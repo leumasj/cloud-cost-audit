@@ -112,13 +112,9 @@ function ProgressRing({ percent, size = 44, stroke = 3, color = "#00ffb4" }) {
 function ParticleBackground() {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
-      {/* Radial glow top-left */}
       <div style={{ position: "absolute", top: "-200px", left: "-200px", width: "600px", height: "600px", background: "radial-gradient(circle, rgba(0,255,180,0.07) 0%, transparent 70%)", borderRadius: "50%" }} />
-      {/* Radial glow bottom-right */}
       <div style={{ position: "absolute", bottom: "-200px", right: "-100px", width: "500px", height: "500px", background: "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)", borderRadius: "50%" }} />
-      {/* Grid */}
       <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
-      {/* Noise */}
       <div style={{ position: "absolute", inset: 0, opacity: 0.04, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
     </div>
   );
@@ -164,8 +160,8 @@ const globalCss = `
   .section-tab { transition: all 0.15s; cursor: pointer; font-family: var(--body); }
   .section-tab:hover { color: var(--green) !important; }
   .stat-num { font-family: var(--display); }
-  input, select { font-family: var(--body); }
-  input:focus { outline: none; border-color: var(--green) !important; box-shadow: 0 0 0 3px rgba(0,255,180,0.1) !important; }
+  input, select, textarea { font-family: var(--body); }
+  input:focus, textarea:focus { outline: none; border-color: var(--green) !important; box-shadow: 0 0 0 3px rgba(0,255,180,0.1) !important; }
   .provider-chip { transition: all 0.15s; cursor: pointer; font-family: var(--body); }
   .provider-chip:hover { border-color: var(--green) !important; color: var(--green) !important; }
   ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -175,8 +171,6 @@ const globalCss = `
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   .modal-box { animation: scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
   @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
-  .shimmer { background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%); background-size: 200% 100%; animation: shimmer 2s infinite; }
-  @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 `;
 
 export default function App() {
@@ -187,7 +181,11 @@ export default function App() {
   const [checked, setChecked] = useState({});
   const [activeSection, setActiveSection] = useState(0);
   const [showSample, setShowSample] = useState(false);
+  const [showContact, setShowContact] = useState(false);
   const [pageKey, setPageKey] = useState(0);
+  
+  // Formspree state
+  const [formStatus, setFormStatus] = useState("idle"); // idle, sending, success, error
 
   const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
 
@@ -201,11 +199,32 @@ export default function App() {
   const savPct = bill > 0 ? Math.round(((savMin + savMax) / 2 / bill) * 100) : 0;
   const progress = Math.round((Object.keys(checked).length / allChecks.length) * 100);
 
-  // Sample report computed values
   const sampleFlagged = allChecks.filter(c => SAMPLE_REPORT.checked[c.id]);
   const sampleSavMin = Math.round(sampleFlagged.reduce((s, c) => s + SAMPLE_REPORT.monthlyBill * c.savingsRange[0] / 100, 0));
   const sampleSavMax = Math.round(sampleFlagged.reduce((s, c) => s + SAMPLE_REPORT.monthlyBill * c.savingsRange[1] / 100, 0));
   const samplePct = Math.round(((sampleSavMin + sampleSavMax) / 2 / SAMPLE_REPORT.monthlyBill) * 100);
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setFormStatus("sending");
+    const formData = new FormData(e.target);
+    try {
+      const response = await fetch("https://formspree.io/f/mlgarana", {
+        method: "POST",
+        body: formData,
+        headers: { 'Accept': 'application/json' }
+      });
+      if (response.ok) {
+        setFormStatus("success");
+        e.target.reset();
+        setTimeout(() => { setShowContact(false); setFormStatus("idle"); }, 3000);
+      } else {
+        setFormStatus("error");
+      }
+    } catch (error) {
+      setFormStatus("error");
+    }
+  };
 
   // ─── NAV ────────────────────────────────────────────────────────────────────
   const Nav = ({ showBack, onBack }) => (
@@ -216,14 +235,56 @@ export default function App() {
             ← Back
           </button>
         )}
-        <div style={{ width: "30px", height: "30px", background: "var(--green)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 16px rgba(0,255,180,0.4)" }}>
-          <span style={{ fontSize: "16px" }}>⚡</span>
+        <div 
+          onClick={() => goTo("intro")}
+          style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "12px" }}
+        >
+          <div style={{ width: "30px", height: "30px", background: "var(--green)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 16px rgba(0,255,180,0.4)" }}>
+            <span style={{ fontSize: "16px" }}>⚡</span>
+          </div>
+          <span className="display" style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "-0.5px", color: "#fff" }}>CloudAudit</span>
         </div>
-        <span className="display" style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "-0.5px", color: "#fff" }}>CloudAudit</span>
-        <span style={{ background: "rgba(0,255,180,0.12)", color: "var(--green)", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "20px", letterSpacing: "1px", border: "1px solid var(--green-border)" }}>BETA</span>
       </div>
-      <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>Free · No account needed</span>
+      <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+        <button onClick={() => setShowContact(true)} className="ghost-btn" style={{ background: "transparent", border: "none", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600 }}>
+          Contact Us
+        </button>
+        <span style={{ fontSize: "13px", color: "var(--text-muted)", display: "none" }}>Free · No account needed</span>
+      </div>
     </nav>
+  );
+
+  // ─── CONTACT MODAL ──────────────────────────────────────────────────────────
+  const ContactModal = () => (
+    <div className="modal-overlay" onClick={() => setShowContact(false)} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+      <div className="modal-box" onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "24px", maxWidth: "480px", width: "100%", padding: "40px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)" }}>
+        <h2 className="display" style={{ fontSize: "32px", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "8px" }}>Get in touch</h2>
+        <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "32px" }}>Have questions about your audit? Drop us a message.</p>
+        
+        {formStatus === "success" ? (
+          <div style={{ textAlign: "center", padding: "40px 0" }}>
+            <div style={{ fontSize: "40px", marginBottom: "16px" }}>✅</div>
+            <p style={{ color: "var(--green)", fontWeight: 700, fontSize: "18px" }}>Message Sent!</p>
+            <p style={{ color: "var(--text-dim)", marginTop: "8px" }}>We'll get back to you shortly.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleContactSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Email Address</label>
+              <input required type="email" name="email" placeholder="you@company.com" style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "12px", color: "#fff" }} />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Message</label>
+              <textarea required name="message" rows="4" placeholder="How can we help?" style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "12px", color: "#fff", resize: "none" }} />
+            </div>
+            <button className="glow-btn" disabled={formStatus === "sending"} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px", fontSize: "16px", width: "100%" }}>
+              {formStatus === "sending" ? "Sending..." : "Send Message →"}
+            </button>
+            {formStatus === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center" }}>Something went wrong. Please try again.</p>}
+          </form>
+        )}
+      </div>
+    </div>
   );
 
   // ─── SAMPLE REPORT MODAL ────────────────────────────────────────────────────
@@ -235,7 +296,6 @@ export default function App() {
     return (
       <div className="modal-overlay" onClick={() => setShowSample(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
         <div className="modal-box" onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "780px", width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,255,180,0.1)" }}>
-          {/* Modal header */}
           <div style={{ padding: "28px 32px 0", borderBottom: "1px solid var(--border)", paddingBottom: "20px", position: "sticky", top: 0, background: "var(--bg2)", zIndex: 10, borderRadius: "20px 20px 0 0" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
@@ -252,7 +312,6 @@ export default function App() {
           </div>
 
           <div style={{ padding: "24px 32px" }}>
-            {/* KPIs */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", marginBottom: "28px" }}>
               {[
                 { label: "Monthly Savings", val: `$${sampleSavMin.toLocaleString()} – $${sampleSavMax.toLocaleString()}`, sub: "per month", color: "var(--green)", bg: "var(--green-dim)", border: "var(--green-border)" },
@@ -267,7 +326,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* Findings */}
             {[
               { label: "🔴 High Impact", items: sHigh, color: "#f87171", border: "rgba(248,113,113,0.2)" },
               { label: "🟡 Medium Impact", items: sMed, color: "#fbbf24", border: "rgba(251,191,36,0.2)" },
@@ -294,7 +352,6 @@ export default function App() {
               </div>
             ))}
 
-            {/* CTA inside modal */}
             <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.08) 0%, rgba(99,102,241,0.08) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "14px", padding: "24px", textAlign: "center", marginTop: "8px" }}>
               <p style={{ color: "var(--text-dim)", fontSize: "13px", marginBottom: "10px" }}>Ready to find savings like this in your own infrastructure?</p>
               <button className="glow-btn" onClick={() => { setShowSample(false); goTo("intake"); }}
@@ -314,10 +371,10 @@ export default function App() {
       <style>{globalCss}</style>
       <ParticleBackground />
       {showSample && <SampleModal />}
+      {showContact && <ContactModal />}
       <Nav />
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px" }}>
-        {/* Hero */}
         <div style={{ paddingTop: "90px", paddingBottom: "80px", textAlign: "center" }}>
           <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "32px" }}>
             <span style={{ width: "6px", height: "6px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)" }} />
@@ -348,7 +405,6 @@ export default function App() {
           <p className="fade-up stagger-4" style={{ marginTop: "20px", fontSize: "12px", color: "var(--text-muted)" }}>✓ 100% free &nbsp;·&nbsp; ✓ No signup &nbsp;·&nbsp; ✓ Results in 15 minutes</p>
         </div>
 
-        {/* Stats bar */}
         <div className="fade-up stagger-3" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1px", background: "var(--border)", borderRadius: "16px", overflow: "hidden", border: "1px solid var(--border)", marginBottom: "80px" }}>
           {[
             { n: "20–45%", label: "Average savings found" },
@@ -363,7 +419,6 @@ export default function App() {
           ))}
         </div>
 
-        {/* What we audit — fancy cards */}
         <div style={{ marginBottom: "100px" }}>
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
             <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Comprehensive Coverage</p>
@@ -374,7 +429,6 @@ export default function App() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
             {AUDIT_SECTIONS.map((s, i) => (
               <div key={s.id} className="audit-cat-card fade-up" style={{ animationDelay: `${0.05 * i}s`, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden" }}>
-                {/* Background accent */}
                 <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "100px", height: "100px", background: "radial-gradient(circle, rgba(0,255,180,0.06) 0%, transparent 70%)", borderRadius: "50%" }} />
                 <div style={{ fontSize: "32px", marginBottom: "16px" }}>{s.icon}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
@@ -396,7 +450,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Bottom CTA */}
         <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.06) 0%, rgba(99,102,241,0.06) 100%)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "24px", padding: "60px 40px", textAlign: "center", marginBottom: "80px" }}>
           <h2 className="display" style={{ fontSize: "clamp(26px,3vw,40px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "14px" }}>Ready to find your savings?</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "16px", marginBottom: "32px" }}>Takes 15 minutes. Free forever. No credit card.</p>
@@ -414,6 +467,7 @@ export default function App() {
     <div className="app">
       <style>{globalCss}</style>
       <ParticleBackground />
+      {showContact && <ContactModal />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
         <div className="fade-up">
@@ -471,14 +525,13 @@ export default function App() {
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
+        {showContact && <ContactModal />}
         <Nav showBack onBack={() => goTo("intake")} />
-        {/* Top progress */}
         <div style={{ height: "2px", background: "var(--border)", position: "sticky", top: "58px", zIndex: 99 }}>
           <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, var(--green), #00d4ff, #818cf8)", transition: "width 0.5s ease", boxShadow: "0 0 8px rgba(0,255,180,0.6)" }} />
         </div>
 
         <div style={{ maxWidth: "960px", margin: "0 auto", padding: "32px 24px 120px", position: "relative", zIndex: 1 }}>
-          {/* Section tabs */}
           <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "32px", paddingBottom: "4px" }}>
             {AUDIT_SECTIONS.map((s, i) => {
               const done = s.checks.filter(c => checked[c.id] !== undefined).length;
@@ -494,7 +547,6 @@ export default function App() {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 290px", gap: "24px", alignItems: "start" }}>
-            {/* Checks */}
             <div key={activeSection} className="fade-up">
               <div style={{ marginBottom: "24px" }}>
                 <h2 className="display" style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-0.5px", color: "#fff" }}>{section.icon} {section.label}</h2>
@@ -553,7 +605,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Sidebar */}
             <div style={{ position: "sticky", top: "76px", display: "flex", flexDirection: "column", gap: "14px" }}>
               <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px", boxShadow: "0 8px 30px rgba(0,0,0,0.4)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
@@ -584,7 +635,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Section mini progress */}
               <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "18px" }}>
                 <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "1px", color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "14px" }}>Sections</p>
                 {AUDIT_SECTIONS.map((s, i) => {
@@ -624,6 +674,7 @@ export default function App() {
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
+        {showContact && <ContactModal />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
 
@@ -651,7 +702,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* KPI cards */}
           {bill > 0 && (
             <div className="fade-up stagger-1" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "14px", marginBottom: "32px" }}>
               {[
@@ -669,7 +719,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Findings */}
           <div className="fade-up stagger-2">
             {[
               { label: "🔴 Critical & High Impact", items: high, color: "#f87171" },
@@ -701,7 +750,6 @@ export default function App() {
             ))}
           </div>
 
-          {/* Next steps */}
           <div className="fade-up stagger-3" style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", marginBottom: "24px" }}>
             <h3 className="display" style={{ fontSize: "18px", fontWeight: 700, marginBottom: "20px", color: "#fff", letterSpacing: "-0.3px" }}>Recommended action plan</h3>
             {[
@@ -720,7 +768,6 @@ export default function App() {
             ))}
           </div>
 
-          {/* CTA */}
           <div className="fade-up stagger-4" style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.07) 0%, rgba(99,102,241,0.07) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "20px", padding: "40px", textAlign: "center" }}>
             <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "12px" }}>Need hands-on help?</p>
             <h3 className="display" style={{ fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "#fff", marginBottom: "10px" }}>Book an implementation session</h3>
