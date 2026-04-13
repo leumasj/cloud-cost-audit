@@ -906,7 +906,7 @@ export default function App() {
             <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "28px" }}>Senior DevOps engineer · Remote · Full report + implementation in 48hrs</p>
             <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
               <button className="glow-btn" onClick={() => setShowBooking(true)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 28px rgba(0,255,180,0.35)" }}>
-                Book for 999 PLN →
+                Book now for 999 PLN →
               </button>
               <button className="ghost-btn" onClick={() => goTo("intro")}
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px" }}>
