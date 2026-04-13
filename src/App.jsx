@@ -497,9 +497,8 @@ export default function App() {
     <div className="app">
       <style>{globalCss}</style>
       <ParticleBackground />
-      {showSample {showSample && <SampleModal />}{showSample && <SampleModal />} <SampleModal />}
-      {showBooking && <BookingModal />}
-      {showContact {showContact && <ContactModal />}{showContact && <ContactModal />} <ContactModal />}
+      {showSample && <SampleModal />}
+      {showContact && <ContactModal />}
       {showBooking && <BookingModal />}
       <Nav />
 
@@ -596,7 +595,7 @@ export default function App() {
     <div className="app">
       <style>{globalCss}</style>
       <ParticleBackground />
-      {showContact {showContact && <ContactModal />}{showContact && <ContactModal />} <ContactModal />}
+      {showContact && <ContactModal />}
       {showBooking && <BookingModal />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
@@ -655,7 +654,7 @@ export default function App() {
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
-        {showContact {showContact && <ContactModal />}{showContact && <ContactModal />} <ContactModal />}
+        {showContact && <ContactModal />}
       {showBooking && <BookingModal />}
         <Nav showBack onBack={() => goTo("intake")} />
         <div style={{ height: "2px", background: "var(--border)", position: "sticky", top: "58px", zIndex: 99 }}>
@@ -805,7 +804,7 @@ export default function App() {
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
-        {showContact {showContact && <ContactModal />}{showContact && <ContactModal />} <ContactModal />}
+        {showContact && <ContactModal />}
       {showBooking && <BookingModal />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
@@ -906,7 +905,7 @@ export default function App() {
             <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "28px" }}>Senior DevOps engineer · Remote · Full report + implementation in 48hrs</p>
             <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
               <button className="glow-btn" onClick={() => setShowBooking(true)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 28px rgba(0,255,180,0.35)" }}>
-                Book now for 999 PLN →
+                Book for 999 PLN →
               </button>
               <button className="ghost-btn" onClick={() => goTo("intro")}
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px" }}>
