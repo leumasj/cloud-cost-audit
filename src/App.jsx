@@ -171,6 +171,7 @@ const globalCss = `
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   .modal-box { animation: scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
   @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
 `;
 
 export default function App() {
@@ -182,10 +183,12 @@ export default function App() {
   const [activeSection, setActiveSection] = useState(0);
   const [showSample, setShowSample] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
   const [pageKey, setPageKey] = useState(0);
-  
+
   // Formspree state
   const [formStatus, setFormStatus] = useState("idle"); // idle, sending, success, error
+  const [bookingStatus, setBookingStatus] = useState("idle"); // idle, sending, success, error
 
   const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
 
@@ -223,6 +226,28 @@ export default function App() {
       }
     } catch (error) {
       setFormStatus("error");
+    }
+  };
+
+  const handleBookingSubmit = async (e) => {
+    e.preventDefault();
+    setBookingStatus("sending");
+    const formData = new FormData(e.target);
+    try {
+      const response = await fetch("https://formspree.io/f/mlgarana", {
+        method: "POST",
+        body: formData,
+        headers: { 'Accept': 'application/json' }
+      });
+      if (response.ok) {
+        setBookingStatus("success");
+        e.target.reset();
+        setTimeout(() => { setShowBooking(false); setBookingStatus("idle"); }, 4000);
+      } else {
+        setBookingStatus("error");
+      }
+    } catch (error) {
+      setBookingStatus("error");
     }
   };
 
@@ -283,6 +308,108 @@ export default function App() {
             {formStatus === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center" }}>Something went wrong. Please try again.</p>}
           </form>
         )}
+      </div>
+    </div>
+  );
+
+  // ─── BOOKING MODAL ──────────────────────────────────────────────────────────
+  const BookingModal = () => (
+    <div className="modal-overlay" onClick={() => { setShowBooking(false); setBookingStatus("idle"); }} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+      <div className="modal-box" onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "24px", maxWidth: "520px", width: "100%", padding: "0", boxShadow: "0 40px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,255,180,0.08)" }}>
+
+        {/* Modal top banner */}
+        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.1) 0%, rgba(99,102,241,0.1) 100%)", borderBottom: "1px solid rgba(0,255,180,0.12)", borderRadius: "24px 24px 0 0", padding: "28px 36px 24px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "4px 12px", marginBottom: "12px" }}>
+                <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px var(--green)" }} />
+                <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>IMPLEMENTATION SESSION · 999 PLN</span>
+              </div>
+              <h2 className="display" style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "6px" }}>Book your session</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>Senior DevOps engineer · Remote · Delivered within 48hrs</p>
+            </div>
+            <button onClick={() => { setShowBooking(false); setBookingStatus("idle"); }} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "18px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
+          </div>
+          {/* What's included */}
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "16px" }}>
+            {["✓ Full audit review", "✓ Implementation roadmap", "✓ 1hr live session", "✓ 30-day follow-up"].map(item => (
+              <span key={item} style={{ fontSize: "12px", color: "var(--text-dim)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "4px 10px" }}>{item}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Form body */}
+        <div style={{ padding: "28px 36px 36px" }}>
+          {bookingStatus === "success" ? (
+            <div style={{ textAlign: "center", padding: "32px 0" }}>
+              <div style={{ fontSize: "52px", marginBottom: "16px" }}>🎉</div>
+              <p className="display" style={{ color: "var(--green)", fontWeight: 800, fontSize: "22px", letterSpacing: "-0.5px", marginBottom: "8px" }}>Booking Confirmed!</p>
+              <p style={{ color: "var(--text-dim)", fontSize: "14px", lineHeight: 1.6 }}>We'll email you within 24hrs to schedule your session.<br />Check your inbox (and spam folder).</p>
+            </div>
+          ) : (
+            <form onSubmit={handleBookingSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+              {/* Hidden field to identify this as a booking */}
+              <input type="hidden" name="_subject" value="New Implementation Session Booking – CloudAudit" />
+              <input type="hidden" name="form_type" value="booking_999pln" />
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>First Name</label>
+                  <input required type="text" name="first_name" placeholder="Jan"
+                    style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Last Name</label>
+                  <input required type="text" name="last_name" placeholder="Kowalski"
+                    style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px" }} />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email</label>
+                <input required type="email" name="email" placeholder="jan@company.com"
+                  style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px" }} />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Company Name</label>
+                <input required type="text" name="company" placeholder="Acme Corp"
+                  style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px" }} />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Cloud Provider & Monthly Bill</label>
+                <input type="text" name="cloud_details" placeholder="e.g. AWS · ~$4,500/month"
+                  style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px" }} />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>What's your biggest challenge? <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
+                <textarea name="message" rows="3" placeholder="e.g. Our AWS bill jumped 40% last month and we don't know why..."
+                  style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", resize: "none" }} />
+              </div>
+
+              <button className="glow-btn" type="submit" disabled={bookingStatus === "sending"}
+                style={{ background: bookingStatus === "sending" ? "rgba(0,255,180,0.5)" : "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px", fontSize: "16px", width: "100%", cursor: bookingStatus === "sending" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                {bookingStatus === "sending" ? (
+                  <><span style={{ display: "inline-block", width: "16px", height: "16px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Sending...</>
+                ) : (
+                  <>Book Session for 999 PLN →</>
+                )}
+              </button>
+
+              {bookingStatus === "error" && (
+                <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>
+                  ⚠ Something went wrong. Please try again or email us directly.
+                </p>
+              )}
+
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", lineHeight: 1.5 }}>
+                We'll confirm your booking by email within 24 hours. No payment required upfront.
+              </p>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -370,8 +497,10 @@ export default function App() {
     <div className="app">
       <style>{globalCss}</style>
       <ParticleBackground />
-      {showSample && <SampleModal />}
-      {showContact && <ContactModal />}
+      {showSample {showSample && <SampleModal />}{showSample && <SampleModal />} <SampleModal />}
+      {showBooking && <BookingModal />}
+      {showContact {showContact && <ContactModal />}{showContact && <ContactModal />} <ContactModal />}
+      {showBooking && <BookingModal />}
       <Nav />
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px" }}>
@@ -467,7 +596,8 @@ export default function App() {
     <div className="app">
       <style>{globalCss}</style>
       <ParticleBackground />
-      {showContact && <ContactModal />}
+      {showContact {showContact && <ContactModal />}{showContact && <ContactModal />} <ContactModal />}
+      {showBooking && <BookingModal />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
         <div className="fade-up">
@@ -525,7 +655,8 @@ export default function App() {
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
-        {showContact && <ContactModal />}
+        {showContact {showContact && <ContactModal />}{showContact && <ContactModal />} <ContactModal />}
+      {showBooking && <BookingModal />}
         <Nav showBack onBack={() => goTo("intake")} />
         <div style={{ height: "2px", background: "var(--border)", position: "sticky", top: "58px", zIndex: 99 }}>
           <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, var(--green), #00d4ff, #818cf8)", transition: "width 0.5s ease", boxShadow: "0 0 8px rgba(0,255,180,0.6)" }} />
@@ -674,7 +805,8 @@ export default function App() {
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
-        {showContact && <ContactModal />}
+        {showContact {showContact && <ContactModal />}{showContact && <ContactModal />} <ContactModal />}
+      {showBooking && <BookingModal />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
 
@@ -773,7 +905,7 @@ export default function App() {
             <h3 className="display" style={{ fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "#fff", marginBottom: "10px" }}>Book an implementation session</h3>
             <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "28px" }}>Senior DevOps engineer · Remote · Full report + implementation in 48hrs</p>
             <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-              <button className="glow-btn" style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 28px rgba(0,255,180,0.35)" }}>
+              <button className="glow-btn" onClick={() => setShowBooking(true)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 28px rgba(0,255,180,0.35)" }}>
                 Book for 999 PLN →
               </button>
               <button className="ghost-btn" onClick={() => goTo("intro")}
