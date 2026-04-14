@@ -171,7 +171,6 @@ const globalCss = `
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   .modal-box { animation: scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
   @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
-  @keyframes spin { to { transform: rotate(360deg); } }
 `;
 
 export default function App() {
@@ -183,12 +182,10 @@ export default function App() {
   const [activeSection, setActiveSection] = useState(0);
   const [showSample, setShowSample] = useState(false);
   const [showContact, setShowContact] = useState(false);
-  const [showBooking, setShowBooking] = useState(false);
   const [pageKey, setPageKey] = useState(0);
-
+  
   // Formspree state
   const [formStatus, setFormStatus] = useState("idle"); // idle, sending, success, error
-  const [bookingStatus, setBookingStatus] = useState("idle"); // idle, sending, success, error
 
   const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
 
@@ -226,28 +223,6 @@ export default function App() {
       }
     } catch (error) {
       setFormStatus("error");
-    }
-  };
-
-  const handleBookingSubmit = async (e) => {
-    e.preventDefault();
-    setBookingStatus("sending");
-    const formData = new FormData(e.target);
-    try {
-      const response = await fetch("https://formspree.io/f/mlgarana", {
-        method: "POST",
-        body: formData,
-        headers: { 'Accept': 'application/json' }
-      });
-      if (response.ok) {
-        setBookingStatus("success");
-        e.target.reset();
-        setTimeout(() => { setShowBooking(false); setBookingStatus("idle"); }, 4000);
-      } else {
-        setBookingStatus("error");
-      }
-    } catch (error) {
-      setBookingStatus("error");
     }
   };
 
@@ -308,108 +283,6 @@ export default function App() {
             {formStatus === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center" }}>Something went wrong. Please try again.</p>}
           </form>
         )}
-      </div>
-    </div>
-  );
-
-  // ─── BOOKING MODAL ──────────────────────────────────────────────────────────
-  const BookingModal = () => (
-    <div className="modal-overlay" onClick={() => { setShowBooking(false); setBookingStatus("idle"); }} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-      <div className="modal-box" onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "24px", maxWidth: "520px", width: "100%", padding: "0", boxShadow: "0 40px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,255,180,0.08)" }}>
-
-        {/* Modal top banner */}
-        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.1) 0%, rgba(99,102,241,0.1) 100%)", borderBottom: "1px solid rgba(0,255,180,0.12)", borderRadius: "24px 24px 0 0", padding: "28px 36px 24px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "4px 12px", marginBottom: "12px" }}>
-                <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px var(--green)" }} />
-                <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>IMPLEMENTATION SESSION · 999 PLN</span>
-              </div>
-              <h2 className="display" style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "6px" }}>Book your session</h2>
-              <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>Senior DevOps engineer · Remote · Delivered within 48hrs</p>
-            </div>
-            <button onClick={() => { setShowBooking(false); setBookingStatus("idle"); }} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "18px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
-          </div>
-          {/* What's included */}
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "16px" }}>
-            {["✓ Full audit review", "✓ Implementation roadmap", "✓ 1hr live session", "✓ 30-day follow-up"].map(item => (
-              <span key={item} style={{ fontSize: "12px", color: "var(--text-dim)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "4px 10px" }}>{item}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* Form body */}
-        <div style={{ padding: "28px 36px 36px" }}>
-          {bookingStatus === "success" ? (
-            <div style={{ textAlign: "center", padding: "32px 0" }}>
-              <div style={{ fontSize: "52px", marginBottom: "16px" }}>🎉</div>
-              <p className="display" style={{ color: "var(--green)", fontWeight: 800, fontSize: "22px", letterSpacing: "-0.5px", marginBottom: "8px" }}>Booking Confirmed!</p>
-              <p style={{ color: "var(--text-dim)", fontSize: "14px", lineHeight: 1.6 }}>We'll email you within 24hrs to schedule your session.<br />Check your inbox (and spam folder).</p>
-            </div>
-          ) : (
-            <form onSubmit={handleBookingSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-              {/* Hidden field to identify this as a booking */}
-              <input type="hidden" name="_subject" value="New Implementation Session Booking – CloudAudit" />
-              <input type="hidden" name="form_type" value="booking_999pln" />
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>First Name</label>
-                  <input required type="text" name="first_name" placeholder="Jan"
-                    style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px" }} />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Last Name</label>
-                  <input required type="text" name="last_name" placeholder="Kowalski"
-                    style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px" }} />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email</label>
-                <input required type="email" name="email" placeholder="jan@company.com"
-                  style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px" }} />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Company Name</label>
-                <input required type="text" name="company" placeholder="Acme Corp"
-                  style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px" }} />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Cloud Provider & Monthly Bill</label>
-                <input type="text" name="cloud_details" placeholder="e.g. AWS · ~$4,500/month"
-                  style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px" }} />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>What's your biggest challenge? <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
-                <textarea name="message" rows="3" placeholder="e.g. Our AWS bill jumped 40% last month and we don't know why..."
-                  style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", resize: "none" }} />
-              </div>
-
-              <button className="glow-btn" type="submit" disabled={bookingStatus === "sending"}
-                style={{ background: bookingStatus === "sending" ? "rgba(0,255,180,0.5)" : "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px", fontSize: "16px", width: "100%", cursor: bookingStatus === "sending" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                {bookingStatus === "sending" ? (
-                  <><span style={{ display: "inline-block", width: "16px", height: "16px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Sending...</>
-                ) : (
-                  <>Book Session for 999 PLN →</>
-                )}
-              </button>
-
-              {bookingStatus === "error" && (
-                <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>
-                  ⚠ Something went wrong. Please try again or email us directly.
-                </p>
-              )}
-
-              <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", lineHeight: 1.5 }}>
-                We'll confirm your booking by email within 24 hours. No payment required upfront.
-              </p>
-            </form>
-          )}
-        </div>
       </div>
     </div>
   );
@@ -499,7 +372,6 @@ export default function App() {
       <ParticleBackground />
       {showSample && <SampleModal />}
       {showContact && <ContactModal />}
-      {showBooking && <BookingModal />}
       <Nav />
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px" }}>
@@ -586,6 +458,48 @@ export default function App() {
             Start Free Audit →
           </button>
         </div>
+
+        {/* ── FOOTER ── */}
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: "40px", paddingBottom: "48px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "24px" }}>
+          {/* Left — branding */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "26px", height: "26px", background: "var(--green)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(0,255,180,0.3)", flexShrink: 0 }}>
+              <span style={{ fontSize: "13px" }}>⚡</span>
+            </div>
+            <div>
+              <span className="display" style={{ fontWeight: 800, fontSize: "14px", color: "#fff", letterSpacing: "-0.3px" }}>CloudAudit</span>
+              <span style={{ color: "var(--text-muted)", fontSize: "13px", marginLeft: "8px" }}>© {new Date().getFullYear()}</span>
+            </div>
+          </div>
+
+          {/* Centre — built by */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 800, color: "#000", flexShrink: 0 }}>SA</div>
+            <div>
+              <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-dim)", lineHeight: 1.3 }}>Built by <span style={{ color: "#fff" }}>Samuel Ayodele Adomeh</span></p>
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: 1.3 }}>Senior DevOps Engineer · Azure Architect Expert · Wrocław, Poland</p>
+            </div>
+          </div>
+
+          {/* Right — social links */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <a href="https://www.linkedin.com/in/samuel-ayodele-adomeh" target="_blank" rel="noopener noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: "7px", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "8px", padding: "8px 14px", fontSize: "13px", fontWeight: 600, color: "var(--text-dim)", textDecoration: "none", transition: "all 0.2s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "#0077b5"; e.currentTarget.style.color = "#0077b5"; e.currentTarget.style.background = "rgba(0,119,181,0.08)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-dim)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+              LinkedIn
+            </a>
+            <a href="https://github.com/leumasj" target="_blank" rel="noopener noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: "7px", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "8px", padding: "8px 14px", fontSize: "13px", fontWeight: 600, color: "var(--text-dim)", textDecoration: "none", transition: "all 0.2s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-dim)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+              GitHub
+            </a>
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -596,7 +510,6 @@ export default function App() {
       <style>{globalCss}</style>
       <ParticleBackground />
       {showContact && <ContactModal />}
-      {showBooking && <BookingModal />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
         <div className="fade-up">
@@ -655,7 +568,6 @@ export default function App() {
         <style>{globalCss}</style>
         <ParticleBackground />
         {showContact && <ContactModal />}
-      {showBooking && <BookingModal />}
         <Nav showBack onBack={() => goTo("intake")} />
         <div style={{ height: "2px", background: "var(--border)", position: "sticky", top: "58px", zIndex: 99 }}>
           <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, var(--green), #00d4ff, #818cf8)", transition: "width 0.5s ease", boxShadow: "0 0 8px rgba(0,255,180,0.6)" }} />
@@ -805,7 +717,6 @@ export default function App() {
         <style>{globalCss}</style>
         <ParticleBackground />
         {showContact && <ContactModal />}
-      {showBooking && <BookingModal />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
 
@@ -903,6 +814,33 @@ export default function App() {
             <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "12px" }}>Need hands-on help?</p>
             <h3 className="display" style={{ fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "#fff", marginBottom: "10px" }}>Book an implementation session</h3>
             <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "28px" }}>Senior DevOps engineer · Remote · Full report + implementation in 48hrs</p>
+
+            {/* Trust card */}
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px 24px", marginBottom: "28px", textAlign: "left" }}>
+              <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: 800, color: "#000", flexShrink: 0 }}>SA</div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: "15px", fontWeight: 700, color: "#fff", marginBottom: "3px" }}>Samuel Ayodele Adomeh</p>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "8px" }}>Certified Azure Architect Expert · DevOps Expert · Wrocław, Poland</p>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <a href="https://www.linkedin.com/in/samuel-ayodele-adomeh" target="_blank" rel="noopener noreferrer"
+                    style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", fontWeight: 600, color: "#0077b5", textDecoration: "none", background: "rgba(0,119,181,0.1)", border: "1px solid rgba(0,119,181,0.25)", borderRadius: "6px", padding: "3px 8px" }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                    LinkedIn
+                  </a>
+                  <a href="https://github.com/leumasj" target="_blank" rel="noopener noreferrer"
+                    style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", fontWeight: 600, color: "var(--text-dim)", textDecoration: "none", background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px" }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+                    GitHub
+                  </a>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: "6px", flexDirection: "column", flexShrink: 0 }}>
+                {["Azure Architect", "DevOps Expert", "28 GitHub repos"].map(badge => (
+                  <span key={badge} style={{ fontSize: "10px", fontWeight: 600, color: "var(--green)", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "4px", padding: "2px 8px", whiteSpace: "nowrap" }}>{badge}</span>
+                ))}
+              </div>
+            </div>
+
             <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
               <button className="glow-btn" onClick={() => setShowBooking(true)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 28px rgba(0,255,180,0.35)" }}>
                 Book for 999 PLN →
