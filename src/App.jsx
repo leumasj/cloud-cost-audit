@@ -483,7 +483,7 @@ export default function App() {
 
           {/* Right — social links */}
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <a href="https://www.linkedin.com/in/samuel-ayodele-adomeh" target="_blank" rel="noopener noreferrer"
+            <a href="www.linkedin.com/in/adomeh" target="_blank" rel="noopener noreferrer"
               style={{ display: "flex", alignItems: "center", gap: "7px", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "8px", padding: "8px 14px", fontSize: "13px", fontWeight: 600, color: "var(--text-dim)", textDecoration: "none", transition: "all 0.2s" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "#0077b5"; e.currentTarget.style.color = "#0077b5"; e.currentTarget.style.background = "rgba(0,119,181,0.08)"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-dim)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}>
