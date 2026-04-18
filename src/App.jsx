@@ -378,7 +378,7 @@ export default function App() {
         <div style={{ paddingTop: "90px", paddingBottom: "80px", textAlign: "center" }}>
           <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "32px" }}>
             <span style={{ width: "6px", height: "6px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)" }} />
-            <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 600, letterSpacing: "1px" }}>TRUSTED BY DEVOPS TEAMS ACROSS EUROPE</span>
+            <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 600, letterSpacing: "1px" }}>TRUSTED BY DEVOPS TEAMS ACROSS EY AND UNIT4</span>
           </div>
 
           <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "24px" }}>
