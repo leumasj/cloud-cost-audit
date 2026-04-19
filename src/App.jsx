@@ -502,7 +502,7 @@ export default function App() {
                 {[
                   { icon: "🌐", label: "kloudaudit.eu", href: "https://kloudaudit.eu", color: "var(--green)" },
                   { icon: "✉️", label: "admin@kloudaudit.eu", href: "mailto:admin@kloudaudit.eu", color: "#00d4ff" },
-                  { icon: "💼", label: "linkedin.com/in/samuel-ayodele-adomeh", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh", color: "#0077b5" },
+                  { icon: "💼", label: "linkedin.com/in/adomeh", href: "https://www.linkedin.com/in/adomeh", color: "#0077b5" },
                   { icon: "💻", label: "github.com/leumasj", href: "https://github.com/leumasj", color: "var(--text-dim)" },
                 ].map(link => (
                   <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer"
@@ -537,7 +537,7 @@ export default function App() {
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
               {[
-                { label: "LinkedIn", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh", hoverColor: "#0077b5" },
+                { label: "LinkedIn", href: "https://www.linkedin.com/in/adomeh", hoverColor: "#0077b5" },
                 { label: "GitHub", href: "https://github.com/leumasj", hoverColor: "#fff" },
               ].map(s => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
