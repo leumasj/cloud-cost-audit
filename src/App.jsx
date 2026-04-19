@@ -171,7 +171,6 @@ const globalCss = `
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   .modal-box { animation: scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
   @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
-  @keyframes spin { to { transform: rotate(360deg); } }
 `;
 
 export default function App() {
@@ -183,12 +182,10 @@ export default function App() {
   const [activeSection, setActiveSection] = useState(0);
   const [showSample, setShowSample] = useState(false);
   const [showContact, setShowContact] = useState(false);
-  const [showBooking, setShowBooking] = useState(false);
   const [pageKey, setPageKey] = useState(0);
-
+  
   // Formspree state
   const [formStatus, setFormStatus] = useState("idle"); // idle, sending, success, error
-  const [bookingStatus, setBookingStatus] = useState("idle"); // idle, sending, success, error
 
   const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
 
@@ -226,29 +223,6 @@ export default function App() {
       }
     } catch (error) {
       setFormStatus("error");
-    }
-  };
-
-  // ─── BOOKING SUBMIT ────────────────────────────────────────────────────────
-  const handleBookingSubmit = async (e) => {
-    e.preventDefault();
-    setBookingStatus("sending");
-    const formData = new FormData(e.target);
-    try {
-      const response = await fetch("https://formspree.io/f/mlgarana", {
-        method: "POST",
-        body: formData,
-        headers: { Accept: "application/json" },
-      });
-      if (response.ok) {
-        setBookingStatus("success");
-        e.target.reset();
-        setTimeout(() => { setShowBooking(false); setBookingStatus("idle"); }, 4000);
-      } else {
-        setBookingStatus("error");
-      }
-    } catch {
-      setBookingStatus("error");
     }
   };
 
@@ -309,109 +283,6 @@ export default function App() {
             {formStatus === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center" }}>Something went wrong. Please try again.</p>}
           </form>
         )}
-      </div>
-    </div>
-  );
-
-  // ─── BOOKING MODAL ─────────────────────────────────────────────────────────
-  const BookingModal = () => (
-    <div
-      onClick={() => { setShowBooking(false); setBookingStatus("idle"); }}
-      style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}
-    >
-      <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,255,180,0.06)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", overflow: "hidden" }}>
-
-        {/* Header banner */}
-        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.1) 0%, rgba(99,102,241,0.1) 100%)", borderBottom: "1px solid rgba(0,255,180,0.12)", padding: "28px 32px 22px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "4px 12px", marginBottom: "10px" }}>
-                <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px var(--green)" }} />
-                <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>IMPLEMENTATION SESSION · 999 PLN</span>
-              </div>
-              <h2 className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "5px" }}>Book your session</h2>
-              <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Senior DevOps engineer · Remote · Delivered within 48hrs</p>
-            </div>
-            <button onClick={() => { setShowBooking(false); setBookingStatus("idle"); }} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "20px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>×</button>
-          </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "14px" }}>
-            {["✓ Full audit review", "✓ Implementation roadmap", "✓ 1hr live session", "✓ 30-day follow-up"].map(item => (
-              <span key={item} style={{ fontSize: "11px", color: "var(--text-dim)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 9px" }}>{item}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* Form body */}
-        <div style={{ padding: "26px 32px 32px" }}>
-          {bookingStatus === "success" ? (
-            <div style={{ textAlign: "center", padding: "28px 0" }}>
-              <div style={{ fontSize: "48px", marginBottom: "14px" }}>🎉</div>
-              <p className="display" style={{ color: "var(--green)", fontWeight: 800, fontSize: "22px", letterSpacing: "-0.5px", marginBottom: "8px" }}>Booking Received!</p>
-              <p style={{ color: "var(--text-dim)", fontSize: "14px", lineHeight: 1.6 }}>We'll email you within 24hrs to confirm your session.<br />Check your inbox and spam folder.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleBookingSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <input type="hidden" name="_subject" value="New Booking – CloudAudit Implementation Session 999 PLN" />
-              <input type="hidden" name="form_type" value="booking_999pln" />
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>First Name</label>
-                  <input required type="text" name="first_name" placeholder="Jan"
-                    style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Last Name</label>
-                  <input required type="text" name="last_name" placeholder="Kowalski"
-                    style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email</label>
-                <input required type="email" name="email" placeholder="jan@company.com"
-                  style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Company</label>
-                <input required type="text" name="company" placeholder="Acme Corp"
-                  style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Cloud Provider & Monthly Bill</label>
-                <input type="text" name="cloud_details" placeholder="e.g. AWS · ~$4,500/month"
-                  style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>
-                  Biggest challenge <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
-                </label>
-                <textarea name="message" rows="3" placeholder="e.g. Our AWS bill jumped 40% last month and we have no idea why..."
-                  style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", resize: "none", fontFamily: "var(--body)" }} />
-              </div>
-
-              <button type="submit" className="glow-btn" disabled={bookingStatus === "sending"}
-                style={{ background: bookingStatus === "sending" ? "rgba(0,255,180,0.5)" : "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "15px", fontSize: "15px", width: "100%", cursor: bookingStatus === "sending" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "4px" }}>
-                {bookingStatus === "sending" ? (
-                  <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Sending...</>
-                ) : "Book Session for 999 PLN →"}
-              </button>
-
-              {bookingStatus === "error" && (
-                <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>
-                  ⚠ Something went wrong. Please try again.
-                </p>
-              )}
-
-              <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>
-                We'll confirm by email within 24 hours. No payment required upfront.
-              </p>
-            </form>
-          )}
-        </div>
       </div>
     </div>
   );
@@ -501,7 +372,6 @@ export default function App() {
       <ParticleBackground />
       {showSample && <SampleModal />}
       {showContact && <ContactModal />}
-      {showBooking && <BookingModal />}
       <Nav />
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px" }}>
@@ -580,7 +450,8 @@ export default function App() {
           </div>
         </div>
 
-        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.06) 0%, rgba(99,102,241,0.06) 100%)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "24px", padding: "60px 40px", textAlign: "center", marginBottom: "80px" }}>
+        {/* ── BOTTOM CTA ── */}
+        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.06) 0%, rgba(99,102,241,0.06) 100%)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "24px", padding: "60px 40px", textAlign: "center", marginBottom: "60px" }}>
           <h2 className="display" style={{ fontSize: "clamp(26px,3vw,40px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "14px" }}>Ready to find your savings?</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "16px", marginBottom: "32px" }}>Takes 15 minutes. Free forever. No credit card.</p>
           <button className="glow-btn" onClick={() => goTo("intake")}
@@ -588,6 +459,97 @@ export default function App() {
             Start Free Audit →
           </button>
         </div>
+
+        {/* ── TRUST FOOTER ── */}
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: "48px", marginBottom: "60px" }}>
+          {/* Section label */}
+          <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "3px", textTransform: "uppercase", marginBottom: "24px", textAlign: "center" }}>Meet Your Engineer</p>
+
+          {/* Consultant card */}
+          <div style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.18)", borderRadius: "20px", overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 1fr", boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}>
+
+            {/* LEFT — identity */}
+            <div style={{ background: "#0a0a14", padding: "36px 40px", position: "relative", overflow: "hidden" }}>
+              {/* bg glow */}
+              <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "160px", height: "160px", background: "radial-gradient(circle, rgba(0,255,180,0.08) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
+              {/* Avatar */}
+              <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: 800, color: "#000", marginBottom: "20px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", fontFamily: "var(--display)" }}>SA</div>
+              {/* Name */}
+              <h3 className="display" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "14px" }}>Samuel Ayodele Adomeh</h3>
+              {/* Certs */}
+              {["Certified Azure Architect Expert", "Certified Azure DevOps Expert", "Kubernetes · Terraform · Docker"].map(c => (
+                <div key={c} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                  <span style={{ color: "var(--green)", fontSize: "13px" }}>✓</span>
+                  <span style={{ fontSize: "13px", color: "var(--green)", fontWeight: 500 }}>{c}</span>
+                </div>
+              ))}
+              {/* Location */}
+              <div style={{ marginTop: "16px", display: "flex", alignItems: "center", gap: "7px" }}>
+                <span style={{ fontSize: "13px" }}>📍</span>
+                <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>Wrocław, Poland · Remote Worldwide</span>
+              </div>
+              {/* Credential badges */}
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "20px" }}>
+                {["Azure Architect", "DevOps Expert", "28 GitHub repos"].map(b => (
+                  <span key={b} style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "6px", padding: "3px 10px" }}>{b}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* RIGHT — links + CTA */}
+            <div style={{ padding: "36px 40px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {[
+                  { icon: "🌐", label: "kloudaudit.eu", href: "https://kloudaudit.eu", color: "var(--green)" },
+                  { icon: "💼", label: "linkedin.com/in/samuel-ayodele-adomeh", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh", color: "#0077b5" },
+                  { icon: "💻", label: "github.com/leumasj", href: "https://github.com/leumasj", color: "var(--text-dim)" },
+                ].map(link => (
+                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer"
+                    style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none", padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: "10px", transition: "all 0.2s" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = link.color; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}>
+                    <span style={{ fontSize: "16px" }}>{link.icon}</span>
+                    <span style={{ fontSize: "13px", color: link.color, fontWeight: 500 }}>{link.label}</span>
+                  </a>
+                ))}
+              </div>
+
+              {/* CTA box */}
+              <div style={{ marginTop: "24px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "12px", padding: "20px" }}>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "6px" }}>Need hands-on implementation?</p>
+                <p className="display" style={{ fontSize: "18px", fontWeight: 800, color: "var(--green)", letterSpacing: "-0.3px", marginBottom: "6px" }}>Sessions from 999 PLN</p>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "14px" }}>Remote · Delivered within 48hrs · Full docs included</p>
+                <button className="glow-btn" onClick={() => setShowBooking(true)}
+                  style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "9px", padding: "11px 22px", fontSize: "13px", width: "100%", boxShadow: "0 0 16px rgba(0,255,180,0.25)" }}>
+                  Book a Session →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom micro footer */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ width: "24px", height: "24px", background: "var(--green)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(0,255,180,0.3)", fontSize: "12px" }}>⚡</div>
+              <span className="display" style={{ fontWeight: 800, fontSize: "14px", color: "#fff" }}>KloudAudit</span>
+              <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>© {new Date().getFullYear()}</span>
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              {[
+                { label: "LinkedIn", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh", hoverColor: "#0077b5" },
+                { label: "GitHub", href: "https://github.com/leumasj", hoverColor: "#fff" },
+              ].map(s => (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--border)", borderRadius: "8px", background: "rgba(255,255,255,0.03)", transition: "all 0.2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.color = s.hoverColor; e.currentTarget.style.borderColor = s.hoverColor; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border)"; }}>
+                  {s.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -598,7 +560,6 @@ export default function App() {
       <style>{globalCss}</style>
       <ParticleBackground />
       {showContact && <ContactModal />}
-      {showBooking && <BookingModal />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
         <div className="fade-up">
@@ -657,7 +618,6 @@ export default function App() {
         <style>{globalCss}</style>
         <ParticleBackground />
         {showContact && <ContactModal />}
-      {showBooking && <BookingModal />}
         <Nav showBack onBack={() => goTo("intake")} />
         <div style={{ height: "2px", background: "var(--border)", position: "sticky", top: "58px", zIndex: 99 }}>
           <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, var(--green), #00d4ff, #818cf8)", transition: "width 0.5s ease", boxShadow: "0 0 8px rgba(0,255,180,0.6)" }} />
@@ -807,7 +767,6 @@ export default function App() {
         <style>{globalCss}</style>
         <ParticleBackground />
         {showContact && <ContactModal />}
-      {showBooking && <BookingModal />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
 
@@ -906,7 +865,7 @@ export default function App() {
             <h3 className="display" style={{ fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "#fff", marginBottom: "10px" }}>Book an implementation session</h3>
             <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "28px" }}>Senior DevOps engineer · Remote · Full report + implementation in 48hrs</p>
             <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-              <button className="glow-btn" onClick={() => setShowBooking(true)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 28px rgba(0,255,180,0.35)" }}>
+              <button className="glow-btn" style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 28px rgba(0,255,180,0.35)" }}>
                 Book for 999 PLN →
               </button>
               <button className="ghost-btn" onClick={() => goTo("intro")}
