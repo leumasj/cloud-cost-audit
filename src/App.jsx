@@ -259,7 +259,7 @@ export default function App() {
     <div className="modal-overlay" onClick={() => setShowContact(false)} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
       <div className="modal-box" onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "24px", maxWidth: "480px", width: "100%", padding: "40px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)" }}>
         <h2 className="display" style={{ fontSize: "32px", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "8px" }}>Get in touch</h2>
-        <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "32px" }}>Have questions about your audit? Drop us a message.</p>
+        <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "32px" }}>Have questions? Send a message or email us directly at <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none", fontWeight: 600 }}>admin@kloudaudit.eu</a></p>
         
         {formStatus === "success" ? (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
@@ -501,6 +501,7 @@ export default function App() {
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 {[
                   { icon: "🌐", label: "kloudaudit.eu", href: "https://kloudaudit.eu", color: "var(--green)" },
+                  { icon: "✉️", label: "admin@kloudaudit.eu", href: "mailto:admin@kloudaudit.eu", color: "#00d4ff" },
                   { icon: "💼", label: "linkedin.com/in/samuel-ayodele-adomeh", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh", color: "#0077b5" },
                   { icon: "💻", label: "github.com/leumasj", href: "https://github.com/leumasj", color: "var(--text-dim)" },
                 ].map(link => (
