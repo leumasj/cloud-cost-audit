@@ -72,38 +72,6 @@ const IMPACT_COLOR = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24", 
 const EFFORT_COLOR = { Low: "#4ade80", Medium: "#fbbf24", High: "#f87171" };
 const PROVIDERS = ["AWS", "GCP", "Azure", "Multi-cloud"];
 
-// ── AFFILIATE TOOLS ──────────────────────────────────────────────────────
-// Replace href values with your actual affiliate links after signing up
-const AFFILIATE_TOOLS = [
-  {
-    id: "DigitalOcean",
-    name: "DigitalOcean",
-    category: "Compute Saving",
-    tagline: "Full-stack observability — catch cost spikes before they explode",
-    why: "See exactly which services are burning money in real time. Used by 26,000+ companies.",
-    badge: "Free 14-day trial",
-    badgeColor: "#7c3aed",
-    icon: "📊",
-    providers: ["AWS", "GCP", "Azure", "Multi-cloud"],
-    href: "https://m.do.co/c/d964278cc72b",  // replace with affiliate link
-    commission: "$100 per signup",
-  },
-  
-  {
-    id: "vultr",
-    name: "Vultr",
-    category: "Cloud Alternative",
-    tagline: "High-performance cloud at 60% less than AWS — worth comparing",
-    why: "If your workloads are not AWS-specific, Vultr often cuts bills dramatically. $100 free credit.",
-    badge: "$100 free credit",
-    badgeColor: "#00d4ff",
-    icon: "🚀",
-    providers: ["AWS", "Multi-cloud"],
-    href: "https://www.vultr.com/?ref=9896539-9J",  // replace with actual referral link
-    commission: "$100 per signup",
-  },
-];
-
 function AnimatedNumber({ value, prefix = "", suffix = "", duration = 900 }) {
   const [display, setDisplay] = useState(0);
   const startRef = useRef(0);
@@ -138,87 +106,6 @@ function ProgressRing({ percent, size = 44, stroke = 3, color = "#00ffb4" }) {
         style={{ transition: "stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1)" }}
         strokeLinecap="round" />
     </svg>
-  );
-}
-
-// ── AFFILIATE TOOLS SECTION COMPONENT ───────────────────────────────────
-function AffiliateTools({ provider = "Multi-cloud", compact = false }) {
-  const filtered = AFFILIATE_TOOLS.filter(t =>
-    !provider || t.providers.includes(provider) || t.providers.includes("Multi-cloud")
-  ).slice(0, compact ? 3 : 6);
-
-  if (compact) {
-    // Homepage strip — 3 tools, minimal
-    return (
-      <div style={{ marginBottom: "80px" }}>
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Tools We Recommend</p>
-          <h2 className="display" style={{ fontSize: "clamp(24px,3vw,36px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>Pair your audit with these</h2>
-          <p style={{ color: "var(--text-muted)", fontSize: "15px", marginTop: "10px", maxWidth: "440px", margin: "10px auto 0" }}>Hand-picked tools that help engineering teams maintain cloud cost hygiene after the audit.</p>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px,1fr))", gap: "14px" }}>
-          {filtered.map(tool => (
-            <a key={tool.id} href={tool.href} target="_blank" rel="noopener noreferrer sponsored"
-              style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "22px", textDecoration: "none", display: "block", transition: "all 0.2s", position: "relative", overflow: "hidden" }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(0,255,180,0.25)"; e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 32px rgba(0,0,0,0.4)"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
-              <div style={{ position: "absolute", top: "12px", right: "12px", background: `${tool.badgeColor}20`, border: `1px solid ${tool.badgeColor}40`, borderRadius: "6px", padding: "2px 8px", fontSize: "10px", fontWeight: 700, color: tool.badgeColor }}>{tool.badge}</div>
-              <div style={{ fontSize: "26px", marginBottom: "12px" }}>{tool.icon}</div>
-              <div style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "4px" }}>{tool.category}</div>
-              <div className="display" style={{ fontSize: "16px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{tool.name}</div>
-              <div style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>{tool.tagline}</div>
-              <div style={{ marginTop: "14px", fontSize: "12px", color: "var(--green)", fontWeight: 600 }}>Learn more →</div>
-            </a>
-          ))}
-        </div>
-        <p style={{ textAlign: "center", fontSize: "11px", color: "var(--text-muted)", marginTop: "16px" }}>
-          * Some links are affiliate links. We only recommend tools we genuinely use and trust.
-        </p>
-      </div>
-    );
-  }
-
-  // Report page — full cards with "why" copy
-  return (
-    <div style={{ marginBottom: "28px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
-        <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase" }}>🛠 Recommended Tools</p>
-        <div style={{ flex: 1, height: "1px", background: "var(--border)" }} />
-        <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>Hand-picked for {provider} teams</p>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px,1fr))", gap: "12px" }}>
-        {filtered.map(tool => (
-          <a key={tool.id} href={tool.href} target="_blank" rel="noopener noreferrer sponsored"
-            style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px", textDecoration: "none", display: "flex", flexDirection: "column", gap: "0", transition: "all 0.2s", position: "relative", overflow: "hidden" }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(0,255,180,0.25)"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.4)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
-            {/* Top row */}
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "12px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ fontSize: "22px" }}>{tool.icon}</span>
-                <div>
-                  <div style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1px", textTransform: "uppercase" }}>{tool.category}</div>
-                  <div className="display" style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{tool.name}</div>
-                </div>
-              </div>
-              <span style={{ background: `${tool.badgeColor}20`, border: `1px solid ${tool.badgeColor}40`, borderRadius: "6px", padding: "2px 8px", fontSize: "10px", fontWeight: 700, color: tool.badgeColor, flexShrink: 0, marginLeft: "8px" }}>{tool.badge}</span>
-            </div>
-            {/* Tagline */}
-            <p style={{ fontSize: "13px", color: "var(--text-dim)", lineHeight: 1.5, marginBottom: "8px" }}>{tool.tagline}</p>
-            {/* Why */}
-            <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.5, marginBottom: "14px", flex: 1 }}>{tool.why}</p>
-            {/* CTA */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--border)", paddingTop: "12px", marginTop: "auto" }}>
-              <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--green)" }}>Try it free →</span>
-              <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{tool.commission}</span>
-            </div>
-          </a>
-        ))}
-      </div>
-      <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "14px", textAlign: "center" }}>
-        * Affiliate links — we earn a small commission at no cost to you. We only list tools we genuinely recommend.
-      </p>
-    </div>
   );
 }
 
@@ -372,7 +259,7 @@ export default function App() {
     <div className="modal-overlay" onClick={() => setShowContact(false)} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
       <div className="modal-box" onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "24px", maxWidth: "480px", width: "100%", padding: "40px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)" }}>
         <h2 className="display" style={{ fontSize: "32px", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "8px" }}>Get in touch</h2>
-        <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "32px" }}>Have questions about your audit? Drop us a message.</p>
+        <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "32px" }}>Have questions? Send a message or email us directly at <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none", fontWeight: 600 }}>admin@kloudaudit.eu</a></p>
         
         {formStatus === "success" ? (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
@@ -563,9 +450,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* ── AFFILIATE TOOLS STRIP — homepage ── */}
-        <AffiliateTools provider="Multi-cloud" compact={true} />
-
         {/* ── BOTTOM CTA ── */}
         <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.06) 0%, rgba(99,102,241,0.06) 100%)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "24px", padding: "60px 40px", textAlign: "center", marginBottom: "60px" }}>
           <h2 className="display" style={{ fontSize: "clamp(26px,3vw,40px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "14px" }}>Ready to find your savings?</h2>
@@ -575,6 +459,98 @@ export default function App() {
             Start Free Audit →
           </button>
         </div>
+
+        {/* ── TRUST FOOTER ── */}
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: "48px", marginBottom: "60px" }}>
+          {/* Section label */}
+          <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "3px", textTransform: "uppercase", marginBottom: "24px", textAlign: "center" }}>Meet Your Engineer</p>
+
+          {/* Consultant card */}
+          <div style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.18)", borderRadius: "20px", overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 1fr", boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}>
+
+            {/* LEFT — identity */}
+            <div style={{ background: "#0a0a14", padding: "36px 40px", position: "relative", overflow: "hidden" }}>
+              {/* bg glow */}
+              <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "160px", height: "160px", background: "radial-gradient(circle, rgba(0,255,180,0.08) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
+              {/* Avatar */}
+              <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: 800, color: "#000", marginBottom: "20px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", fontFamily: "var(--display)" }}>SA</div>
+              {/* Name */}
+              <h3 className="display" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "14px" }}>Samuel Ayodele Adomeh</h3>
+              {/* Certs */}
+              {["Certified Azure Architect Expert", "Certified Azure DevOps Expert", "Kubernetes · Terraform · Docker"].map(c => (
+                <div key={c} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                  <span style={{ color: "var(--green)", fontSize: "13px" }}>✓</span>
+                  <span style={{ fontSize: "13px", color: "var(--green)", fontWeight: 500 }}>{c}</span>
+                </div>
+              ))}
+              {/* Location */}
+              <div style={{ marginTop: "16px", display: "flex", alignItems: "center", gap: "7px" }}>
+                <span style={{ fontSize: "13px" }}>📍</span>
+                <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>Wrocław, Poland · Remote Worldwide</span>
+              </div>
+              {/* Credential badges */}
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "20px" }}>
+                {["Azure Architect", "DevOps Expert", "28 GitHub repos"].map(b => (
+                  <span key={b} style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "6px", padding: "3px 10px" }}>{b}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* RIGHT — links + CTA */}
+            <div style={{ padding: "36px 40px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {[
+                  { icon: "🌐", label: "kloudaudit.eu", href: "https://kloudaudit.eu", color: "var(--green)" },
+                  { icon: "✉️", label: "admin@kloudaudit.eu", href: "mailto:admin@kloudaudit.eu", color: "#00d4ff" },
+                  { icon: "💼", label: "linkedin.com/in/adomeh", href: "https://www.linkedin.com/in/adomeh", color: "#0077b5" },
+                  { icon: "💻", label: "github.com/leumasj", href: "https://github.com/leumasj", color: "var(--text-dim)" },
+                ].map(link => (
+                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer"
+                    style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none", padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: "10px", transition: "all 0.2s" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = link.color; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}>
+                    <span style={{ fontSize: "16px" }}>{link.icon}</span>
+                    <span style={{ fontSize: "13px", color: link.color, fontWeight: 500 }}>{link.label}</span>
+                  </a>
+                ))}
+              </div>
+
+              {/* CTA box */}
+              <div style={{ marginTop: "24px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "12px", padding: "20px" }}>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "6px" }}>Need hands-on implementation?</p>
+                <p className="display" style={{ fontSize: "18px", fontWeight: 800, color: "var(--green)", letterSpacing: "-0.3px", marginBottom: "6px" }}>Sessions from 999 PLN</p>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "14px" }}>Remote · Delivered within 48hrs · Full docs included</p>
+                <button className="glow-btn" onClick={() => setShowBooking(true)}
+                  style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "9px", padding: "11px 22px", fontSize: "13px", width: "100%", boxShadow: "0 0 16px rgba(0,255,180,0.25)" }}>
+                  Book a Session →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom micro footer */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ width: "24px", height: "24px", background: "var(--green)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(0,255,180,0.3)", fontSize: "12px" }}>⚡</div>
+              <span className="display" style={{ fontWeight: 800, fontSize: "14px", color: "#fff" }}>KloudAudit</span>
+              <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>© {new Date().getFullYear()}</span>
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              {[
+                { label: "LinkedIn", href: "https://www.linkedin.com/in/adomeh", hoverColor: "#0077b5" },
+                { label: "GitHub", href: "https://github.com/leumasj", hoverColor: "#fff" },
+              ].map(s => (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--border)", borderRadius: "8px", background: "rgba(255,255,255,0.03)", transition: "all 0.2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.color = s.hoverColor; e.currentTarget.style.borderColor = s.hoverColor; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border)"; }}>
+                  {s.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -884,9 +860,6 @@ export default function App() {
               </div>
             ))}
           </div>
-
-          {/* ── AFFILIATE TOOLS — report screen, provider-aware ── */}
-          <AffiliateTools provider={provider || "Multi-cloud"} compact={false} />
 
           <div className="fade-up stagger-4" style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.07) 0%, rgba(99,102,241,0.07) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "20px", padding: "40px", textAlign: "center" }}>
             <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "12px" }}>Need hands-on help?</p>
