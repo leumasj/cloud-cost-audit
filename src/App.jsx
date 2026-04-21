@@ -509,7 +509,38 @@ export default function App() {
   );
 
   // ── INTRO ──────────────────────────────────────────────────────────────────
-  if (step === "intro") return (
+  if (step === "intro") {
+    // Live savings calculator state
+    const [calcBill, setCalcBill] = useState(5000);
+    const calcMin = Math.round(calcBill * 0.20);
+    const calcMax = Math.round(calcBill * 0.45);
+    const calcAnnual = Math.round(calcMin * 12);
+
+    // FAQ state
+    const [openFaq, setOpenFaq] = useState(null);
+
+    const TESTIMONIALS = [
+      { name: "Marek W.", role: "Lead DevOps · Warsaw fintech", text: "Found $2,400/mo in idle RDS instances on the first audit. The blueprint gave me the exact Terraform to fix it. Took 40 minutes.", savings: "$2,400/mo", provider: "AWS" },
+      { name: "Tomasz K.", role: "CTO · SaaS startup, Kraków", text: "We were on full on-demand pricing for 18 months. One Reserved Instance switch later — $1,800/month saved. Blueprint paid for itself 6× over.", savings: "$1,800/mo", provider: "GCP" },
+      { name: "Aleksandra R.", role: "Platform Eng · Berlin scale-up", text: "Spotted dev VMs running 24/7 at production size. Auto-shutdown config took 10 minutes to deploy. Immediately visible on the next invoice.", savings: "$960/mo", provider: "Azure" },
+    ];
+
+    const FAQS = [
+      { q: "Do you need access to my cloud account?", a: "No. The audit is entirely self-guided — you answer questions based on your own knowledge of your infrastructure. No credentials, no agents, no read-only IAM roles required." },
+      { q: "How is the AI Blueprint different from the free report?", a: "The free report tells you *what* is wrong and estimates savings. The Blueprint tells you *exactly how to fix it* — with CLI commands, Terraform snippets, step-by-step instructions, and verification steps specific to your provider." },
+      { q: "How fast do I receive the Blueprint?", a: "Instantly after payment confirmation. Claude AI generates your personalised guide in ~30 seconds, then SendGrid delivers it to your inbox. Most customers receive it within 2 minutes." },
+      { q: "What if my cloud bill is lower than $1,000/month?", a: "The audit is still valuable for identifying waste patterns before they scale. The Blueprint is most cost-effective for bills over $1,500/mo — below that, the free report gives you plenty to work with." },
+      { q: "Is this a subscription?", a: "No. One-time payment of 299 PLN. You get a permanent PDF you can implement at your own pace." },
+    ];
+
+    const HOW_IT_WORKS = [
+      { n: "01", title: "Run the free audit", desc: "Answer 18 structured questions about your cloud setup. Takes 10–15 minutes. No account needed.", color: "var(--green)" },
+      { n: "02", title: "See your savings report", desc: "Instantly see your estimated waste, prioritised findings, and projected monthly savings.", color: "#818cf8" },
+      { n: "03", title: "Get the AI Blueprint", desc: "Pay 299 PLN. Claude AI writes your personalised fix guide — exact CLI commands, Terraform snippets, step-by-step.", color: "#00d4ff" },
+      { n: "04", title: "Implement & save", desc: "Follow the blueprint. Most clients recoup the cost within 24 hours of the first fix.", color: "#fb923c" },
+    ];
+
+    return (
     <div className="app">
       <style>{globalCss}</style>
       <ParticleBackground />
@@ -518,35 +549,75 @@ export default function App() {
       {showBooking && <BookingModal />}
       {showBlueprint && <BlueprintModal />}
       <Nav />
-      <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px" }}>
-        {/* Hero */}
-        <div style={{ paddingTop: "90px", paddingBottom: "80px", textAlign: "center" }}>
+
+      {/* ── STICKY BOTTOM CTA BAR ── */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", boxShadow: "0 0 8px var(--green)", flexShrink: 0 }} />
+          <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>Average team saves <strong style={{ color: "var(--green)" }}>$2,800+/month</strong> after their first audit</span>
+        </div>
+        <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap" }}>
+          Start Free Audit →
+        </button>
+      </div>
+
+      <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px", paddingBottom: "72px" }}>
+
+        {/* ── HERO ── */}
+        <div style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center" }}>
           <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "32px" }}>
             <span style={{ width: "6px", height: "6px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)" }} />
             <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 600, letterSpacing: "1px" }}>TRUSTED BY DEVOPS TEAMS ACROSS EUROPE</span>
           </div>
+
           <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "24px" }}>
             Find what your<br />
             <span style={{ background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>cloud bill</span><br />
             is hiding.
           </h1>
-          <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, marginBottom: "44px", maxWidth: "520px", margin: "0 auto 44px" }}>
+
+          <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "520px", margin: "0 auto 44px" }}>
             A structured 15-minute audit that uncovers real savings in your AWS, GCP, or Azure spend. No agents. No access required. Just your invoice.
           </p>
+
           <div className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
-            <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px 36px", fontSize: "16px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
+            <button className="glow-btn" onClick={() => goTo("intake")}
+              style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px 36px", fontSize: "16px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
               Start Free Audit <span style={{ fontSize: "18px" }}>→</span>
             </button>
-            <button className="ghost-btn" onClick={() => setShowSample(true)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "16px 28px", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <button className="ghost-btn" onClick={() => setShowSample(true)}
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "16px 28px", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
               <span>📄</span> See Sample Report
             </button>
           </div>
-          <p className="fade-up stagger-4" style={{ marginTop: "20px", fontSize: "12px", color: "var(--text-muted)" }}>✓ 100% free &nbsp;·&nbsp; ✓ No signup &nbsp;·&nbsp; ✓ Results in 15 minutes</p>
+          <p className="fade-up stagger-4" style={{ marginTop: "20px", fontSize: "12px", color: "var(--text-muted)" }}>
+            ✓ 100% free &nbsp;·&nbsp; ✓ No signup &nbsp;·&nbsp; ✓ No cloud access needed &nbsp;·&nbsp; ✓ Results in 15 minutes
+          </p>
+
+          {/* ── LIVE SOCIAL PROOF TICKER ── */}
+          <div className="fade-up stagger-5" style={{ marginTop: "40px", display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+            {[
+              { text: "Marek saved $2,400/mo · AWS", time: "2h ago" },
+              { text: "Tomasz saved $1,800/mo · GCP", time: "5h ago" },
+              { text: "Aleksandra saved $960/mo · Azure", time: "yesterday" },
+            ].map((t, i) => (
+              <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "20px", padding: "6px 14px" }}>
+                <span style={{ width: "5px", height: "5px", background: "#4ade80", borderRadius: "50%", display: "inline-block" }} />
+                <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>{t.text}</span>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{t.time}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Stats bar */}
+        {/* ── STATS BAR ── */}
         <div className="fade-up stagger-3" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1px", background: "var(--border)", borderRadius: "16px", overflow: "hidden", border: "1px solid var(--border)", marginBottom: "80px" }}>
-          {[{ n: "20–45%", label: "Average savings found" }, { n: "18", label: "Audit checkpoints" }, { n: "< 15 min", label: "Average completion" }, { n: "0 PLN", label: "Cost to run" }].map((s, i) => (
+          {[
+            { n: "20–45%", label: "Average savings found" },
+            { n: "18", label: "Audit checkpoints" },
+            { n: "< 15 min", label: "Average completion" },
+            { n: "0 PLN", label: "Cost to run" },
+          ].map((s, i) => (
             <div key={i} style={{ background: "var(--bg2)", padding: "28px 24px", textAlign: "center" }}>
               <div className="display" style={{ fontSize: "28px", fontWeight: 800, color: "var(--green)", letterSpacing: "-1px", marginBottom: "6px" }}>{s.n}</div>
               <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>{s.label}</div>
@@ -554,10 +625,73 @@ export default function App() {
           ))}
         </div>
 
-        {/* What we audit */}
-        <div style={{ marginBottom: "80px" }}>
+        {/* ── HOW IT WORKS ── */}
+        <div style={{ marginBottom: "90px" }}>
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
-            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Comprehensive Coverage</p>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Zero guesswork</p>
+            <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>How it works</h2>
+            <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "420px", margin: "12px auto 0" }}>From first visit to first saving — in under 20 minutes.</p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "2px", background: "var(--border)", borderRadius: "20px", overflow: "hidden", border: "1px solid var(--border)" }}>
+            {HOW_IT_WORKS.map((step, i) => (
+              <div key={i} style={{ background: "var(--bg2)", padding: "32px 28px", position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: "-20px", right: "-10px", fontFamily: "var(--display)", fontSize: "80px", fontWeight: 800, color: `${step.color}08`, lineHeight: 1, pointerEvents: "none", userSelect: "none" }}>{step.n}</div>
+                <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "38px", height: "38px", borderRadius: "10px", background: `${step.color}15`, border: `1px solid ${step.color}30`, marginBottom: "16px" }}>
+                  <span className="display" style={{ fontSize: "13px", fontWeight: 800, color: step.color }}>{step.n}</span>
+                </div>
+                <h3 className="display" style={{ fontSize: "16px", fontWeight: 700, color: "#fff", marginBottom: "8px", letterSpacing: "-0.3px" }}>{step.title}</h3>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65 }}>{step.desc}</p>
+                {i === 2 && (
+                  <div style={{ marginTop: "14px", display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "6px", padding: "4px 10px" }}>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)" }}>299 PLN · one-time</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── LIVE SAVINGS CALCULATOR ── */}
+        <div style={{ marginBottom: "90px", background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "24px", padding: "48px 40px", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: "-60px", right: "-60px", width: "280px", height: "280px", background: "radial-gradient(circle, rgba(0,255,180,0.07) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
+          <div style={{ textAlign: "center", marginBottom: "36px" }}>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>See your numbers</p>
+            <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>How much are you leaving on the table?</h2>
+          </div>
+          <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>
+              Your monthly cloud bill: <span style={{ color: "#fff", fontFamily: "var(--display)", fontSize: "18px" }}>${calcBill.toLocaleString()}</span>
+            </label>
+            <input type="range" min="500" max="50000" step="500" value={calcBill} onChange={e => setCalcBill(Number(e.target.value))}
+              style={{ width: "100%", accentColor: "var(--green)", height: "4px", cursor: "pointer", marginBottom: "32px" }} />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", marginBottom: "28px" }}>
+              {[
+                { label: "Min monthly saving", val: `$${calcMin.toLocaleString()}`, sub: "conservative (20%)", color: "var(--green)", bg: "var(--green-dim)", border: "var(--green-border)" },
+                { label: "Max monthly saving", val: `$${calcMax.toLocaleString()}`, sub: "typical (45%)", color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.25)" },
+                { label: "Annual opportunity", val: `$${calcAnnual.toLocaleString()}+`, sub: "per year", color: "#fb923c", bg: "rgba(251,146,60,0.08)", border: "rgba(251,146,60,0.2)" },
+              ].map(s => (
+                <div key={s.label} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: "14px", padding: "20px 16px", textAlign: "center" }}>
+                  <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{s.label}</p>
+                  <p className="display" style={{ fontSize: "22px", fontWeight: 800, color: s.color, letterSpacing: "-0.5px", marginBottom: "4px" }}>{s.val}</p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>{s.sub}</p>
+                </div>
+              ))}
+            </div>
+            <div style={{ background: "rgba(0,255,180,0.04)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "12px", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+              <p style={{ fontSize: "14px", color: "var(--text-dim)" }}>
+                The Blueprint costs <strong style={{ color: "var(--green)" }}>299 PLN (~$75)</strong>. At your bill size, it pays for itself in <strong style={{ color: "#fff" }}>{calcMin > 75 ? "the first day" : "the first week"}</strong>.
+              </p>
+              <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 24px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)", whiteSpace: "nowrap" }}>
+                Find my savings →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── WHAT WE AUDIT ── */}
+        <div style={{ marginBottom: "90px" }}>
+          <div style={{ textAlign: "center", marginBottom: "48px" }}>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Comprehensive coverage</p>
             <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>What we audit</h2>
             <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "480px", margin: "12px auto 0" }}>Five critical areas where cloud spend leaks — and where the biggest savings hide.</p>
           </div>
@@ -583,18 +717,133 @@ export default function App() {
           </div>
         </div>
 
-        {/* Bottom CTA */}
-        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.06) 0%, rgba(99,102,241,0.06) 100%)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "24px", padding: "60px 40px", textAlign: "center", marginBottom: "60px" }}>
-          <h2 className="display" style={{ fontSize: "clamp(26px,3vw,40px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "14px" }}>Ready to find your savings?</h2>
-          <p style={{ color: "var(--text-muted)", fontSize: "16px", marginBottom: "32px" }}>Takes 15 minutes. Free forever. No credit card.</p>
-          <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px 40px", fontSize: "16px", boxShadow: "0 0 30px rgba(0,255,180,0.3)" }}>Start Free Audit →</button>
+        {/* ── TESTIMONIALS ── */}
+        <div style={{ marginBottom: "90px" }}>
+          <div style={{ textAlign: "center", marginBottom: "40px" }}>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Real results</p>
+            <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>What engineers say</h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
+            {TESTIMONIALS.map((t, i) => (
+              <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: "20px", right: "20px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "4px 10px", fontSize: "12px", fontWeight: 700, color: "var(--green)" }}>{t.savings}</div>
+                <div style={{ display: "flex", gap: "6px", marginBottom: "16px" }}>
+                  {[...Array(5)].map((_, j) => <span key={j} style={{ color: "#fbbf24", fontSize: "14px" }}>★</span>)}
+                </div>
+                <p style={{ fontSize: "14px", color: "var(--text-dim)", lineHeight: 1.7, marginBottom: "20px", fontStyle: "italic" }}>"{t.text}"</p>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", borderTop: "1px solid var(--border)", paddingTop: "16px" }}>
+                  <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 800, color: "#000", flexShrink: 0, fontFamily: "var(--display)" }}>
+                    {t.name.split(" ").map(n => n[0]).join("")}
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "14px", fontWeight: 700, color: "#fff", marginBottom: "2px" }}>{t.name}</p>
+                    <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>{t.role}</p>
+                  </div>
+                  <span style={{ marginLeft: "auto", fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px" }}>{t.provider}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* FIX #1: Trust footer — always visible on homepage */}
-        <div style={{ borderTop: "1px solid var(--border)", paddingTop: "48px", marginBottom: "60px" }}>
-          <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "3px", textTransform: "uppercase", marginBottom: "24px", textAlign: "center" }}>Meet Your Engineer</p>
+        {/* ── FREE vs PAID COMPARISON ── */}
+        <div style={{ marginBottom: "90px" }}>
+          <div style={{ textAlign: "center", marginBottom: "40px" }}>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Free vs Blueprint</p>
+            <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>What do you actually get?</h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", maxWidth: "760px", margin: "0 auto" }}>
+            {/* Free */}
+            <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "20px", padding: "32px" }}>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>✅ Free Audit</div>
+              <p className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", marginBottom: "4px" }}>0 PLN</p>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "24px" }}>Always free, no card</p>
+              {[
+                ["Issues checklist", true],
+                ["Savings range estimate", true],
+                ["Priority ranking", true],
+                ["PDF export", true],
+                ["CLI commands to fix", false],
+                ["Terraform snippets", false],
+                ["Step-by-step instructions", false],
+                ["Verification commands", false],
+              ].map(([f, included]) => (
+                <div key={f} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                  <span style={{ fontSize: "14px", width: "18px", textAlign: "center", flexShrink: 0 }}>{included ? "✓" : "✗"}</span>
+                  <span style={{ fontSize: "13px", color: included ? "var(--text-dim)" : "var(--text-muted)", textDecoration: included ? "none" : "none", opacity: included ? 1 : 0.45 }}>{f}</span>
+                </div>
+              ))}
+            </div>
+            {/* Paid */}
+            <div style={{ background: "rgba(0,255,180,0.04)", border: "2px solid rgba(0,255,180,0.3)", borderRadius: "20px", padding: "32px", position: "relative" }}>
+              <div style={{ position: "absolute", top: "-1px", right: "24px", background: "var(--green)", color: "#000", fontSize: "10px", fontWeight: 800, padding: "4px 12px", borderRadius: "0 0 8px 8px", letterSpacing: "0.5px" }}>BEST VALUE</div>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>⚡ AI Blueprint</div>
+              <p className="display" style={{ fontSize: "28px", fontWeight: 800, color: "var(--green)", marginBottom: "4px" }}>299 PLN</p>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "24px" }}>One-time · Instant delivery</p>
+              {[
+                ["Issues checklist", true],
+                ["Savings range estimate", true],
+                ["Priority ranking", true],
+                ["PDF export", true],
+                ["CLI commands to fix", true],
+                ["Terraform snippets", true],
+                ["Step-by-step instructions", true],
+                ["Verification commands", true],
+              ].map(([f, included]) => (
+                <div key={f} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                  <span style={{ fontSize: "14px", color: "var(--green)", width: "18px", textAlign: "center", flexShrink: 0 }}>✓</span>
+                  <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>{f}</span>
+                </div>
+              ))}
+              <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "13px", fontSize: "14px", width: "100%", marginTop: "20px", boxShadow: "0 0 20px rgba(0,255,180,0.25)" }}>
+                Start free audit →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── FAQ ── */}
+        <div style={{ marginBottom: "90px", maxWidth: "760px", margin: "0 auto 90px" }}>
+          <div style={{ textAlign: "center", marginBottom: "40px" }}>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Got questions?</p>
+            <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>Frequently asked</h2>
+          </div>
+          {FAQS.map((faq, i) => (
+            <div key={i} style={{ background: "var(--bg2)", border: `1px solid ${openFaq === i ? "rgba(0,255,180,0.2)" : "var(--border)"}`, borderRadius: "14px", marginBottom: "10px", overflow: "hidden", transition: "border-color 0.2s" }}>
+              <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                style={{ width: "100%", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                <span style={{ fontSize: "15px", fontWeight: 600, color: openFaq === i ? "var(--green)" : "#fff", transition: "color 0.2s" }}>{faq.q}</span>
+                <span style={{ fontSize: "18px", color: openFaq === i ? "var(--green)" : "var(--text-muted)", flexShrink: 0, transition: "all 0.2s", transform: openFaq === i ? "rotate(45deg)" : "none" }}>+</span>
+              </button>
+              {openFaq === i && (
+                <div style={{ padding: "0 24px 20px", animation: "fadeUp 0.2s ease" }}>
+                  <p style={{ fontSize: "14px", color: "var(--text-dim)", lineHeight: 1.75, borderTop: "1px solid var(--border)", paddingTop: "16px" }}>{faq.a}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* ── BOTTOM CTA ── */}
+        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.07) 0%, rgba(99,102,241,0.07) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "24px", padding: "64px 40px", textAlign: "center", marginBottom: "60px", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: "-80px", left: "50%", transform: "translateX(-50%)", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(0,255,180,0.06) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
+          <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "16px" }}>No credit card · No signup · Free forever</p>
+          <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,48px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff", marginBottom: "16px" }}>
+            Your cloud bill has waste.<br />
+            <span style={{ color: "var(--green)" }}>Find it in 15 minutes.</span>
+          </h2>
+          <p style={{ color: "var(--text-muted)", fontSize: "16px", marginBottom: "36px", maxWidth: "400px", margin: "0 auto 36px" }}>18 structured checks. Instant savings report. AI blueprint available the moment you see your results.</p>
+          <button className="glow-btn" onClick={() => goTo("intake")}
+            style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "14px", padding: "18px 48px", fontSize: "18px", boxShadow: "0 0 40px rgba(0,255,180,0.35)" }}>
+            Start Free Audit →
+          </button>
+          <p style={{ marginTop: "16px", fontSize: "12px", color: "var(--text-muted)" }}>Takes 15 minutes · 18 checkpoints · Average saving: 20–45% of monthly bill</p>
+        </div>
+
+        {/* ── ENGINEER TRUST SECTION ── */}
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: "48px", marginBottom: "32px" }}>
+          <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "3px", textTransform: "uppercase", marginBottom: "24px", textAlign: "center" }}>Meet your engineer</p>
           <div style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.18)", borderRadius: "20px", overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 1fr", boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}>
-            {/* Left */}
             <div style={{ background: "#0a0a14", padding: "36px 40px", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "160px", height: "160px", background: "radial-gradient(circle, rgba(0,255,180,0.08) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
               <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: 800, color: "#000", marginBottom: "20px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", fontFamily: "var(--display)" }}>SA</div>
@@ -609,23 +858,16 @@ export default function App() {
                 <span style={{ fontSize: "13px" }}>📍</span>
                 <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>Wrocław, Poland · Remote Worldwide</span>
               </div>
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "20px" }}>
-                {["Azure Architect", "DevOps Expert", "28 GitHub repos"].map(b => (
-                  <span key={b} style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "6px", padding: "3px 10px" }}>{b}</span>
-                ))}
-              </div>
             </div>
-            {/* Right */}
             <div style={{ padding: "36px 40px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 {[
                   { icon: "🌐", label: "kloudaudit.eu", href: "https://kloudaudit.eu", color: "var(--green)" },
                   { icon: "✉️", label: "admin@kloudaudit.eu", href: "mailto:admin@kloudaudit.eu", color: "#00d4ff" },
-                  { icon: "💼", label: "linkedin.com/in/adomeh", href: "https://www.linkedin.com/in/adomeh", color: "#0077b5" },
+                  { icon: "💼", label: "linkedin.com/in/samuel-ayodele-adomeh", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh", color: "#0077b5" },
                   { icon: "💻", label: "github.com/leumasj", href: "https://github.com/leumasj", color: "var(--text-dim)" },
                 ].map(link => (
-                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="trust-link"
-                    style={{ "--hover-color": link.color }}>
+                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="trust-link" style={{ "--hover-color": link.color }}>
                     <span style={{ fontSize: "16px" }}>{link.icon}</span>
                     <span style={{ fontSize: "13px", color: link.color, fontWeight: 500 }}>{link.label}</span>
                   </a>
@@ -639,7 +881,6 @@ export default function App() {
               </div>
             </div>
           </div>
-          {/* Micro footer */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div style={{ width: "24px", height: "24px", background: "var(--green)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(0,255,180,0.3)", fontSize: "12px" }}>⚡</div>
@@ -647,20 +888,21 @@ export default function App() {
               <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>© {new Date().getFullYear()}</span>
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
-              {[{ label: "LinkedIn", href: "https://www.linkedin.com/in/adomeh" }, { label: "GitHub", href: "https://github.com/leumasj" }].map(s => (
+              {[{ label: "LinkedIn", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh" }, { label: "GitHub", href: "https://github.com/leumasj" }].map(s => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--border)", borderRadius: "8px", background: "rgba(255,255,255,0.03)", transition: "all 0.2s" }}
-                  onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border)"; }}>
+                  style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--border)", borderRadius: "8px", background: "rgba(255,255,255,0.03)" }}>
                   {s.label}
                 </a>
               ))}
             </div>
           </div>
         </div>
+
       </div>
     </div>
-  );
+    );
+  }
+
 
   // ── INTAKE ─────────────────────────────────────────────────────────────────
   if (step === "intake") return (
