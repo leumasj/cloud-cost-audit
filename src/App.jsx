@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import SEOPage, { SEO_PAGES } from "./SEOPages.jsx";
 
 const AUDIT_SECTIONS = [
   {
@@ -126,32 +125,18 @@ const globalCss = `
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #080810; color: #e2e8f0; }
   :root {
-    --bg: #080810;
-    --bg2: #0d0d1a;
-    --bg3: #12121f;
-    --border: rgba(255,255,255,0.08);
-    --border-hover: rgba(0,255,180,0.3);
-    --green: #00ffb4;
-    --green-dim: rgba(0,255,180,0.12);
-    --green-border: rgba(0,255,180,0.25);
-    --text: #e2e8f0;
-    --text-muted: #64748b;
-    --text-dim: #94a3b8;
-    --display: 'Bricolage Grotesque', sans-serif;
-    --body: 'DM Sans', sans-serif;
+    --bg: #080810; --bg2: #0d0d1a; --bg3: #12121f;
+    --border: rgba(255,255,255,0.08); --border-hover: rgba(0,255,180,0.3);
+    --green: #00ffb4; --green-dim: rgba(0,255,180,0.12); --green-border: rgba(0,255,180,0.25);
+    --text: #e2e8f0; --text-muted: #64748b; --text-dim: #94a3b8;
+    --display: 'Bricolage Grotesque', sans-serif; --body: 'DM Sans', sans-serif;
   }
   .app { font-family: var(--body); background: var(--bg); min-height: 100vh; color: var(--text); }
   .display { font-family: var(--display); }
   .fade-up { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; }
   @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-  @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
-  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  .stagger-1 { animation-delay: 0.05s; }
-  .stagger-2 { animation-delay: 0.12s; }
-  .stagger-3 { animation-delay: 0.2s; }
-  .stagger-4 { animation-delay: 0.28s; }
-  .stagger-5 { animation-delay: 0.36s; }
+  .stagger-1 { animation-delay: 0.05s; } .stagger-2 { animation-delay: 0.12s; }
+  .stagger-3 { animation-delay: 0.2s; } .stagger-4 { animation-delay: 0.28s; }
   .glow-btn { transition: all 0.2s; cursor: pointer; font-family: var(--display); font-weight: 700; }
   .glow-btn:hover { box-shadow: 0 0 30px rgba(0,255,180,0.35), 0 0 60px rgba(0,255,180,0.15) !important; transform: translateY(-2px); }
   .glow-btn:active { transform: translateY(0); }
@@ -163,7 +148,6 @@ const globalCss = `
   .audit-cat-card:hover { transform: translateY(-4px); border-color: var(--green-border) !important; box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,255,180,0.1) !important; }
   .section-tab { transition: all 0.15s; cursor: pointer; font-family: var(--body); }
   .section-tab:hover { color: var(--green) !important; }
-  .stat-num { font-family: var(--display); }
   input, select, textarea { font-family: var(--body); }
   input:focus, textarea:focus { outline: none; border-color: var(--green) !important; box-shadow: 0 0 0 3px rgba(0,255,180,0.1) !important; }
   .provider-chip { transition: all 0.15s; cursor: pointer; font-family: var(--body); }
@@ -171,8 +155,11 @@ const globalCss = `
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-  .modal-overlay { animation: fadeIn 0.2s ease; }
-  .modal-box { animation: scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .trust-link { display:flex; align-items:center; gap:10px; text-decoration:none; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; transition:all 0.2s; }
+  .trust-link:hover { background:rgba(255,255,255,0.06) !important; transform:translateX(3px); }
 `;
 
 export default function App() {
@@ -184,14 +171,14 @@ export default function App() {
   const [activeSection, setActiveSection] = useState(0);
   const [showSample, setShowSample] = useState(false);
   const [showContact, setShowContact] = useState(false);
-  const [pageKey, setPageKey] = useState(0);
-  const [formStatus, setFormStatus] = useState("idle"); // idle | sending | success | error
-
-  // FIX: These were missing — caused ReferenceError on render
+  const [showBooking, setShowBooking] = useState(false);
+  const [showBlueprint, setShowBlueprint] = useState(false);
+  // FIX #3: blueprintEmail lifted to app level — no re-renders causing flicker
   const [blueprintEmail, setBlueprintEmail] = useState("");
-  const [blueprintStatus, setBlueprintStatus] = useState("idle"); // idle | loading | error
-  const [showBlueprintModal, setShowBlueprintModal] = useState(false);
-  const [seoPage, setSeoPage] = useState(null);
+  const [blueprintStatus, setBlueprintStatus] = useState("idle");
+  const [formStatus, setFormStatus] = useState("idle");
+  const [bookingStatus, setBookingStatus] = useState("idle");
+  const [pageKey, setPageKey] = useState(0);
 
   const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
   const goTo = (s) => { setStep(s); setPageKey(k => k + 1); window.scrollTo(0, 0); };
@@ -209,40 +196,50 @@ export default function App() {
   const sampleSavMax = Math.round(sampleFlagged.reduce((s, c) => s + SAMPLE_REPORT.monthlyBill * c.savingsRange[1] / 100, 0));
   const samplePct = Math.round(((sampleSavMin + sampleSavMax) / 2 / SAMPLE_REPORT.monthlyBill) * 100);
 
+  // FIX #2: Payment success detection on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "success") {
+      setStep("payment_success");
+      window.history.replaceState({}, "", "/");
+    }
+  }, []);
+
+  // ── Formspree contact ──────────────────────────────────────────────────────
   const handleContactSubmit = async (e) => {
     e.preventDefault();
     setFormStatus("sending");
     const formData = new FormData(e.target);
     try {
-      const response = await fetch("https://formspree.io/f/mlgarana", {
-        method: "POST",
-        body: formData,
-        headers: { 'Accept': 'application/json' }
-      });
-      if (response.ok) {
-        setFormStatus("success");
-        e.target.reset();
-        setTimeout(() => { setShowContact(false); setFormStatus("idle"); }, 3000);
-      } else {
-        setFormStatus("error");
-      }
-    } catch {
-      setFormStatus("error");
-    }
+      const res = await fetch("https://formspree.io/f/mlgarana", { method: "POST", body: formData, headers: { Accept: "application/json" } });
+      if (res.ok) { setFormStatus("success"); e.target.reset(); setTimeout(() => { setShowContact(false); setFormStatus("idle"); }, 3000); }
+      else setFormStatus("error");
+    } catch { setFormStatus("error"); }
   };
 
-  // ─── BUY BLUEPRINT — calls Vercel Function → Stripe ────────────────────────
-  const handleBuyBlueprint = async (emailOverride) => {
-    const userEmail = emailOverride || blueprintEmail;
-    if (!userEmail) { setShowBlueprintModal(true); return; }
+  // ── Formspree booking ──────────────────────────────────────────────────────
+  const handleBookingSubmit = async (e) => {
+    e.preventDefault();
+    setBookingStatus("sending");
+    const formData = new FormData(e.target);
+    try {
+      const res = await fetch("https://formspree.io/f/mlgarana", { method: "POST", body: formData, headers: { Accept: "application/json" } });
+      if (res.ok) { setBookingStatus("success"); e.target.reset(); setTimeout(() => { setShowBooking(false); setBookingStatus("idle"); }, 4000); }
+      else setBookingStatus("error");
+    } catch { setBookingStatus("error"); }
+  };
+
+  // FIX #2: Buy Blueprint → Vercel Function → Stripe Checkout
+  const handleBuyBlueprint = async () => {
+    if (!blueprintEmail) return;
     setBlueprintStatus("loading");
     try {
-      const response = await fetch("/api/create-checkout", {
+      const res = await fetch("/api/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: userEmail,
-          provider,
+          email: blueprintEmail,
+          provider: provider || "AWS",
           monthlyBill: bill,
           companyName: companyName || "Your Company",
           savingsMin: savMin,
@@ -250,61 +247,39 @@ export default function App() {
           flaggedIssues: flagged.map(c => ({ id: c.id, label: c.label })),
         }),
       });
-      const data = await response.json();
+      const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
       } else {
-        throw new Error(data.error || "Failed to create checkout");
+        throw new Error(data.error || "Checkout failed");
       }
     } catch (err) {
-      console.error("Checkout error:", err);
+      console.error(err);
       setBlueprintStatus("error");
-      setTimeout(() => setBlueprintStatus("idle"), 3000);
+      setTimeout(() => setBlueprintStatus("idle"), 4000);
     }
   };
 
-  // Handle Stripe return URL params
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("payment") === "success") {
-      setStep("payment_success");
-      window.history.replaceState({}, "", "/");
-    }
-    const handleSEONav = (e) => setSeoPage(e.detail);
-    window.addEventListener("navigateSEO", handleSEONav);
-    return () => window.removeEventListener("navigateSEO", handleSEONav);
-  }, []);
-
-  // ─── NAV ─────────────────────────────────────────────────────────────────────
+  // ── NAV ────────────────────────────────────────────────────────────────────
   const Nav = ({ showBack, onBack }) => (
     <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(8,8,16,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid var(--border)", padding: "0 24px", height: "58px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        {showBack && (
-          <button className="ghost-btn" onClick={onBack} style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-dim)", fontSize: "13px", padding: "6px 12px", marginRight: "4px" }}>
-            ← Back
-          </button>
-        )}
-        <div onClick={() => goTo("intro")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ width: "30px", height: "30px", background: "var(--green)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 16px rgba(0,255,180,0.4)" }}>
-            <span style={{ fontSize: "16px" }}>⚡</span>
-          </div>
+        {showBack && <button className="ghost-btn" onClick={onBack} style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-dim)", fontSize: "13px", padding: "6px 12px", marginRight: "4px" }}>← Back</button>}
+        <div onClick={() => goTo("intro")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ width: "30px", height: "30px", background: "var(--green)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 16px rgba(0,255,180,0.4)" }}>⚡</div>
           <span className="display" style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "-0.5px", color: "#fff" }}>KloudAudit</span>
         </div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-        <button onClick={() => setShowContact(true)} className="ghost-btn" style={{ background: "transparent", border: "none", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600 }}>
-          Contact Us
-        </button>
-      </div>
+      <button onClick={() => setShowContact(true)} className="ghost-btn" style={{ background: "transparent", border: "none", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600 }}>Contact Us</button>
     </nav>
   );
 
-  // ─── CONTACT MODAL ───────────────────────────────────────────────────────────
+  // ── CONTACT MODAL ──────────────────────────────────────────────────────────
   const ContactModal = () => (
-    <div className="modal-overlay" onClick={() => setShowContact(false)} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-      <div className="modal-box" onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "24px", maxWidth: "480px", width: "100%", padding: "40px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)" }}>
+    <div onClick={() => setShowContact(false)} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "24px", maxWidth: "480px", width: "100%", padding: "40px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
         <h2 className="display" style={{ fontSize: "32px", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "8px" }}>Get in touch</h2>
-        <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "32px" }}>Have questions about your audit? Drop us a message.</p>
+        <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "32px" }}>Have questions? Email us at <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none", fontWeight: 600 }}>admin@kloudaudit.eu</a></p>
         {formStatus === "success" ? (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
             <div style={{ fontSize: "40px", marginBottom: "16px" }}>✅</div>
@@ -331,26 +306,92 @@ export default function App() {
     </div>
   );
 
-  // ─── BLUEPRINT EMAIL MODAL ───────────────────────────────────────────────────
-  const BlueprintEmailModal = () => (
-    <div onClick={() => setShowBlueprintModal(false)} style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
+  // ── BOOKING MODAL ──────────────────────────────────────────────────────────
+  const BookingModal = () => (
+    <div onClick={() => { setShowBooking(false); setBookingStatus("idle"); }} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", overflow: "hidden" }}>
+        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.1) 0%, rgba(99,102,241,0.1) 100%)", borderBottom: "1px solid rgba(0,255,180,0.12)", padding: "28px 32px 22px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "4px 12px", marginBottom: "10px" }}>
+                <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px var(--green)" }} />
+                <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>IMPLEMENTATION SESSION · 999 PLN</span>
+              </div>
+              <h2 className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "5px" }}>Book your session</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Senior DevOps engineer · Remote · Delivered within 48hrs</p>
+            </div>
+            <button onClick={() => { setShowBooking(false); setBookingStatus("idle"); }} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "20px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>×</button>
+          </div>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "14px" }}>
+            {["✓ Full audit review", "✓ Implementation roadmap", "✓ 1hr live session", "✓ 30-day follow-up"].map(item => (
+              <span key={item} style={{ fontSize: "11px", color: "var(--text-dim)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 9px" }}>{item}</span>
+            ))}
+          </div>
+        </div>
+        <div style={{ padding: "26px 32px 32px" }}>
+          {bookingStatus === "success" ? (
+            <div style={{ textAlign: "center", padding: "28px 0" }}>
+              <div style={{ fontSize: "48px", marginBottom: "14px" }}>🎉</div>
+              <p className="display" style={{ color: "var(--green)", fontWeight: 800, fontSize: "22px", letterSpacing: "-0.5px", marginBottom: "8px" }}>Booking Received!</p>
+              <p style={{ color: "var(--text-dim)", fontSize: "14px", lineHeight: 1.6 }}>We'll email you within 24hrs to confirm your session.<br />Check your inbox and spam folder.</p>
+            </div>
+          ) : (
+            <form onSubmit={handleBookingSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <input type="hidden" name="_subject" value="New Booking – KloudAudit Implementation Session 999 PLN" />
+              <input type="hidden" name="form_type" value="booking_999pln" />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>First Name</label>
+                  <input required type="text" name="first_name" placeholder="Jan" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Last Name</label>
+                  <input required type="text" name="last_name" placeholder="Kowalski" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                </div>
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email</label>
+                <input required type="email" name="email" placeholder="jan@company.com" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Company</label>
+                <input required type="text" name="company" placeholder="Acme Corp" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Cloud Provider & Monthly Bill</label>
+                <input type="text" name="cloud_details" placeholder="e.g. AWS · ~$4,500/month" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Biggest challenge <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>(optional)</span></label>
+                <textarea name="message" rows="3" placeholder="e.g. Our AWS bill jumped 40% last month..." style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", resize: "none", fontFamily: "var(--body)" }} />
+              </div>
+              <button type="submit" className="glow-btn" disabled={bookingStatus === "sending"}
+                style={{ background: bookingStatus === "sending" ? "rgba(0,255,180,0.5)" : "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "15px", fontSize: "15px", width: "100%", cursor: bookingStatus === "sending" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "4px" }}>
+                {bookingStatus === "sending" ? <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Sending...</> : "Book Session for 999 PLN →"}
+              </button>
+              {bookingStatus === "error" && <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>⚠ Something went wrong. Please try again.</p>}
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>We'll confirm by email within 24 hours. No payment required upfront.</p>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── BLUEPRINT MODAL — FIX #3: stable input, no flicker ───────────────────
+  const BlueprintModal = () => (
+    <div onClick={() => { setShowBlueprint(false); setBlueprintStatus("idle"); }} style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
       <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "460px", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>📄</div>
           <h2 className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>Get Your AI Blueprint</h2>
-          <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.6 }}>
-            Enter your email and you'll be taken to secure payment. Your personalised {provider} implementation guide lands in your inbox within 2 minutes of payment.
+          <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
+            Enter your email and you'll be redirected to secure payment. Your personalised {provider || "cloud"} implementation guide lands in your inbox within 2 minutes of payment.
           </p>
         </div>
         <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "10px", padding: "14px 18px", marginBottom: "20px" }}>
-          <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>What you get:</p>
-          {[
-            "Exact CLI commands for your " + (provider || "cloud") + " setup",
-            "Terraform snippets for each fix",
-            "Step-by-step implementation guide",
-            `${flagged.length} issues covered with savings estimates`,
-            "PDF delivered to your inbox instantly",
-          ].map(f => (
+          <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>What you get:</p>
+          {[`Exact ${provider || "cloud"} CLI commands`, "Terraform snippets per issue", "Step-by-step fix instructions", `${flagged.length} issues with savings estimates`, "PDF in your inbox in ~2 minutes"].map(f => (
             <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
               <span style={{ color: "var(--green)", fontSize: "13px" }}>✓</span>
               <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>{f}</span>
@@ -358,48 +399,44 @@ export default function App() {
           ))}
         </div>
         <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Your Email</label>
+        {/* FIX #3: uncontrolled input with defaultValue — prevents re-render flicker */}
         <input
           type="email"
           placeholder="you@company.com"
-          value={blueprintEmail}
+          defaultValue={blueprintEmail}
           onChange={e => setBlueprintEmail(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && blueprintEmail && handleBuyBlueprint(blueprintEmail)}
-          style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "15px", fontFamily: "inherit", marginBottom: "14px" }}
+          onKeyDown={e => e.key === "Enter" && blueprintEmail && handleBuyBlueprint()}
+          style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.06)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "15px", fontFamily: "var(--body)", marginBottom: "14px" }}
+          autoFocus
         />
-        <button
-          className="glow-btn"
-          onClick={() => blueprintEmail && handleBuyBlueprint(blueprintEmail)}
-          disabled={!blueprintEmail || blueprintStatus === "loading"}
-          style={{ background: blueprintEmail ? "var(--green)" : "rgba(255,255,255,0.06)", color: blueprintEmail ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: blueprintEmail ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
-        >
+        <button className="glow-btn" onClick={handleBuyBlueprint}
+          disabled={blueprintStatus === "loading"}
+          style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
           {blueprintStatus === "loading" ? (
             <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Redirecting to payment...</>
           ) : "Pay 299 PLN → Get Blueprint"}
         </button>
-        {blueprintStatus === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Something went wrong. Please try again.</p>}
-        <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "12px" }}>
-          🔒 Secure payment via Stripe · Instant delivery · No refund needed — it works.
-        </p>
+        {blueprintStatus === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Something went wrong. Please try again or email admin@kloudaudit.eu</p>}
+        <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "12px" }}>🔒 Secure payment via Stripe · Instant delivery · admin@kloudaudit.eu</p>
+        <button onClick={() => { setShowBlueprint(false); setBlueprintStatus("idle"); }} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
       </div>
     </div>
   );
 
-  // ─── SAMPLE REPORT MODAL ─────────────────────────────────────────────────────
+  // ── SAMPLE MODAL ───────────────────────────────────────────────────────────
   const SampleModal = () => {
     const getSev = c => { const p = (c.savingsRange[0] + c.savingsRange[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
     const sHigh = sampleFlagged.filter(c => getSev(c) === "high");
     const sMed = sampleFlagged.filter(c => getSev(c) === "med");
     const sLow = sampleFlagged.filter(c => getSev(c) === "low");
     return (
-      <div className="modal-overlay" onClick={() => setShowSample(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-        <div className="modal-box" onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "780px", width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,255,180,0.1)" }}>
+      <div onClick={() => setShowSample(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "780px", width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.7)" }}>
           <div style={{ padding: "28px 32px 20px", borderBottom: "1px solid var(--border)", position: "sticky", top: 0, background: "var(--bg2)", zIndex: 10, borderRadius: "20px 20px 0 0" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
-                  {["Sample Report", SAMPLE_REPORT.provider, "Apr 2026"].map(t => (
-                    <span key={t} style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-dim)", fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "20px", border: "1px solid var(--border)" }}>{t}</span>
-                  ))}
+                  {["Sample Report", SAMPLE_REPORT.provider, "Apr 2026"].map(t => <span key={t} style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-dim)", fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "20px", border: "1px solid var(--border)" }}>{t}</span>)}
                 </div>
                 <h2 className="display" style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>{SAMPLE_REPORT.companyName} · Cost Report</h2>
                 <p style={{ color: "var(--text-muted)", fontSize: "14px", marginTop: "4px" }}>Monthly bill: ${SAMPLE_REPORT.monthlyBill.toLocaleString()} · {sampleFlagged.length} issues found</p>
@@ -407,14 +444,9 @@ export default function App() {
               <button onClick={() => setShowSample(false)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "18px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
             </div>
           </div>
-
           <div style={{ padding: "24px 32px" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", marginBottom: "28px" }}>
-              {[
-                { label: "Monthly Savings", val: `$${sampleSavMin.toLocaleString()} – $${sampleSavMax.toLocaleString()}`, sub: "per month", color: "var(--green)", bg: "var(--green-dim)", border: "var(--green-border)" },
-                { label: "Annual Opportunity", val: `$${(sampleSavMin * 12).toLocaleString()}+`, sub: "per year", color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.25)" },
-                { label: "Waste Rate", val: `~${samplePct}%`, sub: "of total bill", color: "#fb923c", bg: "rgba(251,146,60,0.1)", border: "rgba(251,146,60,0.25)" },
-              ].map(s => (
+              {[{ label: "Monthly Savings", val: `$${sampleSavMin.toLocaleString()} – $${sampleSavMax.toLocaleString()}`, sub: "per month", color: "var(--green)", bg: "var(--green-dim)", border: "var(--green-border)" }, { label: "Annual Opportunity", val: `$${(sampleSavMin * 12).toLocaleString()}+`, sub: "per year", color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.25)" }, { label: "Waste Rate", val: `~${samplePct}%`, sub: "of total bill", color: "#fb923c", bg: "rgba(251,146,60,0.1)", border: "rgba(251,146,60,0.25)" }].map(s => (
                 <div key={s.label} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: "12px", padding: "18px" }}>
                   <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{s.label}</p>
                   <p className="display" style={{ fontSize: "20px", fontWeight: 800, color: s.color, letterSpacing: "-0.5px" }}>{s.val}</p>
@@ -422,19 +454,14 @@ export default function App() {
                 </div>
               ))}
             </div>
-
-            {[
-              { label: "🔴 High Impact", items: sHigh, color: "#f87171" },
-              { label: "🟡 Medium Impact", items: sMed, color: "#fbbf24" },
-              { label: "🟢 Quick Wins", items: sLow, color: "#4ade80" },
-            ].filter(g => g.items.length > 0).map(group => (
+            {[{ label: "🔴 High Impact", items: sHigh, color: "#f87171" }, { label: "🟡 Medium Impact", items: sMed, color: "#fbbf24" }, { label: "🟢 Quick Wins", items: sLow, color: "#4ade80" }].filter(g => g.items.length > 0).map(group => (
               <div key={group.label} style={{ marginBottom: "20px" }}>
-                <h4 className="display" style={{ fontSize: "13px", fontWeight: 700, color: group.color, marginBottom: "10px", letterSpacing: "0.3px" }}>{group.label}</h4>
+                <h4 className="display" style={{ fontSize: "13px", fontWeight: 700, color: group.color, marginBottom: "10px" }}>{group.label}</h4>
                 {group.items.map(check => {
                   const sMin = Math.round(SAMPLE_REPORT.monthlyBill * check.savingsRange[0] / 100);
                   const sMax = Math.round(SAMPLE_REPORT.monthlyBill * check.savingsRange[1] / 100);
                   return (
-                    <div key={check.id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderLeft: `3px solid ${group.color}`, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
+                    <div key={check.id} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid var(--border)`, borderLeft: `3px solid ${group.color}`, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
                       <div>
                         <p style={{ fontWeight: 600, fontSize: "14px", color: "#fff", marginBottom: "3px" }}>{check.label}</p>
                         <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>{check.detail}</p>
@@ -448,13 +475,9 @@ export default function App() {
                 })}
               </div>
             ))}
-
             <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.08) 0%, rgba(99,102,241,0.08) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "14px", padding: "24px", textAlign: "center", marginTop: "8px" }}>
               <p style={{ color: "var(--text-dim)", fontSize: "13px", marginBottom: "10px" }}>Ready to find savings like this in your own infrastructure?</p>
-              <button className="glow-btn" onClick={() => { setShowSample(false); goTo("intake"); }}
-                style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "13px 32px", fontSize: "15px", fontWeight: 700, boxShadow: "0 0 20px rgba(0,255,180,0.3)" }}>
-                Run Your Free Audit →
-              </button>
+              <button className="glow-btn" onClick={() => { setShowSample(false); goTo("intake"); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "13px 32px", fontSize: "15px", fontWeight: 700, boxShadow: "0 0 20px rgba(0,255,180,0.3)" }}>Run Your Free Audit →</button>
             </div>
           </div>
         </div>
@@ -462,7 +485,7 @@ export default function App() {
     );
   };
 
-  // ─── PAYMENT SUCCESS ──────────────────────────────────────────────────────────
+  // ── PAYMENT SUCCESS ────────────────────────────────────────────────────────
   if (step === "payment_success") return (
     <div className="app">
       <style>{globalCss}</style>
@@ -472,86 +495,58 @@ export default function App() {
         <div style={{ fontSize: "72px", marginBottom: "24px" }}>🎉</div>
         <h1 className="display" style={{ fontSize: "36px", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff", marginBottom: "12px" }}>Blueprint on its way!</h1>
         <p style={{ fontSize: "17px", color: "var(--text-muted)", lineHeight: 1.7, marginBottom: "32px" }}>
-          Payment confirmed. Your AI-generated implementation guide is being prepared right now and will land in your inbox within <strong style={{ color: "var(--green)" }}>2 minutes</strong>.
+          Payment confirmed. Your AI-generated guide is being prepared and will land in your inbox within <strong style={{ color: "var(--green)" }}>2 minutes</strong>.
         </p>
         <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "14px", padding: "24px", marginBottom: "32px" }}>
           <p style={{ fontSize: "14px", color: "var(--text-dim)", marginBottom: "4px" }}>Check your email for a message from</p>
           <p style={{ fontSize: "16px", fontWeight: 700, color: "var(--green)" }}>admin@kloudaudit.eu</p>
-          <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>Subject: "Your {provider} Implementation Blueprint is ready ⚡"</p>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>Subject: "Your Implementation Blueprint is ready ⚡"</p>
           <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>Check spam if you don't see it within 5 minutes.</p>
         </div>
-        <button className="glow-btn" onClick={() => { setStep("intro"); setChecked({}); }}
-          style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>
-          Run Another Audit →
-        </button>
+        <button className="glow-btn" onClick={() => { setStep("intro"); setChecked({}); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Run Another Audit →</button>
       </div>
     </div>
   );
 
-  // ─── SEO LANDING PAGE ─────────────────────────────────────────────────────────
-  if (seoPage) return (
-    <div className="app">
-      <style>{globalCss}</style>
-      <ParticleBackground />
-      {showBlueprintModal && <BlueprintEmailModal />}
-      <Nav showBack onBack={() => setSeoPage(null)} />
-      <SEOPage page={seoPage} onStartAudit={() => { setSeoPage(null); goTo("intake"); }} />
-    </div>
-  );
-
-  // ─── INTRO ────────────────────────────────────────────────────────────────────
+  // ── INTRO ──────────────────────────────────────────────────────────────────
   if (step === "intro") return (
     <div className="app">
       <style>{globalCss}</style>
       <ParticleBackground />
       {showSample && <SampleModal />}
       {showContact && <ContactModal />}
+      {showBooking && <BookingModal />}
+      {showBlueprint && <BlueprintModal />}
       <Nav />
-
       <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px" }}>
+        {/* Hero */}
         <div style={{ paddingTop: "90px", paddingBottom: "80px", textAlign: "center" }}>
           <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "32px" }}>
             <span style={{ width: "6px", height: "6px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)" }} />
             <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 600, letterSpacing: "1px" }}>TRUSTED BY DEVOPS TEAMS ACROSS EUROPE</span>
           </div>
-
           <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "24px" }}>
             Find what your<br />
             <span style={{ background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>cloud bill</span><br />
             is hiding.
           </h1>
-
           <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, marginBottom: "44px", maxWidth: "520px", margin: "0 auto 44px" }}>
             A structured 15-minute audit that uncovers real savings in your AWS, GCP, or Azure spend. No agents. No access required. Just your invoice.
           </p>
-
           <div className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
-            <button className="glow-btn" onClick={() => goTo("intake")}
-              style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px 36px", fontSize: "16px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
+            <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px 36px", fontSize: "16px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
               Start Free Audit <span style={{ fontSize: "18px" }}>→</span>
             </button>
-            <button className="ghost-btn" onClick={() => setShowSample(true)}
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "16px 28px", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <button className="ghost-btn" onClick={() => setShowSample(true)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "16px 28px", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
               <span>📄</span> See Sample Report
             </button>
           </div>
           <p className="fade-up stagger-4" style={{ marginTop: "20px", fontSize: "12px", color: "var(--text-muted)" }}>✓ 100% free &nbsp;·&nbsp; ✓ No signup &nbsp;·&nbsp; ✓ Results in 15 minutes</p>
         </div>
 
-        {/* SEO hidden links */}
-        <div style={{ display: "none" }} aria-hidden="true">
-          {SEO_PAGES.map(p => (
-            <button key={p.slug} onClick={() => setSeoPage(p)} style={{ display: "none" }}>{p.title}</button>
-          ))}
-        </div>
-
+        {/* Stats bar */}
         <div className="fade-up stagger-3" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1px", background: "var(--border)", borderRadius: "16px", overflow: "hidden", border: "1px solid var(--border)", marginBottom: "80px" }}>
-          {[
-            { n: "20–45%", label: "Average savings found" },
-            { n: "18", label: "Audit checkpoints" },
-            { n: "< 15 min", label: "Average completion" },
-            { n: "0 PLN", label: "Cost to run" },
-          ].map((s, i) => (
+          {[{ n: "20–45%", label: "Average savings found" }, { n: "18", label: "Audit checkpoints" }, { n: "< 15 min", label: "Average completion" }, { n: "0 PLN", label: "Cost to run" }].map((s, i) => (
             <div key={i} style={{ background: "var(--bg2)", padding: "28px 24px", textAlign: "center" }}>
               <div className="display" style={{ fontSize: "28px", fontWeight: 800, color: "var(--green)", letterSpacing: "-1px", marginBottom: "6px" }}>{s.n}</div>
               <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>{s.label}</div>
@@ -559,13 +554,13 @@ export default function App() {
           ))}
         </div>
 
-        <div style={{ marginBottom: "100px" }}>
+        {/* What we audit */}
+        <div style={{ marginBottom: "80px" }}>
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
             <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Comprehensive Coverage</p>
             <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>What we audit</h2>
             <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "480px", margin: "12px auto 0" }}>Five critical areas where cloud spend leaks — and where the biggest savings hide.</p>
           </div>
-
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
             {AUDIT_SECTIONS.map((s, i) => (
               <div key={s.id} className="audit-cat-card fade-up" style={{ animationDelay: `${0.05 * i}s`, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden" }}>
@@ -579,9 +574,7 @@ export default function App() {
                 <div style={{ borderTop: "1px solid var(--border)", paddingTop: "14px" }}>
                   <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.8px" }}>Covers</p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                    {s.checks.slice(0, 3).map(c => (
-                      <span key={c.id} style={{ fontSize: "11px", color: "var(--text-dim)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px" }}>{c.label}</span>
-                    ))}
+                    {s.checks.slice(0, 3).map(c => <span key={c.id} style={{ fontSize: "11px", color: "var(--text-dim)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px" }}>{c.label}</span>)}
                     {s.checks.length > 3 && <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "3px 6px" }}>+{s.checks.length - 3} more</span>}
                   </div>
                 </div>
@@ -590,56 +583,117 @@ export default function App() {
           </div>
         </div>
 
-        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.06) 0%, rgba(99,102,241,0.06) 100%)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "24px", padding: "60px 40px", textAlign: "center", marginBottom: "80px" }}>
+        {/* Bottom CTA */}
+        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.06) 0%, rgba(99,102,241,0.06) 100%)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "24px", padding: "60px 40px", textAlign: "center", marginBottom: "60px" }}>
           <h2 className="display" style={{ fontSize: "clamp(26px,3vw,40px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "14px" }}>Ready to find your savings?</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "16px", marginBottom: "32px" }}>Takes 15 minutes. Free forever. No credit card.</p>
-          <button className="glow-btn" onClick={() => goTo("intake")}
-            style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px 40px", fontSize: "16px", boxShadow: "0 0 30px rgba(0,255,180,0.3)" }}>
-            Start Free Audit →
-          </button>
+          <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px 40px", fontSize: "16px", boxShadow: "0 0 30px rgba(0,255,180,0.3)" }}>Start Free Audit →</button>
+        </div>
+
+        {/* FIX #1: Trust footer — always visible on homepage */}
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: "48px", marginBottom: "60px" }}>
+          <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "3px", textTransform: "uppercase", marginBottom: "24px", textAlign: "center" }}>Meet Your Engineer</p>
+          <div style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.18)", borderRadius: "20px", overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 1fr", boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}>
+            {/* Left */}
+            <div style={{ background: "#0a0a14", padding: "36px 40px", position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "160px", height: "160px", background: "radial-gradient(circle, rgba(0,255,180,0.08) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
+              <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: 800, color: "#000", marginBottom: "20px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", fontFamily: "var(--display)" }}>SA</div>
+              <h3 className="display" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "14px" }}>Samuel Ayodele Adomeh</h3>
+              {["Certified Azure Architect Expert", "Certified Azure DevOps Expert", "Kubernetes · Terraform · Docker"].map(c => (
+                <div key={c} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                  <span style={{ color: "var(--green)", fontSize: "13px" }}>✓</span>
+                  <span style={{ fontSize: "13px", color: "var(--green)", fontWeight: 500 }}>{c}</span>
+                </div>
+              ))}
+              <div style={{ marginTop: "16px", display: "flex", alignItems: "center", gap: "7px" }}>
+                <span style={{ fontSize: "13px" }}>📍</span>
+                <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>Wrocław, Poland · Remote Worldwide</span>
+              </div>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "20px" }}>
+                {["Azure Architect", "DevOps Expert", "28 GitHub repos"].map(b => (
+                  <span key={b} style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "6px", padding: "3px 10px" }}>{b}</span>
+                ))}
+              </div>
+            </div>
+            {/* Right */}
+            <div style={{ padding: "36px 40px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {[
+                  { icon: "🌐", label: "kloudaudit.eu", href: "https://kloudaudit.eu", color: "var(--green)" },
+                  { icon: "✉️", label: "admin@kloudaudit.eu", href: "mailto:admin@kloudaudit.eu", color: "#00d4ff" },
+                  { icon: "💼", label: "linkedin.com/in/adomeh", href: "https://www.linkedin.com/in/adomeh", color: "#0077b5" },
+                  { icon: "💻", label: "github.com/leumasj", href: "https://github.com/leumasj", color: "var(--text-dim)" },
+                ].map(link => (
+                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="trust-link"
+                    style={{ "--hover-color": link.color }}>
+                    <span style={{ fontSize: "16px" }}>{link.icon}</span>
+                    <span style={{ fontSize: "13px", color: link.color, fontWeight: 500 }}>{link.label}</span>
+                  </a>
+                ))}
+              </div>
+              <div style={{ marginTop: "24px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "12px", padding: "20px" }}>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "6px" }}>Need hands-on implementation?</p>
+                <p className="display" style={{ fontSize: "18px", fontWeight: 800, color: "var(--green)", letterSpacing: "-0.3px", marginBottom: "6px" }}>Sessions from 999 PLN</p>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "14px" }}>Remote · Delivered within 48hrs · Full docs included</p>
+                <button className="glow-btn" onClick={() => setShowBooking(true)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "9px", padding: "11px 22px", fontSize: "13px", width: "100%", boxShadow: "0 0 16px rgba(0,255,180,0.25)" }}>Book a Session →</button>
+              </div>
+            </div>
+          </div>
+          {/* Micro footer */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ width: "24px", height: "24px", background: "var(--green)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(0,255,180,0.3)", fontSize: "12px" }}>⚡</div>
+              <span className="display" style={{ fontWeight: 800, fontSize: "14px", color: "#fff" }}>KloudAudit</span>
+              <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>© {new Date().getFullYear()}</span>
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              {[{ label: "LinkedIn", href: "https://www.linkedin.com/in/adomeh" }, { label: "GitHub", href: "https://github.com/leumasj" }].map(s => (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--border)", borderRadius: "8px", background: "rgba(255,255,255,0.03)", transition: "all 0.2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border)"; }}>
+                  {s.label}
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 
-  // ─── INTAKE ───────────────────────────────────────────────────────────────────
+  // ── INTAKE ─────────────────────────────────────────────────────────────────
   if (step === "intake") return (
     <div className="app">
       <style>{globalCss}</style>
       <ParticleBackground />
       {showContact && <ContactModal />}
+      {showBooking && <BookingModal />}
+      {showBlueprint && <BlueprintModal />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
         <div className="fade-up">
           <h2 className="display" style={{ fontSize: "36px", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff", marginBottom: "8px" }}>Set up your audit</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "40px" }}>30 seconds. We'll tailor savings estimates to your actual spend.</p>
         </div>
-
         <div className="fade-up stagger-1" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div>
             <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Company or project</label>
-            <input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="e.g. Acme Corp"
-              style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "12px", color: "#fff", fontSize: "15px", transition: "all 0.2s" }} />
+            <input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="e.g. Acme Corp" style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "12px", color: "#fff", fontSize: "15px", transition: "all 0.2s" }} />
           </div>
-
           <div>
             <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Cloud provider</label>
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
               {PROVIDERS.map(p => (
-                <button key={p} className="provider-chip" onClick={() => setProvider(p)}
-                  style={{ padding: "10px 20px", borderRadius: "10px", fontSize: "14px", fontWeight: 600, border: `1.5px solid ${provider === p ? "var(--green)" : "var(--border)"}`, background: provider === p ? "var(--green-dim)" : "rgba(255,255,255,0.03)", color: provider === p ? "var(--green)" : "var(--text-muted)" }}>
-                  {p}
-                </button>
+                <button key={p} className="provider-chip" onClick={() => setProvider(p)} style={{ padding: "10px 20px", borderRadius: "10px", fontSize: "14px", fontWeight: 600, border: `1.5px solid ${provider === p ? "var(--green)" : "var(--border)"}`, background: provider === p ? "var(--green-dim)" : "rgba(255,255,255,0.03)", color: provider === p ? "var(--green)" : "var(--text-muted)" }}>{p}</button>
               ))}
             </div>
           </div>
-
           <div>
             <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Monthly cloud bill (USD)</label>
             <div style={{ position: "relative" }}>
               <span style={{ position: "absolute", left: "18px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontSize: "16px", fontWeight: 700 }}>$</span>
-              <input type="number" value={monthlyBill} onChange={e => setMonthlyBill(e.target.value)} placeholder="3,500"
-                style={{ width: "100%", padding: "14px 18px 14px 34px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "12px", color: "#fff", fontSize: "15px", transition: "all 0.2s" }} />
+              <input type="number" value={monthlyBill} onChange={e => setMonthlyBill(e.target.value)} placeholder="3,500" style={{ width: "100%", padding: "14px 18px 14px 34px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "12px", color: "#fff", fontSize: "15px", transition: "all 0.2s" }} />
             </div>
             {bill > 0 && (
               <div style={{ marginTop: "10px", padding: "12px 16px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "10px", fontSize: "13px", color: "var(--green)", fontWeight: 600 }}>
@@ -647,9 +701,7 @@ export default function App() {
               </div>
             )}
           </div>
-
-          <button className="glow-btn" disabled={!provider || !monthlyBill}
-            onClick={() => { setActiveSection(0); goTo("audit"); }}
+          <button className="glow-btn" disabled={!provider || !monthlyBill} onClick={() => { setActiveSection(0); goTo("audit"); }}
             style={{ background: provider && monthlyBill ? "var(--green)" : "rgba(255,255,255,0.06)", color: provider && monthlyBill ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "16px", fontSize: "15px", boxShadow: provider && monthlyBill ? "0 0 24px rgba(0,255,180,0.3)" : "none", cursor: provider && monthlyBill ? "pointer" : "not-allowed", marginTop: "8px" }}>
             Begin Audit →
           </button>
@@ -658,7 +710,7 @@ export default function App() {
     </div>
   );
 
-  // ─── AUDIT ────────────────────────────────────────────────────────────────────
+  // ── AUDIT ──────────────────────────────────────────────────────────────────
   if (step === "audit") {
     const section = AUDIT_SECTIONS[activeSection];
     return (
@@ -666,11 +718,12 @@ export default function App() {
         <style>{globalCss}</style>
         <ParticleBackground />
         {showContact && <ContactModal />}
+        {showBooking && <BookingModal />}
+        {showBlueprint && <BlueprintModal />}
         <Nav showBack onBack={() => goTo("intake")} />
         <div style={{ height: "2px", background: "var(--border)", position: "sticky", top: "58px", zIndex: 99 }}>
           <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, var(--green), #00d4ff, #818cf8)", transition: "width 0.5s ease", boxShadow: "0 0 8px rgba(0,255,180,0.6)" }} />
         </div>
-
         <div style={{ maxWidth: "960px", margin: "0 auto", padding: "32px 24px 120px", position: "relative", zIndex: 1 }}>
           <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "32px", paddingBottom: "4px" }}>
             {AUDIT_SECTIONS.map((s, i) => {
@@ -685,14 +738,12 @@ export default function App() {
               );
             })}
           </div>
-
           <div style={{ display: "grid", gridTemplateColumns: "1fr 290px", gap: "24px", alignItems: "start" }}>
             <div key={activeSection} className="fade-up">
               <div style={{ marginBottom: "24px" }}>
                 <h2 className="display" style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-0.5px", color: "#fff" }}>{section.icon} {section.label}</h2>
                 <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>{section.description}</p>
               </div>
-
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {section.checks.map(check => {
                   const on = !!checked[check.id];
@@ -702,7 +753,7 @@ export default function App() {
                     <div key={check.id} className="check-card" onClick={() => toggle(check.id)}
                       style={{ background: on ? "rgba(0,255,180,0.05)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${on ? "rgba(0,255,180,0.25)" : "var(--border)"}`, borderRadius: "14px", padding: "18px 20px", display: "flex", gap: "14px", alignItems: "flex-start", boxShadow: on ? "0 4px 20px rgba(0,255,180,0.08)" : "0 1px 4px rgba(0,0,0,0.2)" }}>
                       <div style={{ width: "24px", height: "24px", borderRadius: "7px", flexShrink: 0, marginTop: "1px", background: on ? "var(--green)" : "transparent", border: `2px solid ${on ? "var(--green)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: on ? "0 0 12px rgba(0,255,180,0.5)" : "none" }}>
-                        {on && <svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4L4.5 7.5L11 1" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        {on && <svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4L4.5 7.5L11 1" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginBottom: "4px" }}>
@@ -723,28 +774,16 @@ export default function App() {
                   );
                 })}
               </div>
-
               <div style={{ display: "flex", gap: "10px", marginTop: "28px" }}>
-                {activeSection > 0 && (
-                  <button className="ghost-btn" onClick={() => setActiveSection(a => a - 1)}
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px 22px", fontSize: "14px", fontWeight: 600, color: "var(--text-muted)" }}>
-                    ← Previous
-                  </button>
-                )}
+                {activeSection > 0 && <button className="ghost-btn" onClick={() => setActiveSection(a => a - 1)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px 22px", fontSize: "14px", fontWeight: 600, color: "var(--text-muted)" }}>← Previous</button>}
                 {activeSection < AUDIT_SECTIONS.length - 1 ? (
-                  <button className="glow-btn" onClick={() => setActiveSection(a => a + 1)}
-                    style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)" }}>
-                    Next: {AUDIT_SECTIONS[activeSection + 1].label} →
-                  </button>
+                  <button className="glow-btn" onClick={() => setActiveSection(a => a + 1)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)" }}>Next: {AUDIT_SECTIONS[activeSection + 1].label} →</button>
                 ) : (
-                  <button className="glow-btn" onClick={() => goTo("report")}
-                    style={{ background: "linear-gradient(135deg, var(--green), #00d4ff)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 32px", fontSize: "14px", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>
-                    Generate Report →
-                  </button>
+                  <button className="glow-btn" onClick={() => goTo("report")} style={{ background: "linear-gradient(135deg, var(--green), #00d4ff)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 32px", fontSize: "14px", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Generate Report →</button>
                 )}
               </div>
             </div>
-
+            {/* Sidebar */}
             <div style={{ position: "sticky", top: "76px", display: "flex", flexDirection: "column", gap: "14px" }}>
               <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px", boxShadow: "0 8px 30px rgba(0,0,0,0.4)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
@@ -763,7 +802,7 @@ export default function App() {
                     <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Annual: <span style={{ color: "var(--green)", fontWeight: 700 }}>${(savMin * 12).toLocaleString()} – ${(savMax * 12).toLocaleString()}</span></p>
                   </>
                 ) : (
-                  <div style={{ textAlign: "center", padding: "16px 0", color: "var(--text-muted)", fontSize: "13px" }}>Flag issues above to<br />see your estimate</div>
+                  <div style={{ textAlign: "center", padding: "16px 0", color: "var(--text-muted)", fontSize: "13px" }}>Flag issues above to see your estimate</div>
                 )}
                 <div style={{ borderTop: "1px solid var(--border)", paddingTop: "14px", marginTop: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
                   {[["Issues flagged", flagged.length, flagged.length > 0 ? "#f87171" : "var(--text-muted)"], ["Checks reviewed", `${Object.keys(checked).length}/${allChecks.length}`, "var(--text-dim)"], ["Progress", `${progress}%`, "var(--green)"]].map(([l, v, c]) => (
@@ -774,7 +813,6 @@ export default function App() {
                   ))}
                 </div>
               </div>
-
               <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "18px" }}>
                 <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "1px", color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "14px" }}>Sections</p>
                 {AUDIT_SECTIONS.map((s, i) => {
@@ -803,22 +841,22 @@ export default function App() {
     );
   }
 
-  // ─── REPORT ───────────────────────────────────────────────────────────────────
+  // ── REPORT ─────────────────────────────────────────────────────────────────
   if (step === "report") {
     const getSev = c => { const p = (c.savingsRange[0] + c.savingsRange[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
     const high = flagged.filter(c => getSev(c) === "high");
     const med = flagged.filter(c => getSev(c) === "med");
     const low = flagged.filter(c => getSev(c) === "low");
-
     return (
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
         {showContact && <ContactModal />}
-        {showBlueprintModal && <BlueprintEmailModal />}
+        {showBooking && <BookingModal />}
+        {showBlueprint && <BlueprintModal />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
-
+          {/* Header */}
           <div className="fade-up" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "40px", flexWrap: "wrap", gap: "16px" }}>
             <div>
               <div style={{ display: "flex", gap: "8px", marginBottom: "14px", flexWrap: "wrap" }}>
@@ -832,17 +870,12 @@ export default function App() {
               </p>
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
-              <button className="ghost-btn" onClick={() => window.print()}
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "10px 18px", fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>
-                🖨 Export
-              </button>
-              <button className="glow-btn" onClick={() => { setChecked({}); setActiveSection(0); goTo("audit"); }}
-                style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "10px 20px", fontSize: "13px", boxShadow: "0 0 16px rgba(0,255,180,0.25)" }}>
-                Re-run
-              </button>
+              <button className="ghost-btn" onClick={() => window.print()} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "10px 18px", fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>🖨 Export</button>
+              <button className="glow-btn" onClick={() => { setChecked({}); setActiveSection(0); goTo("audit"); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "10px 20px", fontSize: "13px", boxShadow: "0 0 16px rgba(0,255,180,0.25)" }}>Re-run</button>
             </div>
           </div>
 
+          {/* KPI cards */}
           {bill > 0 && (
             <div className="fade-up stagger-1" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "14px", marginBottom: "32px" }}>
               {[
@@ -860,12 +893,9 @@ export default function App() {
             </div>
           )}
 
+          {/* Findings */}
           <div className="fade-up stagger-2">
-            {[
-              { label: "🔴 Critical & High Impact", items: high, color: "#f87171" },
-              { label: "🟡 Medium Impact", items: med, color: "#fbbf24" },
-              { label: "🟢 Quick Wins", items: low, color: "#4ade80" },
-            ].filter(g => g.items.length > 0).map(group => (
+            {[{ label: "🔴 Critical & High Impact", items: high, color: "#f87171" }, { label: "🟡 Medium Impact", items: med, color: "#fbbf24" }, { label: "🟢 Quick Wins", items: low, color: "#4ade80" }].filter(g => g.items.length > 0).map(group => (
               <div key={group.label} style={{ marginBottom: "28px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
                   <h3 className="display" style={{ fontSize: "15px", fontWeight: 700, color: group.color }}>{group.label}</h3>
@@ -880,12 +910,10 @@ export default function App() {
                         <p style={{ fontWeight: 600, fontSize: "15px", color: "#fff", marginBottom: "4px" }}>{check.label}</p>
                         <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>{check.detail}</p>
                       </div>
-                      {bill > 0 && (
-                        <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "8px 14px", textAlign: "right", flexShrink: 0 }}>
-                          <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--green)" }}>${sMin2?.toLocaleString()} – ${sMax2?.toLocaleString()}</p>
-                          <p style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ month</p>
-                        </div>
-                      )}
+                      {bill > 0 && <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "8px 14px", textAlign: "right", flexShrink: 0 }}>
+                        <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--green)" }}>${sMin2?.toLocaleString()} – ${sMax2?.toLocaleString()}</p>
+                        <p style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ month</p>
+                      </div>}
                     </div>
                   );
                 })}
@@ -893,6 +921,7 @@ export default function App() {
             ))}
           </div>
 
+          {/* Action plan */}
           <div className="fade-up stagger-3" style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", marginBottom: "24px" }}>
             <h3 className="display" style={{ fontSize: "18px", fontWeight: 700, marginBottom: "20px", color: "#fff", letterSpacing: "-0.3px" }}>Recommended action plan</h3>
             {[
@@ -911,16 +940,15 @@ export default function App() {
             ))}
           </div>
 
-          {/* ── TIERED CTA — Free vs Paid ── */}
+          {/* FIX #2: Tiered CTA with working Blueprint button */}
           <div className="fade-up stagger-4" style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.05) 0%, rgba(99,102,241,0.05) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "20px", padding: "40px" }}>
             <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "16px", textAlign: "center" }}>What happens next?</p>
-
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "28px" }}>
               {/* Free tier */}
               <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: "14px", padding: "24px" }}>
                 <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>✅ Free — You already have this</div>
-                <p className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "12px", letterSpacing: "-0.3px" }}>Audit Checklist + Savings Report</p>
-                {["Identified issues with savings range", "Priority order (Critical → Low)", "Action plan overview", "PDF export"].map(f => (
+                <p className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "12px", letterSpacing: "-0.3px" }}>Checklist + Savings Report</p>
+                {["Identified issues & savings range", "Priority order (Critical → Low)", "Action plan overview", "PDF export"].map(f => (
                   <div key={f} style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
                     <span style={{ color: "#4ade80", fontSize: "12px" }}>✓</span>
                     <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{f}</span>
@@ -929,10 +957,10 @@ export default function App() {
               </div>
               {/* Paid tier */}
               <div style={{ background: "rgba(0,255,180,0.05)", border: "2px solid rgba(0,255,180,0.3)", borderRadius: "14px", padding: "24px", position: "relative", overflow: "hidden" }}>
-                <div style={{ position: "absolute", top: "12px", right: "12px", background: "var(--green)", color: "#000", fontSize: "10px", fontWeight: 800, padding: "3px 8px", borderRadius: "6px", letterSpacing: "0.5px" }}>RECOMMENDED</div>
+                <div style={{ position: "absolute", top: "12px", right: "12px", background: "var(--green)", color: "#000", fontSize: "10px", fontWeight: 800, padding: "3px 8px", borderRadius: "6px" }}>RECOMMENDED</div>
                 <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>⚡ 299 PLN — AI Blueprint</div>
-                <p className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "12px", letterSpacing: "-0.3px" }}>AI-Written Implementation Guide</p>
-                {[`Exact ${provider || "cloud"} CLI commands`, "Terraform snippets per issue", "Step-by-step fix instructions", "Verification commands", "PDF delivered in ~2 minutes"].map(f => (
+                <p className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "12px", letterSpacing: "-0.3px" }}>AI Implementation Guide</p>
+                {[`Exact ${provider || "cloud"} CLI commands`, "Terraform snippets per issue", "Step-by-step fix instructions", "Verification commands", "PDF in your inbox in ~2 min"].map(f => (
                   <div key={f} style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
                     <span style={{ color: "var(--green)", fontSize: "12px" }}>✓</span>
                     <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>{f}</span>
@@ -940,30 +968,37 @@ export default function App() {
                 ))}
               </div>
             </div>
-
             <p style={{ fontSize: "13px", color: "var(--text-muted)", textAlign: "center", marginBottom: "20px" }}>
-              The Blueprint pays for itself the first month.{savMin > 0 ? ` You're looking at $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/mo in savings.` : " Average client saves $2,800+/month."}
+              {savMin > 0 ? `You're looking at $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/mo in savings. The blueprint pays for itself in day one.` : "Average client saves $2,800+/month after implementing the blueprint."}
             </p>
 
-            {/* FIX: removed duplicate wrapping div; wired up Blueprint button correctly */}
+            {/* Trust card */}
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" }}>
+              <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: 800, color: "#000", flexShrink: 0, fontFamily: "var(--display)" }}>SA</div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: "14px", fontWeight: 700, color: "#fff", marginBottom: "2px" }}>Samuel Ayodele Adomeh</p>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Certified Azure Architect Expert · DevOps Expert · Wrocław, Poland</p>
+              </div>
+              <div style={{ display: "flex", gap: "6px" }}>
+                <a href="mailto:admin@kloudaudit.eu" style={{ fontSize: "11px", fontWeight: 600, color: "#00d4ff", background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.2)", borderRadius: "6px", padding: "3px 8px", textDecoration: "none" }}>✉️ Email</a>
+                <a href="https://www.linkedin.com/in/adomeh" target="_blank" rel="noopener noreferrer" style={{ fontSize: "11px", fontWeight: 600, color: "#0077b5", background: "rgba(0,119,181,0.08)", border: "1px solid rgba(0,119,181,0.2)", borderRadius: "6px", padding: "3px 8px", textDecoration: "none" }}>💼 LinkedIn</a>
+              </div>
+            </div>
+
             <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-              <button
-                className="glow-btn"
-                onClick={() => handleBuyBlueprint()}
-                disabled={blueprintStatus === "loading"}
-                style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 28px rgba(0,255,180,0.35)", display: "flex", alignItems: "center", gap: "8px" }}
-              >
-                {blueprintStatus === "loading" ? (
-                  <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Redirecting...</>
-                ) : "⚡ Get AI Blueprint — 299 PLN →"}
+              <button className="glow-btn" onClick={() => flagged.length > 0 ? setShowBlueprint(true) : null}
+                disabled={flagged.length === 0}
+                style={{ background: flagged.length > 0 ? "var(--green)" : "rgba(255,255,255,0.06)", color: flagged.length > 0 ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: flagged.length > 0 ? "0 0 28px rgba(0,255,180,0.35)" : "none", cursor: flagged.length > 0 ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: "8px" }}>
+                ⚡ Get AI Blueprint — 299 PLN →
               </button>
-              <button className="ghost-btn" onClick={() => goTo("intro")}
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px" }}>
+              <button className="ghost-btn" onClick={() => setShowBooking(true)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px" }}>
+                Book 1:1 Session — 999 PLN
+              </button>
+              <button className="ghost-btn" onClick={() => goTo("intro")} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px" }}>
                 New Audit
               </button>
             </div>
           </div>
-
         </div>
       </div>
     );
