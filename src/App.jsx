@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import SEOPage, { SEO_PAGES } from "./src/SEOPages.jsx";
+import SEOPage, { SEO_PAGES } from "./SEOPages.jsx";
 
 const AUDIT_SECTIONS = [
   {
@@ -144,6 +144,9 @@ const globalCss = `
   .display { font-family: var(--display); }
   .fade-up { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; }
   @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .stagger-1 { animation-delay: 0.05s; }
   .stagger-2 { animation-delay: 0.12s; }
   .stagger-3 { animation-delay: 0.2s; }
@@ -169,9 +172,7 @@ const globalCss = `
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
   .modal-overlay { animation: fadeIn 0.2s ease; }
-  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   .modal-box { animation: scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
-  @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
 `;
 
 export default function App() {
@@ -184,13 +185,16 @@ export default function App() {
   const [showSample, setShowSample] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [pageKey, setPageKey] = useState(0);
-  
-  // Formspree state
-  const [formStatus, setFormStatus] = useState("idle"); // idle, sending, success, error
+  const [formStatus, setFormStatus] = useState("idle"); // idle | sending | success | error
+
+  // FIX: These were missing — caused ReferenceError on render
+  const [blueprintEmail, setBlueprintEmail] = useState("");
+  const [blueprintStatus, setBlueprintStatus] = useState("idle"); // idle | loading | error
+  const [showBlueprintModal, setShowBlueprintModal] = useState(false);
+  const [seoPage, setSeoPage] = useState(null);
 
   const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
-
-  const goTo = (s) => { setStep(s); setPageKey(k => k + 1); window.scrollTo(0,0); };
+  const goTo = (s) => { setStep(s); setPageKey(k => k + 1); window.scrollTo(0, 0); };
 
   const bill = parseFloat(monthlyBill) || 0;
   const allChecks = AUDIT_SECTIONS.flatMap(s => s.checks);
@@ -222,12 +226,12 @@ export default function App() {
       } else {
         setFormStatus("error");
       }
-    } catch (error) {
+    } catch {
       setFormStatus("error");
     }
   };
 
-  // ─── BUY BLUEPRINT — calls Vercel Function → Stripe ─────────────────────
+  // ─── BUY BLUEPRINT — calls Vercel Function → Stripe ────────────────────────
   const handleBuyBlueprint = async (emailOverride) => {
     const userEmail = emailOverride || blueprintEmail;
     if (!userEmail) { setShowBlueprintModal(true); return; }
@@ -248,7 +252,7 @@ export default function App() {
       });
       const data = await response.json();
       if (data.url) {
-        window.location.href = data.url; // redirect to Stripe Checkout
+        window.location.href = data.url;
       } else {
         throw new Error(data.error || "Failed to create checkout");
       }
@@ -259,20 +263,19 @@ export default function App() {
     }
   };
 
-  // Handle payment success return from Stripe
+  // Handle Stripe return URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("payment") === "success") {
       setStep("payment_success");
       window.history.replaceState({}, "", "/");
     }
-    // SEO page navigation via custom event (from SEOPage component)
     const handleSEONav = (e) => setSeoPage(e.detail);
     window.addEventListener("navigateSEO", handleSEONav);
     return () => window.removeEventListener("navigateSEO", handleSEONav);
   }, []);
 
-  // ─── NAV ────────────────────────────────────────────────────────────────────
+  // ─── NAV ─────────────────────────────────────────────────────────────────────
   const Nav = ({ showBack, onBack }) => (
     <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(8,8,16,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid var(--border)", padding: "0 24px", height: "58px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -281,32 +284,27 @@ export default function App() {
             ← Back
           </button>
         )}
-        <div 
-          onClick={() => goTo("intro")}
-          style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "12px" }}
-        >
+        <div onClick={() => goTo("intro")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "12px" }}>
           <div style={{ width: "30px", height: "30px", background: "var(--green)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 16px rgba(0,255,180,0.4)" }}>
             <span style={{ fontSize: "16px" }}>⚡</span>
           </div>
-          <span className="display" style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "-0.5px", color: "#fff" }}>CloudAudit</span>
+          <span className="display" style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "-0.5px", color: "#fff" }}>KloudAudit</span>
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
         <button onClick={() => setShowContact(true)} className="ghost-btn" style={{ background: "transparent", border: "none", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600 }}>
           Contact Us
         </button>
-        <span style={{ fontSize: "13px", color: "var(--text-muted)", display: "none" }}>Free · No account needed</span>
       </div>
     </nav>
   );
 
-  // ─── CONTACT MODAL ──────────────────────────────────────────────────────────
+  // ─── CONTACT MODAL ───────────────────────────────────────────────────────────
   const ContactModal = () => (
     <div className="modal-overlay" onClick={() => setShowContact(false)} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
       <div className="modal-box" onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "24px", maxWidth: "480px", width: "100%", padding: "40px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)" }}>
         <h2 className="display" style={{ fontSize: "32px", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "8px" }}>Get in touch</h2>
         <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "32px" }}>Have questions about your audit? Drop us a message.</p>
-        
         {formStatus === "success" ? (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
             <div style={{ fontSize: "40px", marginBottom: "16px" }}>✅</div>
@@ -333,7 +331,7 @@ export default function App() {
     </div>
   );
 
-  // ─── BLUEPRINT EMAIL MODAL ──────────────────────────────────────────────────
+  // ─── BLUEPRINT EMAIL MODAL ───────────────────────────────────────────────────
   const BlueprintEmailModal = () => (
     <div onClick={() => setShowBlueprintModal(false)} style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
       <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "460px", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
@@ -344,10 +342,15 @@ export default function App() {
             Enter your email and you'll be taken to secure payment. Your personalised {provider} implementation guide lands in your inbox within 2 minutes of payment.
           </p>
         </div>
-        {/* What's included */}
         <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "10px", padding: "14px 18px", marginBottom: "20px" }}>
           <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>What you get:</p>
-          {["Exact CLI commands for your " + (provider||"cloud") + " setup", "Terraform snippets for each fix", "Step-by-step implementation guide", `${flagged.length} issues covered with savings estimates`, "PDF delivered to your inbox instantly"].map(f => (
+          {[
+            "Exact CLI commands for your " + (provider || "cloud") + " setup",
+            "Terraform snippets for each fix",
+            "Step-by-step implementation guide",
+            `${flagged.length} issues covered with savings estimates`,
+            "PDF delivered to your inbox instantly",
+          ].map(f => (
             <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
               <span style={{ color: "var(--green)", fontSize: "13px" }}>✓</span>
               <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>{f}</span>
@@ -355,12 +358,20 @@ export default function App() {
           ))}
         </div>
         <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Your Email</label>
-        <input type="email" placeholder="you@company.com" value={blueprintEmail} onChange={e => setBlueprintEmail(e.target.value)}
+        <input
+          type="email"
+          placeholder="you@company.com"
+          value={blueprintEmail}
+          onChange={e => setBlueprintEmail(e.target.value)}
           onKeyDown={e => e.key === "Enter" && blueprintEmail && handleBuyBlueprint(blueprintEmail)}
-          style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "15px", fontFamily: "inherit", marginBottom: "14px" }} />
-        <button className="glow-btn" onClick={() => blueprintEmail && handleBuyBlueprint(blueprintEmail)}
+          style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "15px", fontFamily: "inherit", marginBottom: "14px" }}
+        />
+        <button
+          className="glow-btn"
+          onClick={() => blueprintEmail && handleBuyBlueprint(blueprintEmail)}
           disabled={!blueprintEmail || blueprintStatus === "loading"}
-          style={{ background: blueprintEmail ? "var(--green)" : "rgba(255,255,255,0.06)", color: blueprintEmail ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: blueprintEmail ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+          style={{ background: blueprintEmail ? "var(--green)" : "rgba(255,255,255,0.06)", color: blueprintEmail ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: blueprintEmail ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+        >
           {blueprintStatus === "loading" ? (
             <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Redirecting to payment...</>
           ) : "Pay 299 PLN → Get Blueprint"}
@@ -373,16 +384,16 @@ export default function App() {
     </div>
   );
 
-  // ─── SAMPLE REPORT MODAL ────────────────────────────────────────────────────
+  // ─── SAMPLE REPORT MODAL ─────────────────────────────────────────────────────
   const SampleModal = () => {
-    const getSev = c => { const p=(c.savingsRange[0]+c.savingsRange[1])/2; return p>=30?"high":p>=15?"med":"low"; };
-    const sHigh = sampleFlagged.filter(c=>getSev(c)==="high");
-    const sMed = sampleFlagged.filter(c=>getSev(c)==="med");
-    const sLow = sampleFlagged.filter(c=>getSev(c)==="low");
+    const getSev = c => { const p = (c.savingsRange[0] + c.savingsRange[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
+    const sHigh = sampleFlagged.filter(c => getSev(c) === "high");
+    const sMed = sampleFlagged.filter(c => getSev(c) === "med");
+    const sLow = sampleFlagged.filter(c => getSev(c) === "low");
     return (
       <div className="modal-overlay" onClick={() => setShowSample(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
         <div className="modal-box" onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "780px", width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,255,180,0.1)" }}>
-          <div style={{ padding: "28px 32px 0", borderBottom: "1px solid var(--border)", paddingBottom: "20px", position: "sticky", top: 0, background: "var(--bg2)", zIndex: 10, borderRadius: "20px 20px 0 0" }}>
+          <div style={{ padding: "28px 32px 20px", borderBottom: "1px solid var(--border)", position: "sticky", top: 0, background: "var(--bg2)", zIndex: 10, borderRadius: "20px 20px 0 0" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
@@ -401,7 +412,7 @@ export default function App() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", marginBottom: "28px" }}>
               {[
                 { label: "Monthly Savings", val: `$${sampleSavMin.toLocaleString()} – $${sampleSavMax.toLocaleString()}`, sub: "per month", color: "var(--green)", bg: "var(--green-dim)", border: "var(--green-border)" },
-                { label: "Annual Opportunity", val: `$${(sampleSavMin*12).toLocaleString()}+`, sub: "per year", color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.25)" },
+                { label: "Annual Opportunity", val: `$${(sampleSavMin * 12).toLocaleString()}+`, sub: "per year", color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.25)" },
                 { label: "Waste Rate", val: `~${samplePct}%`, sub: "of total bill", color: "#fb923c", bg: "rgba(251,146,60,0.1)", border: "rgba(251,146,60,0.25)" },
               ].map(s => (
                 <div key={s.label} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: "12px", padding: "18px" }}>
@@ -413,9 +424,9 @@ export default function App() {
             </div>
 
             {[
-              { label: "🔴 High Impact", items: sHigh, color: "#f87171", border: "rgba(248,113,113,0.2)" },
-              { label: "🟡 Medium Impact", items: sMed, color: "#fbbf24", border: "rgba(251,191,36,0.2)" },
-              { label: "🟢 Quick Wins", items: sLow, color: "#4ade80", border: "rgba(74,222,128,0.2)" },
+              { label: "🔴 High Impact", items: sHigh, color: "#f87171" },
+              { label: "🟡 Medium Impact", items: sMed, color: "#fbbf24" },
+              { label: "🟢 Quick Wins", items: sLow, color: "#4ade80" },
             ].filter(g => g.items.length > 0).map(group => (
               <div key={group.label} style={{ marginBottom: "20px" }}>
                 <h4 className="display" style={{ fontSize: "13px", fontWeight: 700, color: group.color, marginBottom: "10px", letterSpacing: "0.3px" }}>{group.label}</h4>
@@ -423,7 +434,7 @@ export default function App() {
                   const sMin = Math.round(SAMPLE_REPORT.monthlyBill * check.savingsRange[0] / 100);
                   const sMax = Math.round(SAMPLE_REPORT.monthlyBill * check.savingsRange[1] / 100);
                   return (
-                    <div key={check.id} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid var(--border)`, borderLeft: `3px solid ${group.color}`, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
+                    <div key={check.id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderLeft: `3px solid ${group.color}`, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
                       <div>
                         <p style={{ fontWeight: 600, fontSize: "14px", color: "#fff", marginBottom: "3px" }}>{check.label}</p>
                         <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>{check.detail}</p>
@@ -451,7 +462,7 @@ export default function App() {
     );
   };
 
-  // ─── PAYMENT SUCCESS ────────────────────────────────────────────────────────
+  // ─── PAYMENT SUCCESS ──────────────────────────────────────────────────────────
   if (step === "payment_success") return (
     <div className="app">
       <style>{globalCss}</style>
@@ -477,19 +488,18 @@ export default function App() {
     </div>
   );
 
-  // ─── SEO LANDING PAGE ────────────────────────────────────────────────────────
+  // ─── SEO LANDING PAGE ─────────────────────────────────────────────────────────
   if (seoPage) return (
     <div className="app">
       <style>{globalCss}</style>
       <ParticleBackground />
-      {showBooking && <BookingModal />}
       {showBlueprintModal && <BlueprintEmailModal />}
       <Nav showBack onBack={() => setSeoPage(null)} />
       <SEOPage page={seoPage} onStartAudit={() => { setSeoPage(null); goTo("intake"); }} />
     </div>
   );
 
-  // ─── INTRO ──────────────────────────────────────────────────────────────────
+  // ─── INTRO ────────────────────────────────────────────────────────────────────
   if (step === "intro") return (
     <div className="app">
       <style>{globalCss}</style>
@@ -518,8 +528,7 @@ export default function App() {
           <div className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
             <button className="glow-btn" onClick={() => goTo("intake")}
               style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px 36px", fontSize: "16px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
-              Start Free Audit
-              <span style={{ fontSize: "18px" }}>→</span>
+              Start Free Audit <span style={{ fontSize: "18px" }}>→</span>
             </button>
             <button className="ghost-btn" onClick={() => setShowSample(true)}
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "16px 28px", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -529,7 +538,7 @@ export default function App() {
           <p className="fade-up stagger-4" style={{ marginTop: "20px", fontSize: "12px", color: "var(--text-muted)" }}>✓ 100% free &nbsp;·&nbsp; ✓ No signup &nbsp;·&nbsp; ✓ Results in 15 minutes</p>
         </div>
 
-        {/* ── SEO HIDDEN LINKS — helps Google discover all 50 pages ── */}
+        {/* SEO hidden links */}
         <div style={{ display: "none" }} aria-hidden="true">
           {SEO_PAGES.map(p => (
             <button key={p.slug} onClick={() => setSeoPage(p)} style={{ display: "none" }}>{p.title}</button>
@@ -593,7 +602,7 @@ export default function App() {
     </div>
   );
 
-  // ─── INTAKE ─────────────────────────────────────────────────────────────────
+  // ─── INTAKE ───────────────────────────────────────────────────────────────────
   if (step === "intake") return (
     <div className="app">
       <style>{globalCss}</style>
@@ -634,7 +643,7 @@ export default function App() {
             </div>
             {bill > 0 && (
               <div style={{ marginTop: "10px", padding: "12px 16px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "10px", fontSize: "13px", color: "var(--green)", fontWeight: 600 }}>
-                💰 Typical savings: <strong>${Math.round(bill*0.20).toLocaleString()} – ${Math.round(bill*0.45).toLocaleString()}/mo</strong> based on 18 audit checks
+                💰 Typical savings: <strong>${Math.round(bill * 0.20).toLocaleString()} – ${Math.round(bill * 0.45).toLocaleString()}/mo</strong> based on 18 audit checks
               </div>
             )}
           </div>
@@ -649,7 +658,7 @@ export default function App() {
     </div>
   );
 
-  // ─── AUDIT ──────────────────────────────────────────────────────────────────
+  // ─── AUDIT ────────────────────────────────────────────────────────────────────
   if (step === "audit") {
     const section = AUDIT_SECTIONS[activeSection];
     return (
@@ -717,15 +726,15 @@ export default function App() {
 
               <div style={{ display: "flex", gap: "10px", marginTop: "28px" }}>
                 {activeSection > 0 && (
-                  <button className="ghost-btn" onClick={() => setActiveSection(a => a-1)}
+                  <button className="ghost-btn" onClick={() => setActiveSection(a => a - 1)}
                     style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px 22px", fontSize: "14px", fontWeight: 600, color: "var(--text-muted)" }}>
                     ← Previous
                   </button>
                 )}
                 {activeSection < AUDIT_SECTIONS.length - 1 ? (
-                  <button className="glow-btn" onClick={() => setActiveSection(a => a+1)}
+                  <button className="glow-btn" onClick={() => setActiveSection(a => a + 1)}
                     style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)" }}>
-                    Next: {AUDIT_SECTIONS[activeSection+1].label} →
+                    Next: {AUDIT_SECTIONS[activeSection + 1].label} →
                   </button>
                 ) : (
                   <button className="glow-btn" onClick={() => goTo("report")}
@@ -749,15 +758,15 @@ export default function App() {
                     </div>
                     <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "14px" }}>/ month · ~{savPct}% of bill</p>
                     <div style={{ height: "5px", background: "rgba(255,255,255,0.06)", borderRadius: "3px", overflow: "hidden", marginBottom: "14px" }}>
-                      <div style={{ height: "100%", width: `${Math.min(savPct*2,100)}%`, background: "linear-gradient(90deg,var(--green),#00d4ff)", borderRadius: "3px", transition: "width 0.5s ease", boxShadow: "0 0 6px rgba(0,255,180,0.5)" }} />
+                      <div style={{ height: "100%", width: `${Math.min(savPct * 2, 100)}%`, background: "linear-gradient(90deg,var(--green),#00d4ff)", borderRadius: "3px", transition: "width 0.5s ease", boxShadow: "0 0 6px rgba(0,255,180,0.5)" }} />
                     </div>
-                    <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Annual: <span style={{ color: "var(--green)", fontWeight: 700 }}>${(savMin*12).toLocaleString()} – ${(savMax*12).toLocaleString()}</span></p>
+                    <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Annual: <span style={{ color: "var(--green)", fontWeight: 700 }}>${(savMin * 12).toLocaleString()} – ${(savMax * 12).toLocaleString()}</span></p>
                   </>
                 ) : (
                   <div style={{ textAlign: "center", padding: "16px 0", color: "var(--text-muted)", fontSize: "13px" }}>Flag issues above to<br />see your estimate</div>
                 )}
                 <div style={{ borderTop: "1px solid var(--border)", paddingTop: "14px", marginTop: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {[["Issues flagged", flagged.length, flagged.length > 0 ? "#f87171" : "var(--text-muted)"], ["Checks reviewed", `${Object.keys(checked).length}/${allChecks.length}`, "var(--text-dim)"], ["Progress", `${progress}%`, "var(--green)"]].map(([l,v,c]) => (
+                  {[["Issues flagged", flagged.length, flagged.length > 0 ? "#f87171" : "var(--text-muted)"], ["Checks reviewed", `${Object.keys(checked).length}/${allChecks.length}`, "var(--text-dim)"], ["Progress", `${progress}%`, "var(--green)"]].map(([l, v, c]) => (
                     <div key={l} style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{l}</span>
                       <span style={{ fontSize: "12px", fontWeight: 700, color: c }}>{v}</span>
@@ -770,17 +779,17 @@ export default function App() {
                 <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "1px", color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "14px" }}>Sections</p>
                 {AUDIT_SECTIONS.map((s, i) => {
                   const done = s.checks.filter(c => checked[c.id] !== undefined).length;
-                  const pct = Math.round((done/s.checks.length)*100);
+                  const pct = Math.round((done / s.checks.length) * 100);
                   return (
-                    <div key={s.id} onClick={() => setActiveSection(i)} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px", cursor: "pointer", opacity: i===activeSection?1:0.6, transition: "opacity 0.15s" }}>
+                    <div key={s.id} onClick={() => setActiveSection(i)} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px", cursor: "pointer", opacity: i === activeSection ? 1 : 0.6, transition: "opacity 0.15s" }}>
                       <span style={{ fontSize: "14px", width: "18px" }}>{s.icon}</span>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                          <span style={{ fontSize: "11px", fontWeight: 600, color: i===activeSection ? "var(--green)" : "var(--text-dim)" }}>{s.label}</span>
+                          <span style={{ fontSize: "11px", fontWeight: 600, color: i === activeSection ? "var(--green)" : "var(--text-dim)" }}>{s.label}</span>
                           <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{done}/{s.checks.length}</span>
                         </div>
                         <div style={{ height: "3px", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden" }}>
-                          <div style={{ height: "100%", width: `${pct}%`, background: i===activeSection ? "var(--green)" : "#4ade80", borderRadius: "2px", transition: "width 0.3s" }} />
+                          <div style={{ height: "100%", width: `${pct}%`, background: i === activeSection ? "var(--green)" : "#4ade80", borderRadius: "2px", transition: "width 0.3s" }} />
                         </div>
                       </div>
                     </div>
@@ -794,25 +803,26 @@ export default function App() {
     );
   }
 
-  // ─── REPORT ─────────────────────────────────────────────────────────────────
+  // ─── REPORT ───────────────────────────────────────────────────────────────────
   if (step === "report") {
-    const getSev = c => { const p=(c.savingsRange[0]+c.savingsRange[1])/2; return p>=30?"high":p>=15?"med":"low"; };
-    const high = flagged.filter(c=>getSev(c)==="high");
-    const med = flagged.filter(c=>getSev(c)==="med");
-    const low = flagged.filter(c=>getSev(c)==="low");
+    const getSev = c => { const p = (c.savingsRange[0] + c.savingsRange[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
+    const high = flagged.filter(c => getSev(c) === "high");
+    const med = flagged.filter(c => getSev(c) === "med");
+    const low = flagged.filter(c => getSev(c) === "low");
 
     return (
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
         {showContact && <ContactModal />}
+        {showBlueprintModal && <BlueprintEmailModal />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
 
           <div className="fade-up" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "40px", flexWrap: "wrap", gap: "16px" }}>
             <div>
               <div style={{ display: "flex", gap: "8px", marginBottom: "14px", flexWrap: "wrap" }}>
-                {[companyName||"Cloud Audit", provider, new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})].map(t=>(
+                {[companyName || "Cloud Audit", provider, new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })].map(t => (
                   <span key={t} style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-dim)", fontSize: "12px", fontWeight: 600, padding: "4px 12px", borderRadius: "20px", border: "1px solid var(--border)" }}>{t}</span>
                 ))}
               </div>
@@ -837,10 +847,10 @@ export default function App() {
             <div className="fade-up stagger-1" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "14px", marginBottom: "32px" }}>
               {[
                 { l: "Monthly Savings", v: `$${savMin.toLocaleString()} – $${savMax.toLocaleString()}`, s: "/month", c: "var(--green)", bg: "var(--green-dim)", b: "var(--green-border)" },
-                { l: "Annual Opportunity", v: `$${(savMin*12).toLocaleString()}+`, s: "per year", c: "#818cf8", bg: "rgba(99,102,241,0.08)", b: "rgba(99,102,241,0.2)" },
-                { l: "Waste Rate", v: `~${savPct}%`, s: savPct>=30?"Critical":savPct>=15?"Significant":"Moderate", c: savPct>=30?"#f87171":savPct>=15?"#fb923c":"#fbbf24", bg: "rgba(248,113,113,0.06)", b: "rgba(248,113,113,0.15)" },
+                { l: "Annual Opportunity", v: `$${(savMin * 12).toLocaleString()}+`, s: "per year", c: "#818cf8", bg: "rgba(99,102,241,0.08)", b: "rgba(99,102,241,0.2)" },
+                { l: "Waste Rate", v: `~${savPct}%`, s: savPct >= 30 ? "Critical" : savPct >= 15 ? "Significant" : "Moderate", c: savPct >= 30 ? "#f87171" : savPct >= 15 ? "#fb923c" : "#fbbf24", bg: "rgba(248,113,113,0.06)", b: "rgba(248,113,113,0.15)" },
                 { l: "Issues Found", v: flagged.length, s: `of ${allChecks.length} checked`, c: "#fb923c", bg: "rgba(251,146,60,0.06)", b: "rgba(251,146,60,0.15)" },
-              ].map(s=>(
+              ].map(s => (
                 <div key={s.l} style={{ background: s.bg, border: `1px solid ${s.b}`, borderRadius: "14px", padding: "22px" }}>
                   <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: "10px" }}>{s.l}</p>
                   <p className="display" style={{ fontSize: "22px", fontWeight: 800, color: s.c, letterSpacing: "-0.5px", lineHeight: 1 }}>{s.v}</p>
@@ -855,25 +865,27 @@ export default function App() {
               { label: "🔴 Critical & High Impact", items: high, color: "#f87171" },
               { label: "🟡 Medium Impact", items: med, color: "#fbbf24" },
               { label: "🟢 Quick Wins", items: low, color: "#4ade80" },
-            ].filter(g=>g.items.length>0).map(group=>(
+            ].filter(g => g.items.length > 0).map(group => (
               <div key={group.label} style={{ marginBottom: "28px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
                   <h3 className="display" style={{ fontSize: "15px", fontWeight: 700, color: group.color }}>{group.label}</h3>
                   <span style={{ background: `${group.color}15`, color: group.color, fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px" }}>{group.items.length}</span>
                 </div>
-                {group.items.map(check=>{
-                  const sMin2 = bill>0 ? Math.round(bill*check.savingsRange[0]/100) : null;
-                  const sMax2 = bill>0 ? Math.round(bill*check.savingsRange[1]/100) : null;
+                {group.items.map(check => {
+                  const sMin2 = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
+                  const sMax2 = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
                   return (
                     <div key={check.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderLeft: `3px solid ${group.color}`, borderRadius: "0 12px 12px 0", padding: "16px 20px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
                       <div>
                         <p style={{ fontWeight: 600, fontSize: "15px", color: "#fff", marginBottom: "4px" }}>{check.label}</p>
                         <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>{check.detail}</p>
                       </div>
-                      {bill>0&&<div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "8px 14px", textAlign: "right", flexShrink: 0 }}>
-                        <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--green)" }}>${sMin2?.toLocaleString()} – ${sMax2?.toLocaleString()}</p>
-                        <p style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ month</p>
-                      </div>}
+                      {bill > 0 && (
+                        <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "8px 14px", textAlign: "right", flexShrink: 0 }}>
+                          <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--green)" }}>${sMin2?.toLocaleString()} – ${sMax2?.toLocaleString()}</p>
+                          <p style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ month</p>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -884,12 +896,12 @@ export default function App() {
           <div className="fade-up stagger-3" style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", marginBottom: "24px" }}>
             <h3 className="display" style={{ fontSize: "18px", fontWeight: 700, marginBottom: "20px", color: "#fff", letterSpacing: "-0.3px" }}>Recommended action plan</h3>
             {[
-              high.length>0 && { n:1, t:"Tackle critical & high-impact findings first — fastest ROI with least risk.", c:"#f87171" },
-              { n:2, t:"Set billing alerts at 80% and 100% of your monthly target in your cloud console today.", c:"var(--green)" },
-              { n:3, t:"Implement auto-shutdown for dev/staging outside business hours.", c:"var(--green)" },
-              { n:4, t:"Run a rightsizing review using your provider's native tooling (Compute Optimizer / GCP Recommender).", c:"#818cf8" },
-              { n:5, t:"Revisit this audit in 30 days after changes are applied to measure real impact.", c:"var(--text-dim)" },
-            ].filter(Boolean).map(item=>(
+              high.length > 0 && { n: 1, t: "Tackle critical & high-impact findings first — fastest ROI with least risk.", c: "#f87171" },
+              { n: 2, t: "Set billing alerts at 80% and 100% of your monthly target in your cloud console today.", c: "var(--green)" },
+              { n: 3, t: "Implement auto-shutdown for dev/staging outside business hours.", c: "var(--green)" },
+              { n: 4, t: "Run a rightsizing review using your provider's native tooling (Compute Optimizer / GCP Recommender).", c: "#818cf8" },
+              { n: 5, t: "Revisit this audit in 30 days after changes are applied to measure real impact.", c: "var(--text-dim)" },
+            ].filter(Boolean).map(item => (
               <div key={item.n} style={{ display: "flex", gap: "14px", alignItems: "flex-start", marginBottom: "14px" }}>
                 <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: `${item.c}15`, border: `1.5px solid ${item.c}40`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <span className="display" style={{ fontSize: "12px", fontWeight: 800, color: item.c }}>{item.n}</span>
@@ -920,7 +932,7 @@ export default function App() {
                 <div style={{ position: "absolute", top: "12px", right: "12px", background: "var(--green)", color: "#000", fontSize: "10px", fontWeight: 800, padding: "3px 8px", borderRadius: "6px", letterSpacing: "0.5px" }}>RECOMMENDED</div>
                 <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>⚡ 299 PLN — AI Blueprint</div>
                 <p className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "12px", letterSpacing: "-0.3px" }}>AI-Written Implementation Guide</p>
-                {[`Exact ${provider||"cloud"} CLI commands`, "Terraform snippets per issue", "Step-by-step fix instructions", "Verification commands", "PDF delivered in ~2 minutes"].map(f => (
+                {[`Exact ${provider || "cloud"} CLI commands`, "Terraform snippets per issue", "Step-by-step fix instructions", "Verification commands", "PDF delivered in ~2 minutes"].map(f => (
                   <div key={f} style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
                     <span style={{ color: "var(--green)", fontSize: "12px" }}>✓</span>
                     <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>{f}</span>
@@ -930,13 +942,20 @@ export default function App() {
             </div>
 
             <p style={{ fontSize: "13px", color: "var(--text-muted)", textAlign: "center", marginBottom: "20px" }}>
-              The Blueprint pays for itself the first month. {savMin > 0 ? `You're looking at $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/mo in savings.` : "Average client saves $2,800+/month."}
+              The Blueprint pays for itself the first month.{savMin > 0 ? ` You're looking at $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/mo in savings.` : " Average client saves $2,800+/month."}
             </p>
 
+            {/* FIX: removed duplicate wrapping div; wired up Blueprint button correctly */}
             <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-              <button className="glow-btn" style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 28px rgba(0,255,180,0.35)" }}>
-                Book for 999 PLN →
+              <button
+                className="glow-btn"
+                onClick={() => handleBuyBlueprint()}
+                disabled={blueprintStatus === "loading"}
+                style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 28px rgba(0,255,180,0.35)", display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                {blueprintStatus === "loading" ? (
+                  <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Redirecting...</>
+                ) : "⚡ Get AI Blueprint — 299 PLN →"}
               </button>
               <button className="ghost-btn" onClick={() => goTo("intro")}
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px" }}>
@@ -944,6 +963,7 @@ export default function App() {
               </button>
             </div>
           </div>
+
         </div>
       </div>
     );
