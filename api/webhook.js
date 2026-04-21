@@ -69,7 +69,7 @@ export default async function handler(req, res) {
     // ── STEP 3: Send email via SendGrid (Remains Unchanged) ───────────────
     await sgMail.send({
       to: email,
-      from: { email: 'admin@kloudaudit.eu', name: 'Samuel @ KloudAudit' },
+      from: { email: 'admin@kloudaudit.eu', name: 'Samuel A @ KloudAudit' },
       subject: `Your ${provider} Implementation Blueprint is ready ⚡`,
       html: ``,
       attachments: [{
