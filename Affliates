@@ -1,0 +1,29 @@
+const AFFILIATE_TOOLS = [
+  {
+    id: "DigitalOcean",
+    name: "DigitalOcean",
+    category: "Compute Saving",
+    tagline: "Full-stack observability — catch cost spikes before they explode",
+    why: "See exactly which services are burning money in real time. Used by 26,000+ companies.",
+    badge: "Free 14-day trial",
+    badgeColor: "#7c3aed",
+    icon: "📊",
+    providers: ["AWS", "GCP", "Azure", "Multi-cloud"],
+    href: "https://m.do.co/c/d964278cc72b",  // replace with affiliate link
+    commission: "$100 per signup",
+  },
+  
+  {
+    id: "vultr",
+    name: "Vultr",
+    category: "Cloud Alternative",
+    tagline: "High-performance cloud at 60% less than AWS — worth comparing",
+    why: "If your workloads are not AWS-specific, Vultr often cuts bills dramatically. $100 free credit.",
+    badge: "$100 free credit",
+    badgeColor: "#00d4ff",
+    icon: "🚀",
+    providers: ["AWS", "Multi-cloud"],
+    href: "https://www.vultr.com/?ref=9896539-9J",  // replace with actual referral link
+    commission: "$100 per signup",
+  },
+];
