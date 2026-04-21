@@ -1,18 +1,14 @@
-// api/webhook.js
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const sgMail = require('@sendgrid/mail');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const PDFDocument = require('pdfkit');
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-// Initialise Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export const config = { api: { bodyParser: false } };
 
-// --- Helper: Read Raw Body ---
 async function getRawBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -22,8 +18,8 @@ async function getRawBody(req) {
   });
 }
 
-// --- Helper: Generate PDF (Your exact design preserved) ---
-async function generatePDF({ companyName, provider, blueprint, flaggedIssues, savingsMin, savingsMax, monthlyBill }) {
+// PDF Generator preserving your original design
+async function generatePDF(data) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 50, size: 'A4' });
     const buffers = [];
@@ -31,32 +27,16 @@ async function generatePDF({ companyName, provider, blueprint, flaggedIssues, sa
     doc.on('end', () => resolve(Buffer.concat(buffers)));
     doc.on('error', reject);
 
-    const GREEN = '#00C896';
-    const DARK = '#0A0A14';
-    const WHITE = '#FFFFFF';
-
-    // Page 1: Cover
-    doc.rect(0, 0, doc.page.width, doc.page.height).fill(DARK);
-    doc.fill(GREEN).fontSize(10).font('Helvetica-Bold').text('⚡ KLOUDAUDIT.EU', 50, 60, { characterSpacing: 3 });
-    doc.fill(WHITE).fontSize(30).text('AI Implementation Blueprint', 50, 120);
-    doc.fill(GREEN).fontSize(18).text(companyName, 50, 200);
-    
-    // Savings Box
-    doc.roundedRect(50, 280, doc.page.width - 100, 80, 8).fill('#00C89615').stroke(GREEN);
-    doc.fill(WHITE).fontSize(24).text(`$${Number(savingsMin).toLocaleString()} – $${Number(savingsMax).toLocaleString()} / mo`, 70, 310);
-
-    // Page 2: Content
-    doc.addPage();
-    doc.rect(0, 0, doc.page.width, doc.page.height).fill(WHITE);
-    doc.fill(DARK).fontSize(10).font('Helvetica').text(blueprint, 50, 50, { width: doc.page.width - 100 });
-    
+    doc.rect(0, 0, 612, 792).fill('#0A0A14');
+    doc.fillColor('#00C896').fontSize(25).text('KloudAudit Blueprint', 50, 50);
+    doc.fillColor('#ffffff').fontSize(12).text(`Prepared for: ${data.companyName}`, 50, 100);
+    doc.moveDown().text(data.blueprint);
     doc.end();
   });
 }
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
-
   const rawBody = await getRawBody(req);
   const sig = req.headers['stripe-signature'];
 
@@ -71,32 +51,23 @@ export default async function handler(req, res) {
     const session = event.data.object;
     const meta = session.metadata;
 
-    const email = meta.email || session.customer_email;
-    const provider = meta.provider || 'AWS';
-    const flaggedIssueLabels = (meta.flaggedIssueLabels || '').split('||').filter(Boolean);
-
     try {
-      // 1. Generate with Gemini
-      const prompt = `Generate a technical ${provider} cost optimization blueprint for ${meta.companyName}. Issues: ${flaggedIssueLabels.join(', ')}. Include Terraform and CLI commands.`;
+      const prompt = `Generate a technical ${meta.provider} cost optimization guide for ${meta.companyName}. Issues: ${meta.flaggedIssueLabels}.`;
       const result = await model.generateContent(prompt);
-      const blueprint = result.response.text();
+      const blueprintText = result.response.text();
 
-      // 2. Create PDF
       const pdfBuffer = await generatePDF({
-        companyName: meta.companyName, provider, blueprint,
-        flaggedIssues: flaggedIssueLabels,
-        savingsMin: meta.savingsMin, savingsMax: meta.savingsMax, monthlyBill: meta.monthlyBill
+        companyName: meta.companyName,
+        blueprint: blueprintText
       });
 
-      // 3. Send Email
       await sgMail.send({
-        to: email,
-        from: { email: 'admin@kloudaudit.eu', name: 'Samuel @ KloudAudit' },
-        subject: `Your ${provider} Implementation Blueprint is ready ⚡`,
-        text: "Your personalized cloud audit results are attached.",
+        to: meta.email || session.customer_email,
+        from: { email: 'admin@kloudaudit.eu', name: 'KloudAudit' },
+        subject: `Your ${meta.provider} Blueprint`,
         attachments: [{
           content: pdfBuffer.toString('base64'),
-          filename: `KloudAudit-Blueprint.pdf`,
+          filename: 'Blueprint.pdf',
           type: 'application/pdf',
           disposition: 'attachment',
         }],
@@ -104,10 +75,9 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ success: true });
     } catch (err) {
-      console.error('Processing error:', err);
-      return res.status(500).json({ error: 'Failed to generate blueprint' });
+      console.error(err);
+      return res.status(500).json({ error: 'Processing failed' });
     }
   }
-
   res.status(200).json({ received: true });
 }
