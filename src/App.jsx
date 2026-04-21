@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import SEOPage, { SEO_PAGES } from "./src/SEOPages.jsx";
 
 const AUDIT_SECTIONS = [
   {
@@ -226,6 +227,51 @@ export default function App() {
     }
   };
 
+  // ─── BUY BLUEPRINT — calls Vercel Function → Stripe ─────────────────────
+  const handleBuyBlueprint = async (emailOverride) => {
+    const userEmail = emailOverride || blueprintEmail;
+    if (!userEmail) { setShowBlueprintModal(true); return; }
+    setBlueprintStatus("loading");
+    try {
+      const response = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: userEmail,
+          provider,
+          monthlyBill: bill,
+          companyName: companyName || "Your Company",
+          savingsMin: savMin,
+          savingsMax: savMax,
+          flaggedIssues: flagged.map(c => ({ id: c.id, label: c.label })),
+        }),
+      });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url; // redirect to Stripe Checkout
+      } else {
+        throw new Error(data.error || "Failed to create checkout");
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+      setBlueprintStatus("error");
+      setTimeout(() => setBlueprintStatus("idle"), 3000);
+    }
+  };
+
+  // Handle payment success return from Stripe
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "success") {
+      setStep("payment_success");
+      window.history.replaceState({}, "", "/");
+    }
+    // SEO page navigation via custom event (from SEOPage component)
+    const handleSEONav = (e) => setSeoPage(e.detail);
+    window.addEventListener("navigateSEO", handleSEONav);
+    return () => window.removeEventListener("navigateSEO", handleSEONav);
+  }, []);
+
   // ─── NAV ────────────────────────────────────────────────────────────────────
   const Nav = ({ showBack, onBack }) => (
     <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(8,8,16,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid var(--border)", padding: "0 24px", height: "58px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -259,7 +305,7 @@ export default function App() {
     <div className="modal-overlay" onClick={() => setShowContact(false)} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
       <div className="modal-box" onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "24px", maxWidth: "480px", width: "100%", padding: "40px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)" }}>
         <h2 className="display" style={{ fontSize: "32px", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "8px" }}>Get in touch</h2>
-        <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "32px" }}>Have questions? Send a message or email us directly at <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none", fontWeight: 600 }}>admin@kloudaudit.eu</a></p>
+        <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "32px" }}>Have questions about your audit? Drop us a message.</p>
         
         {formStatus === "success" ? (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
@@ -283,6 +329,46 @@ export default function App() {
             {formStatus === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center" }}>Something went wrong. Please try again.</p>}
           </form>
         )}
+      </div>
+    </div>
+  );
+
+  // ─── BLUEPRINT EMAIL MODAL ──────────────────────────────────────────────────
+  const BlueprintEmailModal = () => (
+    <div onClick={() => setShowBlueprintModal(false)} style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "460px", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
+        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+          <div style={{ fontSize: "40px", marginBottom: "12px" }}>📄</div>
+          <h2 className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>Get Your AI Blueprint</h2>
+          <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.6 }}>
+            Enter your email and you'll be taken to secure payment. Your personalised {provider} implementation guide lands in your inbox within 2 minutes of payment.
+          </p>
+        </div>
+        {/* What's included */}
+        <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "10px", padding: "14px 18px", marginBottom: "20px" }}>
+          <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>What you get:</p>
+          {["Exact CLI commands for your " + (provider||"cloud") + " setup", "Terraform snippets for each fix", "Step-by-step implementation guide", `${flagged.length} issues covered with savings estimates`, "PDF delivered to your inbox instantly"].map(f => (
+            <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <span style={{ color: "var(--green)", fontSize: "13px" }}>✓</span>
+              <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>{f}</span>
+            </div>
+          ))}
+        </div>
+        <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Your Email</label>
+        <input type="email" placeholder="you@company.com" value={blueprintEmail} onChange={e => setBlueprintEmail(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && blueprintEmail && handleBuyBlueprint(blueprintEmail)}
+          style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "15px", fontFamily: "inherit", marginBottom: "14px" }} />
+        <button className="glow-btn" onClick={() => blueprintEmail && handleBuyBlueprint(blueprintEmail)}
+          disabled={!blueprintEmail || blueprintStatus === "loading"}
+          style={{ background: blueprintEmail ? "var(--green)" : "rgba(255,255,255,0.06)", color: blueprintEmail ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: blueprintEmail ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+          {blueprintStatus === "loading" ? (
+            <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Redirecting to payment...</>
+          ) : "Pay 299 PLN → Get Blueprint"}
+        </button>
+        {blueprintStatus === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Something went wrong. Please try again.</p>}
+        <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "12px" }}>
+          🔒 Secure payment via Stripe · Instant delivery · No refund needed — it works.
+        </p>
       </div>
     </div>
   );
@@ -365,6 +451,44 @@ export default function App() {
     );
   };
 
+  // ─── PAYMENT SUCCESS ────────────────────────────────────────────────────────
+  if (step === "payment_success") return (
+    <div className="app">
+      <style>{globalCss}</style>
+      <ParticleBackground />
+      <Nav />
+      <div style={{ maxWidth: "560px", margin: "0 auto", padding: "120px 24px", textAlign: "center", position: "relative", zIndex: 1 }}>
+        <div style={{ fontSize: "72px", marginBottom: "24px" }}>🎉</div>
+        <h1 className="display" style={{ fontSize: "36px", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff", marginBottom: "12px" }}>Blueprint on its way!</h1>
+        <p style={{ fontSize: "17px", color: "var(--text-muted)", lineHeight: 1.7, marginBottom: "32px" }}>
+          Payment confirmed. Your AI-generated implementation guide is being prepared right now and will land in your inbox within <strong style={{ color: "var(--green)" }}>2 minutes</strong>.
+        </p>
+        <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "14px", padding: "24px", marginBottom: "32px" }}>
+          <p style={{ fontSize: "14px", color: "var(--text-dim)", marginBottom: "4px" }}>Check your email for a message from</p>
+          <p style={{ fontSize: "16px", fontWeight: 700, color: "var(--green)" }}>admin@kloudaudit.eu</p>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>Subject: "Your {provider} Implementation Blueprint is ready ⚡"</p>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>Check spam if you don't see it within 5 minutes.</p>
+        </div>
+        <button className="glow-btn" onClick={() => { setStep("intro"); setChecked({}); }}
+          style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>
+          Run Another Audit →
+        </button>
+      </div>
+    </div>
+  );
+
+  // ─── SEO LANDING PAGE ────────────────────────────────────────────────────────
+  if (seoPage) return (
+    <div className="app">
+      <style>{globalCss}</style>
+      <ParticleBackground />
+      {showBooking && <BookingModal />}
+      {showBlueprintModal && <BlueprintEmailModal />}
+      <Nav showBack onBack={() => setSeoPage(null)} />
+      <SEOPage page={seoPage} onStartAudit={() => { setSeoPage(null); goTo("intake"); }} />
+    </div>
+  );
+
   // ─── INTRO ──────────────────────────────────────────────────────────────────
   if (step === "intro") return (
     <div className="app">
@@ -403,6 +527,13 @@ export default function App() {
             </button>
           </div>
           <p className="fade-up stagger-4" style={{ marginTop: "20px", fontSize: "12px", color: "var(--text-muted)" }}>✓ 100% free &nbsp;·&nbsp; ✓ No signup &nbsp;·&nbsp; ✓ Results in 15 minutes</p>
+        </div>
+
+        {/* ── SEO HIDDEN LINKS — helps Google discover all 50 pages ── */}
+        <div style={{ display: "none" }} aria-hidden="true">
+          {SEO_PAGES.map(p => (
+            <button key={p.slug} onClick={() => setSeoPage(p)} style={{ display: "none" }}>{p.title}</button>
+          ))}
         </div>
 
         <div className="fade-up stagger-3" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1px", background: "var(--border)", borderRadius: "16px", overflow: "hidden", border: "1px solid var(--border)", marginBottom: "80px" }}>
@@ -450,8 +581,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* ── BOTTOM CTA ── */}
-        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.06) 0%, rgba(99,102,241,0.06) 100%)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "24px", padding: "60px 40px", textAlign: "center", marginBottom: "60px" }}>
+        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.06) 0%, rgba(99,102,241,0.06) 100%)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "24px", padding: "60px 40px", textAlign: "center", marginBottom: "80px" }}>
           <h2 className="display" style={{ fontSize: "clamp(26px,3vw,40px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "14px" }}>Ready to find your savings?</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "16px", marginBottom: "32px" }}>Takes 15 minutes. Free forever. No credit card.</p>
           <button className="glow-btn" onClick={() => goTo("intake")}
@@ -459,98 +589,6 @@ export default function App() {
             Start Free Audit →
           </button>
         </div>
-
-        {/* ── TRUST FOOTER ── */}
-        <div style={{ borderTop: "1px solid var(--border)", paddingTop: "48px", marginBottom: "60px" }}>
-          {/* Section label */}
-          <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "3px", textTransform: "uppercase", marginBottom: "24px", textAlign: "center" }}>Meet Your Engineer</p>
-
-          {/* Consultant card */}
-          <div style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.18)", borderRadius: "20px", overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 1fr", boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}>
-
-            {/* LEFT — identity */}
-            <div style={{ background: "#0a0a14", padding: "36px 40px", position: "relative", overflow: "hidden" }}>
-              {/* bg glow */}
-              <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "160px", height: "160px", background: "radial-gradient(circle, rgba(0,255,180,0.08) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
-              {/* Avatar */}
-              <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: 800, color: "#000", marginBottom: "20px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", fontFamily: "var(--display)" }}>SA</div>
-              {/* Name */}
-              <h3 className="display" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "14px" }}>Samuel Ayodele Adomeh</h3>
-              {/* Certs */}
-              {["Certified Azure Architect Expert", "Certified Azure DevOps Expert", "Kubernetes · Terraform · Docker"].map(c => (
-                <div key={c} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                  <span style={{ color: "var(--green)", fontSize: "13px" }}>✓</span>
-                  <span style={{ fontSize: "13px", color: "var(--green)", fontWeight: 500 }}>{c}</span>
-                </div>
-              ))}
-              {/* Location */}
-              <div style={{ marginTop: "16px", display: "flex", alignItems: "center", gap: "7px" }}>
-                <span style={{ fontSize: "13px" }}>📍</span>
-                <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>Wrocław, Poland · Remote Worldwide</span>
-              </div>
-              {/* Credential badges */}
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "20px" }}>
-                {["Azure Architect", "DevOps Expert", "28 GitHub repos"].map(b => (
-                  <span key={b} style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "6px", padding: "3px 10px" }}>{b}</span>
-                ))}
-              </div>
-            </div>
-
-            {/* RIGHT — links + CTA */}
-            <div style={{ padding: "36px 40px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {[
-                  { icon: "🌐", label: "kloudaudit.eu", href: "https://kloudaudit.eu", color: "var(--green)" },
-                  { icon: "✉️", label: "admin@kloudaudit.eu", href: "mailto:admin@kloudaudit.eu", color: "#00d4ff" },
-                  { icon: "💼", label: "linkedin.com/in/adomeh", href: "https://www.linkedin.com/in/adomeh", color: "#0077b5" },
-                  { icon: "💻", label: "github.com/leumasj", href: "https://github.com/leumasj", color: "var(--text-dim)" },
-                ].map(link => (
-                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer"
-                    style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none", padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: "10px", transition: "all 0.2s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = link.color; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}>
-                    <span style={{ fontSize: "16px" }}>{link.icon}</span>
-                    <span style={{ fontSize: "13px", color: link.color, fontWeight: 500 }}>{link.label}</span>
-                  </a>
-                ))}
-              </div>
-
-              {/* CTA box */}
-              <div style={{ marginTop: "24px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "12px", padding: "20px" }}>
-                <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "6px" }}>Need hands-on implementation?</p>
-                <p className="display" style={{ fontSize: "18px", fontWeight: 800, color: "var(--green)", letterSpacing: "-0.3px", marginBottom: "6px" }}>Sessions from 999 PLN</p>
-                <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "14px" }}>Remote · Delivered within 48hrs · Full docs included</p>
-                <button className="glow-btn" onClick={() => setShowBooking(true)}
-                  style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "9px", padding: "11px 22px", fontSize: "13px", width: "100%", boxShadow: "0 0 16px rgba(0,255,180,0.25)" }}>
-                  Book a Session →
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom micro footer */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ width: "24px", height: "24px", background: "var(--green)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(0,255,180,0.3)", fontSize: "12px" }}>⚡</div>
-              <span className="display" style={{ fontWeight: 800, fontSize: "14px", color: "#fff" }}>KloudAudit</span>
-              <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>© {new Date().getFullYear()}</span>
-            </div>
-            <div style={{ display: "flex", gap: "10px" }}>
-              {[
-                { label: "LinkedIn", href: "https://www.linkedin.com/in/adomeh", hoverColor: "#0077b5" },
-                { label: "GitHub", href: "https://github.com/leumasj", hoverColor: "#fff" },
-              ].map(s => (
-                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--border)", borderRadius: "8px", background: "rgba(255,255,255,0.03)", transition: "all 0.2s" }}
-                  onMouseEnter={e => { e.currentTarget.style.color = s.hoverColor; e.currentTarget.style.borderColor = s.hoverColor; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border)"; }}>
-                  {s.label}
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
   );
@@ -861,10 +899,41 @@ export default function App() {
             ))}
           </div>
 
-          <div className="fade-up stagger-4" style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.07) 0%, rgba(99,102,241,0.07) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "20px", padding: "40px", textAlign: "center" }}>
-            <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "12px" }}>Need hands-on help?</p>
-            <h3 className="display" style={{ fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "#fff", marginBottom: "10px" }}>Book an implementation session</h3>
-            <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "28px" }}>Senior DevOps engineer · Remote · Full report + implementation in 48hrs</p>
+          {/* ── TIERED CTA — Free vs Paid ── */}
+          <div className="fade-up stagger-4" style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.05) 0%, rgba(99,102,241,0.05) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "20px", padding: "40px" }}>
+            <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "16px", textAlign: "center" }}>What happens next?</p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "28px" }}>
+              {/* Free tier */}
+              <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: "14px", padding: "24px" }}>
+                <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>✅ Free — You already have this</div>
+                <p className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "12px", letterSpacing: "-0.3px" }}>Audit Checklist + Savings Report</p>
+                {["Identified issues with savings range", "Priority order (Critical → Low)", "Action plan overview", "PDF export"].map(f => (
+                  <div key={f} style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
+                    <span style={{ color: "#4ade80", fontSize: "12px" }}>✓</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Paid tier */}
+              <div style={{ background: "rgba(0,255,180,0.05)", border: "2px solid rgba(0,255,180,0.3)", borderRadius: "14px", padding: "24px", position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: "12px", right: "12px", background: "var(--green)", color: "#000", fontSize: "10px", fontWeight: 800, padding: "3px 8px", borderRadius: "6px", letterSpacing: "0.5px" }}>RECOMMENDED</div>
+                <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>⚡ 299 PLN — AI Blueprint</div>
+                <p className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "12px", letterSpacing: "-0.3px" }}>AI-Written Implementation Guide</p>
+                {[`Exact ${provider||"cloud"} CLI commands`, "Terraform snippets per issue", "Step-by-step fix instructions", "Verification commands", "PDF delivered in ~2 minutes"].map(f => (
+                  <div key={f} style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
+                    <span style={{ color: "var(--green)", fontSize: "12px" }}>✓</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p style={{ fontSize: "13px", color: "var(--text-muted)", textAlign: "center", marginBottom: "20px" }}>
+              The Blueprint pays for itself the first month. {savMin > 0 ? `You're looking at $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/mo in savings.` : "Average client saves $2,800+/month."}
+            </p>
+
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
             <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
               <button className="glow-btn" style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 28px rgba(0,255,180,0.35)" }}>
                 Book for 999 PLN →
