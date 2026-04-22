@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
 
+# Block non-content paths
+Disallow: /api/
+Disallow: /_vercel/
+
+# Sitemaps
 Sitemap: https://kloudaudit.eu/sitemap.xml

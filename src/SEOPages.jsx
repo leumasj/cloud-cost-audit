@@ -2,6 +2,8 @@
 // 50 programmatic SEO landing pages — each targets a specific search query
 // These pages are indexed by Google and drive zero-cost organic traffic
 
+import { useEffect } from "react";
+
 export const SEO_PAGES = [
   // AWS specific
   { slug: "fix-aws-nat-gateway-charges", provider: "AWS", keyword: "Excessive NAT Gateway charges AWS", title: "How to Fix Excessive AWS NAT Gateway Charges", issue: "nat_gateway", saving: "10–30%" },
@@ -20,7 +22,7 @@ export const SEO_PAGES = [
   { slug: "aws-snapshot-cleanup", provider: "AWS", keyword: "AWS snapshot costs reduce", title: "AWS Snapshot Retention Policy: Stop the Silent Cost Drain", issue: "snapshots", saving: "5–15%" },
   { slug: "aws-cost-optimization-checklist", provider: "AWS", keyword: "AWS cost optimization checklist 2026", title: "The Complete AWS Cost Optimisation Checklist for 2026", issue: null, saving: "20–45%" },
 
-  // Azure specific  
+  // Azure specific
   { slug: "fix-azure-vm-costs", provider: "Azure", keyword: "Reduce Azure VM costs", title: "How to Reduce Azure VM Costs by 40% Immediately", issue: "rightsizing", saving: "15–40%" },
   { slug: "azure-reserved-instances", provider: "Azure", keyword: "Azure Reserved Instances savings", title: "Azure Reserved vs Pay-as-you-go: Save 40% on VMs", issue: "reserved", saving: "20–45%" },
   { slug: "azure-blob-storage-cost", provider: "Azure", keyword: "Reduce Azure Blob storage costs", title: "Cut Azure Blob Storage Costs 60% With Lifecycle Management", issue: "s3_tier", saving: "30–60%" },
@@ -61,8 +63,115 @@ export const SEO_PAGES = [
   { slug: "startup-cloud-costs", provider: "Multi-cloud", keyword: "startup cloud costs too high", title: "Why Your Startup's Cloud Bill Is Too High (And the Fix)", issue: null, saving: "20–45%" },
 ];
 
+// ── SEO Head injector — sets real <title>, <meta>, canonical, JSON-LD ──────
+function useSEOHead(page) {
+  useEffect(() => {
+    const BASE = "https://kloudaudit.eu";
+    const canonicalUrl = `${BASE}/${page.slug}/`;
+    const description = `${page.title}. Typical savings: ${page.saving} of affected ${page.provider} spend. Free 15-minute audit at KloudAudit.eu — no cloud access required.`;
+
+    // ── <title> ────────────────────────────────────────────────────────────
+    document.title = `${page.title} | KloudAudit`;
+
+    // ── helper: upsert a <meta> tag ────────────────────────────────────────
+    const setMeta = (attr, key, content) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`);
+      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, key); document.head.appendChild(el); }
+      el.setAttribute("content", content);
+    };
+
+    // ── helper: upsert a <link> tag ────────────────────────────────────────
+    const setLink = (rel, href) => {
+      let el = document.querySelector(`link[rel="${rel}"]`);
+      if (!el) { el = document.createElement("link"); el.setAttribute("rel", rel); document.head.appendChild(el); }
+      el.setAttribute("href", href);
+    };
+
+    // Standard meta
+    setMeta("name", "description", description);
+    setMeta("name", "robots", "index, follow");
+    setMeta("name", "author", "Samuel Ayodele Adomeh · KloudAudit.eu");
+
+    // Open Graph
+    setMeta("property", "og:type", "article");
+    setMeta("property", "og:url", canonicalUrl);
+    setMeta("property", "og:title", `${page.title} | KloudAudit`);
+    setMeta("property", "og:description", description);
+    setMeta("property", "og:image", `${BASE}/android-chrome-512x512.png`);
+    setMeta("property", "og:site_name", "KloudAudit");
+
+    // Twitter
+    setMeta("name", "twitter:card", "summary_large_image");
+    setMeta("name", "twitter:title", `${page.title} | KloudAudit`);
+    setMeta("name", "twitter:description", description);
+    setMeta("name", "twitter:image", `${BASE}/android-chrome-512x512.png`);
+
+    // Canonical
+    setLink("canonical", canonicalUrl);
+
+    // ── JSON-LD structured data ────────────────────────────────────────────
+    const jsonld = {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": page.title,
+      "description": description,
+      "url": canonicalUrl,
+      "datePublished": "2026-01-01",
+      "dateModified": new Date().toISOString().split("T")[0],
+      "author": {
+        "@type": "Person",
+        "name": "Samuel Ayodele Adomeh",
+        "url": "https://www.linkedin.com/in/samuel-ayodele-adomeh",
+        "jobTitle": "Senior DevOps Engineer",
+        "worksFor": { "@type": "Organization", "name": "KloudAudit", "url": BASE }
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "KloudAudit",
+        "url": BASE,
+        "logo": { "@type": "ImageObject", "url": `${BASE}/android-chrome-192x192.png` }
+      },
+      "about": { "@type": "Thing", "name": `${page.provider} cloud cost optimisation` },
+      "keywords": `${page.keyword}, cloud cost optimisation, ${page.provider} costs, FinOps, DevOps`,
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "KloudAudit", "item": BASE },
+          { "@type": "ListItem", "position": 2, "name": page.provider, "item": `${BASE}/#${page.provider.toLowerCase()}` },
+          { "@type": "ListItem", "position": 3, "name": page.title, "item": canonicalUrl }
+        ]
+      }
+    };
+
+    let scriptEl = document.querySelector('script[data-seo="kloudaudit-page"]');
+    if (!scriptEl) { scriptEl = document.createElement("script"); scriptEl.setAttribute("type", "application/ld+json"); scriptEl.setAttribute("data-seo", "kloudaudit-page"); document.head.appendChild(scriptEl); }
+    scriptEl.textContent = JSON.stringify(jsonld, null, 2);
+
+    // ── Push real URL to browser history so Googlebot sees the slug ────────
+    const targetPath = `/${page.slug}/`;
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({ slug: page.slug }, document.title, targetPath);
+    }
+
+    // ── Cleanup on unmount: restore homepage title/canonical ───────────────
+    return () => {
+      document.title = "KloudAudit — Find What Your Cloud Bill Is Hiding";
+      setMeta("name", "description", "A structured 15-minute audit that uncovers real savings in your AWS, GCP, or Azure spend. No agents. No access required.");
+      setLink("canonical", `${BASE}/`);
+      const s = document.querySelector('script[data-seo="kloudaudit-page"]');
+      if (s) s.remove();
+      if (window.location.pathname !== "/") {
+        window.history.pushState({}, document.title, "/");
+      }
+    };
+  }, [page.slug]);
+}
+
 // ── SEO Page Component ─────────────────────────────────────────────────────
 export default function SEOPage({ page, onStartAudit }) {
+  // Inject all SEO tags and set real URL
+  useSEOHead(page);
+
   const isAWS = page.provider === "AWS";
   const isAzure = page.provider === "Azure";
   const isGCP = page.provider === "GCP";
@@ -116,13 +225,12 @@ export default function SEOPage({ page, onStartAudit }) {
     "Review reserved instance utilisation quarterly — underutilised RIs are wasted commitments",
   ];
 
-  // Generate mock CLI snippet based on provider and issue
   const cliSnippet = {
     AWS: {
       nat_gateway: `# Find NAT Gateway data processed costs\naws cloudwatch get-metric-statistics \\\n  --namespace AWS/NatGateway \\\n  --metric-name BytesOutToDestination \\\n  --period 86400 --statistics Sum \\\n  --start-time $(date -d '30 days ago' +%Y-%m-%dT%H:%M:%S) \\\n  --end-time $(date +%Y-%m-%dT%H:%M:%S)\n\n# Create VPC endpoint for S3 (eliminates NAT charges)\naws ec2 create-vpc-endpoint \\\n  --vpc-id vpc-xxxxxxxx \\\n  --service-name com.amazonaws.eu-west-1.s3 \\\n  --route-table-ids rtb-xxxxxxxx`,
       rightsizing: `# Get Compute Optimizer recommendations\naws compute-optimizer get-ec2-instance-recommendations \\\n  --filters name=Finding,values=Overprovisioned \\\n  --query 'instanceRecommendations[*].{Instance:instanceArn,Current:currentInstanceType,Recommended:recommendationOptions[0].instanceType,Saving:recommendationOptions[0].estimatedMonthlySavings}' \\\n  --output table`,
-      reserved: `# Analyse on-demand spend to identify reservation candidates\naws ce get-reservation-purchase-recommendation \\\n  --service EC2 \\\n  --lookback-period-in-days SIXTY_DAYS \\\n  --term-in-years ONE_YEAR \\\n  --payment-option NO_UPFRONT \\\n  --query 'Recommendations[*].{InstanceType:RecommendationDetails[0].InstanceDetails.EC2InstanceDetails.InstanceType,MonthlySaving:RecommendationSummary.EstimatedMonthlySavingsAmount}' \\\n  --output table`,
-      s3_tier: `# Enable Intelligent Tiering on existing bucket\naws s3api put-bucket-intelligent-tiering-configuration \\\n  --bucket your-bucket-name \\\n  --id EntireBucket \\\n  --intelligent-tiering-configuration '{"Id":"EntireBucket","Status":"Enabled","Tierings":[{"Days":90,"AccessTier":"ARCHIVE_ACCESS"}]}'\n\n# Add lifecycle rule to move to IA after 30 days\naws s3api put-bucket-lifecycle-configuration \\\n  --bucket your-bucket-name \\\n  --lifecycle-configuration file://lifecycle.json`,
+      reserved: `# Analyse on-demand spend for reservation candidates\naws ce get-reservation-purchase-recommendation \\\n  --service EC2 \\\n  --lookback-period-in-days SIXTY_DAYS \\\n  --term-in-years ONE_YEAR \\\n  --payment-option NO_UPFRONT \\\n  --query 'Recommendations[*].{InstanceType:RecommendationDetails[0].InstanceDetails.EC2InstanceDetails.InstanceType,MonthlySaving:RecommendationSummary.EstimatedMonthlySavingsAmount}' \\\n  --output table`,
+      s3_tier: `# Enable Intelligent Tiering on existing bucket\naws s3api put-bucket-intelligent-tiering-configuration \\\n  --bucket your-bucket-name \\\n  --id EntireBucket \\\n  --intelligent-tiering-configuration '{"Id":"EntireBucket","Status":"Enabled","Tierings":[{"Days":90,"AccessTier":"ARCHIVE_ACCESS"}]}'\n\n# Add lifecycle rule: move to IA after 30 days\naws s3api put-bucket-lifecycle-configuration \\\n  --bucket your-bucket-name \\\n  --lifecycle-configuration file://lifecycle.json`,
     },
     Azure: {
       rightsizing: `# Get Azure Advisor cost recommendations\naz advisor recommendation list \\\n  --category Cost \\\n  --query '[].{Title:shortDescription.solution,Impact:impact,Savings:extendedProperties.annualSavingsAmount}' \\\n  --output table\n\n# Resize a VM\naz vm resize \\\n  --resource-group myRG \\\n  --name myVM \\\n  --size Standard_D2s_v5`,
@@ -140,14 +248,14 @@ export default function SEOPage({ page, onStartAudit }) {
   return (
     <div style={{ maxWidth: "860px", margin: "0 auto", padding: "88px 24px 80px", position: "relative", zIndex: 1 }}>
 
-      {/* Breadcrumb */}
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "32px", fontSize: "13px", color: "var(--text-muted)" }}>
-        <button onClick={onStartAudit} style={{ background: "none", border: "none", color: "var(--green)", cursor: "pointer", fontSize: "13px", padding: 0 }}>KloudAudit</button>
-        <span>›</span>
+      {/* Breadcrumb — visible to Google */}
+      <nav aria-label="breadcrumb" style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "32px", fontSize: "13px", color: "var(--text-muted)" }}>
+        <a href="https://kloudaudit.eu/" onClick={e => { e.preventDefault(); onStartAudit(); }} style={{ color: "var(--green)", textDecoration: "none" }}>KloudAudit</a>
+        <span aria-hidden="true">›</span>
         <span style={{ color: providerColor }}>{page.provider}</span>
-        <span>›</span>
+        <span aria-hidden="true">›</span>
         <span>{page.title}</span>
-      </div>
+      </nav>
 
       {/* Header */}
       <div style={{ marginBottom: "40px" }}>
@@ -234,15 +342,18 @@ export default function SEOPage({ page, onStartAudit }) {
         </button>
       </div>
 
-      {/* Internal links to other pages */}
+      {/* Internal links — real <a> tags for Google to follow */}
       <div style={{ borderTop: "1px solid var(--border)", paddingTop: "28px" }}>
         <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "16px" }}>Related Guides</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-          {SEO_PAGES.filter(p => p.slug !== page.slug && p.provider === page.provider).slice(0, 4).map(related => (
-            <button key={related.slug} onClick={() => window.dispatchEvent(new CustomEvent('navigateSEO', { detail: related }))}
-              style={{ fontSize: "13px", color: "var(--green)", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "6px 14px", cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" }}>
-              {related.title.replace(/^(How to|The Complete|Why Your|Stop|Find and|Cut|Is Your|Set Up|AWS|Azure|GCP|Get) /i, '').substring(0, 40)}...
-            </button>
+          {SEO_PAGES.filter(p => p.slug !== page.slug && p.provider === page.provider).slice(0, 5).map(related => (
+            <a
+              key={related.slug}
+              href={`https://kloudaudit.eu/${related.slug}/`}
+              onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigateSEO', { detail: related })); }}
+              style={{ fontSize: "13px", color: "var(--green)", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "6px 14px", cursor: "pointer", fontFamily: "inherit", textDecoration: "none", transition: "all 0.15s" }}>
+              {related.title.substring(0, 48)}{related.title.length > 48 ? "…" : ""}
+            </a>
           ))}
         </div>
       </div>
