@@ -241,6 +241,11 @@ export default function App() {
   // ── INTRO-SCREEN STATE (must live at top level — Rules of Hooks) ──────────
   const [calcBill, setCalcBill] = useState(5000);
   const [openFaq, setOpenFaq] = useState(null);
+  // ── MULTI-CURRENCY ────────────────────────────────────────────────────────
+  const [currency, setCurrency] = useState({
+    code: "PLN", symbol: "zł", blueprintPrice: {currency.blueprintPrice}, blueprintAmount: 29900,
+    sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln"
+  });
 
   const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
   const goTo = (s) => { setStep(s); setPageKey(k => k + 1); window.scrollTo(0, 0); };
@@ -266,6 +271,29 @@ export default function App() {
       window.history.replaceState({}, "", "/");
     }
   }, []);
+
+  // ── CURRENCY DETECTION ───────────────────────────────────────────
+  useEffect(() => {
+    const CURRENCY_MAP = {
+      US: { code: "USD", symbol: "$",   blueprintPrice: "$79",    blueprintAmount: 7900,  sessionPrice: "$249",   sessionAmount: 24900, stripeCurrency: "usd" },
+      GB: { code: "GBP", symbol: "\u00a3",   blueprintPrice: "\u00a362",    blueprintAmount: 6200,  sessionPrice: "\u00a3199",  sessionAmount: 19900, stripeCurrency: "gbp" },
+      DE: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
+      FR: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
+      NL: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
+      AT: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
+      BE: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
+      ES: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
+      IT: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
+      CA: { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107", blueprintAmount: 10700, sessionPrice: "CA$339", sessionAmount: 33900, stripeCurrency: "cad" },
+      AU: { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",  blueprintAmount: 11900, sessionPrice: "A$379",  sessionAmount: 37900, stripeCurrency: "aud" },
+      PL: { code: "PLN", symbol: "z\u0142",  blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln" },
+    };
+    fetch("https://ipapi.co/json/")
+      .then(r => r.json())
+      .then(data => { const match = CURRENCY_MAP[data.country_code]; if (match) setCurrency(match); })
+      .catch(() => {}); // silently keep PLN default on failure
+  }, []);
+
 
   // ── Formspree contact ──────────────────────────────────────────────────────
   const handleContactSubmit = async (e) => {
@@ -307,6 +335,8 @@ export default function App() {
           savingsMin: savMin,
           savingsMax: savMax,
           flaggedIssues: flagged.map(c => ({ id: c.id, label: c.label })),
+          currency: currency.stripeCurrency,
+          currencyAmount: currency.blueprintAmount,
         }),
       });
       const data = await res.json();
@@ -377,7 +407,7 @@ export default function App() {
             <div>
               <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "4px 12px", marginBottom: "10px" }}>
                 <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px var(--green)" }} />
-                <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>IMPLEMENTATION SESSION · 999 PLN</span>
+                <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>{`IMPLEMENTATION SESSION · ${currency.sessionPrice}`}</span>
               </div>
               <h2 className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "5px" }}>Book your session</h2>
               <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Senior DevOps engineer · Remote · Delivered within 48hrs</p>
@@ -399,7 +429,7 @@ export default function App() {
             </div>
           ) : (
             <form onSubmit={handleBookingSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <input type="hidden" name="_subject" value="New Booking – KloudAudit Implementation Session 999 PLN" />
+              <input type="hidden" name="_subject" value={`New Booking – KloudAudit Implementation Session ${currency.sessionPrice}`} />
               <input type="hidden" name="form_type" value="booking_999pln" />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
@@ -429,7 +459,7 @@ export default function App() {
               </div>
               <button type="submit" className="glow-btn" disabled={bookingStatus === "sending"}
                 style={{ background: bookingStatus === "sending" ? "rgba(0,255,180,0.5)" : "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "15px", fontSize: "15px", width: "100%", cursor: bookingStatus === "sending" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "4px" }}>
-                {bookingStatus === "sending" ? <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Sending...</> : "Book Session for 999 PLN →"}
+                {bookingStatus === "sending" ? <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Sending...</> : `Book Session for ${currency.sessionPrice} →`}
               </button>
               {bookingStatus === "error" && <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>⚠ Something went wrong. Please try again.</p>}
               <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>We'll confirm by email within 24 hours. No payment required upfront.</p>
@@ -476,7 +506,7 @@ export default function App() {
           style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
           {blueprintStatus === "loading" ? (
             <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Redirecting to payment...</>
-          ) : "Pay 299 PLN → Get Blueprint"}
+          ) : `Pay ${currency.blueprintPrice} → Get Blueprint`}
         </button>
         {blueprintStatus === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Something went wrong. Please try again or email admin@kloudaudit.eu</p>}
         <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "12px" }}>🔒 Secure payment via Stripe · Instant delivery · admin@kloudaudit.eu</p>
@@ -572,7 +602,7 @@ export default function App() {
 
   // ── INTRO ──────────────────────────────────────────────────────────────────
   if (step === "intro") {
-    // calcBill and openFaq are declared at top level (Rules of Hooks)
+    // calcBill and openFaq declared at top level (Rules of Hooks)
     const calcMin = Math.round(calcBill * 0.20);
     const calcMax = Math.round(calcBill * 0.45);
     const calcAnnual = Math.round(calcMin * 12);
@@ -588,13 +618,13 @@ export default function App() {
       { q: "How is the AI Blueprint different from the free report?", a: "The free report tells you *what* is wrong and estimates savings. The Blueprint tells you *exactly how to fix it* — with CLI commands, Terraform snippets, step-by-step instructions, and verification steps specific to your provider." },
       { q: "How fast do I receive the Blueprint?", a: "Instantly after payment confirmation. Claude AI generates your personalised guide in ~30 seconds, then SendGrid delivers it to your inbox. Most customers receive it within 2 minutes." },
       { q: "What if my cloud bill is lower than $1,000/month?", a: "The audit is still valuable for identifying waste patterns before they scale. The Blueprint is most cost-effective for bills over $1,500/mo — below that, the free report gives you plenty to work with." },
-      { q: "Is this a subscription?", a: "No. One-time payment of 299 PLN. You get a permanent PDF you can implement at your own pace." },
+      { q: "Is this a subscription?", a: `No. One-time payment of ${currency.blueprintPrice}. You get a permanent PDF you can implement at your own pace.` },
     ];
 
     const HOW_IT_WORKS = [
       { n: "01", title: "Run the free audit", desc: "Answer 18 structured questions about your cloud setup. Takes 10–15 minutes. No account needed.", color: "var(--green)" },
       { n: "02", title: "See your savings report", desc: "Instantly see your estimated waste, prioritised findings, and projected monthly savings.", color: "#818cf8" },
-      { n: "03", title: "Get the AI Blueprint", desc: "Pay 299 PLN. Claude AI writes your personalised fix guide — exact CLI commands, Terraform snippets, step-by-step.", color: "#00d4ff" },
+      { n: "03", title: "Get the AI Blueprint", desc: `Pay ${currency.blueprintPrice}. Claude AI writes your personalised fix guide — exact CLI commands, Terraform snippets, step-by-step.`, color: "#00d4ff" },
       { n: "04", title: "Implement & save", desc: "Follow the blueprint. Most clients recoup the cost within 24 hours of the first fix.", color: "#fb923c" },
     ];
 
@@ -707,7 +737,7 @@ export default function App() {
                 <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65 }}>{step.desc}</p>
                 {i === 2 && (
                   <div style={{ marginTop: "14px", display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "6px", padding: "4px 10px" }}>
-                    <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)" }}>299 PLN · one-time</span>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)" }}>{`${currency.blueprintPrice} · one-time`}</span>
                   </div>
                 )}
               </div>
@@ -743,7 +773,7 @@ export default function App() {
             </div>
             <div style={{ background: "rgba(0,255,180,0.04)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "12px", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
               <p style={{ fontSize: "14px", color: "var(--text-dim)" }}>
-                The Blueprint costs <strong style={{ color: "var(--green)" }}>299 PLN (~$75)</strong>. At your bill size, it pays for itself in <strong style={{ color: "#fff" }}>{calcMin > 75 ? "the first day" : "the first week"}</strong>.
+                The Blueprint costs <strong style={{ color: "var(--green)" }}>{currency.blueprintPrice}</strong>. At your bill size, it pays for itself in <strong style={{ color: "#fff" }}>{calcMin > (currency.blueprintAmount / 100) ? "the first day" : "the first week"}</strong>.
               </p>
               <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 24px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)", whiteSpace: "nowrap" }}>
                 Find my savings →
@@ -854,7 +884,7 @@ export default function App() {
             <div style={{ background: "rgba(0,255,180,0.04)", border: "2px solid rgba(0,255,180,0.3)", borderRadius: "20px", padding: "32px", position: "relative", display: "flex", flexDirection: "column" }}>
               <div style={{ position: "absolute", top: "-1px", right: "24px", background: "var(--green)", color: "#000", fontSize: "10px", fontWeight: 800, padding: "4px 12px", borderRadius: "0 0 8px 8px", letterSpacing: "0.5px" }}>BEST VALUE</div>
               <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>⚡ AI Blueprint</div>
-              <p className="display" style={{ fontSize: "28px", fontWeight: 800, color: "var(--green)", marginBottom: "4px" }}>299 PLN</p>
+              <p className="display" style={{ fontSize: "28px", fontWeight: 800, color: "var(--green)", marginBottom: "4px" }}>{currency.blueprintPrice}</p>
               <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "24px" }}>One-time · Instant delivery</p>
               {[
                 ["Issues checklist", true],
@@ -957,7 +987,7 @@ export default function App() {
               </div>
               <div style={{ marginTop: "24px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "12px", padding: "20px" }}>
                 <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "6px" }}>Need hands-on implementation?</p>
-                <p className="display" style={{ fontSize: "18px", fontWeight: 800, color: "var(--green)", letterSpacing: "-0.3px", marginBottom: "6px" }}>Sessions from 999 PLN</p>
+                <p className="display" style={{ fontSize: "18px", fontWeight: 800, color: "var(--green)", letterSpacing: "-0.3px", marginBottom: "6px" }}>{`Sessions from ${currency.sessionPrice}`}</p>
                 <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "14px" }}>Remote · Delivered within 48hrs · Full docs included</p>
                 <button className="glow-btn" onClick={() => setShowBooking(true)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "9px", padding: "11px 22px", fontSize: "13px", width: "100%", boxShadow: "0 0 16px rgba(0,255,180,0.25)" }}>Book a Session →</button>
               </div>
@@ -1282,7 +1312,7 @@ export default function App() {
               {/* Paid tier */}
               <div style={{ background: "rgba(0,255,180,0.05)", border: "2px solid rgba(0,255,180,0.3)", borderRadius: "14px", padding: "24px", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", top: "12px", right: "12px", background: "var(--green)", color: "#000", fontSize: "10px", fontWeight: 800, padding: "3px 8px", borderRadius: "6px" }}>RECOMMENDED</div>
-                <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>⚡ 299 PLN — AI Blueprint</div>
+                <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>{`⚡ ${currency.blueprintPrice} — AI Blueprint`}</div>
                 <p className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "12px", letterSpacing: "-0.3px" }}>AI Implementation Guide</p>
                 {[`Exact ${provider || "cloud"} CLI commands`, "Terraform snippets per issue", "Step-by-step fix instructions", "Verification commands", "PDF in your inbox in ~2 min"].map(f => (
                   <div key={f} style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
@@ -1313,10 +1343,10 @@ export default function App() {
               <button className="glow-btn" onClick={() => flagged.length > 0 ? setShowBlueprint(true) : null}
                 disabled={flagged.length === 0}
                 style={{ background: flagged.length > 0 ? "var(--green)" : "rgba(255,255,255,0.06)", color: flagged.length > 0 ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: flagged.length > 0 ? "0 0 28px rgba(0,255,180,0.35)" : "none", cursor: flagged.length > 0 ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: "8px" }}>
-                ⚡ Get AI Blueprint — 299 PLN →
+                {`⚡ Get AI Blueprint — ${currency.blueprintPrice} →`}
               </button>
               <button className="ghost-btn" onClick={() => setShowBooking(true)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px" }}>
-                Book 1:1 Session — 999 PLN
+                {`Book 1:1 Session — ${currency.sessionPrice}`}
               </button>
               <button className="ghost-btn" onClick={() => goTo("intro")} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px" }}>
                 New Audit

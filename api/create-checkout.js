@@ -15,7 +15,11 @@ module.exports = async function handler(req, res)  {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax } = req.body;
+    const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax, currency, currencyAmount } = req.body;
+
+    // Multi-currency: use values from frontend, fall back to PLN defaults
+    const chargeCurrency = currency || "pln";
+    const chargeAmount   = currencyAmount || 29900;
 
     if (!email || !flaggedIssues || flaggedIssues.length === 0) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -39,13 +43,13 @@ module.exports = async function handler(req, res)  {
       payment_method_types: ['card'],
       line_items: [{
         price_data: {
-          currency: 'pln',
+          currency: chargeCurrency,
           product_data: {
             name: 'KloudAudit — AI Implementation Blueprint',
             description: `Personalised ${provider} fix guide for ${flaggedIssues.length} detected issues. CLI commands, Terraform snippets, step-by-step. Delivered to ${email} instantly.`,
             images: ['https://kloudaudit.eu/og-image.png'],
           },
-          unit_amount: 29900, // 299 PLN in groszy
+          unit_amount: chargeAmount,
         },
         quantity: 1,
       }],
