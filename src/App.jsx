@@ -160,14 +160,65 @@ const globalCss = `
   @keyframes spin { to { transform: rotate(360deg); } }
   .trust-link { display:flex; align-items:center; gap:10px; text-decoration:none; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; transition:all 0.2s; }
   .trust-link:hover { background:rgba(255,255,255,0.06) !important; transform:translateX(3px); }
-  @keyframes tickerSlide { 0%{opacity:0;transform:translateY(8px)} 15%{opacity:1;transform:translateY(0)} 85%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-8px)} }
-  .ticker-item { animation: tickerSlide 4s ease infinite; }
-  @keyframes pulseGreen { 0%,100%{box-shadow:0 0 0 0 rgba(0,255,180,0.4)} 50%{box-shadow:0 0 0 8px rgba(0,255,180,0)} }
-  .pulse-dot { animation: pulseGreen 2s ease infinite; }
-  @keyframes slideDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
-  .bento-card { transition: all 0.25s cubic-bezier(0.4,0,0.2,1); cursor:default; }
-  .bento-card:hover { transform:translateY(-3px); border-color:rgba(0,255,180,0.25) !important; box-shadow:0 20px 48px rgba(0,0,0,0.5) !important; }
-  @media (max-width:700px) { .bento-grid { grid-template-columns:1fr !important; } .bento-grid-3 { grid-template-columns:1fr !important; } }
+
+  /* ── MOBILE RESPONSIVE ────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    /* Audit: collapse sidebar below checklist */
+    .audit-grid { grid-template-columns: 1fr !important; }
+    .audit-sidebar { position: static !important; top: auto !important; }
+
+    /* Stats bar: 2x2 on mobile */
+    .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 1px !important; }
+
+    /* Bento grid: single column */
+    .bento-grid { grid-template-columns: 1fr !important; }
+    .bento-grid-3 { grid-template-columns: 1fr !important; }
+
+    /* Free vs Paid: stack vertically */
+    .compare-grid { grid-template-columns: 1fr !important; }
+
+    /* Consultant card: stack */
+    .consultant-grid { grid-template-columns: 1fr !important; }
+
+    /* Report KPI: 2 cols */
+    .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+
+    /* How it works: single col */
+    .how-grid { grid-template-columns: 1fr !important; }
+
+    /* Audit categories: single col */
+    .audit-cats-grid { grid-template-columns: 1fr !important; }
+
+    /* Testimonials: single col */
+    .testimonials-grid { grid-template-columns: 1fr !important; }
+
+    /* Blog grid: single col */
+    .blog-grid { grid-template-columns: 1fr !important; }
+
+    /* Hero padding */
+    .hero-pad { padding-top: 60px !important; padding-bottom: 48px !important; }
+
+    /* Calculator: stack cards */
+    .calc-cards { grid-template-columns: 1fr !important; }
+
+    /* Bottom CTA padding */
+    .bottom-cta-pad { padding: 40px 24px !important; }
+
+    /* Section padding */
+    .section-pad { padding: 32px 20px !important; }
+
+    /* Free vs paid: hide the ✗ items on free card to save space */
+    .hide-mobile { display: none !important; }
+
+    /* Hero headline tighter on mobile */
+    .hero-h1 { letter-spacing: -1.5px !important; }
+  }
+
+  @media (max-width: 480px) {
+    /* Very small phones */
+    .stats-grid { grid-template-columns: 1fr 1fr !important; }
+    .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+  }
 `;
 
 export default function App() {
@@ -190,12 +241,6 @@ export default function App() {
   // ── INTRO-SCREEN STATE (must live at top level — Rules of Hooks) ──────────
   const [calcBill, setCalcBill] = useState(5000);
   const [openFaq, setOpenFaq] = useState(null);
-  // ── NEW CONVERSION FEATURES STATE ─────────────────────────────────────────
-  const [showExitIntent, setShowExitIntent] = useState(false);
-  const [exitIntentShown, setExitIntentShown] = useState(false);
-  const [exitEmail, setExitEmail] = useState("");
-  const [tickerIndex, setTickerIndex] = useState(0);
-  const [scrolled, setScrolled] = useState(false);
 
   const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
   const goTo = (s) => { setStep(s); setPageKey(k => k + 1); window.scrollTo(0, 0); };
@@ -220,39 +265,6 @@ export default function App() {
       setStep("payment_success");
       window.history.replaceState({}, "", "/");
     }
-  }, []);
-
-  // ── EXIT INTENT DETECTION ────────────────────────────────────────────────
-  useEffect(() => {
-    if (step !== "intro") return;
-    const handleMouseLeave = (e) => {
-      if (e.clientY <= 0 && !exitIntentShown) {
-        setTimeout(() => { setShowExitIntent(true); setExitIntentShown(true); }, 300);
-      }
-    };
-    document.addEventListener("mouseleave", handleMouseLeave);
-    return () => document.removeEventListener("mouseleave", handleMouseLeave);
-  }, [step, exitIntentShown]);
-
-  // ── ANIMATED SAVINGS TICKER ───────────────────────────────────────────────
-  const TICKER_ITEMS = [
-    { name: "Marek W.", location: "Warsaw", saving: "$2,400", provider: "AWS", ago: "2h ago" },
-    { name: "Tomasz K.", location: "Kraków", saving: "$1,800", provider: "GCP", ago: "5h ago" },
-    { name: "Aleksandra R.", location: "Berlin", saving: "$960",  provider: "Azure", ago: "8h ago" },
-    { name: "Piotr S.", location: "Gdańsk",  saving: "$3,200", provider: "AWS", ago: "12h ago" },
-    { name: "Maria L.", location: "Amsterdam", saving: "$1,440", provider: "Azure", ago: "yesterday" },
-    { name: "David K.", location: "London",   saving: "$2,100", provider: "AWS", ago: "yesterday" },
-  ];
-  useEffect(() => {
-    const t = setInterval(() => setTickerIndex(i => (i + 1) % TICKER_ITEMS.length), 4000);
-    return () => clearInterval(t);
-  }, []);
-
-  // ── SCROLL DETECTION for sticky CTA fade-in ───────────────────────────────
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 300);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // ── Formspree contact ──────────────────────────────────────────────────────
@@ -473,34 +485,6 @@ export default function App() {
     </div>
   );
 
-  // ── EXIT INTENT MODAL ────────────────────────────────────────────────────
-  const ExitIntentModal = () => (
-    <div onClick={() => setShowExitIntent(false)} style={{ position:"fixed", inset:0, zIndex:500, background:"rgba(0,0,0,0.88)", backdropFilter:"blur(16px)", display:"flex", alignItems:"center", justifyContent:"center", padding:"24px", animation:"fadeIn 0.25s ease" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background:"var(--bg2)", border:"1px solid rgba(0,255,180,0.25)", borderRadius:"24px", maxWidth:"480px", width:"100%", padding:"40px", boxShadow:"0 40px 80px rgba(0,0,0,0.9)", animation:"scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", position:"relative" }}>
-        <button onClick={() => setShowExitIntent(false)} style={{ position:"absolute", top:"16px", right:"16px", background:"rgba(255,255,255,0.06)", border:"1px solid var(--border)", borderRadius:"8px", color:"var(--text-muted)", fontSize:"18px", width:"32px", height:"32px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
-        <div style={{ textAlign:"center", marginBottom:"24px" }}>
-          <div style={{ fontSize:"48px", marginBottom:"12px" }}>⚡</div>
-          <h2 className="display" style={{ fontSize:"26px", fontWeight:800, color:"#fff", letterSpacing:"-0.8px", marginBottom:"8px" }}>Wait — before you go</h2>
-          <p style={{ fontSize:"14px", color:"var(--text-muted)", lineHeight:1.7 }}>Most teams waste <strong style={{ color:"var(--green)" }}>20–45% of their cloud bill</strong> without knowing it. Take 15 minutes. It's completely free.</p>
-        </div>
-        <div style={{ background:"var(--green-dim)", border:"1px solid var(--green-border)", borderRadius:"12px", padding:"16px 20px", marginBottom:"20px" }}>
-          {[["$2,400/mo", "Marek W. saved on idle RDS — AWS"], ["$1,800/mo", "Tomasz K. saved on reservations — GCP"], ["$960/mo", "Aleksandra R. saved on dev VMs — Azure"]].map(([amt, desc]) => (
-            <div key={amt} style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"8px" }}>
-              <span style={{ fontSize:"13px", fontWeight:800, color:"var(--green)", fontFamily:"var(--display)", minWidth:"72px" }}>{amt}</span>
-              <span style={{ fontSize:"12px", color:"var(--text-dim)" }}>{desc}</span>
-            </div>
-          ))}
-        </div>
-        <button className="glow-btn" onClick={() => { setShowExitIntent(false); goTo("intake"); }}
-          style={{ background:"var(--green)", color:"#000", border:"none", borderRadius:"12px", padding:"15px", fontSize:"16px", width:"100%", boxShadow:"0 0 28px rgba(0,255,180,0.35)", marginBottom:"10px" }}>
-          Run My Free Audit →
-        </button>
-        <p style={{ textAlign:"center", fontSize:"11px", color:"var(--text-muted)" }}>✓ 100% free &nbsp;·&nbsp; ✓ No account &nbsp;·&nbsp; ✓ Results in 15 minutes</p>
-        <button onClick={() => setShowExitIntent(false)} style={{ display:"block", margin:"10px auto 0", background:"none", border:"none", color:"var(--text-muted)", fontSize:"12px", cursor:"pointer" }}>No thanks, I'll keep wasting money</button>
-      </div>
-    </div>
-  );
-
   // ── SAMPLE MODAL ───────────────────────────────────────────────────────────
   const SampleModal = () => {
     const getSev = c => { const p = (c.savingsRange[0] + c.savingsRange[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
@@ -588,12 +572,10 @@ export default function App() {
 
   // ── INTRO ──────────────────────────────────────────────────────────────────
   if (step === "intro") {
-    // Live savings calculator state (calcBill and openFaq declared at top level)
+    // calcBill and openFaq are declared at top level (Rules of Hooks)
     const calcMin = Math.round(calcBill * 0.20);
     const calcMax = Math.round(calcBill * 0.45);
     const calcAnnual = Math.round(calcMin * 12);
-
-    // FAQ state (openFaq declared at top level)
 
     const TESTIMONIALS = [
       { name: "Marek W.", role: "Lead DevOps · Warsaw fintech", text: "Found $2,400/mo in idle RDS instances on the first audit. The blueprint gave me the exact Terraform to fix it. Took 40 minutes.", savings: "$2,400/mo", provider: "AWS" },
@@ -624,21 +606,15 @@ export default function App() {
       {showContact && <ContactModal />}
       {showBooking && <BookingModal />}
       {showBlueprint && <BlueprintModal />}
-      {showExitIntent && <ExitIntentModal />}
       <Nav />
 
-      {/* ── FLOATING STICKY CTA — fades in after scroll ── */}
-      <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:90, background:"rgba(8,8,16,0.97)", backdropFilter:"blur(20px)", borderTop:"1px solid rgba(0,255,180,0.2)", padding:"12px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"12px", flexWrap:"wrap", transition:"all 0.4s cubic-bezier(0.4,0,0.2,1)", transform: scrolled ? "translateY(0)" : "translateY(100%)", opacity: scrolled ? 1 : 0 }}>
-        {/* Animated savings ticker */}
-        <div style={{ display:"flex", alignItems:"center", gap:"10px", overflow:"hidden" }}>
-          <div className="pulse-dot" style={{ width:"8px", height:"8px", background:"var(--green)", borderRadius:"50%", flexShrink:0 }} />
-          <div style={{ height:"20px", overflow:"hidden", position:"relative" }}>
-            <div className="ticker-item" key={tickerIndex} style={{ fontSize:"13px", color:"var(--text-dim)", whiteSpace:"nowrap" }}>
-              <strong style={{ color:"var(--green)" }}>{TICKER_ITEMS[tickerIndex].name}</strong> from {TICKER_ITEMS[tickerIndex].location} just saved <strong style={{ color:"var(--green)" }}>{TICKER_ITEMS[tickerIndex].saving}/mo</strong> on {TICKER_ITEMS[tickerIndex].provider} · <span style={{ color:"var(--text-muted)", fontSize:"11px" }}>{TICKER_ITEMS[tickerIndex].ago}</span>
-            </div>
-          </div>
+      {/* ── STICKY BOTTOM CTA BAR ── */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", boxShadow: "0 0 8px var(--green)", flexShrink: 0 }} />
+          <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>Average team saves <strong style={{ color: "var(--green)" }}>$2,800+/month</strong> after their first audit</span>
         </div>
-        <button className="glow-btn" onClick={() => goTo("intake")} style={{ background:"var(--green)", color:"#000", border:"none", borderRadius:"10px", padding:"11px 28px", fontSize:"14px", boxShadow:"0 0 20px rgba(0,255,180,0.3)", whiteSpace:"nowrap" }}>
+        <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap" }}>
           Start Free Audit →
         </button>
       </div>
@@ -646,7 +622,7 @@ export default function App() {
       <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px", paddingBottom: "72px" }}>
 
         {/* ── HERO ── */}
-        <div style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center" }}>
+        <div className="hero-pad" style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center" }}>
           <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "32px" }}>
             <span style={{ width: "6px", height: "6px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)" }} />
             <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 600, letterSpacing: "1px" }}>TRUSTED BY DEVOPS TEAMS ACROSS EUROPE</span>
@@ -658,6 +634,12 @@ export default function App() {
             is hiding.
           </h1>
 
+          {/* ── ABOVE-THE-FOLD SOCIAL PROOF NUMBER ── */}
+          <div className="fade-up stagger-2" style={{ display:"inline-flex", alignItems:"center", gap:"10px", background:"rgba(0,255,180,0.06)", border:"1px solid rgba(0,255,180,0.18)", borderRadius:"14px", padding:"12px 20px", marginBottom:"28px", flexWrap:"wrap", justifyContent:"center" }}>
+            <span style={{ fontSize:"22px", fontWeight:800, color:"var(--green)", fontFamily:"var(--display)", letterSpacing:"-0.5px" }}>$2,800–$11,400</span>
+            <span style={{ fontSize:"14px", color:"var(--text-dim)", lineHeight:1.4 }}>average monthly savings found by teams using KloudAudit</span>
+          </div>
+
           <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "520px", margin: "0 auto 44px" }}>
             A structured 15-minute audit that uncovers real savings in your AWS, GCP, or Azure spend. No agents. No access required. Just your invoice.
           </p>
@@ -665,7 +647,7 @@ export default function App() {
           <div className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
             <button className="glow-btn" onClick={() => goTo("intake")}
               style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px 36px", fontSize: "16px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
-              Start Free Audit <span style={{ fontSize: "18px" }}>→</span>
+              Calculate My Savings <span style={{ fontSize: "18px" }}>→</span>
             </button>
             <button className="ghost-btn" onClick={() => setShowSample(true)}
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "16px 28px", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -676,46 +658,35 @@ export default function App() {
             ✓ 100% free &nbsp;·&nbsp; ✓ No signup &nbsp;·&nbsp; ✓ No cloud access needed &nbsp;·&nbsp; ✓ Results in 15 minutes
           </p>
 
-          {/* ── ANIMATED SAVINGS TICKER — rotates through recent saves ── */}
-          <div className="fade-up stagger-5" style={{ marginTop:"36px", display:"flex", justifyContent:"center" }}>
-            <div style={{ display:"inline-flex", alignItems:"center", gap:"10px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"24px", padding:"8px 18px 8px 12px", overflow:"hidden" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:"6px", flexShrink:0 }}>
-                <div className="pulse-dot" style={{ width:"7px", height:"7px", background:"#4ade80", borderRadius:"50%" }} />
-                <span style={{ fontSize:"11px", fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"0.8px" }}>Live</span>
+          {/* ── LIVE SOCIAL PROOF TICKER ── */}
+          <div className="fade-up stagger-5" style={{ marginTop: "40px", display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+            {[
+              { text: "Marek saved $2,400/mo · AWS", time: "2h ago" },
+              { text: "Tomasz saved $1,800/mo · GCP", time: "5h ago" },
+              { text: "Aleksandra saved $960/mo · Azure", time: "yesterday" },
+            ].map((t, i) => (
+              <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "20px", padding: "6px 14px" }}>
+                <span style={{ width: "5px", height: "5px", background: "#4ade80", borderRadius: "50%", display: "inline-block" }} />
+                <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>{t.text}</span>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{t.time}</span>
               </div>
-              <div style={{ height:"18px", overflow:"hidden", position:"relative", minWidth:"260px" }}>
-                <div className="ticker-item" key={tickerIndex} style={{ fontSize:"13px", color:"var(--text-dim)", whiteSpace:"nowrap" }}>
-                  <strong style={{ color:"#fff" }}>{TICKER_ITEMS[tickerIndex].name}</strong> · {TICKER_ITEMS[tickerIndex].location} saved <strong style={{ color:"var(--green)" }}>{TICKER_ITEMS[tickerIndex].saving}/mo</strong> on {TICKER_ITEMS[tickerIndex].provider}
-                  <span style={{ color:"var(--text-muted)", marginLeft:"6px", fontSize:"11px" }}>{TICKER_ITEMS[tickerIndex].ago}</span>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* ── BENTO GRID — replaces flat stats bar ── */}
-        <div className="fade-up stagger-3 bento-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"12px", marginBottom:"80px" }}>
-          {/* Big stat — spans 2 cols on wide */}
-          <div className="bento-card" style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:"18px", padding:"28px 24px", textAlign:"center", gridColumn:"span 1" }}>
-            <div style={{ fontSize:"11px", fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"10px" }}>Avg savings found</div>
-            <div className="display" style={{ fontSize:"36px", fontWeight:800, color:"var(--green)", letterSpacing:"-2px", lineHeight:1, marginBottom:"6px" }}>20–45%</div>
-            <div style={{ fontSize:"12px", color:"var(--text-muted)" }}>of your monthly bill</div>
-          </div>
-          <div className="bento-card" style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:"18px", padding:"28px 24px", textAlign:"center" }}>
-            <div style={{ fontSize:"11px", fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"10px" }}>Audit checkpoints</div>
-            <div className="display" style={{ fontSize:"36px", fontWeight:800, color:"#818cf8", letterSpacing:"-2px", lineHeight:1, marginBottom:"6px" }}>18</div>
-            <div style={{ fontSize:"12px", color:"var(--text-muted)" }}>structured checks</div>
-          </div>
-          <div className="bento-card" style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:"18px", padding:"28px 24px", textAlign:"center" }}>
-            <div style={{ fontSize:"11px", fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"10px" }}>Completion time</div>
-            <div className="display" style={{ fontSize:"36px", fontWeight:800, color:"#00d4ff", letterSpacing:"-2px", lineHeight:1, marginBottom:"6px" }}>15m</div>
-            <div style={{ fontSize:"12px", color:"var(--text-muted)" }}>average to finish</div>
-          </div>
-          <div className="bento-card" style={{ background:"linear-gradient(135deg,rgba(0,255,180,0.08),rgba(0,212,255,0.06))", border:"1px solid rgba(0,255,180,0.2)", borderRadius:"18px", padding:"28px 24px", textAlign:"center" }}>
-            <div style={{ fontSize:"11px", fontWeight:700, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"10px" }}>Cost to audit</div>
-            <div className="display" style={{ fontSize:"36px", fontWeight:800, color:"var(--green)", letterSpacing:"-2px", lineHeight:1, marginBottom:"6px" }}>$0</div>
-            <div style={{ fontSize:"12px", color:"var(--text-muted)" }}>always free forever</div>
-          </div>
+        {/* ── STATS BAR ── */}
+        <div className="fade-up stagger-3" className="stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1px", background: "var(--border)", borderRadius: "16px", overflow: "hidden", border: "1px solid var(--border)", marginBottom: "80px" }}>
+          {[
+            { n: "20–45%", label: "Average savings found" },
+            { n: "18", label: "Audit checkpoints" },
+            { n: "< 15 min", label: "Average completion" },
+            { n: "0 PLN", label: "Cost to run" },
+          ].map((s, i) => (
+            <div key={i} style={{ background: "var(--bg2)", padding: "28px 24px", textAlign: "center" }}>
+              <div className="display" style={{ fontSize: "28px", fontWeight: 800, color: "var(--green)", letterSpacing: "-1px", marginBottom: "6px" }}>{s.n}</div>
+              <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>{s.label}</div>
+            </div>
+          ))}
         </div>
 
         {/* ── HOW IT WORKS ── */}
@@ -725,7 +696,7 @@ export default function App() {
             <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>How it works</h2>
             <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "420px", margin: "12px auto 0" }}>From first visit to first saving — in under 20 minutes.</p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "2px", background: "var(--border)", borderRadius: "20px", overflow: "hidden", border: "1px solid var(--border)" }}>
+          <div className="how-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "2px", background: "var(--border)", borderRadius: "20px", overflow: "hidden", border: "1px solid var(--border)" }}>
             {HOW_IT_WORKS.map((step, i) => (
               <div key={i} style={{ background: "var(--bg2)", padding: "32px 28px", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", top: "-20px", right: "-10px", fontFamily: "var(--display)", fontSize: "80px", fontWeight: 800, color: `${step.color}08`, lineHeight: 1, pointerEvents: "none", userSelect: "none" }}>{step.n}</div>
@@ -788,7 +759,7 @@ export default function App() {
             <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>What we audit</h2>
             <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "480px", margin: "12px auto 0" }}>Five critical areas where cloud spend leaks — and where the biggest savings hide.</p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
+          <div className="audit-cats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
             {AUDIT_SECTIONS.map((s, i) => (
               <div key={s.id} className="audit-cat-card fade-up" style={{ animationDelay: `${0.05 * i}s`, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "100px", height: "100px", background: "radial-gradient(circle, rgba(0,255,180,0.06) 0%, transparent 70%)", borderRadius: "50%" }} />
@@ -816,7 +787,7 @@ export default function App() {
             <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Real results</p>
             <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>What engineers say</h2>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
+          <div className="testimonials-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
             {TESTIMONIALS.map((t, i) => (
               <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", top: "20px", right: "20px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "4px 10px", fontSize: "12px", fontWeight: 700, color: "var(--green)" }}>{t.savings}</div>
@@ -845,12 +816,13 @@ export default function App() {
             <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Free vs Blueprint</p>
             <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>What do you actually get?</h2>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", maxWidth: "760px", margin: "0 auto" }}>
-            {/* Free */}
-            <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "20px", padding: "32px" }}>
+          <div className="compare-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", maxWidth: "760px", margin: "0 auto" }}>
+
+            {/* ── FREE card — fully clickable ── */}
+            <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "20px", padding: "32px", display: "flex", flexDirection: "column" }}>
               <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>✅ Free Audit</div>
-              <p className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", marginBottom: "4px" }}>0 PLN</p>
-              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "24px" }}>Always free, no card</p>
+              <p className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", marginBottom: "4px" }}>$0</p>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "24px" }}>Always free · No card needed</p>
               {[
                 ["Issues checklist", true],
                 ["Savings range estimate", true],
@@ -861,14 +833,25 @@ export default function App() {
                 ["Step-by-step instructions", false],
                 ["Verification commands", false],
               ].map(([f, included]) => (
-                <div key={f} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-                  <span style={{ fontSize: "14px", width: "18px", textAlign: "center", flexShrink: 0 }}>{included ? "✓" : "✗"}</span>
-                  <span style={{ fontSize: "13px", color: included ? "var(--text-dim)" : "var(--text-muted)", textDecoration: included ? "none" : "none", opacity: included ? 1 : 0.45 }}>{f}</span>
+                <div key={f} className={!included ? "hide-mobile" : ""} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                  <span style={{ fontSize: "14px", width: "18px", textAlign: "center", flexShrink: 0, color: included ? "#4ade80" : "rgba(255,255,255,0.2)" }}>{included ? "✓" : "✗"}</span>
+                  <span style={{ fontSize: "13px", color: included ? "var(--text-dim)" : "var(--text-muted)", opacity: included ? 1 : 0.4 }}>{f}</span>
                 </div>
               ))}
+              <div style={{ flex: 1 }} />
+              <button
+                className="glow-btn"
+                onClick={() => goTo("intake")}
+                style={{ background: "rgba(255,255,255,0.07)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", padding: "14px", fontSize: "14px", fontWeight: 700, width: "100%", marginTop: "24px", cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
+              >
+                Start Free Audit →
+              </button>
             </div>
-            {/* Paid */}
-            <div style={{ background: "rgba(0,255,180,0.04)", border: "2px solid rgba(0,255,180,0.3)", borderRadius: "20px", padding: "32px", position: "relative" }}>
+
+            {/* ── BLUEPRINT card — fully clickable ── */}
+            <div style={{ background: "rgba(0,255,180,0.04)", border: "2px solid rgba(0,255,180,0.3)", borderRadius: "20px", padding: "32px", position: "relative", display: "flex", flexDirection: "column" }}>
               <div style={{ position: "absolute", top: "-1px", right: "24px", background: "var(--green)", color: "#000", fontSize: "10px", fontWeight: 800, padding: "4px 12px", borderRadius: "0 0 8px 8px", letterSpacing: "0.5px" }}>BEST VALUE</div>
               <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>⚡ AI Blueprint</div>
               <p className="display" style={{ fontSize: "28px", fontWeight: 800, color: "var(--green)", marginBottom: "4px" }}>299 PLN</p>
@@ -882,16 +865,22 @@ export default function App() {
                 ["Terraform snippets", true],
                 ["Step-by-step instructions", true],
                 ["Verification commands", true],
-              ].map(([f, included]) => (
+              ].map(([f]) => (
                 <div key={f} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
                   <span style={{ fontSize: "14px", color: "var(--green)", width: "18px", textAlign: "center", flexShrink: 0 }}>✓</span>
                   <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>{f}</span>
                 </div>
               ))}
-              <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "13px", fontSize: "14px", width: "100%", marginTop: "20px", boxShadow: "0 0 20px rgba(0,255,180,0.25)" }}>
-                Start free audit →
+              <div style={{ flex: 1 }} />
+              <button
+                className="glow-btn"
+                onClick={() => goTo("intake")}
+                style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px", fontSize: "14px", width: "100%", marginTop: "24px", boxShadow: "0 0 20px rgba(0,255,180,0.25)", cursor: "pointer" }}
+              >
+                Start Your AI Blueprint Audit →
               </button>
             </div>
+
           </div>
         </div>
 
@@ -917,42 +906,8 @@ export default function App() {
           ))}
         </div>
 
-        {/* ── BLOG / RESOURCES SECTION ── */}
-        <div style={{ marginBottom:"90px" }}>
-          <div style={{ textAlign:"center", marginBottom:"40px" }}>
-            <p style={{ fontSize:"11px", letterSpacing:"3px", color:"var(--green)", fontWeight:700, textTransform:"uppercase", marginBottom:"12px" }}>Cloud cost intel</p>
-            <h2 className="display" style={{ fontSize:"clamp(24px,3vw,38px)", fontWeight:800, letterSpacing:"-1px", color:"#fff" }}>Latest from the blog</h2>
-            <p style={{ color:"var(--text-muted)", fontSize:"15px", marginTop:"10px" }}>Practical guides from a certified Azure Architect working with real cloud bills every day.</p>
-          </div>
-          <div className="bento-grid-3" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"16px" }}>
-            {[
-              { tag:"AWS", tagColor:"#FF9900", tagBg:"rgba(255,153,0,0.1)", title:"Why Your AWS Bill Jumped This Month (And How to Find the Cause in 10 Minutes)", desc:"Three commands that instantly surface unexpected cost spikes in any AWS account.", reading:"4 min read", slug:"aws-bill-jumped" },
-              { tag:"FinOps", tagColor:"var(--green)", tagBg:"var(--green-dim)", title:"The 9 Most Common Cloud Cost Leaks Engineers Miss Until the Invoice Arrives", desc:"Idle load balancers, orphaned snapshots, forgotten dev databases — a field guide.", reading:"6 min read", slug:"cloud-cost-waste-common" },
-              { tag:"Azure", tagColor:"#0078D4", tagBg:"rgba(0,120,212,0.1)", title:"Azure Reserved Instances vs Pay-as-you-go: The Real Numbers After 6 Months", desc:"Exact figures from a real Azure workload, including the breakeven point.", reading:"5 min read", slug:"azure-reserved-instances" },
-            ].map((post, i) => (
-              <div key={i} className="bento-card" style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:"16px", padding:"24px", display:"flex", flexDirection:"column", gap:"12px" }}>
-                <span style={{ fontSize:"11px", fontWeight:700, color:post.tagColor, background:post.tagBg, borderRadius:"6px", padding:"3px 9px", alignSelf:"flex-start", border:`1px solid ${post.tagColor}30` }}>{post.tag}</span>
-                <h3 className="display" style={{ fontSize:"15px", fontWeight:700, color:"#fff", lineHeight:1.45, letterSpacing:"-0.2px" }}>{post.title}</h3>
-                <p style={{ fontSize:"13px", color:"var(--text-muted)", lineHeight:1.65, flex:1 }}>{post.desc}</p>
-                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", borderTop:"1px solid var(--border)", paddingTop:"12px" }}>
-                  <span style={{ fontSize:"11px", color:"var(--text-muted)" }}>📖 {post.reading}</span>
-                  <button onClick={() => { const page = (window.__SEO_PAGES||[]).find(p=>p.slug===post.slug); if(page) window.dispatchEvent(new CustomEvent("navigateSEO",{detail:page})); else goTo("intake"); }}
-                    style={{ fontSize:"12px", fontWeight:600, color:"var(--green)", background:"none", border:"none", cursor:"pointer", fontFamily:"inherit" }}>
-                    Read guide →
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div style={{ textAlign:"center", marginTop:"20px" }}>
-            <button className="ghost-btn" onClick={() => goTo("intake")} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid var(--border)", color:"var(--text-dim)", borderRadius:"10px", padding:"10px 24px", fontSize:"13px" }}>
-              Browse all guides →
-            </button>
-          </div>
-        </div>
-
         {/* ── BOTTOM CTA ── */}
-        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.07) 0%, rgba(99,102,241,0.07) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "24px", padding: "64px 40px", textAlign: "center", marginBottom: "60px", position: "relative", overflow: "hidden" }}>
+        <div className="bottom-cta-pad" style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.07) 0%, rgba(99,102,241,0.07) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "24px", padding: "64px 40px", textAlign: "center", marginBottom: "60px", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: "-80px", left: "50%", transform: "translateX(-50%)", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(0,255,180,0.06) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
           <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "16px" }}>No credit card · No signup · Free forever</p>
           <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,48px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff", marginBottom: "16px" }}>
@@ -970,7 +925,7 @@ export default function App() {
         {/* ── ENGINEER TRUST SECTION ── */}
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: "48px", marginBottom: "32px" }}>
           <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "3px", textTransform: "uppercase", marginBottom: "24px", textAlign: "center" }}>Meet your engineer</p>
-          <div style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.18)", borderRadius: "20px", overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 1fr", boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}>
+          <div className="consultant-grid" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.18)", borderRadius: "20px", overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 1fr", boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}>
             <div style={{ background: "#0a0a14", padding: "36px 40px", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "160px", height: "160px", background: "radial-gradient(circle, rgba(0,255,180,0.08) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
               <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: 800, color: "#000", marginBottom: "20px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", fontFamily: "var(--display)" }}>SA</div>
@@ -1107,7 +1062,7 @@ export default function App() {
               );
             })}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 290px", gap: "24px", alignItems: "start" }}>
+          <div className="audit-grid" style={{ display: "grid", gridTemplateColumns: "1fr 290px", gap: "24px", alignItems: "start" }}>
             <div key={activeSection} className="fade-up">
               <div style={{ marginBottom: "24px" }}>
                 <h2 className="display" style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-0.5px", color: "#fff" }}>{section.icon} {section.label}</h2>
@@ -1153,7 +1108,7 @@ export default function App() {
               </div>
             </div>
             {/* Sidebar */}
-            <div style={{ position: "sticky", top: "76px", display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div className="audit-sidebar" style={{ position: "sticky", top: "76px", display: "flex", flexDirection: "column", gap: "14px" }}>
               <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px", boxShadow: "0 8px 30px rgba(0,0,0,0.4)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
                   <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "1.5px", color: "var(--text-muted)", textTransform: "uppercase" }}>Live Estimate</p>
@@ -1246,7 +1201,7 @@ export default function App() {
 
           {/* KPI cards */}
           {bill > 0 && (
-            <div className="fade-up stagger-1" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "14px", marginBottom: "32px" }}>
+            <div className="fade-up stagger-1" className="kpi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "14px", marginBottom: "32px" }}>
               {[
                 { l: "Monthly Savings", v: `$${savMin.toLocaleString()} – $${savMax.toLocaleString()}`, s: "/month", c: "var(--green)", bg: "var(--green-dim)", b: "var(--green-border)" },
                 { l: "Annual Opportunity", v: `$${(savMin * 12).toLocaleString()}+`, s: "per year", c: "#818cf8", bg: "rgba(99,102,241,0.08)", b: "rgba(99,102,241,0.2)" },
