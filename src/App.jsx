@@ -160,6 +160,14 @@ const globalCss = `
   @keyframes spin { to { transform: rotate(360deg); } }
   .trust-link { display:flex; align-items:center; gap:10px; text-decoration:none; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; transition:all 0.2s; }
   .trust-link:hover { background:rgba(255,255,255,0.06) !important; transform:translateX(3px); }
+  @keyframes tickerSlide { 0%{opacity:0;transform:translateY(8px)} 15%{opacity:1;transform:translateY(0)} 85%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-8px)} }
+  .ticker-item { animation: tickerSlide 4s ease infinite; }
+  @keyframes pulseGreen { 0%,100%{box-shadow:0 0 0 0 rgba(0,255,180,0.4)} 50%{box-shadow:0 0 0 8px rgba(0,255,180,0)} }
+  .pulse-dot { animation: pulseGreen 2s ease infinite; }
+  @keyframes slideDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+  .bento-card { transition: all 0.25s cubic-bezier(0.4,0,0.2,1); cursor:default; }
+  .bento-card:hover { transform:translateY(-3px); border-color:rgba(0,255,180,0.25) !important; box-shadow:0 20px 48px rgba(0,0,0,0.5) !important; }
+  @media (max-width:700px) { .bento-grid { grid-template-columns:1fr !important; } .bento-grid-3 { grid-template-columns:1fr !important; } }
 `;
 
 export default function App() {
@@ -179,6 +187,12 @@ export default function App() {
   const [formStatus, setFormStatus] = useState("idle");
   const [bookingStatus, setBookingStatus] = useState("idle");
   const [pageKey, setPageKey] = useState(0);
+  // ── NEW CONVERSION FEATURES STATE ─────────────────────────────────────────
+  const [showExitIntent, setShowExitIntent] = useState(false);
+  const [exitIntentShown, setExitIntentShown] = useState(false);
+  const [exitEmail, setExitEmail] = useState("");
+  const [tickerIndex, setTickerIndex] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
 
   const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
   const goTo = (s) => { setStep(s); setPageKey(k => k + 1); window.scrollTo(0, 0); };
@@ -203,6 +217,39 @@ export default function App() {
       setStep("payment_success");
       window.history.replaceState({}, "", "/");
     }
+  }, []);
+
+  // ── EXIT INTENT DETECTION ────────────────────────────────────────────────
+  useEffect(() => {
+    if (step !== "intro") return;
+    const handleMouseLeave = (e) => {
+      if (e.clientY <= 0 && !exitIntentShown) {
+        setTimeout(() => { setShowExitIntent(true); setExitIntentShown(true); }, 300);
+      }
+    };
+    document.addEventListener("mouseleave", handleMouseLeave);
+    return () => document.removeEventListener("mouseleave", handleMouseLeave);
+  }, [step, exitIntentShown]);
+
+  // ── ANIMATED SAVINGS TICKER ───────────────────────────────────────────────
+  const TICKER_ITEMS = [
+    { name: "Marek W.", location: "Warsaw", saving: "$2,400", provider: "AWS", ago: "2h ago" },
+    { name: "Tomasz K.", location: "Kraków", saving: "$1,800", provider: "GCP", ago: "5h ago" },
+    { name: "Aleksandra R.", location: "Berlin", saving: "$960",  provider: "Azure", ago: "8h ago" },
+    { name: "Piotr S.", location: "Gdańsk",  saving: "$3,200", provider: "AWS", ago: "12h ago" },
+    { name: "Maria L.", location: "Amsterdam", saving: "$1,440", provider: "Azure", ago: "yesterday" },
+    { name: "David K.", location: "London",   saving: "$2,100", provider: "AWS", ago: "yesterday" },
+  ];
+  useEffect(() => {
+    const t = setInterval(() => setTickerIndex(i => (i + 1) % TICKER_ITEMS.length), 4000);
+    return () => clearInterval(t);
+  }, []);
+
+  // ── SCROLL DETECTION for sticky CTA fade-in ───────────────────────────────
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 300);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // ── Formspree contact ──────────────────────────────────────────────────────
@@ -423,6 +470,34 @@ export default function App() {
     </div>
   );
 
+  // ── EXIT INTENT MODAL ────────────────────────────────────────────────────
+  const ExitIntentModal = () => (
+    <div onClick={() => setShowExitIntent(false)} style={{ position:"fixed", inset:0, zIndex:500, background:"rgba(0,0,0,0.88)", backdropFilter:"blur(16px)", display:"flex", alignItems:"center", justifyContent:"center", padding:"24px", animation:"fadeIn 0.25s ease" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:"var(--bg2)", border:"1px solid rgba(0,255,180,0.25)", borderRadius:"24px", maxWidth:"480px", width:"100%", padding:"40px", boxShadow:"0 40px 80px rgba(0,0,0,0.9)", animation:"scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", position:"relative" }}>
+        <button onClick={() => setShowExitIntent(false)} style={{ position:"absolute", top:"16px", right:"16px", background:"rgba(255,255,255,0.06)", border:"1px solid var(--border)", borderRadius:"8px", color:"var(--text-muted)", fontSize:"18px", width:"32px", height:"32px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
+        <div style={{ textAlign:"center", marginBottom:"24px" }}>
+          <div style={{ fontSize:"48px", marginBottom:"12px" }}>⚡</div>
+          <h2 className="display" style={{ fontSize:"26px", fontWeight:800, color:"#fff", letterSpacing:"-0.8px", marginBottom:"8px" }}>Wait — before you go</h2>
+          <p style={{ fontSize:"14px", color:"var(--text-muted)", lineHeight:1.7 }}>Most teams waste <strong style={{ color:"var(--green)" }}>20–45% of their cloud bill</strong> without knowing it. Take 15 minutes. It's completely free.</p>
+        </div>
+        <div style={{ background:"var(--green-dim)", border:"1px solid var(--green-border)", borderRadius:"12px", padding:"16px 20px", marginBottom:"20px" }}>
+          {[["$2,400/mo", "Marek W. saved on idle RDS — AWS"], ["$1,800/mo", "Tomasz K. saved on reservations — GCP"], ["$960/mo", "Aleksandra R. saved on dev VMs — Azure"]].map(([amt, desc]) => (
+            <div key={amt} style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"8px" }}>
+              <span style={{ fontSize:"13px", fontWeight:800, color:"var(--green)", fontFamily:"var(--display)", minWidth:"72px" }}>{amt}</span>
+              <span style={{ fontSize:"12px", color:"var(--text-dim)" }}>{desc}</span>
+            </div>
+          ))}
+        </div>
+        <button className="glow-btn" onClick={() => { setShowExitIntent(false); goTo("intake"); }}
+          style={{ background:"var(--green)", color:"#000", border:"none", borderRadius:"12px", padding:"15px", fontSize:"16px", width:"100%", boxShadow:"0 0 28px rgba(0,255,180,0.35)", marginBottom:"10px" }}>
+          Run My Free Audit →
+        </button>
+        <p style={{ textAlign:"center", fontSize:"11px", color:"var(--text-muted)" }}>✓ 100% free &nbsp;·&nbsp; ✓ No account &nbsp;·&nbsp; ✓ Results in 15 minutes</p>
+        <button onClick={() => setShowExitIntent(false)} style={{ display:"block", margin:"10px auto 0", background:"none", border:"none", color:"var(--text-muted)", fontSize:"12px", cursor:"pointer" }}>No thanks, I'll keep wasting money</button>
+      </div>
+    </div>
+  );
+
   // ── SAMPLE MODAL ───────────────────────────────────────────────────────────
   const SampleModal = () => {
     const getSev = c => { const p = (c.savingsRange[0] + c.savingsRange[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
@@ -548,15 +623,21 @@ export default function App() {
       {showContact && <ContactModal />}
       {showBooking && <BookingModal />}
       {showBlueprint && <BlueprintModal />}
+      {showExitIntent && <ExitIntentModal />}
       <Nav />
 
-      {/* ── STICKY BOTTOM CTA BAR ── */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", boxShadow: "0 0 8px var(--green)", flexShrink: 0 }} />
-          <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>Average team saves <strong style={{ color: "var(--green)" }}>$2,800+/month</strong> after their first audit</span>
+      {/* ── FLOATING STICKY CTA — fades in after scroll ── */}
+      <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:90, background:"rgba(8,8,16,0.97)", backdropFilter:"blur(20px)", borderTop:"1px solid rgba(0,255,180,0.2)", padding:"12px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"12px", flexWrap:"wrap", transition:"all 0.4s cubic-bezier(0.4,0,0.2,1)", transform: scrolled ? "translateY(0)" : "translateY(100%)", opacity: scrolled ? 1 : 0 }}>
+        {/* Animated savings ticker */}
+        <div style={{ display:"flex", alignItems:"center", gap:"10px", overflow:"hidden" }}>
+          <div className="pulse-dot" style={{ width:"8px", height:"8px", background:"var(--green)", borderRadius:"50%", flexShrink:0 }} />
+          <div style={{ height:"20px", overflow:"hidden", position:"relative" }}>
+            <div className="ticker-item" key={tickerIndex} style={{ fontSize:"13px", color:"var(--text-dim)", whiteSpace:"nowrap" }}>
+              <strong style={{ color:"var(--green)" }}>{TICKER_ITEMS[tickerIndex].name}</strong> from {TICKER_ITEMS[tickerIndex].location} just saved <strong style={{ color:"var(--green)" }}>{TICKER_ITEMS[tickerIndex].saving}/mo</strong> on {TICKER_ITEMS[tickerIndex].provider} · <span style={{ color:"var(--text-muted)", fontSize:"11px" }}>{TICKER_ITEMS[tickerIndex].ago}</span>
+            </div>
+          </div>
         </div>
-        <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap" }}>
+        <button className="glow-btn" onClick={() => goTo("intake")} style={{ background:"var(--green)", color:"#000", border:"none", borderRadius:"10px", padding:"11px 28px", fontSize:"14px", boxShadow:"0 0 20px rgba(0,255,180,0.3)", whiteSpace:"nowrap" }}>
           Start Free Audit →
         </button>
       </div>
@@ -594,35 +675,46 @@ export default function App() {
             ✓ 100% free &nbsp;·&nbsp; ✓ No signup &nbsp;·&nbsp; ✓ No cloud access needed &nbsp;·&nbsp; ✓ Results in 15 minutes
           </p>
 
-          {/* ── LIVE SOCIAL PROOF TICKER ── */}
-          <div className="fade-up stagger-5" style={{ marginTop: "40px", display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
-            {[
-              { text: "Marek saved $2,400/mo · AWS", time: "2h ago" },
-              { text: "Tomasz saved $1,800/mo · GCP", time: "5h ago" },
-              { text: "Aleksandra saved $960/mo · Azure", time: "yesterday" },
-            ].map((t, i) => (
-              <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "20px", padding: "6px 14px" }}>
-                <span style={{ width: "5px", height: "5px", background: "#4ade80", borderRadius: "50%", display: "inline-block" }} />
-                <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>{t.text}</span>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{t.time}</span>
+          {/* ── ANIMATED SAVINGS TICKER — rotates through recent saves ── */}
+          <div className="fade-up stagger-5" style={{ marginTop:"36px", display:"flex", justifyContent:"center" }}>
+            <div style={{ display:"inline-flex", alignItems:"center", gap:"10px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"24px", padding:"8px 18px 8px 12px", overflow:"hidden" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:"6px", flexShrink:0 }}>
+                <div className="pulse-dot" style={{ width:"7px", height:"7px", background:"#4ade80", borderRadius:"50%" }} />
+                <span style={{ fontSize:"11px", fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"0.8px" }}>Live</span>
               </div>
-            ))}
+              <div style={{ height:"18px", overflow:"hidden", position:"relative", minWidth:"260px" }}>
+                <div className="ticker-item" key={tickerIndex} style={{ fontSize:"13px", color:"var(--text-dim)", whiteSpace:"nowrap" }}>
+                  <strong style={{ color:"#fff" }}>{TICKER_ITEMS[tickerIndex].name}</strong> · {TICKER_ITEMS[tickerIndex].location} saved <strong style={{ color:"var(--green)" }}>{TICKER_ITEMS[tickerIndex].saving}/mo</strong> on {TICKER_ITEMS[tickerIndex].provider}
+                  <span style={{ color:"var(--text-muted)", marginLeft:"6px", fontSize:"11px" }}>{TICKER_ITEMS[tickerIndex].ago}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* ── STATS BAR ── */}
-        <div className="fade-up stagger-3" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1px", background: "var(--border)", borderRadius: "16px", overflow: "hidden", border: "1px solid var(--border)", marginBottom: "80px" }}>
-          {[
-            { n: "20–45%", label: "Average savings found" },
-            { n: "18", label: "Audit checkpoints" },
-            { n: "< 15 min", label: "Average completion" },
-            { n: "0 PLN", label: "Cost to run" },
-          ].map((s, i) => (
-            <div key={i} style={{ background: "var(--bg2)", padding: "28px 24px", textAlign: "center" }}>
-              <div className="display" style={{ fontSize: "28px", fontWeight: 800, color: "var(--green)", letterSpacing: "-1px", marginBottom: "6px" }}>{s.n}</div>
-              <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>{s.label}</div>
-            </div>
-          ))}
+        {/* ── BENTO GRID — replaces flat stats bar ── */}
+        <div className="fade-up stagger-3 bento-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"12px", marginBottom:"80px" }}>
+          {/* Big stat — spans 2 cols on wide */}
+          <div className="bento-card" style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:"18px", padding:"28px 24px", textAlign:"center", gridColumn:"span 1" }}>
+            <div style={{ fontSize:"11px", fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"10px" }}>Avg savings found</div>
+            <div className="display" style={{ fontSize:"36px", fontWeight:800, color:"var(--green)", letterSpacing:"-2px", lineHeight:1, marginBottom:"6px" }}>20–45%</div>
+            <div style={{ fontSize:"12px", color:"var(--text-muted)" }}>of your monthly bill</div>
+          </div>
+          <div className="bento-card" style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:"18px", padding:"28px 24px", textAlign:"center" }}>
+            <div style={{ fontSize:"11px", fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"10px" }}>Audit checkpoints</div>
+            <div className="display" style={{ fontSize:"36px", fontWeight:800, color:"#818cf8", letterSpacing:"-2px", lineHeight:1, marginBottom:"6px" }}>18</div>
+            <div style={{ fontSize:"12px", color:"var(--text-muted)" }}>structured checks</div>
+          </div>
+          <div className="bento-card" style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:"18px", padding:"28px 24px", textAlign:"center" }}>
+            <div style={{ fontSize:"11px", fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"10px" }}>Completion time</div>
+            <div className="display" style={{ fontSize:"36px", fontWeight:800, color:"#00d4ff", letterSpacing:"-2px", lineHeight:1, marginBottom:"6px" }}>15m</div>
+            <div style={{ fontSize:"12px", color:"var(--text-muted)" }}>average to finish</div>
+          </div>
+          <div className="bento-card" style={{ background:"linear-gradient(135deg,rgba(0,255,180,0.08),rgba(0,212,255,0.06))", border:"1px solid rgba(0,255,180,0.2)", borderRadius:"18px", padding:"28px 24px", textAlign:"center" }}>
+            <div style={{ fontSize:"11px", fontWeight:700, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"10px" }}>Cost to audit</div>
+            <div className="display" style={{ fontSize:"36px", fontWeight:800, color:"var(--green)", letterSpacing:"-2px", lineHeight:1, marginBottom:"6px" }}>$0</div>
+            <div style={{ fontSize:"12px", color:"var(--text-muted)" }}>always free forever</div>
+          </div>
         </div>
 
         {/* ── HOW IT WORKS ── */}
@@ -822,6 +914,40 @@ export default function App() {
               )}
             </div>
           ))}
+        </div>
+
+        {/* ── BLOG / RESOURCES SECTION ── */}
+        <div style={{ marginBottom:"90px" }}>
+          <div style={{ textAlign:"center", marginBottom:"40px" }}>
+            <p style={{ fontSize:"11px", letterSpacing:"3px", color:"var(--green)", fontWeight:700, textTransform:"uppercase", marginBottom:"12px" }}>Cloud cost intel</p>
+            <h2 className="display" style={{ fontSize:"clamp(24px,3vw,38px)", fontWeight:800, letterSpacing:"-1px", color:"#fff" }}>Latest from the blog</h2>
+            <p style={{ color:"var(--text-muted)", fontSize:"15px", marginTop:"10px" }}>Practical guides from a certified Azure Architect working with real cloud bills every day.</p>
+          </div>
+          <div className="bento-grid-3" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"16px" }}>
+            {[
+              { tag:"AWS", tagColor:"#FF9900", tagBg:"rgba(255,153,0,0.1)", title:"Why Your AWS Bill Jumped This Month (And How to Find the Cause in 10 Minutes)", desc:"Three commands that instantly surface unexpected cost spikes in any AWS account.", reading:"4 min read", slug:"aws-bill-jumped" },
+              { tag:"FinOps", tagColor:"var(--green)", tagBg:"var(--green-dim)", title:"The 9 Most Common Cloud Cost Leaks Engineers Miss Until the Invoice Arrives", desc:"Idle load balancers, orphaned snapshots, forgotten dev databases — a field guide.", reading:"6 min read", slug:"cloud-cost-waste-common" },
+              { tag:"Azure", tagColor:"#0078D4", tagBg:"rgba(0,120,212,0.1)", title:"Azure Reserved Instances vs Pay-as-you-go: The Real Numbers After 6 Months", desc:"Exact figures from a real Azure workload, including the breakeven point.", reading:"5 min read", slug:"azure-reserved-instances" },
+            ].map((post, i) => (
+              <div key={i} className="bento-card" style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:"16px", padding:"24px", display:"flex", flexDirection:"column", gap:"12px" }}>
+                <span style={{ fontSize:"11px", fontWeight:700, color:post.tagColor, background:post.tagBg, borderRadius:"6px", padding:"3px 9px", alignSelf:"flex-start", border:`1px solid ${post.tagColor}30` }}>{post.tag}</span>
+                <h3 className="display" style={{ fontSize:"15px", fontWeight:700, color:"#fff", lineHeight:1.45, letterSpacing:"-0.2px" }}>{post.title}</h3>
+                <p style={{ fontSize:"13px", color:"var(--text-muted)", lineHeight:1.65, flex:1 }}>{post.desc}</p>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", borderTop:"1px solid var(--border)", paddingTop:"12px" }}>
+                  <span style={{ fontSize:"11px", color:"var(--text-muted)" }}>📖 {post.reading}</span>
+                  <button onClick={() => { const page = (window.__SEO_PAGES||[]).find(p=>p.slug===post.slug); if(page) window.dispatchEvent(new CustomEvent("navigateSEO",{detail:page})); else goTo("intake"); }}
+                    style={{ fontSize:"12px", fontWeight:600, color:"var(--green)", background:"none", border:"none", cursor:"pointer", fontFamily:"inherit" }}>
+                    Read guide →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign:"center", marginTop:"20px" }}>
+            <button className="ghost-btn" onClick={() => goTo("intake")} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid var(--border)", color:"var(--text-dim)", borderRadius:"10px", padding:"10px 24px", fontSize:"13px" }}>
+              Browse all guides →
+            </button>
+          </div>
         </div>
 
         {/* ── BOTTOM CTA ── */}
