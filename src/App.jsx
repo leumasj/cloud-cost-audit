@@ -187,6 +187,9 @@ export default function App() {
   const [formStatus, setFormStatus] = useState("idle");
   const [bookingStatus, setBookingStatus] = useState("idle");
   const [pageKey, setPageKey] = useState(0);
+  // ── INTRO-SCREEN STATE (must live at top level — Rules of Hooks) ──────────
+  const [calcBill, setCalcBill] = useState(5000);
+  const [openFaq, setOpenFaq] = useState(null);
   // ── NEW CONVERSION FEATURES STATE ─────────────────────────────────────────
   const [showExitIntent, setShowExitIntent] = useState(false);
   const [exitIntentShown, setExitIntentShown] = useState(false);
@@ -585,14 +588,12 @@ export default function App() {
 
   // ── INTRO ──────────────────────────────────────────────────────────────────
   if (step === "intro") {
-    // Live savings calculator state
-    const [calcBill, setCalcBill] = useState(5000);
+    // Live savings calculator state (calcBill and openFaq declared at top level)
     const calcMin = Math.round(calcBill * 0.20);
     const calcMax = Math.round(calcBill * 0.45);
     const calcAnnual = Math.round(calcMin * 12);
 
-    // FAQ state
-    const [openFaq, setOpenFaq] = useState(null);
+    // FAQ state (openFaq declared at top level)
 
     const TESTIMONIALS = [
       { name: "Marek W.", role: "Lead DevOps · Warsaw fintech", text: "Found $2,400/mo in idle RDS instances on the first audit. The blueprint gave me the exact Terraform to fix it. Took 40 minutes.", savings: "$2,400/mo", provider: "AWS" },
