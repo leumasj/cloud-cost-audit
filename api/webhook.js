@@ -328,6 +328,9 @@ module.exports = async function handler(req, res) {
   const savingsMin         = meta.savingsMin || '0';
   const savingsMax         = meta.savingsMax || '0';
   const flaggedIssueLabels = (meta.flaggedIssueLabels || '').split('||').filter(Boolean);
+  // Real charge from Stripe session (handles multi-currency correctly)
+  const chargeAmount   = session.amount_total ? (session.amount_total / 100).toFixed(2) : '?';
+  const chargeCurrency = (session.currency || 'pln').toUpperCase();
 
   console.log(`Processing: ${email} | ${provider} | ${flaggedIssueLabels.length} issues`);
   if (!email) return res.status(400).json({ error: 'No email' });
@@ -362,7 +365,7 @@ module.exports = async function handler(req, res) {
     await sgMail.send({
       to: 'admin@kloudaudit.eu',
       from: { email: 'admin@kloudaudit.eu', name: 'KloudAudit System' },
-      subject: `✅ Blueprint sold — ${companyName} · ${provider} · 299 PLN`,
+      subject: `✅ Blueprint sold — ${companyName} · ${provider} · ${chargeAmount} ${chargeCurrency}`,
       text: `Delivered to: ${email}\nCompany: ${companyName}\nProvider: ${provider}\nBill: $${monthlyBill}/mo\nSavings: $${savingsMin}–$${savingsMax}/mo\nIssues (${flaggedIssueLabels.length}): ${flaggedIssueLabels.join(', ')}`,
     });
 

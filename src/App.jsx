@@ -221,6 +221,196 @@ const globalCss = `
   }
 `;
 
+// ── SHARE CARD MODAL ──────────────────────────────────────────────────────────
+function ShareCardModal({ savMin, savMax, savPct, flaggedCount, totalChecks, provider, onClose }) {
+  const canvasRef = useRef(null);
+  const [downloaded, setDownloaded] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const W = 1200, H = 630;
+    canvas.width = W;
+    canvas.height = H;
+
+    // Helper — must be defined before use
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    // Background
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, "#07070f");
+    bg.addColorStop(1, "#0d0d1e");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Glow circle
+    const glow = ctx.createRadialGradient(W * 0.3, H * 0.4, 0, W * 0.3, H * 0.4, 380);
+    glow.addColorStop(0, "rgba(0,255,180,0.10)");
+    glow.addColorStop(1, "rgba(0,255,180,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+
+    // Border
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, W - 2, H - 2);
+
+    // Inner accent line top
+    ctx.strokeStyle = "rgba(0,255,180,0.25)";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(60, 58); ctx.lineTo(W - 60, 58); ctx.stroke();
+
+    // Logo badge
+    ctx.fillStyle = "#00ffb4";
+    roundRect(ctx, 60, 72, 42, 42, 10);
+    ctx.fill();
+    ctx.fillStyle = "#000";
+    ctx.font = "bold 22px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("⚡", 81, 100);
+
+    // KloudAudit wordmark
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 22px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText("KloudAudit", 116, 100);
+
+    // Provider badge
+    const provColor = provider === "AWS" ? "#ff9900" : provider === "GCP" ? "#4285f4" : "#0078d4";
+    ctx.fillStyle = provColor + "22";
+    roundRect(ctx, W - 180, 72, 120, 34, 8);
+    ctx.fill();
+    ctx.strokeStyle = provColor + "66";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(W - 180, 72, 120, 34);
+    ctx.fillStyle = provColor;
+    ctx.font = "bold 14px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(provider + " AUDIT", W - 120, 95);
+
+    // Main headline
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 52px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText("My cloud waste report", 60, 210);
+
+    // Savings range — big green number
+    ctx.fillStyle = "#00ffb4";
+    ctx.font = "bold 96px Arial";
+    ctx.fillText(`$${savMin.toLocaleString()}–$${savMax.toLocaleString()}`, 60, 330);
+
+    // /month label
+    ctx.fillStyle = "rgba(255,255,255,0.45)";
+    ctx.font = "28px Arial";
+    ctx.fillText("estimated monthly savings", 60, 375);
+
+    // Divider
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(60, 420); ctx.lineTo(W - 60, 420); ctx.stroke();
+
+    // Stat pills
+    const stats = [
+      { label: "Waste Rate", value: `${savPct}%`, color: savPct >= 30 ? "#f87171" : savPct >= 15 ? "#fb923c" : "#fbbf24" },
+      { label: "Issues Found", value: `${flaggedCount}`, color: "#fb923c" },
+      { label: "Checks Done", value: `${totalChecks}`, color: "#a5b4fc" },
+      { label: "Annual Opportunity", value: `$${(savMin * 12).toLocaleString()}+`, color: "#00ffb4" },
+    ];
+    const pillW = 240, pillH = 90, pillGap = 30;
+    const totalW = stats.length * pillW + (stats.length - 1) * pillGap;
+    const startX = (W - totalW) / 2;
+
+    stats.forEach((s, i) => {
+      const x = startX + i * (pillW + pillGap);
+      const y = 445;
+      ctx.fillStyle = s.color + "12";
+      roundRect(ctx, x, y, pillW, pillH, 12);
+      ctx.fill();
+      ctx.strokeStyle = s.color + "30";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, pillW, pillH);
+      ctx.fillStyle = s.color;
+      ctx.font = "bold 28px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(s.value, x + pillW / 2, y + 38);
+      ctx.fillStyle = "rgba(255,255,255,0.45)";
+      ctx.font = "13px Arial";
+      ctx.fillText(s.label, x + pillW / 2, y + 62);
+    });
+
+    // CTA footer
+    ctx.fillStyle = "rgba(0,255,180,0.08)";
+    ctx.fillRect(0, H - 68, W, 68);
+    ctx.strokeStyle = "rgba(0,255,180,0.15)";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, H - 68); ctx.lineTo(W, H - 68); ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.5)";
+    ctx.font = "16px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Run your free audit in 15 minutes at kloudaudit.eu — no account access required", W / 2, H - 36);
+
+  }, [savMin, savMax, savPct, flaggedCount, totalChecks, provider]);
+
+  const handleDownload = () => {
+    const canvas = canvasRef.current;
+    const link = document.createElement("a");
+    link.download = "kloudaudit-results.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+    setDownloaded(true);
+  };
+
+  const handleCopyLink = () => {
+    const text = `Just ran a free cloud cost audit on KloudAudit and found $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/month in potential savings on ${provider}. Takes 15 minutes, no account access needed. kloudaudit.eu`;
+    navigator.clipboard.writeText(text).then(() => alert("Caption copied! Paste it with your image on LinkedIn or Twitter."));
+  };
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", animation: "fadeIn 0.2s ease" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "linear-gradient(145deg, #0f0f1a, #13131f)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "32px", maxWidth: "700px", width: "100%", position: "relative" }}>
+        {/* Close */}
+        <button onClick={onClose} style={{ position: "absolute", top: "16px", right: "16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "rgba(255,255,255,0.5)", width: "30px", height: "30px", cursor: "pointer", fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+
+        <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px" }}>Your shareable results card</p>
+        <h2 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", marginBottom: "4px", letterSpacing: "-0.5px" }}>Share your audit results</h2>
+        <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "20px" }}>Download as PNG and share on LinkedIn or Twitter. Every share helps others find savings too.</p>
+
+        {/* Canvas preview */}
+        <div style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", marginBottom: "20px" }}>
+          <canvas ref={canvasRef} style={{ width: "100%", display: "block" }} />
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <button onClick={handleDownload} style={{ flex: 1, minWidth: "160px", padding: "13px 20px", borderRadius: "10px", border: "none", background: downloaded ? "rgba(0,255,180,0.15)" : "var(--green)", color: downloaded ? "var(--green)" : "#000", fontWeight: 700, fontSize: "14px", cursor: "pointer", transition: "all 0.2s" }}>
+            {downloaded ? "✓ Downloaded!" : "⬇ Download PNG"}
+          </button>
+          <button onClick={handleCopyLink} style={{ flex: 1, minWidth: "160px", padding: "13px 20px", borderRadius: "10px", border: "1px solid rgba(99,102,241,0.4)", background: "rgba(99,102,241,0.1)", color: "#a5b4fc", fontWeight: 700, fontSize: "14px", cursor: "pointer", transition: "all 0.2s" }}>
+            📋 Copy Caption
+          </button>
+          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=https://kloudaudit.eu`} target="_blank" rel="noopener noreferrer" style={{ flex: 1, minWidth: "160px", padding: "13px 20px", borderRadius: "10px", border: "1px solid rgba(10,102,194,0.4)", background: "rgba(10,102,194,0.1)", color: "#60a5fa", fontWeight: 700, fontSize: "14px", cursor: "pointer", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+            🔗 Share on LinkedIn
+          </a>
+        </div>
+        <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "14px", textAlign: "center" }}>Tip: Download the image first, then attach it to your LinkedIn post for best visibility.</p>
+      </div>
+    </div>
+  );
+}
+
 // ── LIVE FEED TICKER COMPONENT ────────────────────────────────────────────────
 function LiveFeedTicker() {
   const FEEDS = [
@@ -330,6 +520,7 @@ export default function App() {
   const [openFaq, setOpenFaq] = useState(null);
   const [activeHowStep, setActiveHowStep] = useState(0);
   const [showExitIntent, setShowExitIntent] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
   // ── MULTI-CURRENCY ────────────────────────────────────────────────────────
   const [currency, setCurrency] = useState({
     code: "PLN", symbol: "zł", blueprintPrice: "299 PLN", blueprintAmount: 29900,
@@ -1564,10 +1755,30 @@ export default function App() {
               <button className="ghost-btn" onClick={() => setShowBooking(true)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px" }}>
                 {`Book 1:1 Session — ${currency.sessionPrice}`}
               </button>
+              {flagged.length > 0 && bill > 0 && (
+                <button onClick={() => setShowShareCard(true)} style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.35)", color: "#a5b4fc", borderRadius: "12px", padding: "14px 24px", fontSize: "15px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", transition: "all 0.2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,102,241,0.22)"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.6)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(99,102,241,0.12)"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}>
+                  📤 Share My Results
+                </button>
+              )}
               <button className="ghost-btn" onClick={() => goTo("intro")} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px" }}>
                 New Audit
               </button>
             </div>
+
+            {/* ── SHARE CARD MODAL ── */}
+            {showShareCard && (
+              <ShareCardModal
+                savMin={savMin}
+                savMax={savMax}
+                savPct={savPct}
+                flaggedCount={flagged.length}
+                totalChecks={allChecks.length}
+                provider={provider}
+                onClose={() => setShowShareCard(false)}
+              />
+            )}
           </div>
         </div>
       </div>
