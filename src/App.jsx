@@ -221,6 +221,93 @@ const globalCss = `
   }
 `;
 
+// ── LIVE FEED TICKER COMPONENT ────────────────────────────────────────────────
+function LiveFeedTicker() {
+  const FEEDS = [
+    { text: "Marek saved $2,400/mo", provider: "AWS",   time: "2h ago" },
+    { text: "Tomasz saved $1,800/mo", provider: "GCP",  time: "5h ago" },
+    { text: "Aleksandra saved $960/mo", provider: "Azure", time: "yesterday" },
+    { text: "Piotr saved $3,100/mo",  provider: "AWS",  time: "3h ago" },
+    { text: "Karolina saved $540/mo", provider: "GCP",  time: "today" },
+    { text: "Dawid saved $1,250/mo",  provider: "Azure","time": "1h ago" },
+  ];
+
+  const PROVIDER_COLORS = { AWS: "#ff9900", GCP: "#4285f4", Azure: "#0078d4" };
+
+  const [visibleIdx, setVisibleIdx] = useState([0, 1, 2]);
+  const [fadingOut, setFadingOut] = useState([]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const outIdx = Math.floor(Math.random() * 3); // which pill to swap
+      setFadingOut([outIdx]);
+      setTimeout(() => {
+        setVisibleIdx(prev => {
+          const next = [...prev];
+          let newItem;
+          do { newItem = Math.floor(Math.random() * FEEDS.length); }
+          while (prev.includes(newItem));
+          next[outIdx] = newItem;
+          return next;
+        });
+        setFadingOut([]);
+      }, 400);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="fade-up stagger-5" style={{ marginTop: "40px", display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+      <style>{`
+        @keyframes pulse-dot {
+          0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(74,222,128,0.6); }
+          50% { opacity: 0.85; transform: scale(1.2); box-shadow: 0 0 0 5px rgba(74,222,128,0); }
+        }
+        @keyframes feed-in {
+          from { opacity: 0; transform: translateY(6px) scale(0.96); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes feed-out {
+          from { opacity: 1; transform: translateY(0) scale(1); }
+          to   { opacity: 0; transform: translateY(-6px) scale(0.96); }
+        }
+        .feed-pill { animation: feed-in 0.4s cubic-bezier(0.4,0,0.2,1) forwards; }
+        .feed-pill.fading { animation: feed-out 0.35s cubic-bezier(0.4,0,0.2,1) forwards; }
+      `}</style>
+      {visibleIdx.map((feedIdx, i) => {
+        const item = FEEDS[feedIdx];
+        const isFading = fadingOut.includes(i);
+        const providerColor = PROVIDER_COLORS[item.provider] || "#4ade80";
+        return (
+          <div key={`${i}-${feedIdx}`}
+            className={`feed-pill${isFading ? " fading" : ""}`}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: "8px",
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "20px", padding: "6px 14px",
+            }}>
+            {/* Pulsing live dot */}
+            <span style={{
+              width: "6px", height: "6px", background: "#4ade80", borderRadius: "50%",
+              display: "inline-block", flexShrink: 0,
+              animation: "pulse-dot 2s ease-in-out infinite",
+              animationDelay: `${i * 0.6}s`,
+            }} />
+            <span style={{ fontSize: "12px", color: "var(--text-dim)", whiteSpace: "nowrap" }}>{item.text}</span>
+            <span style={{
+              fontSize: "10px", fontWeight: 700, color: providerColor,
+              background: `${providerColor}15`, border: `1px solid ${providerColor}30`,
+              borderRadius: "4px", padding: "1px 6px",
+            }}>{item.provider}</span>
+            <span style={{ fontSize: "11px", color: "var(--text-muted)", whiteSpace: "nowrap" }}>{item.time}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function App() {
   const [step, setStep] = useState("intro");
   const [provider, setProvider] = useState("");
@@ -241,9 +328,10 @@ export default function App() {
   // ── INTRO-SCREEN STATE (must live at top level — Rules of Hooks) ──────────
   const [calcBill, setCalcBill] = useState(5000);
   const [openFaq, setOpenFaq] = useState(null);
+  const [activeHowStep, setActiveHowStep] = useState(0);
   // ── MULTI-CURRENCY ────────────────────────────────────────────────────────
   const [currency, setCurrency] = useState({
-    code: "PLN", symbol: "zł", blueprintPrice: {currency.blueprintPrice}, blueprintAmount: 29900,
+    code: "PLN", symbol: "zł", blueprintPrice: "299 PLN", blueprintAmount: 29900,
     sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln"
   });
 
@@ -689,19 +777,7 @@ export default function App() {
           </p>
 
           {/* ── LIVE SOCIAL PROOF TICKER ── */}
-          <div className="fade-up stagger-5" style={{ marginTop: "40px", display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
-            {[
-              { text: "Marek saved $2,400/mo · AWS", time: "2h ago" },
-              { text: "Tomasz saved $1,800/mo · GCP", time: "5h ago" },
-              { text: "Aleksandra saved $960/mo · Azure", time: "yesterday" },
-            ].map((t, i) => (
-              <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "20px", padding: "6px 14px" }}>
-                <span style={{ width: "5px", height: "5px", background: "#4ade80", borderRadius: "50%", display: "inline-block" }} />
-                <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>{t.text}</span>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{t.time}</span>
-              </div>
-            ))}
-          </div>
+          <LiveFeedTicker />
         </div>
 
         {/* ── STATS BAR ── */}
@@ -727,21 +803,70 @@ export default function App() {
             <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "420px", margin: "12px auto 0" }}>From first visit to first saving — in under 20 minutes.</p>
           </div>
           <div className="how-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "2px", background: "var(--border)", borderRadius: "20px", overflow: "hidden", border: "1px solid var(--border)" }}>
-            {HOW_IT_WORKS.map((step, i) => (
-              <div key={i} style={{ background: "var(--bg2)", padding: "32px 28px", position: "relative", overflow: "hidden" }}>
-                <div style={{ position: "absolute", top: "-20px", right: "-10px", fontFamily: "var(--display)", fontSize: "80px", fontWeight: 800, color: `${step.color}08`, lineHeight: 1, pointerEvents: "none", userSelect: "none" }}>{step.n}</div>
-                <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "38px", height: "38px", borderRadius: "10px", background: `${step.color}15`, border: `1px solid ${step.color}30`, marginBottom: "16px" }}>
-                  <span className="display" style={{ fontSize: "13px", fontWeight: 800, color: step.color }}>{step.n}</span>
-                </div>
-                <h3 className="display" style={{ fontSize: "16px", fontWeight: 700, color: "#fff", marginBottom: "8px", letterSpacing: "-0.3px" }}>{step.title}</h3>
-                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65 }}>{step.desc}</p>
-                {i === 2 && (
-                  <div style={{ marginTop: "14px", display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "6px", padding: "4px 10px" }}>
-                    <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)" }}>{`${currency.blueprintPrice} · one-time`}</span>
+            {HOW_IT_WORKS.map((step, i) => {
+              const isActive = activeHowStep === i;
+              return (
+                <div key={i}
+                  onClick={() => setActiveHowStep(isActive ? null : i)}
+                  style={{
+                    background: isActive ? `linear-gradient(145deg, ${step.color}12, var(--bg2))` : "var(--bg2)",
+                    padding: "32px 28px",
+                    position: "relative",
+                    overflow: "hidden",
+                    cursor: "pointer",
+                    transition: "all 0.35s cubic-bezier(0.4,0,0.2,1)",
+                    transform: isActive ? "scale(1.02)" : "scale(1)",
+                    boxShadow: isActive ? `0 8px 40px ${step.color}20, inset 0 0 0 1.5px ${step.color}30` : "none",
+                    zIndex: isActive ? 2 : 1,
+                  }}>
+                  {/* Step number — clipped inside card, dimmed */}
+                  <div style={{
+                    position: "absolute", bottom: "-12px", right: "12px",
+                    fontFamily: "var(--display)", fontSize: "72px", fontWeight: 800,
+                    color: isActive ? `${step.color}18` : `${step.color}08`,
+                    lineHeight: 1, pointerEvents: "none", userSelect: "none",
+                    transition: "color 0.35s",
+                    overflow: "hidden", maxWidth: "100%",
+                  }}>{step.n}</div>
+
+                  {/* Number badge */}
+                  <div style={{
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    width: "38px", height: "38px", borderRadius: "10px",
+                    background: isActive ? `${step.color}25` : `${step.color}15`,
+                    border: `1px solid ${isActive ? step.color + "60" : step.color + "30"}`,
+                    marginBottom: "16px",
+                    transition: "all 0.3s",
+                    boxShadow: isActive ? `0 0 14px ${step.color}40` : "none",
+                  }}>
+                    <span className="display" style={{ fontSize: "13px", fontWeight: 800, color: step.color }}>{step.n}</span>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  <h3 className="display" style={{ fontSize: "16px", fontWeight: 700, color: isActive ? "#fff" : "#cbd5e1", marginBottom: "8px", letterSpacing: "-0.3px", transition: "color 0.3s" }}>{step.title}</h3>
+
+                  {/* Description — expands on click */}
+                  <div style={{
+                    overflow: "hidden",
+                    maxHeight: isActive ? "120px" : "0px",
+                    opacity: isActive ? 1 : 0,
+                    transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease",
+                    marginBottom: isActive ? "12px" : "0",
+                  }}>
+                    <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65 }}>{step.desc}</p>
+                    {i === 2 && (
+                      <div style={{ marginTop: "12px", display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "6px", padding: "4px 10px" }}>
+                        <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)" }}>{`${currency.blueprintPrice} · one-time`}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tap hint */}
+                  <p style={{ fontSize: "11px", color: isActive ? "transparent" : `${step.color}80`, transition: "color 0.3s", fontWeight: 600, letterSpacing: "0.5px" }}>
+                    {isActive ? "" : "Tap to learn more"}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
 
