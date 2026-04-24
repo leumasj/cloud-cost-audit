@@ -329,6 +329,7 @@ export default function App() {
   const [calcBill, setCalcBill] = useState(5000);
   const [openFaq, setOpenFaq] = useState(null);
   const [activeHowStep, setActiveHowStep] = useState(0);
+  const [showExitIntent, setShowExitIntent] = useState(false);
   // ── MULTI-CURRENCY ────────────────────────────────────────────────────────
   const [currency, setCurrency] = useState({
     code: "PLN", symbol: "zł", blueprintPrice: "299 PLN", blueprintAmount: 29900,
@@ -382,6 +383,26 @@ export default function App() {
       .catch(() => {}); // silently keep PLN default on failure
   }, []);
 
+
+  // ── EXIT INTENT DETECTOR ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (sessionStorage.getItem('exitShown')) return; // only once per session
+    const handleMouseLeave = (e) => {
+      if (e.clientY <= 10) { // cursor leaving from top of viewport
+        setShowExitIntent(true);
+        sessionStorage.setItem('exitShown', '1');
+        document.removeEventListener('mouseleave', handleMouseLeave);
+      }
+    };
+    // Small delay so it doesn't fire immediately on page load
+    const timer = setTimeout(() => {
+      document.addEventListener('mouseleave', handleMouseLeave);
+    }, 5000);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, []);
 
   // ── Formspree contact ──────────────────────────────────────────────────────
   const handleContactSubmit = async (e) => {
@@ -721,6 +742,76 @@ export default function App() {
       <style>{globalCss}</style>
       <ParticleBackground />
       {showSample && <SampleModal />}
+
+      {/* ── EXIT INTENT MODAL ── */}
+      {showExitIntent && (
+        <div onClick={() => setShowExitIntent(false)} style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)",
+          zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px",
+          animation: "fadeIn 0.25s ease"
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: "linear-gradient(145deg, #0f0f1a, #13131f)",
+            border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px",
+            padding: "40px 36px", maxWidth: "420px", width: "100%", position: "relative",
+            boxShadow: "0 25px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,255,180,0.08)",
+            animation: "slideUp 0.35s cubic-bezier(0.4,0,0.2,1)"
+          }}>
+            <style>{`
+              @keyframes slideUp {
+                from { opacity: 0; transform: translateY(24px) scale(0.97); }
+                to   { opacity: 1; transform: translateY(0) scale(1); }
+              }
+            `}</style>
+            {/* Close */}
+            <button onClick={() => setShowExitIntent(false)} style={{
+              position: "absolute", top: "16px", right: "16px", background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "var(--text-muted)",
+              width: "30px", height: "30px", cursor: "pointer", fontSize: "16px", lineHeight: 1,
+              display: "flex", alignItems: "center", justifyContent: "center"
+            }}>×</button>
+
+            {/* Badge */}
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(0,255,180,0.1)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "4px 12px", marginBottom: "20px" }}>
+              <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", animation: "pulse-dot 2s infinite" }} />
+              <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px" }}>WAIT — FREE AUDIT TAKES 15 MIN</span>
+            </div>
+
+            <h2 className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "10px", lineHeight: 1.2 }}>
+              Your cloud bill is hiding savings right now.
+            </h2>
+            <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "24px" }}>
+              Most teams find <strong style={{ color: "#fff" }}>$1,000–$3,000/month</strong> in waste on their first audit. It's free, takes 15 minutes, and requires zero account access.
+            </p>
+
+            {/* Social proof */}
+            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "14px 16px", marginBottom: "24px" }}>
+              <p style={{ fontSize: "13px", color: "var(--text-dim)", fontStyle: "italic", marginBottom: "8px" }}>
+                "Found $2,400/mo in idle RDS instances on the first audit. Took 40 minutes to fix."
+              </p>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>— Marek W., Lead DevOps · Warsaw fintech</p>
+            </div>
+
+            {/* CTA */}
+            <button
+              onClick={() => { setShowExitIntent(false); setStep("questions"); window.scrollTo(0,0); }}
+              style={{
+                width: "100%", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer",
+                background: "linear-gradient(135deg, var(--green), #00c896)",
+                color: "#000", fontWeight: 800, fontSize: "15px", letterSpacing: "-0.3px",
+                boxShadow: "0 4px 20px rgba(0,255,180,0.3)", transition: "transform 0.2s, box-shadow 0.2s"
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,255,180,0.4)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,255,180,0.3)"; }}
+            >
+              Run My Free Audit →
+            </button>
+            <p onClick={() => setShowExitIntent(false)} style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "12px", cursor: "pointer" }}>
+              No thanks, I'll keep overpaying
+            </p>
+          </div>
+        </div>
+      )}
       {showContact && <ContactModal />}
       {showBooking && <BookingModal />}
       {showBlueprint && <BlueprintModal />}
