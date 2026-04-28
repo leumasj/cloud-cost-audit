@@ -34,8 +34,25 @@
     <meta name="twitter:title" content="KloudAudit — Find What Your Cloud Bill Is Hiding" />
     <meta name="twitter:description" content="Free cloud cost audit. Average saving: 20–45%." />
     <meta name="twitter:image" content="https://kloudaudit.eu/android-chrome-512x512.png" />
+
+    <!-- ── SEO: visually hidden H1 for crawlers ── -->
+    <style>
+      .seo-h1 {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+    </style>
   </head>
   <body>
+    <!-- Static H1 for Bingbot/Googlebot — React renders over this -->
+    <h1 class="seo-h1">KloudAudit — Free Cloud Cost Audit for AWS, GCP and Azure. Find 20–45% Savings in 15 Minutes. No Account Access Required.</h1>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
