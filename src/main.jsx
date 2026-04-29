@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { inject } from '@vercel/analytics'
-import { injectSpeedInsights } from '@vercel/speed-insights/next'
+import { injectSpeedInsights } from '@vercel/speed-insights'
 import App from './App.jsx'
 
 // Inject Vercel Analytics — free, zero config
