@@ -1062,7 +1062,7 @@ export default function App() {
           <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>Average team saves <strong style={{ color: "var(--green)" }}>$2,800+/month</strong> after their first audit</span>
         </div>
         <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap" }}>
-          Start Free Audit →
+          See What My Bill Is Hiding →
         </button>
       </div>
 
@@ -1101,9 +1101,18 @@ export default function App() {
               <span>📄</span> See Sample Report
             </button>
           </div>
-          <p className="fade-up stagger-4" style={{ marginTop: "20px", fontSize: "12px", color: "var(--text-muted)" }}>
-            ✓ 100% free &nbsp;·&nbsp; ✓ No signup &nbsp;·&nbsp; ✓ No cloud access needed &nbsp;·&nbsp; ✓ Results in 15 minutes
-          </p>
+          <div className="fade-up stagger-4" style={{ marginTop: "22px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
+            {[
+              "🔒 No account access",
+              "✓ No sign-up",
+              "⚡ Results in 15 min",
+              "👥 62+ teams audited"
+            ].map((item, i) => (
+              <span key={i} style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "4px 12px", whiteSpace: "nowrap" }}>
+                {item}
+              </span>
+            ))}
+          </div>
 
           {/* ── LIVE SOCIAL PROOF TICKER ── */}
           <LiveFeedTicker />
@@ -1330,7 +1339,7 @@ export default function App() {
                 onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
               >
-                Start Free Audit →
+                See What My Bill Is Hiding →
               </button>
             </div>
 
@@ -1401,7 +1410,7 @@ export default function App() {
           <p style={{ color: "var(--text-muted)", fontSize: "16px", marginBottom: "36px", maxWidth: "400px", margin: "0 auto 36px" }}>18 structured checks. Instant savings report. AI blueprint available the moment you see your results.</p>
           <button className="glow-btn" onClick={() => goTo("intake")}
             style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "14px", padding: "18px 48px", fontSize: "18px", boxShadow: "0 0 40px rgba(0,255,180,0.35)" }}>
-            Start Free Audit →
+            See What My Bill Is Hiding →
           </button>
           <p style={{ marginTop: "16px", fontSize: "12px", color: "var(--text-muted)" }}>Takes 15 minutes · 18 checkpoints · Average saving: 20–45% of monthly bill</p>
         </div>
