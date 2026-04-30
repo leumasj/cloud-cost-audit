@@ -66,7 +66,7 @@ export const SEO_PAGES = [
 // ── SEO Head injector — sets real <title>, <meta>, canonical, JSON-LD ──────
 function useSEOHead(page) {
   useEffect(() => {
-    const BASE = "https://kloudaudit.eu";
+    const BASE = "https://www.kloudaudit.eu";
     const canonicalUrl = `${BASE}/${page.slug}/`;
     const description = `${page.title}. Typical savings: ${page.saving} of affected ${page.provider} spend. Free 15-minute audit at KloudAudit.eu — no cloud access required.`;
 

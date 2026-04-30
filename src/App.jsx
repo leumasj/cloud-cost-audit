@@ -121,7 +121,7 @@ function ParticleBackground() {
 }
 
 const globalCss = `
-  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+  /* Fonts loaded via <link rel=preload> in index.html for better LCP/FCP */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #080810; color: #e2e8f0; }
   :root {

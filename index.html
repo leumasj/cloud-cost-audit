@@ -4,9 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- ── Google Fonts preconnect (eliminates render-blocking latency) ── -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- ── Canonical URL — fixes "Duplicate without user-selected canonical" in GSC ── -->
+    <link rel="canonical" href="https://www.kloudaudit.eu/" />
+
+    <!-- ── Google Fonts: preconnect first, then non-blocking load ── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" />
+    <link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+      media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" />
+    </noscript>
 
     <!-- ── Favicon & PWA icons ── -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
@@ -24,7 +36,7 @@
 
     <!-- ── Open Graph ── -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://kloudaudit.eu/" />
+    <meta property="og:url" content="https://www.kloudaudit.eu/" />
     <meta property="og:title" content="KloudAudit — Find What Your Cloud Bill Is Hiding" />
     <meta property="og:description" content="Free cloud cost audit. Identifies idle VMs, storage waste, orphaned resources and more. Average saving: 20–45%." />
     <meta property="og:image" content="https://kloudaudit.eu/android-chrome-512x512.png" />
@@ -35,23 +47,13 @@
     <meta name="twitter:description" content="Free cloud cost audit. Average saving: 20–45%." />
     <meta name="twitter:image" content="https://kloudaudit.eu/android-chrome-512x512.png" />
 
-    <!-- ── SEO: visually hidden H1 for crawlers ── -->
+    <!-- ── Fallback font + hidden H1 style ── -->
     <style>
-      .seo-h1 {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-      }
+      .seo-h1 { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+      body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     </style>
   </head>
   <body>
-    <!-- Static H1 for Bingbot/Googlebot — React renders over this -->
     <h1 class="seo-h1">KloudAudit — Free Cloud Cost Audit for AWS, GCP and Azure. Find 20–45% Savings in 15 Minutes. No Account Access Required.</h1>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
