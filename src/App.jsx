@@ -1297,23 +1297,115 @@ Keep it concise, technical, and accurate. Real commands only.`;
           {/* AI Report */}
           <div style={{ background: "var(--bg2)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "20px", padding: "32px", marginBottom: "24px" }}>
             {secReport ? (
-              <div style={{ fontFamily: "var(--body)", lineHeight: 1.8 }}>
-                {secReport.split('\n').map((line, i) => {
-                  if (line.startsWith('## ')) return (
-                    <h2 key={i} style={{ fontSize: "16px", fontWeight: 800, color: "#f87171", letterSpacing: "0.5px", textTransform: "uppercase", marginTop: "28px", marginBottom: "12px", paddingBottom: "8px", borderBottom: "1px solid rgba(248,113,113,0.2)" }}>{line.replace('## ', '')}</h2>
-                  );
-                  if (line.startsWith('- **CRITICAL**') || line.includes('CRITICAL')) return (
-                    <p key={i} style={{ fontSize: "13px", color: "#f87171", fontWeight: 600, background: "rgba(248,113,113,0.06)", padding: "4px 10px", borderRadius: "6px", marginBottom: "4px" }}>{line}</p>
-                  );
-                  if (line.startsWith('```')) return null;
-                  if (line.match(/^(aws |gcloud |az |terraform|kubectl)/)) return (
-                    <code key={i} style={{ display: "block", fontSize: "12px", color: "#93c5fd", background: "rgba(147,197,253,0.06)", padding: "6px 12px", borderRadius: "6px", marginBottom: "4px", fontFamily: "monospace" }}>{line}</code>
-                  );
-                  if (line.startsWith('**')) return (
-                    <p key={i} style={{ fontSize: "14px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>{line.replace(/\*\*/g, '')}</p>
-                  );
-                  return line.trim() ? <p key={i} style={{ fontSize: "14px", color: "var(--text-dim)", marginBottom: "4px" }}>{line}</p> : <br key={i} />;
-                })}
+              <div style={{ fontFamily: "var(--body)", lineHeight: 1.75 }}>
+                {(() => {
+                  // Parse report into blocks for clean rendering
+                  const lines = secReport.split('\n');
+                  const blocks = [];
+                  let codeBlock = [];
+                  let inCode = false;
+
+                  lines.forEach((line, i) => {
+                    // Code block toggle
+                    if (line.startsWith('```')) {
+                      if (inCode) {
+                        blocks.push({ type: 'code', content: codeBlock.join('\n') });
+                        codeBlock = [];
+                        inCode = false;
+                      } else {
+                        inCode = true;
+                      }
+                      return;
+                    }
+                    if (inCode) { codeBlock.push(line); return; }
+
+                    // Skip table/box drawing characters and dividers
+                    if (line.match(/^[┌┐└┘│├┤─═+|]+/) || line.match(/^[-─═]{3,}$/) || line.match(/^\s*[|]{1}.*[|]{1}\s*$/)) {
+                      return;
+                    }
+
+                    // H1
+                    if (line.startsWith('# ') && !line.startsWith('## ')) {
+                      blocks.push({ type: 'h1', content: line.replace(/^# /, '') });
+                    }
+                    // H2
+                    else if (line.startsWith('## ')) {
+                      blocks.push({ type: 'h2', content: line.replace(/^## /, '') });
+                    }
+                    // H3 / Finding headers
+                    else if (line.startsWith('### ')) {
+                      blocks.push({ type: 'h3', content: line.replace(/^### /, '') });
+                    }
+                    // SEVERITY badges
+                    else if (line.includes('SEVERITY:') || line.match(/^(CRITICAL|HIGH|MEDIUM|LOW):/)) {
+                      const sev = line.includes('CRITICAL') ? 'CRITICAL' : line.includes('HIGH') ? 'HIGH' : line.includes('MEDIUM') ? 'MEDIUM' : 'LOW';
+                      blocks.push({ type: 'severity', content: line.replace(/[│|]/g, '').trim(), sev });
+                    }
+                    // SCORE line
+                    else if (line.includes('SCORE:') || line.includes('GRADE:')) {
+                      blocks.push({ type: 'score', content: line.replace(/[│|█░]/g, '').trim() });
+                    }
+                    // Shell commands (start with $ aws, aws, gcloud, az, etc.)
+                    else if (line.match(/^(#|aws |gcloud |az |terraform|kubectl|pip |for |do|done|echo|python3|detect)/)) {
+                      blocks.push({ type: 'cmd', content: line });
+                    }
+                    // Bullet points
+                    else if (line.match(/^[-*•]\s/)) {
+                      blocks.push({ type: 'bullet', content: line.replace(/^[-*•]\s/, '') });
+                    }
+                    // Blank line
+                    else if (!line.trim()) {
+                      blocks.push({ type: 'spacer' });
+                    }
+                    // Regular text — strip inline markdown
+                    else {
+                      const cleaned = line
+                        .replace(/\*\*(.*?)\*\*/g, '$1')
+                        .replace(/\*(.*?)\*/g, '$1')
+                        .replace(/`(.*?)`/g, '$1')
+                        .replace(/^>\s*/, '')
+                        .replace(/[│|┌┐└┘├┤]/g, '')
+                        .trim();
+                      if (cleaned) blocks.push({ type: 'text', content: cleaned, raw: line });
+                    }
+                  });
+
+                  // Render blocks
+                  const SCOLORS = { CRITICAL: '#f87171', HIGH: '#fb923c', MEDIUM: '#fbbf24', LOW: '#4ade80' };
+                  return blocks.map((b, i) => {
+                    switch (b.type) {
+                      case 'h1': return <h1 key={i} style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginTop: "8px", marginBottom: "4px" }}>{b.content}</h1>;
+                      case 'h2': return <h2 key={i} style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", letterSpacing: "1px", textTransform: "uppercase", marginTop: "32px", marginBottom: "12px", paddingBottom: "8px", borderBottom: "1px solid rgba(248,113,113,0.2)" }}>{b.content}</h2>;
+                      case 'h3': return <h3 key={i} style={{ fontSize: "16px", fontWeight: 700, color: "#fff", marginTop: "20px", marginBottom: "8px" }}>{b.content}</h3>;
+                      case 'severity': return (
+                        <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: `${SCOLORS[b.sev] || '#f87171'}15`, border: `1px solid ${SCOLORS[b.sev] || '#f87171'}40`, borderRadius: "8px", padding: "6px 14px", marginBottom: "12px", marginTop: "4px" }}>
+                          <span style={{ fontSize: "11px", fontWeight: 800, color: SCOLORS[b.sev] || '#f87171', letterSpacing: "1px" }}>⚠ {b.sev}</span>
+                          <span style={{ fontSize: "13px", color: "#fff", fontWeight: 600 }}>{b.content.replace(/SEVERITY:\s*(CRITICAL|HIGH|MEDIUM|LOW)\s*/i, '').trim()}</span>
+                        </div>
+                      );
+                      case 'score': return (
+                        <div key={i} style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "10px", padding: "12px 16px", marginBottom: "8px" }}>
+                          <p style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", margin: 0 }}>{b.content}</p>
+                        </div>
+                      );
+                      case 'code': return (
+                        <pre key={i} style={{ background: "#0a0a14", border: "1px solid rgba(147,197,253,0.15)", borderRadius: "10px", padding: "16px", margin: "12px 0", overflowX: "auto", fontSize: "12px", color: "#93c5fd", lineHeight: 1.7, fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{b.content}</pre>
+                      );
+                      case 'cmd': return (
+                        <code key={i} style={{ display: "block", fontSize: "12px", color: "#93c5fd", background: "#0a0a14", border: "1px solid rgba(147,197,253,0.1)", padding: "5px 12px", borderRadius: "6px", marginBottom: "3px", fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{b.content}</code>
+                      );
+                      case 'bullet': return (
+                        <div key={i} style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "6px" }}>
+                          <span style={{ color: "#f87171", fontSize: "14px", marginTop: "1px", flexShrink: 0 }}>•</span>
+                          <span style={{ fontSize: "14px", color: "#cbd5e1", lineHeight: 1.6 }}>{b.content.replace(/\*\*(.*?)\*\*/g, '$1')}</span>
+                        </div>
+                      );
+                      case 'spacer': return <div key={i} style={{ height: "10px" }} />;
+                      case 'text':
+                      default: return <p key={i} style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.7, marginBottom: "6px" }}>{b.content}</p>;
+                    }
+                  });
+                })()}
               </div>
             ) : (
               <p style={{ color: "var(--text-muted)" }}>No report data available.</p>
