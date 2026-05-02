@@ -1135,12 +1135,22 @@ Keep it concise, technical, and accurate. Real commands only.`;
             flaggedIssues: flaggedSec.map(c => c.label),
           }),
         });
+        if (!res.ok) {
+          const text = await res.text().catch(() => res.status);
+          throw new Error(`API returned ${res.status}: ${text}`);
+        }
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         setSecReport(data.report);
         goTo("security_report");
       } catch (err) {
-        setSecError(err.message || "Failed to generate report. Please try again.");
+        const msg = err.message || "Unknown error";
+        // Show helpful message if API not found
+        if (msg.includes("404") || msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+          setSecError("API endpoint not found. Make sure security-report.js is deployed in your /api/ folder.");
+        } else {
+          setSecError(`Error: ${msg}`);
+        }
       } finally {
         setSecLoading(false);
       }
