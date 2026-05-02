@@ -15,7 +15,7 @@ module.exports = async function handler(req, res)  {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax, currency, currencyAmount } = req.body;
+    const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax, currency, currencyAmount, productType } = req.body;
 
     // Multi-currency: use values from frontend, fall back to PLN defaults
     const chargeCurrency = currency || "pln";
@@ -26,16 +26,18 @@ module.exports = async function handler(req, res)  {
     }
 
     // Store audit data in Stripe metadata so we can use it in the webhook
+    // Determine product type — routes webhook to correct delivery handler
+    const type = productType === 'security_blueprint' ? 'security_certificate' : 'blueprint';
+
     const metadata = {
       email,
+      type,                                   // ← webhook routing key
       provider: provider || 'AWS',
       monthlyBill: String(monthlyBill || 0),
       companyName: companyName || 'Your Company',
       savingsMin: String(savingsMin || 0),
       savingsMax: String(savingsMax || 0),
-      // Store flagged issue IDs as comma-separated string (Stripe metadata limit: 500 chars per value)
-      flaggedIssueIds: flaggedIssues.map(i => i.id).join(',').substring(0, 499),
-      // Store issue labels separately
+      flaggedIssueIds:    flaggedIssues.map(i => i.id).join(',').substring(0, 499),
       flaggedIssueLabels: flaggedIssues.map(i => i.label).join('||').substring(0, 499),
     };
 
@@ -45,8 +47,12 @@ module.exports = async function handler(req, res)  {
         price_data: {
           currency: chargeCurrency,
           product_data: {
-            name: 'KloudAudit — AI Implementation Blueprint',
-            description: `Personalised ${provider} fix guide for ${flaggedIssues.length} detected issues. CLI commands, Terraform snippets, step-by-step. Delivered to ${email} instantly.`,
+            name: type === 'security_certificate'
+              ? 'KloudAudit — Security Blueprint'
+              : 'KloudAudit — AI Implementation Blueprint',
+            description: type === 'security_certificate'
+              ? `${provider} security remediation for ${flaggedIssues.length} flagged issues. CLI commands, IAM policy fixes, compliance mapping. Delivered to ${email} instantly.`
+              : `Personalised ${provider} fix guide for ${flaggedIssues.length} detected issues. CLI commands, Terraform snippets, step-by-step. Delivered to ${email} instantly.`,
             images: ['https://kloudaudit.eu/og-image.png'],
           },
           unit_amount: chargeAmount,

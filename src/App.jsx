@@ -443,6 +443,133 @@ function ShareCardModal({ savMin, savMax, savPct, flaggedCount, totalChecks, pro
   );
 }
 
+// ── SECURITY BLUEPRINT MODAL ─────────────────────────────────────────────────
+function SecurityBlueprintModal({ onClose, secChecked, currency, provider, companyName }) {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | loading | success | error
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const flaggedIds = Object.keys(secChecked).filter(k => secChecked[k]);
+  const critCount  = [
+    "mfa_all","iam_wildcards","public_buckets","hardcoded_secrets"
+  ].filter(id => secChecked[id]).length;
+
+  const handlePurchase = async (e) => {
+    e.preventDefault();
+    if (!email || flaggedIds.length === 0) return;
+    setStatus("loading");
+    try {
+      const res = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          provider: provider || "AWS",
+          monthlyBill: 0,
+          companyName: companyName || "Your Company",
+          savingsMin: 0,
+          savingsMax: 0,
+          currency: currency.stripeCurrency || "pln",
+          currencyAmount: currency.securityAmount || 11900,
+          flaggedIssues: flaggedIds.map(id => ({ id, label: id.replace(/_/g, " ") })),
+          productType: "security_blueprint",
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || "Checkout failed");
+      }
+    } catch (err) {
+      setErrorMsg(err.message);
+      setStatus("error");
+    }
+  };
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(12px)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", animation: "fadeIn 0.2s ease" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "linear-gradient(145deg, #0f0f1a, #13131f)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "24px", maxWidth: "480px", width: "100%", overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(248,113,113,0.08)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
+
+        {/* Header */}
+        <div style={{ background: "linear-gradient(135deg, rgba(248,113,113,0.1), rgba(251,146,60,0.08))", borderBottom: "1px solid rgba(248,113,113,0.15)", padding: "28px 32px 22px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: "20px", padding: "4px 12px", marginBottom: "10px" }}>
+                <span style={{ width: "5px", height: "5px", background: "#f87171", borderRadius: "50%", animation: "pulse-dot 2s infinite" }} />
+                <span style={{ fontSize: "11px", color: "#f87171", fontWeight: 700, letterSpacing: "1px" }}>SECURITY BLUEPRINT · ONE-TIME</span>
+              </div>
+              <h2 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "4px", fontFamily: "system-ui, sans-serif" }}>Get your Security Blueprint</h2>
+              <p style={{ fontSize: "13px", color: "#94a3b8" }}>AI-generated remediation for all {flaggedIds.length} flagged issues</p>
+            </div>
+            <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "rgba(255,255,255,0.5)", width: "32px", height: "32px", cursor: "pointer", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
+          </div>
+          {/* What's included */}
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "14px" }}>
+            {["✓ Exact CLI fix commands", "✓ IAM policy templates", "✓ Compliance mapping", "✓ 30-day roadmap", "✓ Verification steps"].map(item => (
+              <span key={item} style={{ fontSize: "11px", color: "#cbd5e1", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "3px 9px" }}>{item}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: "26px 32px 32px" }}>
+          {/* Urgency — critical count */}
+          {critCount > 0 && (
+            <div style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "10px", padding: "12px 16px", marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "18px" }}>⚠️</span>
+              <p style={{ fontSize: "13px", color: "#f87171", fontWeight: 600, margin: 0 }}>
+                {critCount} critical issue{critCount > 1 ? "s" : ""} detected. Public exposure or credential risk may be active right now.
+              </p>
+            </div>
+          )}
+
+          <form onSubmit={handlePurchase} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#f87171", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email — Blueprint delivered here</label>
+              <input
+                type="email" required value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="security@yourcompany.com"
+                style={{ width: "100%", padding: "13px 16px", background: "#1e293b", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: "10px", color: "#f8fafc", fontSize: "15px", outline: "none", boxSizing: "border-box", WebkitTextFillColor: "#f8fafc", caretColor: "#f87171", fontFamily: "system-ui, sans-serif" }}
+                onFocus={e => e.target.style.borderColor = "#f87171"}
+                onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
+              />
+            </div>
+
+            {/* Price */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "10px", padding: "14px 16px" }}>
+              <div>
+                <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", margin: "0 0 2px" }}>Security Blueprint</p>
+                <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>One-time · Delivered instantly after payment</p>
+              </div>
+              <span style={{ fontSize: "22px", fontWeight: 800, color: "#f87171" }}>{currency.securityPrice || "119 PLN"}</span>
+            </div>
+
+            {/* Bundle upsell */}
+            <div style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "10px", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
+              <div>
+                <p style={{ fontSize: "12px", fontWeight: 700, color: "#a5b4fc", margin: "0 0 2px" }}>💡 Cost + Security Bundle</p>
+                <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>Both blueprints · Complete cloud health</p>
+              </div>
+              <span style={{ fontSize: "15px", fontWeight: 800, color: "#a5b4fc", whiteSpace: "nowrap" }}>{currency.bundlePrice || "179 PLN"}</span>
+            </div>
+
+            <button type="submit" disabled={status === "loading"}
+              style={{ width: "100%", padding: "15px", borderRadius: "12px", border: "none", background: status === "loading" ? "rgba(248,113,113,0.5)" : "#f87171", color: "#000", fontWeight: 800, fontSize: "15px", cursor: status === "loading" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: "0 4px 20px rgba(248,113,113,0.3)", fontFamily: "system-ui, sans-serif" }}>
+              {status === "loading"
+                ? <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Processing…</>
+                : `Pay ${currency.securityPrice || "119 PLN"} → Get Blueprint`}
+            </button>
+            {status === "error" && <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>⚠ {errorMsg}</p>}
+            <p style={{ fontSize: "11px", color: "#475569", textAlign: "center" }}>🔒 Secure checkout via Stripe · No cloud access ever required</p>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── LIVE FEED TICKER COMPONENT ────────────────────────────────────────────────
 function LiveFeedTicker() {
   const FEEDS = [
@@ -566,6 +693,12 @@ export default function App() {
   const [secReport, setSecReport] = useState(null);
   const [secLoading, setSecLoading] = useState(false);
   const [secError, setSecError] = useState(null);
+  const [showSecBlueprint, setShowSecBlueprint] = useState(false);
+  const [secBlueprintEmail, setSecBlueprintEmail] = useState("");
+  const [secBlueprintStatus, setSecBlueprintStatus] = useState("idle"); // idle | loading | success | error
+  const [secScore, setSecScore] = useState(null); // computed after audit
+  const [secEmail, setSecEmail] = useState("");
+  const [secPaymentLoading, setSecPaymentLoading] = useState(false);
   const [gateEmail, setGateEmail] = useState("");
   const [aiPreview, setAiPreview] = useState(null);
   const [aiPreviewLoading, setAiPreviewLoading] = useState(false);
@@ -574,7 +707,9 @@ export default function App() {
   // ── MULTI-CURRENCY ────────────────────────────────────────────────────────
   const [currency, setCurrency] = useState({
     code: "PLN", symbol: "zł", blueprintPrice: "299 PLN", blueprintAmount: 29900,
-    sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln"
+    sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln",
+    securityPrice: "119 PLN", securityAmount: 11900,
+    bundlePrice: "179 PLN", bundleAmount: 17900,
   });
 
   const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
@@ -611,7 +746,7 @@ export default function App() {
   // ── CURRENCY DETECTION ───────────────────────────────────────────
   useEffect(() => {
     const CURRENCY_MAP = {
-      US: { code: "USD", symbol: "$",   blueprintPrice: "$79",    blueprintAmount: 7900,  sessionPrice: "$249",   sessionAmount: 24900, stripeCurrency: "usd" },
+      US: { code: "USD", symbol: "$",   blueprintPrice: "$79",    blueprintAmount: 7900,  sessionPrice: "$249",   sessionAmount: 24900, stripeCurrency: "usd", securityPrice: "$29", securityAmount: 2900, bundlePrice: "$49", bundleAmount: 4900 },
       GB: { code: "GBP", symbol: "\u00a3",   blueprintPrice: "\u00a362",    blueprintAmount: 6200,  sessionPrice: "\u00a3199",  sessionAmount: 19900, stripeCurrency: "gbp" },
       DE: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
       FR: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
@@ -620,8 +755,8 @@ export default function App() {
       BE: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
       ES: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
       IT: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
-      CA: { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107", blueprintAmount: 10700, sessionPrice: "CA$339", sessionAmount: 33900, stripeCurrency: "cad" },
-      AU: { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",  blueprintAmount: 11900, sessionPrice: "A$379",  sessionAmount: 37900, stripeCurrency: "aud" },
+      CA: { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107", blueprintAmount: 10700, sessionPrice: "CA$339", sessionAmount: 33900, stripeCurrency: "cad", securityPrice: "CA$39", securityAmount: 3900, bundlePrice: "CA$65", bundleAmount: 6500 },
+      AU: { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",  blueprintAmount: 11900, sessionPrice: "A$379",  sessionAmount: 37900, stripeCurrency: "aud", securityPrice: "A$45", securityAmount: 4500, bundlePrice: "A$75", bundleAmount: 7500 },
       PL: { code: "PLN", symbol: "z\u0142",  blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln" },
     };
     fetch("https://ipapi.co/json/")
@@ -1108,54 +1243,6 @@ Keep it concise, technical, and accurate. Real commands only.`;
     const currentSection = SEC_SECTIONS[secStep];
     const RISK_COLOR = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24", Low: "#4ade80" };
 
-    const handleSecurityReport = async () => {
-      if (flaggedSec.length === 0) return;
-      setSecLoading(true);
-      setSecError(null);
-      try {
-        const res = await fetch("/api/security-report", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            provider: provider || "AWS",
-            companyName: companyName || "Your Company",
-            teamSize: "unknown",
-            environment: "production",
-            mfaEnabled: !secChecked["mfa_all"],
-            publicBuckets: secChecked["public_buckets"],
-            iamWildcards: secChecked["iam_wildcards"],
-            encryptionAtRest: !secChecked["no_encryption_rest"],
-            encryptionInTransit: !secChecked["no_encryption_transit"],
-            loggingEnabled: !secChecked["no_cloudtrail"],
-            vpcIsolation: !secChecked["no_vpc"],
-            secretsManager: !secChecked["hardcoded_secrets"],
-            incidentResponse: !secChecked["no_ir_plan"],
-            patchingCadence: "unknown",
-            complianceFramework: "General best practices",
-            flaggedIssues: flaggedSec.map(c => c.label),
-          }),
-        });
-        if (!res.ok) {
-          const text = await res.text().catch(() => res.status);
-          throw new Error(`API returned ${res.status}: ${text}`);
-        }
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-        setSecReport(data.report);
-        goTo("security_report");
-      } catch (err) {
-        const msg = err.message || "Unknown error";
-        // Show helpful message if API not found
-        if (msg.includes("404") || msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
-          setSecError("API endpoint not found. Make sure security-report.js is deployed in your /api/ folder.");
-        } else {
-          setSecError(`Error: ${msg}`);
-        }
-      } finally {
-        setSecLoading(false);
-      }
-    };
-
     return (
       <div className="app">
         <style>{globalCss}</style>
@@ -1163,6 +1250,8 @@ Keep it concise, technical, and accurate. Real commands only.`;
         {showContact && <ContactModal />}
         {showBooking && <BookingModal />}
         <Nav showBack onBack={() => goTo("intro")} />
+
+        {showSecBlueprint && <SecurityBlueprintModal onClose={() => setShowSecBlueprint(false)} secChecked={secChecked} currency={currency} provider={provider} companyName={companyName} />}
 
         <div style={{ maxWidth: "960px", margin: "0 auto", padding: "40px 24px 100px" }}>
           {/* Header */}
@@ -1179,93 +1268,141 @@ Keep it concise, technical, and accurate. Real commands only.`;
             </p>
           </div>
 
-          {/* Progress + section tabs */}
-          <div style={{ display: "flex", gap: "4px", marginBottom: "32px", background: "var(--bg2)", borderRadius: "12px", padding: "6px", border: "1px solid var(--border)" }}>
-            {SEC_SECTIONS.map((s, i) => (
-              <button key={s.id} onClick={() => setSecStep(i)}
-                style={{ flex: 1, padding: "10px 8px", borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: 700, transition: "all 0.2s", background: secStep === i ? s.color + "20" : "transparent", color: secStep === i ? s.color : "var(--text-muted)", borderBottom: secStep === i ? `2px solid ${s.color}` : "2px solid transparent" }}>
-                {s.icon} {s.title}
-              </button>
-            ))}
+          {/* ── PROGRESS STEPPER ── */}
+          <div style={{ marginBottom: "32px" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: "16px" }}>
+              {SEC_SECTIONS.map((s, i) => (
+                <div key={s.id} style={{ display: "flex", alignItems: "center", flex: 1 }}>
+                  <button onClick={() => setSecStep(i)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", flex: 1, padding: "0" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", transition: "all 0.25s", background: i < secStep ? "#00ffb4" : secStep === i ? s.color + "25" : "rgba(255,255,255,0.05)", border: `2px solid ${i < secStep ? "#00ffb4" : secStep === i ? s.color : "rgba(255,255,255,0.1)"}`, boxShadow: secStep === i ? `0 0 14px ${s.color}50` : "none" }}>
+                      {i < secStep ? <span style={{ fontSize: "13px", fontWeight: 800, color: "#000" }}>✓</span> : <span>{s.icon}</span>}
+                    </div>
+                    <span style={{ fontSize: "10px", fontWeight: 700, color: secStep === i ? s.color : i < secStep ? "#00ffb4" : "var(--text-muted)", whiteSpace: "nowrap" }}>{s.title}</span>
+                  </button>
+                  {i < SEC_SECTIONS.length - 1 && (
+                    <div style={{ height: "2px", flex: 1, background: i < secStep ? "#00ffb4" : "rgba(255,255,255,0.08)", transition: "background 0.3s", marginBottom: "22px" }} />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div style={{ height: "4px", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${((secStep + 1) / SEC_SECTIONS.length) * 100}%`, background: "linear-gradient(90deg, #00ffb4, #f87171)", borderRadius: "2px", transition: "width 0.4s cubic-bezier(0.4,0,0.2,1)" }} />
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
+              <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Section {secStep + 1} of {SEC_SECTIONS.length} — {currentSection.title}</span>
+              <span style={{ fontSize: "11px", color: flaggedSec.length > 0 ? "#f87171" : "var(--text-muted)", fontWeight: flaggedSec.length > 0 ? 700 : 400 }}>{flaggedSec.length} issue{flaggedSec.length !== 1 ? "s" : ""} flagged</span>
+            </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: "24px", alignItems: "start" }}>
-            {/* Checks */}
+          {/* ── MAIN GRID ── */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 250px", gap: "24px", alignItems: "start" }}>
+            {/* Left — checks */}
             <div>
-              <div style={{ marginBottom: "20px" }}>
-                <h2 className="display" style={{ fontSize: "22px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{currentSection.icon} {currentSection.title}</h2>
-                <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>{currentSection.desc}</p>
+              <div style={{ marginBottom: "14px" }}>
+                <h2 className="display" style={{ fontSize: "20px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>{currentSection.icon} {currentSection.title}</h2>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: 0 }}>{currentSection.desc}</p>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", padding: "8px 14px", marginBottom: "14px" }}>
+                <span style={{ fontSize: "13px" }}>☑</span>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Check every issue that applies to your infrastructure — be honest, this is for your benefit</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {currentSection.checks.map(check => (
                   <div key={check.id} onClick={() => setSecChecked(p => ({ ...p, [check.id]: !p[check.id] }))}
-                    style={{ background: secChecked[check.id] ? `${RISK_COLOR[check.risk]}10` : "var(--bg2)", border: `1.5px solid ${secChecked[check.id] ? RISK_COLOR[check.risk] + "60" : "var(--border)"}`, borderRadius: "14px", padding: "18px 20px", cursor: "pointer", transition: "all 0.2s" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
+                    style={{ background: secChecked[check.id] ? RISK_COLOR[check.risk] + "0e" : "rgba(255,255,255,0.02)", border: `1.5px solid ${secChecked[check.id] ? RISK_COLOR[check.risk] + "55" : "rgba(255,255,255,0.07)"}`, borderRadius: "12px", padding: "15px 18px", cursor: "pointer", transition: "all 0.2s", boxShadow: secChecked[check.id] ? `0 0 0 1px ${RISK_COLOR[check.risk]}18` : "none" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                          <span style={{ fontSize: "11px", fontWeight: 700, color: RISK_COLOR[check.risk], background: RISK_COLOR[check.risk] + "15", border: `1px solid ${RISK_COLOR[check.risk]}30`, borderRadius: "4px", padding: "2px 7px" }}>{check.risk}</span>
-                          <span style={{ fontSize: "14px", fontWeight: 700, color: secChecked[check.id] ? "#fff" : "var(--text-dim)" }}>{check.label}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "3px" }}>
+                          <span style={{ fontSize: "10px", fontWeight: 800, color: RISK_COLOR[check.risk], background: RISK_COLOR[check.risk] + "18", border: `1px solid ${RISK_COLOR[check.risk]}30`, borderRadius: "4px", padding: "1px 7px", textTransform: "uppercase", letterSpacing: "0.3px" }}>{check.risk}</span>
+                          <span style={{ fontSize: "14px", fontWeight: 700, color: secChecked[check.id] ? "#fff" : "#cbd5e1" }}>{check.label}</span>
                         </div>
-                        <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.5 }}>{check.detail}</p>
+                        <p style={{ fontSize: "12px", color: secChecked[check.id] ? "#94a3b8" : "rgba(148,163,184,0.55)", lineHeight: 1.5, margin: 0 }}>{check.detail}</p>
                       </div>
-                      <div style={{ width: "22px", height: "22px", borderRadius: "6px", border: `2px solid ${secChecked[check.id] ? RISK_COLOR[check.risk] : "var(--border)"}`, background: secChecked[check.id] ? RISK_COLOR[check.risk] : "transparent", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
-                        {secChecked[check.id] && <span style={{ color: "#000", fontSize: "12px", fontWeight: 800 }}>✓</span>}
+                      <div style={{ width: "24px", height: "24px", borderRadius: "6px", border: `2px solid ${secChecked[check.id] ? RISK_COLOR[check.risk] : "rgba(255,255,255,0.18)"}`, background: secChecked[check.id] ? RISK_COLOR[check.risk] : "transparent", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: secChecked[check.id] ? `0 0 8px ${RISK_COLOR[check.risk]}50` : "none" }}>
+                        {secChecked[check.id] && <span style={{ color: "#000", fontSize: "13px", fontWeight: 900, lineHeight: 1 }}>✓</span>}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
               {/* Navigation */}
-              <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
-                {secStep > 0 && <button onClick={() => setSecStep(s => s - 1)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px 24px", color: "var(--text-muted)", fontSize: "14px", cursor: "pointer" }}>← Back</button>}
-                {secStep < SEC_SECTIONS.length - 1
-                  ? <button className="glow-btn" onClick={() => setSecStep(s => s + 1)} style={{ background: currentSection.color, color: "#000", border: "none", borderRadius: "10px", padding: "12px 28px", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>Next Section →</button>
-                  : <button className="glow-btn" onClick={handleSecurityReport} disabled={secLoading || flaggedSec.length === 0}
-                      style={{ background: flaggedSec.length > 0 ? "#f87171" : "rgba(255,255,255,0.06)", color: flaggedSec.length > 0 ? "#000" : "var(--text-muted)", border: "none", borderRadius: "10px", padding: "12px 32px", fontSize: "14px", fontWeight: 700, cursor: flaggedSec.length > 0 ? "pointer" : "not-allowed", opacity: secLoading ? 0.7 : 1 }}>
-                      {secLoading ? (
-                        <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span style={{ display: "inline-block", width: "14px", height: "14px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
-                          Generating Security Report…
-                        </span>
-                      ) : `Generate Security Report →`}
-                    </button>
-                }
-              </div>
-              {secError && <p style={{ color: "#f87171", fontSize: "13px", marginTop: "12px", background: "rgba(248,113,113,0.08)", padding: "10px 14px", borderRadius: "8px", border: "1px solid rgba(248,113,113,0.2)" }}>⚠ {secError}</p>}
-            </div>
-
-            {/* Sidebar — live risk summary */}
-            <div style={{ position: "sticky", top: "80px" }}>
-              <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px" }}>
-                <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "16px" }}>Risk Summary</p>
-                {flaggedSec.length === 0 ? (
-                  <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>Check issues as you find them — your risk summary will appear here.</p>
+              <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
+                {secStep > 0 && (
+                  <button onClick={() => setSecStep(s => s - 1)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "12px 20px", color: "var(--text-muted)", fontSize: "14px", cursor: "pointer" }}>← Back</button>
+                )}
+                {secStep < SEC_SECTIONS.length - 1 ? (
+                  <button onClick={() => setSecStep(s => s + 1)} style={{ flex: 1, padding: "13px 24px", borderRadius: "10px", border: "none", background: currentSection.color, color: "#000", fontWeight: 800, fontSize: "14px", cursor: "pointer", boxShadow: `0 4px 16px ${currentSection.color}35` }}>
+                    Next: {SEC_SECTIONS[secStep + 1].title} →
+                  </button>
                 ) : (
-                  <>
-                    {criticalCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px 14px", marginBottom: "8px" }}>
-                      <span style={{ fontSize: "13px", fontWeight: 700, color: "#f87171" }}>🔴 Critical</span>
-                      <span style={{ fontSize: "18px", fontWeight: 800, color: "#f87171" }}>{criticalCount}</span>
-                    </div>}
-                    {highCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.2)", borderRadius: "8px", padding: "10px 14px", marginBottom: "8px" }}>
-                      <span style={{ fontSize: "13px", fontWeight: 700, color: "#fb923c" }}>🟠 High</span>
-                      <span style={{ fontSize: "18px", fontWeight: 800, color: "#fb923c" }}>{highCount}</span>
-                    </div>}
-                    {flaggedSec.filter(c => c.risk === "Medium").length > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.2)", borderRadius: "8px", padding: "10px 14px", marginBottom: "16px" }}>
-                      <span style={{ fontSize: "13px", fontWeight: 700, color: "#fbbf24" }}>🟡 Medium</span>
-                      <span style={{ fontSize: "18px", fontWeight: 800, color: "#fbbf24" }}>{flaggedSec.filter(c => c.risk === "Medium").length}</span>
-                    </div>}
-                    <div style={{ borderTop: "1px solid var(--border)", paddingTop: "14px" }}>
-                      <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.6 }}>
-                        {criticalCount > 0 ? "⚠️ Critical issues require immediate attention. Your infrastructure may be actively at risk." : "Complete all 4 sections for a full security assessment."}
-                      </p>
-                    </div>
-                  </>
+                  <button onClick={() => {
+                      const issueW = Math.min(flaggedSec.length / allSecChecks.length, 1) * 40;
+                      const critW  = Math.min(criticalCount * 15, 40);
+                      const highW  = Math.min(highCount * 5, 20);
+                      const score  = Math.max(0, Math.min(100, Math.round(100 - issueW - critW - highW)));
+                      setSecScore(score);
+                      goTo("security_report");
+                    }}
+                    disabled={flaggedSec.length === 0}
+                    style={{ flex: 1, padding: "13px 24px", borderRadius: "10px", border: "none", background: flaggedSec.length > 0 ? "#f87171" : "rgba(255,255,255,0.06)", color: flaggedSec.length > 0 ? "#000" : "var(--text-muted)", fontWeight: 800, fontSize: "14px", cursor: flaggedSec.length > 0 ? "pointer" : "not-allowed", boxShadow: flaggedSec.length > 0 ? "0 4px 20px rgba(248,113,113,0.35)" : "none" }}>
+                    {flaggedSec.length === 0 ? "Select at least one issue →" : "See My Security Score →"}
+                  </button>
                 )}
               </div>
             </div>
+
+            {/* Right — sticky sidebar */}
+            <div style={{ position: "sticky", top: "80px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              {/* Live risk counts */}
+              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "18px" }}>
+                <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "12px" }}>Live Risk Tracker</p>
+                {flaggedSec.length === 0 ? (
+                  <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", lineHeight: 1.65 }}>Issues you flag will appear here as you work through each section.</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {criticalCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.18)", borderRadius: "8px", padding: "9px 12px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 700, color: "#f87171" }}>🔴 Critical</span>
+                      <span style={{ fontSize: "18px", fontWeight: 800, color: "#f87171", lineHeight: 1 }}>{criticalCount}</span>
+                    </div>}
+                    {highCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.18)", borderRadius: "8px", padding: "9px 12px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 700, color: "#fb923c" }}>🟠 High</span>
+                      <span style={{ fontSize: "18px", fontWeight: 800, color: "#fb923c", lineHeight: 1 }}>{highCount}</span>
+                    </div>}
+                    {flaggedSec.filter(c => c.risk === "Medium").length > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.18)", borderRadius: "8px", padding: "9px 12px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 700, color: "#fbbf24" }}>🟡 Medium</span>
+                      <span style={{ fontSize: "18px", fontWeight: 800, color: "#fbbf24", lineHeight: 1 }}>{flaggedSec.filter(c => c.risk === "Medium").length}</span>
+                    </div>}
+                  </div>
+                )}
+              </div>
+
+              {/* Live score estimate */}
+              {flaggedSec.length > 0 && (() => {
+                const issueW = Math.min(flaggedSec.length / 16, 1) * 40;
+                const critW  = Math.min(criticalCount * 15, 40);
+                const highW  = Math.min(highCount * 5, 20);
+                const score  = Math.max(0, Math.min(100, Math.round(100 - issueW - critW - highW)));
+                const col    = score >= 80 ? "#4ade80" : score >= 60 ? "#fbbf24" : score >= 40 ? "#fb923c" : "#f87171";
+                const lbl    = score >= 80 ? "Low Risk" : score >= 60 ? "Medium Risk" : score >= 40 ? "High Risk" : "Critical Risk";
+                return (
+                  <div style={{ background: col + "10", border: `1px solid ${col}22`, borderRadius: "14px", padding: "16px 18px", textAlign: "center" }}>
+                    <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "8px" }}>Score Estimate</p>
+                    <div style={{ fontSize: "38px", fontWeight: 800, color: col, lineHeight: 1, letterSpacing: "-1px", marginBottom: "4px" }}>{score}</div>
+                    <p style={{ fontSize: "12px", fontWeight: 700, color: col, margin: "0 0 4px" }}>{lbl}</p>
+                    <p style={{ fontSize: "11px", color: "rgba(148,163,184,0.5)", margin: 0 }}>Updates as you flag issues</p>
+                  </div>
+                );
+              })()}
+
+              {/* CTA in sidebar on last step */}
+              {secStep === SEC_SECTIONS.length - 1 && flaggedSec.length > 0 && (
+                <button onClick={() => setShowSecBlueprint(true)}
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: "12px", border: "none", background: "#f87171", color: "#000", fontWeight: 800, fontSize: "12px", cursor: "pointer", boxShadow: "0 4px 16px rgba(248,113,113,0.3)" }}>
+                  {`Get Blueprint — ${currency.securityPrice || "119 PLN"}`}
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
     );
   }
 
@@ -1277,6 +1414,7 @@ Keep it concise, technical, and accurate. Real commands only.`;
         <ParticleBackground />
         {showContact && <ContactModal />}
         {showBooking && <BookingModal />}
+        {showSecBlueprint && <SecurityBlueprintModal onClose={() => setShowSecBlueprint(false)} secChecked={secChecked} currency={currency} provider={provider} companyName={companyName} />}
         <Nav showBack onBack={() => goTo("security_intro")} />
 
         <div style={{ maxWidth: "800px", margin: "0 auto", padding: "40px 24px 100px" }}>
@@ -1294,121 +1432,124 @@ Keep it concise, technical, and accurate. Real commands only.`;
             </div>
           </div>
 
-          {/* AI Report */}
-          <div style={{ background: "var(--bg2)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "20px", padding: "32px", marginBottom: "24px" }}>
-            {secReport ? (
-              <div style={{ fontFamily: "var(--body)", lineHeight: 1.75 }}>
-                {(() => {
-                  // Parse report into blocks for clean rendering
-                  const lines = secReport.split('\n');
-                  const blocks = [];
-                  let codeBlock = [];
-                  let inCode = false;
-
-                  lines.forEach((line, i) => {
-                    // Code block toggle
-                    if (line.startsWith('```')) {
-                      if (inCode) {
-                        blocks.push({ type: 'code', content: codeBlock.join('\n') });
-                        codeBlock = [];
-                        inCode = false;
-                      } else {
-                        inCode = true;
-                      }
-                      return;
-                    }
-                    if (inCode) { codeBlock.push(line); return; }
-
-                    // Skip table/box drawing characters and dividers
-                    if (line.match(/^[┌┐└┘│├┤─═+|]+/) || line.match(/^[-─═]{3,}$/) || line.match(/^\s*[|]{1}.*[|]{1}\s*$/)) {
-                      return;
-                    }
-
-                    // H1
-                    if (line.startsWith('# ') && !line.startsWith('## ')) {
-                      blocks.push({ type: 'h1', content: line.replace(/^# /, '') });
-                    }
-                    // H2
-                    else if (line.startsWith('## ')) {
-                      blocks.push({ type: 'h2', content: line.replace(/^## /, '') });
-                    }
-                    // H3 / Finding headers
-                    else if (line.startsWith('### ')) {
-                      blocks.push({ type: 'h3', content: line.replace(/^### /, '') });
-                    }
-                    // SEVERITY badges
-                    else if (line.includes('SEVERITY:') || line.match(/^(CRITICAL|HIGH|MEDIUM|LOW):/)) {
-                      const sev = line.includes('CRITICAL') ? 'CRITICAL' : line.includes('HIGH') ? 'HIGH' : line.includes('MEDIUM') ? 'MEDIUM' : 'LOW';
-                      blocks.push({ type: 'severity', content: line.replace(/[│|]/g, '').trim(), sev });
-                    }
-                    // SCORE line
-                    else if (line.includes('SCORE:') || line.includes('GRADE:')) {
-                      blocks.push({ type: 'score', content: line.replace(/[│|█░]/g, '').trim() });
-                    }
-                    // Shell commands (start with $ aws, aws, gcloud, az, etc.)
-                    else if (line.match(/^(#|aws |gcloud |az |terraform|kubectl|pip |for |do|done|echo|python3|detect)/)) {
-                      blocks.push({ type: 'cmd', content: line });
-                    }
-                    // Bullet points
-                    else if (line.match(/^[-*•]\s/)) {
-                      blocks.push({ type: 'bullet', content: line.replace(/^[-*•]\s/, '') });
-                    }
-                    // Blank line
-                    else if (!line.trim()) {
-                      blocks.push({ type: 'spacer' });
-                    }
-                    // Regular text — strip inline markdown
-                    else {
-                      const cleaned = line
-                        .replace(/\*\*(.*?)\*\*/g, '$1')
-                        .replace(/\*(.*?)\*/g, '$1')
-                        .replace(/`(.*?)`/g, '$1')
-                        .replace(/^>\s*/, '')
-                        .replace(/[│|┌┐└┘├┤]/g, '')
-                        .trim();
-                      if (cleaned) blocks.push({ type: 'text', content: cleaned, raw: line });
-                    }
-                  });
-
-                  // Render blocks
-                  const SCOLORS = { CRITICAL: '#f87171', HIGH: '#fb923c', MEDIUM: '#fbbf24', LOW: '#4ade80' };
-                  return blocks.map((b, i) => {
-                    switch (b.type) {
-                      case 'h1': return <h1 key={i} style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginTop: "8px", marginBottom: "4px" }}>{b.content}</h1>;
-                      case 'h2': return <h2 key={i} style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", letterSpacing: "1px", textTransform: "uppercase", marginTop: "32px", marginBottom: "12px", paddingBottom: "8px", borderBottom: "1px solid rgba(248,113,113,0.2)" }}>{b.content}</h2>;
-                      case 'h3': return <h3 key={i} style={{ fontSize: "16px", fontWeight: 700, color: "#fff", marginTop: "20px", marginBottom: "8px" }}>{b.content}</h3>;
-                      case 'severity': return (
-                        <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: `${SCOLORS[b.sev] || '#f87171'}15`, border: `1px solid ${SCOLORS[b.sev] || '#f87171'}40`, borderRadius: "8px", padding: "6px 14px", marginBottom: "12px", marginTop: "4px" }}>
-                          <span style={{ fontSize: "11px", fontWeight: 800, color: SCOLORS[b.sev] || '#f87171', letterSpacing: "1px" }}>⚠ {b.sev}</span>
-                          <span style={{ fontSize: "13px", color: "#fff", fontWeight: 600 }}>{b.content.replace(/SEVERITY:\s*(CRITICAL|HIGH|MEDIUM|LOW)\s*/i, '').trim()}</span>
-                        </div>
-                      );
-                      case 'score': return (
-                        <div key={i} style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "10px", padding: "12px 16px", marginBottom: "8px" }}>
-                          <p style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", margin: 0 }}>{b.content}</p>
-                        </div>
-                      );
-                      case 'code': return (
-                        <pre key={i} style={{ background: "#0a0a14", border: "1px solid rgba(147,197,253,0.15)", borderRadius: "10px", padding: "16px", margin: "12px 0", overflowX: "auto", fontSize: "12px", color: "#93c5fd", lineHeight: 1.7, fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{b.content}</pre>
-                      );
-                      case 'cmd': return (
-                        <code key={i} style={{ display: "block", fontSize: "12px", color: "#93c5fd", background: "#0a0a14", border: "1px solid rgba(147,197,253,0.1)", padding: "5px 12px", borderRadius: "6px", marginBottom: "3px", fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{b.content}</code>
-                      );
-                      case 'bullet': return (
-                        <div key={i} style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "6px" }}>
-                          <span style={{ color: "#f87171", fontSize: "14px", marginTop: "1px", flexShrink: 0 }}>•</span>
-                          <span style={{ fontSize: "14px", color: "#cbd5e1", lineHeight: 1.6 }}>{b.content.replace(/\*\*(.*?)\*\*/g, '$1')}</span>
-                        </div>
-                      );
-                      case 'spacer': return <div key={i} style={{ height: "10px" }} />;
-                      case 'text':
-                      default: return <p key={i} style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.7, marginBottom: "6px" }}>{b.content}</p>;
-                    }
-                  });
-                })()}
+          {/* ── SECURITY SCORE CARD ── */}
+          {(() => {
+            const allSecChecks2 = [
+              {id:"mfa_all",risk:"Critical"},{id:"iam_wildcards",risk:"Critical"},{id:"root_usage",risk:"High"},{id:"unused_keys",risk:"High"},
+              {id:"public_buckets",risk:"Critical"},{id:"open_security_groups",risk:"High"},{id:"no_vpc",risk:"High"},{id:"no_waf",risk:"Medium"},
+              {id:"no_encryption_rest",risk:"High"},{id:"no_encryption_transit",risk:"High"},{id:"hardcoded_secrets",risk:"Critical"},{id:"no_kms",risk:"Medium"},
+              {id:"no_cloudtrail",risk:"High"},{id:"no_alerts",risk:"High"},{id:"no_ir_plan",risk:"Medium"},{id:"no_vuln_scanning",risk:"Medium"},
+            ];
+            const flaggedS  = allSecChecks2.filter(c => secChecked[c.id]);
+            const critCount = flaggedS.filter(c => c.risk === "Critical").length;
+            const highCount2 = flaggedS.filter(c => c.risk === "High").length;
+            const issueW    = Math.min(flaggedS.length / 16, 1) * 40;
+            const critW     = Math.min(critCount * 15, 40);
+            const highW     = Math.min(highCount2 * 5, 20);
+            const score     = secScore !== null ? secScore : Math.max(0, Math.min(100, Math.round(100 - issueW - critW - highW)));
+            const grade     = score >= 80 ? { label: "Low Risk",      color: "#4ade80", ring: "#4ade80" }
+                            : score >= 60 ? { label: "Medium Risk",   color: "#fbbf24", ring: "#fbbf24" }
+                            : score >= 40 ? { label: "High Risk",     color: "#fb923c", ring: "#fb923c" }
+                            :               { label: "Critical Risk", color: "#f87171", ring: "#f87171" };
+            const circ = 2 * Math.PI * 54;
+            const dash = circ * (1 - score / 100);
+            return (
+              <div style={{ background: "var(--bg2)", border: `1.5px solid ${grade.ring}30`, borderRadius: "20px", padding: "32px", marginBottom: "24px", display: "flex", alignItems: "center", gap: "32px", flexWrap: "wrap" }}>
+                {/* Ring */}
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <svg width="120" height="120" style={{ transform: "rotate(-90deg)" }}>
+                    <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+                    <circle cx="60" cy="60" r="54" fill="none" stroke={grade.ring} strokeWidth="10"
+                      strokeDasharray={circ} strokeDashoffset={dash} strokeLinecap="round"
+                      style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)", filter: `drop-shadow(0 0 8px ${grade.ring}60)` }} />
+                  </svg>
+                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: "30px", fontWeight: 800, color: grade.color, lineHeight: 1, letterSpacing: "-1px" }}>{score}</span>
+                    <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>/ 100</span>
+                  </div>
+                </div>
+                {/* Details */}
+                <div style={{ flex: 1, minWidth: "180px" }}>
+                  <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "6px" }}>Security Risk Score</p>
+                  <h2 style={{ fontSize: "26px", fontWeight: 800, color: grade.color, letterSpacing: "-0.5px", marginBottom: "8px" }}>{grade.label}</h2>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "12px" }}>
+                    {critCount > 0 && <span style={{ fontSize: "12px", color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "6px", padding: "3px 10px", fontWeight: 700 }}>🔴 {critCount} Critical</span>}
+                    {highCount2 > 0 && <span style={{ fontSize: "12px", color: "#fb923c", background: "rgba(251,146,60,0.1)", border: "1px solid rgba(251,146,60,0.25)", borderRadius: "6px", padding: "3px 10px", fontWeight: 700 }}>🟠 {highCount2} High</span>}
+                    {flaggedS.filter(c => c.risk === "Medium").length > 0 && <span style={{ fontSize: "12px", color: "#fbbf24", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)", borderRadius: "6px", padding: "3px 10px", fontWeight: 700 }}>🟡 {flaggedS.filter(c=>c.risk==="Medium").length} Medium</span>}
+                  </div>
+                  <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                    {score < 40 ? `${critCount} critical vulnerabilities detected. Your infrastructure is at active risk. Immediate remediation required.`
+                    : score < 60 ? `Significant security gaps found. ${flaggedS.length} issues need attention before your next compliance review.`
+                    : score < 80 ? `Some security issues detected. Address these before your next pentest or audit.`
+                    : `Good security posture. Minor issues found — address them to maintain compliance.`}
+                  </p>
+                </div>
               </div>
-            ) : (
-              <p style={{ color: "var(--text-muted)" }}>No report data available.</p>
+            );
+          })()}
+
+          {/* ── FINDINGS PREVIEW (free) ── */}
+          <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "20px", overflow: "hidden", marginBottom: "24px" }}>
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#fff", marginBottom: "2px" }}>Issues Found</h3>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Severity ranking · free preview</p>
+              </div>
+              <span style={{ fontSize: "12px", color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "20px", padding: "4px 12px", fontWeight: 700 }}>
+                {Object.keys(secChecked).filter(k => secChecked[k]).length} issues
+              </span>
+            </div>
+            {/* First 2 issues — fully visible */}
+            {[
+              {id:"mfa_all",label:"MFA not enforced for all users",risk:"Critical",detail:"Users can authenticate with password only"},
+              {id:"iam_wildcards",label:"IAM wildcard permissions (Action: *)",risk:"Critical",detail:"Overly permissive policies granting full service access"},
+              {id:"root_usage",label:"Root account used for daily operations",risk:"High",detail:"Root credentials should never be used after initial setup"},
+              {id:"unused_keys",label:"Access keys older than 90 days",risk:"High",detail:"Long-lived credentials increase breach exposure window"},
+              {id:"public_buckets",label:"Public S3/storage buckets detected",risk:"Critical",detail:"Storage accessible without authentication"},
+              {id:"open_security_groups",label:"Security groups open to 0.0.0.0/0",risk:"High",detail:"Ports open to entire internet"},
+              {id:"no_vpc",label:"Resources not isolated in VPC",risk:"High",detail:"Services running without network boundary controls"},
+              {id:"no_waf",label:"No WAF on public endpoints",risk:"Medium",detail:"Web application firewall absent"},
+              {id:"no_encryption_rest",label:"Data at rest not encrypted",risk:"High",detail:"Databases or storage without encryption"},
+              {id:"no_encryption_transit",label:"Data in transit not encrypted",risk:"High",detail:"Internal traffic using unencrypted channels"},
+              {id:"hardcoded_secrets",label:"Secrets hardcoded in code/config",risk:"Critical",detail:"API keys or tokens in source code"},
+              {id:"no_kms",label:"No key management system",risk:"Medium",detail:"Encryption keys not centrally managed"},
+              {id:"no_cloudtrail",label:"Audit logging not enabled",risk:"High",detail:"No CloudTrail — no record of who did what"},
+              {id:"no_alerts",label:"No security alerts configured",risk:"High",detail:"No notifications for suspicious activity"},
+              {id:"no_ir_plan",label:"No incident response plan",risk:"Medium",detail:"No documented process for security incidents"},
+              {id:"no_vuln_scanning",label:"No vulnerability scanning",risk:"Medium",detail:"Infrastructure not scanned for known CVEs"},
+            ].filter(c => secChecked[c.id]).map((c, i) => {
+              const RISK_COLOR = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24" };
+              const isLocked = i >= 2;
+              return (
+                <div key={c.id} style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", position: "relative", filter: isLocked ? "blur(3px)" : "none", userSelect: isLocked ? "none" : "auto" }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
+                      <span style={{ fontSize: "10px", fontWeight: 700, color: RISK_COLOR[c.risk], background: RISK_COLOR[c.risk] + "15", border: `1px solid ${RISK_COLOR[c.risk]}30`, borderRadius: "4px", padding: "1px 6px" }}>{c.risk}</span>
+                      <span style={{ fontSize: "13px", fontWeight: 600, color: isLocked ? "rgba(255,255,255,0.3)" : "#fff" }}>{c.label}</span>
+                    </div>
+                    <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.5)", margin: 0 }}>{c.detail}</p>
+                  </div>
+                  {isLocked
+                    ? <span style={{ fontSize: "11px", color: "#f87171", fontWeight: 700, whiteSpace: "nowrap" }}>🔒 Locked</span>
+                    : <span style={{ fontSize: "11px", color: "#94a3b8" }}>Visible</span>
+                  }
+                </div>
+              );
+            })}
+            {/* Unlock overlay */}
+            {Object.keys(secChecked).filter(k => secChecked[k]).length > 2 && (
+              <div style={{ padding: "20px 24px", background: "linear-gradient(135deg, rgba(248,113,113,0.06), rgba(251,146,60,0.04))", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
+                <div>
+                  <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "2px" }}>
+                    🔒 {Object.keys(secChecked).filter(k => secChecked[k]).length - 2} more issues + full remediation locked
+                  </p>
+                  <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>CLI commands · Compliance mapping · 30-day fix roadmap</p>
+                </div>
+                <button onClick={() => setShowSecBlueprint(true)}
+                  style={{ background: "#f87171", color: "#000", border: "none", borderRadius: "10px", padding: "10px 22px", fontSize: "13px", fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 4px 16px rgba(248,113,113,0.3)" }}>
+                  {`Unlock Blueprint — ${currency.securityPrice || "119 PLN"} →`}
+                </button>
+              </div>
             )}
           </div>
 
@@ -1422,16 +1563,20 @@ Keep it concise, technical, and accurate. Real commands only.`;
 
           {/* Actions */}
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-            <button onClick={() => window.print()} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "12px", padding: "13px 28px", color: "var(--text-dim)", fontSize: "14px", cursor: "pointer", fontWeight: 600 }}>
-              🖨 Print / Save PDF
+            <button onClick={() => setShowSecBlueprint(true)}
+              style={{ background: "#f87171", color: "#000", border: "none", borderRadius: "12px", padding: "13px 32px", fontSize: "15px", fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 20px rgba(248,113,113,0.3)" }}>
+              {`🛡 Get Security Blueprint — ${currency.securityPrice || "119 PLN"} →`}
             </button>
-            <button onClick={() => { setSecChecked({}); setSecReport(null); setSecStep(0); goTo("security_intro"); }}
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "12px", padding: "13px 28px", color: "var(--text-dim)", fontSize: "14px", cursor: "pointer", fontWeight: 600 }}>
-              🔄 Re-run Audit
+            <button onClick={() => window.print()} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "12px", padding: "13px 24px", color: "var(--text-dim)", fontSize: "14px", cursor: "pointer", fontWeight: 600 }}>
+              🖨 Print Score
+            </button>
+            <button onClick={() => { setSecChecked({}); setSecScore(null); setSecStep(0); goTo("security_intro"); }}
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "12px", padding: "13px 24px", color: "var(--text-dim)", fontSize: "14px", cursor: "pointer", fontWeight: 600 }}>
+              🔄 Re-run
             </button>
             <button onClick={() => goTo("intro")}
-              style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "13px 28px", fontSize: "14px", fontWeight: 800, cursor: "pointer" }}>
-              → Run Cost Audit Too
+              style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "13px 24px", fontSize: "14px", fontWeight: 800, cursor: "pointer" }}>
+              → Cost Audit Too
             </button>
           </div>
         </div>
@@ -2778,3 +2923,4 @@ Keep it concise, technical, and accurate. Real commands only.`;
     );
   }
 }
+
