@@ -1403,6 +1403,8 @@ Keep it concise, technical, and accurate. Real commands only.`;
               )}
             </div>
           </div>
+        </div>
+      </div>
     );
   }
 
@@ -2923,4 +2925,3 @@ Keep it concise, technical, and accurate. Real commands only.`;
     );
   }
 }
-
