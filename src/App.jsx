@@ -530,6 +530,13 @@ function LiveFeedTicker() {
   );
 }
 
+// ── MODULE-LEVEL CONSTANTS — defined once, never recreated on render ─────────
+const TESTIMONIALS = [
+  { name: "Marek W.", role: "Lead DevOps · Warsaw fintech", text: "Found $2,400/mo in idle RDS instances on the first audit. The blueprint gave me the exact Terraform to fix it. Took 40 minutes.", savings: "$2,400/mo", provider: "AWS" },
+  { name: "Tomasz K.", role: "CTO · SaaS startup, Kraków", text: "We were on full on-demand pricing for 18 months. One Reserved Instance switch later — $1,800/month saved. Blueprint paid for itself 6× over.", savings: "$1,800/mo", provider: "GCP" },
+  { name: "Aleksandra R.", role: "Platform Eng · Berlin scale-up", text: "Spotted dev VMs running 24/7 at production size. Auto-shutdown config took 10 minutes to deploy. Immediately visible on the next invoice.", savings: "$960/mo", provider: "Azure" },
+];
+
 export default function App() {
   const [step, setStep] = useState("intro");
   const [provider, setProvider] = useState("");
@@ -553,6 +560,12 @@ export default function App() {
   const [activeHowStep, setActiveHowStep] = useState(0);
   const [showExitIntent, setShowExitIntent] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
+  // ── SECURITY AUDIT STATE ──────────────────────────────────────────────────
+  const [secChecked, setSecChecked] = useState({});
+  const [secStep, setSecStep] = useState(0);
+  const [secReport, setSecReport] = useState(null);
+  const [secLoading, setSecLoading] = useState(false);
+  const [secError, setSecError] = useState(null);
   const [gateEmail, setGateEmail] = useState("");
   const [aiPreview, setAiPreview] = useState(null);
   const [aiPreviewLoading, setAiPreviewLoading] = useState(false);
@@ -567,12 +580,18 @@ export default function App() {
   const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
   const goTo = (s) => { setStep(s); setPageKey(k => k + 1); window.scrollTo(0, 0); };
 
-  const bill = parseFloat(monthlyBill) || 0;
-  const allChecks = AUDIT_SECTIONS.flatMap(s => s.checks);
-  const flagged = allChecks.filter(c => checked[c.id]);
-  const savMin = Math.round(flagged.reduce((s, c) => s + bill * c.savingsRange[0] / 100, 0));
-  const savMax = Math.round(flagged.reduce((s, c) => s + bill * c.savingsRange[1] / 100, 0));
-  const savPct = bill > 0 ? Math.round(((savMin + savMax) / 2 / bill) * 100) : 0;
+  const bill = useMemo(() => parseFloat(monthlyBill) || 0, [monthlyBill]);
+  const allChecks = useMemo(() => AUDIT_SECTIONS.flatMap(s => s.checks), []);
+  const flagged = useMemo(() => allChecks.filter(c => checked[c.id]), [checked, allChecks]);
+  const { savMin, savMax, savPct } = useMemo(() => {
+    const min = Math.round(flagged.reduce((s, c) => s + bill * c.savingsRange[0] / 100, 0));
+    const max = Math.round(flagged.reduce((s, c) => s + bill * c.savingsRange[1] / 100, 0));
+    return {
+      savMin: min,
+      savMax: max,
+      savPct: bill > 0 ? Math.round(((min + max) / 2 / bill) * 100) : 0,
+    };
+  }, [flagged, bill]);
   const progress = Math.round((Object.keys(checked).length / allChecks.length) * 100);
 
   const sampleFlagged = allChecks.filter(c => SAMPLE_REPORT.checked[c.id]);
@@ -1040,6 +1059,285 @@ Keep it concise, technical, and accurate. Real commands only.`;
     </div>
   );
 
+
+  // ── SECURITY AUDIT INTRO ──────────────────────────────────────────────────
+  if (step === "security_intro") {
+    const SEC_SECTIONS = [
+      { id: "iam", icon: "🔐", title: "Identity & Access", color: "#f87171",
+        desc: "IAM policies, MFA enforcement, privilege escalation paths",
+        checks: [
+          { id: "mfa_all", label: "MFA not enforced for all users", detail: "Users can authenticate with password only — no second factor", risk: "Critical" },
+          { id: "iam_wildcards", label: "IAM wildcard permissions (Action: *)", detail: "Overly permissive policies granting full service access", risk: "Critical" },
+          { id: "root_usage", label: "Root account used for daily operations", detail: "Root credentials should never be used after initial setup", risk: "High" },
+          { id: "unused_keys", label: "Access keys older than 90 days", detail: "Long-lived credentials increase breach exposure window", risk: "High" },
+        ]
+      },
+      { id: "network", icon: "🌐", title: "Network & Exposure", color: "#fb923c",
+        desc: "Public exposure, VPC isolation, security groups",
+        checks: [
+          { id: "public_buckets", label: "Public S3/storage buckets detected", detail: "Storage accessible without authentication from the internet", risk: "Critical" },
+          { id: "open_security_groups", label: "Security groups open to 0.0.0.0/0", detail: "Ports open to entire internet — including management ports", risk: "High" },
+          { id: "no_vpc", label: "Resources not isolated in VPC", detail: "Services running without network boundary controls", risk: "High" },
+          { id: "no_waf", label: "No WAF on public endpoints", detail: "Web application firewall absent on internet-facing services", risk: "Medium" },
+        ]
+      },
+      { id: "data", icon: "🗄", title: "Data Protection", color: "#fbbf24",
+        desc: "Encryption at rest, in transit, secrets management",
+        checks: [
+          { id: "no_encryption_rest", label: "Data at rest not encrypted", detail: "Databases or storage volumes without encryption enabled", risk: "High" },
+          { id: "no_encryption_transit", label: "Data in transit not encrypted (HTTP)", detail: "Internal or external traffic using unencrypted channels", risk: "High" },
+          { id: "hardcoded_secrets", label: "Secrets hardcoded in code/config", detail: "API keys, passwords, or tokens in source code or env vars", risk: "Critical" },
+          { id: "no_kms", label: "No key management system", detail: "Encryption keys not centrally managed or rotated", risk: "Medium" },
+        ]
+      },
+      { id: "logging", icon: "📋", title: "Logging & Detection", color: "#818cf8",
+        desc: "Audit trails, alerting, incident response",
+        checks: [
+          { id: "no_cloudtrail", label: "Audit logging not enabled", detail: "No CloudTrail/Audit Log — no record of who did what", risk: "High" },
+          { id: "no_alerts", label: "No security alerts configured", detail: "No notifications for suspicious activity or policy violations", risk: "High" },
+          { id: "no_ir_plan", label: "No incident response plan", detail: "No documented process for security incidents", risk: "Medium" },
+          { id: "no_vuln_scanning", label: "No vulnerability scanning", detail: "Infrastructure not scanned for known CVEs or misconfigs", risk: "Medium" },
+        ]
+      },
+    ];
+
+    const allSecChecks = SEC_SECTIONS.flatMap(s => s.checks);
+    const flaggedSec = allSecChecks.filter(c => secChecked[c.id]);
+    const criticalCount = flaggedSec.filter(c => c.risk === "Critical").length;
+    const highCount = flaggedSec.filter(c => c.risk === "High").length;
+    const currentSection = SEC_SECTIONS[secStep];
+    const RISK_COLOR = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24", Low: "#4ade80" };
+
+    const handleSecurityReport = async () => {
+      if (flaggedSec.length === 0) return;
+      setSecLoading(true);
+      setSecError(null);
+      try {
+        const res = await fetch("/api/security-report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            provider: provider || "AWS",
+            companyName: companyName || "Your Company",
+            teamSize: "unknown",
+            environment: "production",
+            mfaEnabled: !secChecked["mfa_all"],
+            publicBuckets: secChecked["public_buckets"],
+            iamWildcards: secChecked["iam_wildcards"],
+            encryptionAtRest: !secChecked["no_encryption_rest"],
+            encryptionInTransit: !secChecked["no_encryption_transit"],
+            loggingEnabled: !secChecked["no_cloudtrail"],
+            vpcIsolation: !secChecked["no_vpc"],
+            secretsManager: !secChecked["hardcoded_secrets"],
+            incidentResponse: !secChecked["no_ir_plan"],
+            patchingCadence: "unknown",
+            complianceFramework: "General best practices",
+            flaggedIssues: flaggedSec.map(c => c.label),
+          }),
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        setSecReport(data.report);
+        goTo("security_report");
+      } catch (err) {
+        setSecError(err.message || "Failed to generate report. Please try again.");
+      } finally {
+        setSecLoading(false);
+      }
+    };
+
+    return (
+      <div className="app">
+        <style>{globalCss}</style>
+        <ParticleBackground />
+        {showContact && <ContactModal />}
+        {showBooking && <BookingModal />}
+        <Nav showBack onBack={() => goTo("intro")} />
+
+        <div style={{ maxWidth: "960px", margin: "0 auto", padding: "40px 24px 100px" }}>
+          {/* Header */}
+          <div style={{ textAlign: "center", marginBottom: "48px" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: "20px", padding: "6px 16px", marginBottom: "20px" }}>
+              <span style={{ width: "6px", height: "6px", background: "#f87171", borderRadius: "50%", animation: "pulse-dot 2s infinite" }} />
+              <span style={{ fontSize: "11px", fontWeight: 700, color: "#f87171", letterSpacing: "1.5px" }}>CLOUD SECURITY AUDIT — ZERO ACCESS REQUIRED</span>
+            </div>
+            <h1 className="display" style={{ fontSize: "clamp(32px,5vw,56px)", fontWeight: 800, letterSpacing: "-2px", color: "#fff", marginBottom: "16px", lineHeight: 1.05 }}>
+              Find security gaps before<br /><span style={{ color: "#f87171" }}>attackers do.</span>
+            </h1>
+            <p style={{ fontSize: "16px", color: "var(--text-muted)", maxWidth: "520px", margin: "0 auto", lineHeight: 1.7 }}>
+              16 security checkpoints across IAM, network exposure, data protection, and logging. Self-reported — no credentials, no cloud access, no agents.
+            </p>
+          </div>
+
+          {/* Progress + section tabs */}
+          <div style={{ display: "flex", gap: "4px", marginBottom: "32px", background: "var(--bg2)", borderRadius: "12px", padding: "6px", border: "1px solid var(--border)" }}>
+            {SEC_SECTIONS.map((s, i) => (
+              <button key={s.id} onClick={() => setSecStep(i)}
+                style={{ flex: 1, padding: "10px 8px", borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: 700, transition: "all 0.2s", background: secStep === i ? s.color + "20" : "transparent", color: secStep === i ? s.color : "var(--text-muted)", borderBottom: secStep === i ? `2px solid ${s.color}` : "2px solid transparent" }}>
+                {s.icon} {s.title}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: "24px", alignItems: "start" }}>
+            {/* Checks */}
+            <div>
+              <div style={{ marginBottom: "20px" }}>
+                <h2 className="display" style={{ fontSize: "22px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{currentSection.icon} {currentSection.title}</h2>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>{currentSection.desc}</p>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {currentSection.checks.map(check => (
+                  <div key={check.id} onClick={() => setSecChecked(p => ({ ...p, [check.id]: !p[check.id] }))}
+                    style={{ background: secChecked[check.id] ? `${RISK_COLOR[check.risk]}10` : "var(--bg2)", border: `1.5px solid ${secChecked[check.id] ? RISK_COLOR[check.risk] + "60" : "var(--border)"}`, borderRadius: "14px", padding: "18px 20px", cursor: "pointer", transition: "all 0.2s" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                          <span style={{ fontSize: "11px", fontWeight: 700, color: RISK_COLOR[check.risk], background: RISK_COLOR[check.risk] + "15", border: `1px solid ${RISK_COLOR[check.risk]}30`, borderRadius: "4px", padding: "2px 7px" }}>{check.risk}</span>
+                          <span style={{ fontSize: "14px", fontWeight: 700, color: secChecked[check.id] ? "#fff" : "var(--text-dim)" }}>{check.label}</span>
+                        </div>
+                        <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.5 }}>{check.detail}</p>
+                      </div>
+                      <div style={{ width: "22px", height: "22px", borderRadius: "6px", border: `2px solid ${secChecked[check.id] ? RISK_COLOR[check.risk] : "var(--border)"}`, background: secChecked[check.id] ? RISK_COLOR[check.risk] : "transparent", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
+                        {secChecked[check.id] && <span style={{ color: "#000", fontSize: "12px", fontWeight: 800 }}>✓</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Navigation */}
+              <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
+                {secStep > 0 && <button onClick={() => setSecStep(s => s - 1)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px 24px", color: "var(--text-muted)", fontSize: "14px", cursor: "pointer" }}>← Back</button>}
+                {secStep < SEC_SECTIONS.length - 1
+                  ? <button className="glow-btn" onClick={() => setSecStep(s => s + 1)} style={{ background: currentSection.color, color: "#000", border: "none", borderRadius: "10px", padding: "12px 28px", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>Next Section →</button>
+                  : <button className="glow-btn" onClick={handleSecurityReport} disabled={secLoading || flaggedSec.length === 0}
+                      style={{ background: flaggedSec.length > 0 ? "#f87171" : "rgba(255,255,255,0.06)", color: flaggedSec.length > 0 ? "#000" : "var(--text-muted)", border: "none", borderRadius: "10px", padding: "12px 32px", fontSize: "14px", fontWeight: 700, cursor: flaggedSec.length > 0 ? "pointer" : "not-allowed", opacity: secLoading ? 0.7 : 1 }}>
+                      {secLoading ? (
+                        <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ display: "inline-block", width: "14px", height: "14px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+                          Generating Security Report…
+                        </span>
+                      ) : `Generate Security Report →`}
+                    </button>
+                }
+              </div>
+              {secError && <p style={{ color: "#f87171", fontSize: "13px", marginTop: "12px", background: "rgba(248,113,113,0.08)", padding: "10px 14px", borderRadius: "8px", border: "1px solid rgba(248,113,113,0.2)" }}>⚠ {secError}</p>}
+            </div>
+
+            {/* Sidebar — live risk summary */}
+            <div style={{ position: "sticky", top: "80px" }}>
+              <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "16px" }}>Risk Summary</p>
+                {flaggedSec.length === 0 ? (
+                  <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>Check issues as you find them — your risk summary will appear here.</p>
+                ) : (
+                  <>
+                    {criticalCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px 14px", marginBottom: "8px" }}>
+                      <span style={{ fontSize: "13px", fontWeight: 700, color: "#f87171" }}>🔴 Critical</span>
+                      <span style={{ fontSize: "18px", fontWeight: 800, color: "#f87171" }}>{criticalCount}</span>
+                    </div>}
+                    {highCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.2)", borderRadius: "8px", padding: "10px 14px", marginBottom: "8px" }}>
+                      <span style={{ fontSize: "13px", fontWeight: 700, color: "#fb923c" }}>🟠 High</span>
+                      <span style={{ fontSize: "18px", fontWeight: 800, color: "#fb923c" }}>{highCount}</span>
+                    </div>}
+                    {flaggedSec.filter(c => c.risk === "Medium").length > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.2)", borderRadius: "8px", padding: "10px 14px", marginBottom: "16px" }}>
+                      <span style={{ fontSize: "13px", fontWeight: 700, color: "#fbbf24" }}>🟡 Medium</span>
+                      <span style={{ fontSize: "18px", fontWeight: 800, color: "#fbbf24" }}>{flaggedSec.filter(c => c.risk === "Medium").length}</span>
+                    </div>}
+                    <div style={{ borderTop: "1px solid var(--border)", paddingTop: "14px" }}>
+                      <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                        {criticalCount > 0 ? "⚠️ Critical issues require immediate attention. Your infrastructure may be actively at risk." : "Complete all 4 sections for a full security assessment."}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── SECURITY REPORT ──────────────────────────────────────────────────────────
+  if (step === "security_report") {
+    return (
+      <div className="app">
+        <style>{globalCss}</style>
+        <ParticleBackground />
+        {showContact && <ContactModal />}
+        {showBooking && <BookingModal />}
+        <Nav showBack onBack={() => goTo("security_intro")} />
+
+        <div style={{ maxWidth: "800px", margin: "0 auto", padding: "40px 24px 100px" }}>
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "32px", flexWrap: "wrap" }}>
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "20px", padding: "4px 14px", marginBottom: "10px" }}>
+                <span style={{ width: "5px", height: "5px", background: "#f87171", borderRadius: "50%", animation: "pulse-dot 2s infinite" }} />
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "#f87171", letterSpacing: "1px" }}>SECURITY ASSESSMENT COMPLETE</span>
+              </div>
+              <h1 className="display" style={{ fontSize: "clamp(24px,4vw,36px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>
+                Cloud Security Report
+              </h1>
+              <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>{provider} · Generated {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            </div>
+          </div>
+
+          {/* AI Report */}
+          <div style={{ background: "var(--bg2)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "20px", padding: "32px", marginBottom: "24px" }}>
+            {secReport ? (
+              <div style={{ fontFamily: "var(--body)", lineHeight: 1.8 }}>
+                {secReport.split('
+').map((line, i) => {
+                  if (line.startsWith('## ')) return (
+                    <h2 key={i} style={{ fontSize: "16px", fontWeight: 800, color: "#f87171", letterSpacing: "0.5px", textTransform: "uppercase", marginTop: "28px", marginBottom: "12px", paddingBottom: "8px", borderBottom: "1px solid rgba(248,113,113,0.2)" }}>{line.replace('## ', '')}</h2>
+                  );
+                  if (line.startsWith('- **CRITICAL**') || line.includes('CRITICAL')) return (
+                    <p key={i} style={{ fontSize: "13px", color: "#f87171", fontWeight: 600, background: "rgba(248,113,113,0.06)", padding: "4px 10px", borderRadius: "6px", marginBottom: "4px" }}>{line}</p>
+                  );
+                  if (line.startsWith('```')) return null;
+                  if (line.match(/^(aws |gcloud |az |terraform|kubectl)/)) return (
+                    <code key={i} style={{ display: "block", fontSize: "12px", color: "#93c5fd", background: "rgba(147,197,253,0.06)", padding: "6px 12px", borderRadius: "6px", marginBottom: "4px", fontFamily: "monospace" }}>{line}</code>
+                  );
+                  if (line.startsWith('**')) return (
+                    <p key={i} style={{ fontSize: "14px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>{line.replace(/\*\*/g, '')}</p>
+                  );
+                  return line.trim() ? <p key={i} style={{ fontSize: "14px", color: "var(--text-dim)", marginBottom: "4px" }}>{line}</p> : <br key={i} />;
+                })}
+              </div>
+            ) : (
+              <p style={{ color: "var(--text-muted)" }}>No report data available.</p>
+            )}
+          </div>
+
+          {/* Trust + CTA */}
+          <div style={{ background: "rgba(248,113,113,0.04)", border: "1px solid rgba(248,113,113,0.12)", borderRadius: "16px", padding: "24px", marginBottom: "24px", textAlign: "center" }}>
+            <p style={{ fontSize: "13px", fontWeight: 700, color: "#f87171", marginBottom: "6px" }}>🔒 What KloudAudit Security never sees</p>
+            <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.65 }}>
+              No credentials. No cloud access. No account IDs. This report was generated entirely from your self-reported answers using Claude AI. We have zero visibility into your actual infrastructure.
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+            <button onClick={() => window.print()} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "12px", padding: "13px 28px", color: "var(--text-dim)", fontSize: "14px", cursor: "pointer", fontWeight: 600 }}>
+              🖨 Print / Save PDF
+            </button>
+            <button onClick={() => { setSecChecked({}); setSecReport(null); setSecStep(0); goTo("security_intro"); }}
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "12px", padding: "13px 28px", color: "var(--text-dim)", fontSize: "14px", cursor: "pointer", fontWeight: 600 }}>
+              🔄 Re-run Audit
+            </button>
+            <button onClick={() => goTo("intro")}
+              style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "13px 28px", fontSize: "14px", fontWeight: 800, cursor: "pointer" }}>
+              → Run Cost Audit Too
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── INTRO ──────────────────────────────────────────────────────────────────
   if (step === "intro") {
     // calcBill and openFaq declared at top level (Rules of Hooks)
@@ -1047,11 +1345,7 @@ Keep it concise, technical, and accurate. Real commands only.`;
     const calcMax = Math.round(calcBill * 0.45);
     const calcAnnual = Math.round(calcMin * 12);
 
-    const TESTIMONIALS = [
-      { name: "Marek W.", role: "Lead DevOps · Warsaw fintech", text: "Found $2,400/mo in idle RDS instances on the first audit. The blueprint gave me the exact Terraform to fix it. Took 40 minutes.", savings: "$2,400/mo", provider: "AWS" },
-      { name: "Tomasz K.", role: "CTO · SaaS startup, Kraków", text: "We were on full on-demand pricing for 18 months. One Reserved Instance switch later — $1,800/month saved. Blueprint paid for itself 6× over.", savings: "$1,800/mo", provider: "GCP" },
-      { name: "Aleksandra R.", role: "Platform Eng · Berlin scale-up", text: "Spotted dev VMs running 24/7 at production size. Auto-shutdown config took 10 minutes to deploy. Immediately visible on the next invoice.", savings: "$960/mo", provider: "Azure" },
-    ];
+    // TESTIMONIALS — defined at module level below for performance
 
     const FAQS = [
       { q: "Do you need access to my cloud account?", a: "No. The audit is entirely self-guided — you answer questions based on your own knowledge of your infrastructure. No credentials, no agents, no read-only IAM roles required." },
@@ -1396,6 +1690,36 @@ Keep it concise, technical, and accurate. Real commands only.`;
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* ── SECURITY AUDIT PRODUCT CARD ── */}
+        <div style={{ marginBottom: "48px" }}>
+          <div onClick={() => goTo("security_intro")}
+            style={{ background: "linear-gradient(135deg, rgba(248,113,113,0.07), rgba(251,146,60,0.05))", border: "1.5px solid rgba(248,113,113,0.2)", borderRadius: "20px", padding: "28px 32px", cursor: "pointer", transition: "all 0.25s", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.45)"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 16px 40px rgba(248,113,113,0.12)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.2)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+              <div style={{ width: "52px", height: "52px", background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", flexShrink: 0 }}>🛡</div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "20px", padding: "2px 10px", letterSpacing: "1px" }}>NEW · FREE</span>
+                  <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1px" }}>CLOUD SECURITY AUDIT</span>
+                </div>
+                <h3 className="display" style={{ fontSize: "20px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "4px" }}>Find security vulnerabilities before attackers do</h3>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>16 checkpoints across IAM, network exposure, encryption & logging. Free. No account access. AI-generated remediation report.</p>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "10px", flexShrink: 0 }}>
+              <div style={{ display: "flex", gap: "6px" }}>
+                {["🔐 IAM", "🌐 Network", "🗄 Data", "📋 Logging"].map(tag => (
+                  <span key={tag} style={{ fontSize: "11px", color: "#f87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "6px", padding: "3px 8px", whiteSpace: "nowrap" }}>{tag}</span>
+                ))}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#f87171", fontSize: "13px", fontWeight: 700 }}>
+                Run Security Audit <span style={{ fontSize: "18px" }}>→</span>
+              </div>
+            </div>
           </div>
         </div>
 
