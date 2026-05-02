@@ -1288,8 +1288,7 @@ Keep it concise, technical, and accurate. Real commands only.`;
           <div style={{ background: "var(--bg2)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "20px", padding: "32px", marginBottom: "24px" }}>
             {secReport ? (
               <div style={{ fontFamily: "var(--body)", lineHeight: 1.8 }}>
-                {secReport.split('
-').map((line, i) => {
+                {secReport.split('\n').map((line, i) => {
                   if (line.startsWith('## ')) return (
                     <h2 key={i} style={{ fontSize: "16px", fontWeight: 800, color: "#f87171", letterSpacing: "0.5px", textTransform: "uppercase", marginTop: "28px", marginBottom: "12px", paddingBottom: "8px", borderBottom: "1px solid rgba(248,113,113,0.2)" }}>{line.replace('## ', '')}</h2>
                   );
