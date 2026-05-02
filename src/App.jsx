@@ -219,10 +219,26 @@ const globalCss = `
     .stats-grid { grid-template-columns: 1fr 1fr !important; }
     .kpi-grid { grid-template-columns: 1fr 1fr !important; }
   }
+
+  /* ── Fix browser autofill overriding dark input backgrounds ── */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #0d0d1a inset !important;
+    -webkit-text-fill-color: #ffffff !important;
+    caret-color: #ffffff !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  input, textarea {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff;
+  }
 `;
 
 // ── SHARE CARD MODAL ──────────────────────────────────────────────────────────
-function ShareCardModal({ savMin, savMax, savPct, flaggedCount, totalChecks, provider, onClose }) {
+function ShareCardModal({ savMin, savMax, savPct, flaggedCount, totalChecks, provider, wasteScore, onClose }) {
   const canvasRef = useRef(null);
   const [downloaded, setDownloaded] = useState(false);
 
@@ -311,6 +327,22 @@ function ShareCardModal({ savMin, savMax, savPct, flaggedCount, totalChecks, pro
     ctx.fillStyle = "#00ffb4";
     ctx.font = "bold 96px Arial";
     ctx.fillText(`$${savMin.toLocaleString()}–$${savMax.toLocaleString()}`, 60, 330);
+
+    // Waste score badge
+    const wsColor = (wasteScore||50) >= 80 ? "#4ade80" : (wasteScore||50) >= 60 ? "#fbbf24" : (wasteScore||50) >= 40 ? "#fb923c" : "#f87171";
+    ctx.fillStyle = wsColor + "22";
+    roundRect(ctx, W - 200, 290, 150, 60, 10);
+    ctx.fill();
+    ctx.strokeStyle = wsColor + "66";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(W - 200, 290, 150, 60);
+    ctx.fillStyle = wsColor;
+    ctx.font = "bold 28px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(`${wasteScore||0}/100`, W - 125, 328);
+    ctx.fillStyle = "rgba(255,255,255,0.5)";
+    ctx.font = "12px Arial";
+    ctx.fillText("Waste Score", W - 125, 345);
 
     // /month label
     ctx.fillStyle = "rgba(255,255,255,0.45)";
@@ -521,6 +553,11 @@ export default function App() {
   const [activeHowStep, setActiveHowStep] = useState(0);
   const [showExitIntent, setShowExitIntent] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
+  const [gateEmail, setGateEmail] = useState("");
+  const [aiPreview, setAiPreview] = useState(null);
+  const [aiPreviewLoading, setAiPreviewLoading] = useState(false);
+  const [gateSubmitted, setGateSubmitted] = useState(false);
+  const [gateSending, setGateSending] = useState(false);
   // ── MULTI-CURRENCY ────────────────────────────────────────────────────────
   const [currency, setCurrency] = useState({
     code: "PLN", symbol: "zł", blueprintPrice: "299 PLN", blueprintAmount: 29900,
@@ -574,6 +611,62 @@ export default function App() {
       .catch(() => {}); // silently keep PLN default on failure
   }, []);
 
+
+  // ── AI PREVIEW GENERATOR ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (step !== "report" || aiPreview || aiPreviewLoading) return;
+    if (!flagged || flagged.length === 0) return;
+    const firstIssue = flagged[0];
+    setAiPreviewLoading(true);
+    const prompt = `You are a senior DevOps engineer writing a concise fix for a cloud cost issue.
+
+Provider: ${provider || "AWS"}
+Issue: ${firstIssue.label}
+Detail: ${firstIssue.detail}
+Monthly bill: $${bill || 5000}
+
+Write ONLY the fix for this ONE issue. Format exactly as:
+## What's happening
+1-2 sentences explaining the waste.
+
+## Fix it now (${provider || "AWS"} CLI)
+\`\`\`bash
+# One practical command with a real comment
+[command here]
+\`\`\`
+
+## Terraform (optional)
+\`\`\`hcl
+[snippet if applicable, else omit this section]
+\`\`\`
+
+## Verify savings
+\`\`\`bash
+[verification command]
+\`\`\`
+
+## Time to implement
+[X minutes/hours]
+
+Keep it concise, technical, and accurate. Real commands only.`;
+
+    fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 600,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        const text = data?.content?.[0]?.text || null;
+        setAiPreview(text);
+        setAiPreviewLoading(false);
+      })
+      .catch(() => setAiPreviewLoading(false));
+  }, [step]);
 
   // ── EXIT INTENT DETECTOR ─────────────────────────────────────────────────
   useEffect(() => {
@@ -1070,25 +1163,27 @@ export default function App() {
 
         {/* ── HERO ── */}
         <div className="hero-pad" style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center" }}>
+          {/* ── CATEGORY BADGE ── */}
           <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "32px" }}>
-            <span style={{ width: "6px", height: "6px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)" }} />
-            <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 600, letterSpacing: "1px" }}>TRUSTED BY DEVOPS TEAMS ACROSS EUROPE</span>
+            <span style={{ width: "6px", height: "6px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)", animation: "pulse-dot 2s infinite" }} />
+            <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 700, letterSpacing: "1.5px" }}>THE ONLY CLOUD COST AUDIT — ZERO ACCESS. ZERO SETUP. ZERO RISK.</span>
           </div>
 
+          {/* ── HEADLINE ── */}
           <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "24px" }}>
-            Find what your<br />
-            <span style={{ background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>cloud bill</span><br />
-            is hiding.
+            The audit your<br />
+            <span style={{ background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AWS console</span><br />
+            won&apos;t give you.
           </h1>
 
-          {/* ── ABOVE-THE-FOLD SOCIAL PROOF NUMBER ── */}
-          <div className="fade-up stagger-2" style={{ display:"inline-flex", alignItems:"center", gap:"10px", background:"rgba(0,255,180,0.06)", border:"1px solid rgba(0,255,180,0.18)", borderRadius:"14px", padding:"12px 20px", marginBottom:"28px", flexWrap:"wrap", justifyContent:"center" }}>
-            <span style={{ fontSize:"22px", fontWeight:800, color:"var(--green)", fontFamily:"var(--display)", letterSpacing:"-0.5px" }}>$2,800–$11,400</span>
-            <span style={{ fontSize:"14px", color:"var(--text-dim)", lineHeight:1.4 }}>average monthly savings found by teams using KloudAudit</span>
-          </div>
+          {/* ── SUBHEADING ── */}
+          <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "560px", margin: "0 auto 20px" }}>
+            No AWS keys. No IAM roles. No procurement process. Answer 18 questions about your setup — get a prioritised savings report with exact CLI commands in 15 minutes.
+          </p>
 
-          <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "520px", margin: "0 auto 44px" }}>
-            A structured 15-minute audit that uncovers real savings in your AWS, GCP, or Azure spend. No agents. No access required. Just your invoice.
+          {/* ── COMPETITOR KILL LINE ── */}
+          <p className="fade-up stagger-2" style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: "480px", margin: "0 auto 36px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "10px 16px" }}>
+            💡 Unlike ChatGPT or Copilot — KloudAudit knows your provider, your bill size, your flagged issues, and your company. The Blueprint isn&apos;t generic advice. It&apos;s written about <em>your</em> infrastructure specifically.
           </p>
 
           <div className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
@@ -1103,13 +1198,14 @@ export default function App() {
           </div>
           <div className="fade-up stagger-4" style={{ marginTop: "22px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
             {[
-              "🔒 No account access",
-              "✓ No sign-up",
-              "⚡ Results in 15 min",
-              "👥 62+ teams audited"
+              { text: "🔒 Zero account access — ever", highlight: true },
+              { text: "✓ No sign-up required", highlight: false },
+              { text: "⚡ Results in 15 min", highlight: false },
+              { text: "👥 62+ teams audited", highlight: false },
+              { text: "🚫 No procurement needed", highlight: false },
             ].map((item, i) => (
-              <span key={i} style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "4px 12px", whiteSpace: "nowrap" }}>
-                {item}
+              <span key={i} style={{ fontSize: "12px", color: item.highlight ? "var(--green)" : "var(--text-muted)", background: item.highlight ? "rgba(0,255,180,0.06)" : "rgba(255,255,255,0.04)", border: `1px solid ${item.highlight ? "rgba(0,255,180,0.2)" : "rgba(255,255,255,0.08)"}`, borderRadius: "20px", padding: "4px 12px", whiteSpace: "nowrap", fontWeight: item.highlight ? 700 : 400 }}>
+                {item.text}
               </span>
             ))}
           </div>
@@ -1124,7 +1220,7 @@ export default function App() {
             { n: "20–45%", label: "Average savings found" },
             { n: "18", label: "Audit checkpoints" },
             { n: "< 15 min", label: "Average completion" },
-            { n: "0 PLN", label: "Cost to run" },
+            { n: "Free", label: "Cost to audit" },
           ].map((s, i) => (
             <div key={i} style={{ background: "var(--bg2)", padding: "28px 24px", textAlign: "center" }}>
               <div className="display" style={{ fontSize: "28px", fontWeight: 800, color: "var(--green)", letterSpacing: "-1px", marginBottom: "6px" }}>{s.n}</div>
@@ -1602,7 +1698,7 @@ export default function App() {
                 {activeSection < AUDIT_SECTIONS.length - 1 ? (
                   <button className="glow-btn" onClick={() => setActiveSection(a => a + 1)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)" }}>Next: {AUDIT_SECTIONS[activeSection + 1].label} →</button>
                 ) : (
-                  <button className="glow-btn" onClick={() => goTo("report")} style={{ background: "linear-gradient(135deg, var(--green), #00d4ff)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 32px", fontSize: "14px", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Generate Report →</button>
+                  <button className="glow-btn" onClick={() => goTo("email_gate")} style={{ background: "linear-gradient(135deg, var(--green), #00d4ff)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 32px", fontSize: "14px", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Generate Report →</button>
                 )}
               </div>
             </div>
@@ -1665,6 +1761,129 @@ export default function App() {
   }
 
   // ── REPORT ─────────────────────────────────────────────────────────────────
+
+  // ── EMAIL GATE STEP ──────────────────────────────────────────────────────────
+  if (step === "email_gate") {
+    const handleGateSubmit = async (e) => {
+      e.preventDefault();
+      if (!gateEmail) { goTo("report"); return; }
+      setGateSending(true);
+      try {
+        await fetch("https://formspree.io/f/mlgarana", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: gateEmail,
+            provider: provider || "Unknown",
+            monthlyBill: bill,
+            savingsMin: savMin,
+            savingsMax: savMax,
+            flaggedCount: flagged.length,
+            source: "audit_completion",
+            _subject: `New audit lead — ${gateEmail} · ${provider} · $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/mo`,
+          }),
+        });
+      } catch (_) {}
+      setGateSubmitted(true);
+      setGateSending(false);
+      setTimeout(() => goTo("report"), 800);
+    };
+
+    return (
+      <div className="app" style={{ minHeight: "100vh", background: "#07070f", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+        <style>{globalCss}</style>
+        <div style={{ maxWidth: "460px", width: "100%", animation: "scaleIn 0.4s cubic-bezier(0.34,1.56,0.64,1)" }}>
+
+          {/* Savings teaser */}
+          <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.12), rgba(99,102,241,0.10))", border: "1.5px solid #00ffb4", borderRadius: "20px", padding: "28px", marginBottom: "20px", textAlign: "center" }}>
+            <p style={{ fontSize: "11px", fontWeight: 700, color: "#00ffb4", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "12px" }}>✅ Your audit is ready</p>
+            <div style={{ fontSize: "48px", fontWeight: 800, color: "#00ffb4", letterSpacing: "-2px", lineHeight: 1, marginBottom: "8px", fontFamily: "system-ui, sans-serif" }}>
+              ${savMin.toLocaleString()}–${savMax.toLocaleString()}
+            </div>
+            <p style={{ fontSize: "15px", color: "#94a3b8", marginBottom: "16px" }}>
+              estimated monthly savings · <strong style={{ color: "#f8fafc" }}>{flagged.length} issues found</strong>
+            </p>
+            <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
+              {flagged.slice(0, 3).map((f, i) => (
+                <span key={i} style={{ fontSize: "11px", color: "#cbd5e1", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "4px 10px" }}>{f.label}</span>
+              ))}
+              {flagged.length > 3 && <span style={{ fontSize: "11px", color: "#94a3b8", padding: "4px 10px" }}>+{flagged.length - 3} more</span>}
+            </div>
+          </div>
+
+          {/* Email capture card */}
+          <div style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "32px", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+            {gateSubmitted ? (
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <div style={{ fontSize: "48px", marginBottom: "14px" }}>✅</div>
+                <p style={{ color: "#00ffb4", fontWeight: 800, fontSize: "20px", marginBottom: "6px" }}>Done — loading your report…</p>
+              </div>
+            ) : (
+              <>
+                <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#f8fafc", letterSpacing: "-0.5px", marginBottom: "8px", fontFamily: "system-ui, sans-serif" }}>
+                  Where should we send your report?
+                </h3>
+                <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.65, marginBottom: "24px" }}>
+                  We'll email you a copy so you can share it with your team or revisit later. Takes 2 seconds.
+                </p>
+                <form onSubmit={handleGateSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <input
+                    type="email"
+                    value={gateEmail}
+                    onChange={e => setGateEmail(e.target.value)}
+                    placeholder="you@company.com"
+                    autoFocus
+                    style={{
+                      width: "100%", padding: "14px 16px",
+                      background: "#1e293b",
+                      border: "1.5px solid rgba(255,255,255,0.2)",
+                      borderRadius: "10px",
+                      color: "#f8fafc",
+                      fontSize: "16px",
+                      fontFamily: "system-ui, sans-serif",
+                      outline: "none",
+                      boxSizing: "border-box",
+                      WebkitTextFillColor: "#f8fafc",
+                      caretColor: "#00ffb4",
+                    }}
+                    onFocus={e => e.target.style.borderColor = "#00ffb4"}
+                    onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.2)"}
+                  />
+                  <button type="submit" disabled={gateSending} style={{
+                    width: "100%", padding: "15px",
+                    borderRadius: "10px", border: "none",
+                    background: "#00ffb4", color: "#000",
+                    fontWeight: 800, fontSize: "16px",
+                    cursor: gateSending ? "not-allowed" : "pointer",
+                    boxShadow: "0 4px 24px rgba(0,255,180,0.35)",
+                    fontFamily: "system-ui, sans-serif",
+                    opacity: gateSending ? 0.7 : 1,
+                  }}>
+                    {gateSending ? "Saving…" : "Send Me the Report →"}
+                  </button>
+                  <button type="button" onClick={() => goTo("report")} style={{
+                    width: "100%", padding: "12px", borderRadius: "10px",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "transparent", color: "#64748b",
+                    fontSize: "14px", cursor: "pointer",
+                    fontFamily: "system-ui, sans-serif",
+                  }}
+                    onMouseEnter={e => { e.target.style.color = "#f8fafc"; e.target.style.borderColor = "rgba(255,255,255,0.2)"; }}
+                    onMouseLeave={e => { e.target.style.color = "#64748b"; e.target.style.borderColor = "rgba(255,255,255,0.08)"; }}>
+                    Skip — just show me the report
+                  </button>
+                </form>
+                <p style={{ fontSize: "12px", color: "#475569", textAlign: "center", marginTop: "16px" }}>
+                  🔒 No spam. No marketing. We use this only to send your report.
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (step === "report") {
     const getSev = c => { const p = (c.savingsRange[0] + c.savingsRange[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
     const high = flagged.filter(c => getSev(c) === "high");
@@ -1716,6 +1935,146 @@ export default function App() {
             </div>
           )}
 
+
+          {/* ── WASTE SCORE ── */}
+          {bill > 0 && flagged.length > 0 && (() => {
+            const score = Math.max(0, Math.min(100, Math.round(100 - savPct)));
+            const grade = score >= 80 ? { label: "Well Optimised", color: "#4ade80", bg: "rgba(74,222,128,0.08)", border: "rgba(74,222,128,0.25)", desc: "Your infrastructure is in good shape. A few quick wins remain.", emoji: "🟢" }
+              : score >= 60 ? { label: "Needs Attention", color: "#fbbf24", bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.25)", desc: "Meaningful waste detected. Fixable without architecture changes.", emoji: "🟡" }
+              : score >= 40 ? { label: "Significant Waste", color: "#fb923c", bg: "rgba(251,146,60,0.08)", border: "rgba(251,146,60,0.25)", desc: "Your bill is substantially higher than it needs to be. Act now.", emoji: "🟠" }
+              : { label: "Critical Overspend", color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.25)", desc: "Serious waste across multiple categories. Every week costs you.", emoji: "🔴" };
+
+            return (
+              <div className="fade-up stagger-1" style={{ background: grade.bg, border: `1px solid ${grade.border}`, borderRadius: "20px", padding: "28px 32px", marginBottom: "28px", display: "flex", alignItems: "center", gap: "28px", flexWrap: "wrap" }}>
+                {/* Score circle */}
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <svg width="110" height="110" viewBox="0 0 110 110">
+                    <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+                    <circle cx="55" cy="55" r="46" fill="none" stroke={grade.color} strokeWidth="10"
+                      strokeDasharray={`${2 * Math.PI * 46}`}
+                      strokeDashoffset={`${2 * Math.PI * 46 * (1 - score / 100)}`}
+                      strokeLinecap="round"
+                      transform="rotate(-90 55 55)"
+                      style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)" }}
+                    />
+                    <text x="55" y="50" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="800" fontFamily="var(--display)">{score}</text>
+                    <text x="55" y="66" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="10">/100</text>
+                  </svg>
+                </div>
+                {/* Score details */}
+                <div style={{ flex: 1, minWidth: "200px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "2px", textTransform: "uppercase" }}>KloudAudit Waste Score</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                    <span style={{ fontSize: "22px" }}>{grade.emoji}</span>
+                    <span className="display" style={{ fontSize: "26px", fontWeight: 800, color: grade.color, letterSpacing: "-0.5px" }}>{grade.label}</span>
+                  </div>
+                  <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.6, marginBottom: "14px" }}>{grade.desc}</p>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "3px 10px" }}>~{savPct}% waste rate</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "3px 10px" }}>{flagged.length} of {allChecks.length} checks flagged</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "3px 10px" }}>${savMin.toLocaleString()}–${savMax.toLocaleString()}/mo recoverable</span>
+                  </div>
+                </div>
+                {/* Share nudge */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "flex-end" }}>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", textAlign: "right", maxWidth: "140px", lineHeight: 1.4 }}>Share your score with your team or on LinkedIn</p>
+                  <button onClick={() => setShowShareCard(true)}
+                    style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 14px", color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 700, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "#fff"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>
+                    📤 Share Score
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+
+          {/* ── WASTE SCORE ────────────────────────────────────────────────────── */}
+          {bill > 0 && flagged.length > 0 && (() => {
+            // Score: 100 = perfectly clean, 0 = catastrophic waste
+            // Derived from waste pct + issue count weighting
+            const issueWeight = Math.min(flagged.length / allChecks.length, 1) * 30;
+            const pctWeight   = Math.min(savPct / 50, 1) * 70;
+            const rawScore    = Math.round(100 - issueWeight - pctWeight);
+            const score       = Math.max(0, Math.min(100, rawScore));
+            const grade       = score >= 80 ? { label: "Well Optimised",    color: "#4ade80", ring: "#4ade80" }
+                              : score >= 60 ? { label: "Needs Attention",   color: "#fbbf24", ring: "#fbbf24" }
+                              : score >= 40 ? { label: "Significant Waste", color: "#fb923c", ring: "#fb923c" }
+                              :               { label: "Critical Waste",    color: "#f87171", ring: "#f87171" };
+            const circumference = 2 * Math.PI * 54;
+            const dashOffset    = circumference * (1 - score / 100);
+
+            return (
+              <div className="fade-up" style={{ background: "var(--bg2)", border: `1px solid ${grade.ring}30`, borderRadius: "20px", padding: "36px", marginBottom: "24px", display: "flex", alignItems: "center", gap: "40px", flexWrap: "wrap" }}>
+                {/* Score ring */}
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <svg width="130" height="130" style={{ transform: "rotate(-90deg)" }}>
+                    <circle cx="65" cy="65" r="54" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+                    <circle cx="65" cy="65" r="54" fill="none"
+                      stroke={grade.ring} strokeWidth="10"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={dashOffset}
+                      strokeLinecap="round"
+                      style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)", filter: `drop-shadow(0 0 8px ${grade.ring}60)` }}
+                    />
+                  </svg>
+                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                    <span className="display" style={{ fontSize: "32px", fontWeight: 800, color: grade.color, letterSpacing: "-1px", lineHeight: 1 }}>{score}</span>
+                    <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600, letterSpacing: "1px" }}>/ 100</span>
+                  </div>
+                </div>
+
+                {/* Score details */}
+                <div style={{ flex: 1, minWidth: "200px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                    <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase" }}>KloudAudit Waste Score</p>
+                  </div>
+                  <h2 className="display" style={{ fontSize: "28px", fontWeight: 800, color: grade.color, letterSpacing: "-0.8px", marginBottom: "8px" }}>{grade.label}</h2>
+                  <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>
+                    {score >= 80
+                      ? `Your infrastructure is well managed. The ${flagged.length} issue${flagged.length > 1 ? "s" : ""} found are optimisation opportunities rather than critical problems.`
+                      : score >= 60
+                      ? `Your bill has identifiable waste that should be addressed. The ${flagged.length} flagged issue${flagged.length > 1 ? "s" : ""} represent ~${savPct}% of your monthly spend.`
+                      : score >= 40
+                      ? `Significant waste detected. Your team is paying roughly $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/month more than necessary. This is fixable.`
+                      : `Critical waste level. At your current bill size, unaddressed issues are costing $${(savMin * 12).toLocaleString()}+ per year. Immediate action recommended.`
+                    }
+                  </p>
+                  {/* Benchmark bar */}
+                  <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "12px 16px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <p style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "8px", fontWeight: 600 }}>Industry benchmark comparison</p>
+                    <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                      {[
+                        { range: "0–39", label: "Critical", color: "#f87171", active: score < 40 },
+                        { range: "40–59", label: "Poor",     color: "#fb923c", active: score >= 40 && score < 60 },
+                        { range: "60–79", label: "Fair",     color: "#fbbf24", active: score >= 60 && score < 80 },
+                        { range: "80–100",label: "Good",     color: "#4ade80", active: score >= 80 },
+                      ].map(b => (
+                        <div key={b.range} style={{ flex: 1, height: "6px", borderRadius: "3px", background: b.active ? b.color : `${b.color}30`, boxShadow: b.active ? `0 0 8px ${b.color}60` : "none", transition: "all 0.3s" }} />
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
+                      <span style={{ fontSize: "10px", color: "#f87171" }}>Critical</span>
+                      <span style={{ fontSize: "10px", color: "#4ade80" }}>Good</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Share score CTA */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", flexShrink: 0 }}>
+                  <button onClick={() => setShowShareCard(true)}
+                    style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "10px", padding: "10px 18px", color: "#a5b4fc", fontSize: "13px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
+                    📤 Share Score
+                  </button>
+                  <p style={{ fontSize: "10px", color: "var(--text-muted)", textAlign: "center" }}>Share on LinkedIn</p>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Findings */}
           <div className="fade-up stagger-2">
             {[{ label: "🔴 Critical & High Impact", items: high, color: "#f87171" }, { label: "🟡 Medium Impact", items: med, color: "#fbbf24" }, { label: "🟢 Quick Wins", items: low, color: "#4ade80" }].filter(g => g.items.length > 0).map(group => (
@@ -1761,6 +2120,149 @@ export default function App() {
                 <p style={{ fontSize: "14px", color: "var(--text-dim)", lineHeight: 1.65, paddingTop: "4px" }}>{item.t}</p>
               </div>
             ))}
+          </div>
+
+
+          {/* ── 1. LIVE AI PREVIEW ─────────────────────────────────────────────── */}
+          {flagged.length > 0 && (
+            <div className="fade-up stagger-3" style={{ marginBottom: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(0,255,180,0.1)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "4px 14px" }}>
+                  <span style={{ width: "6px", height: "6px", background: "var(--green)", borderRadius: "50%", animation: "pulse-dot 2s infinite" }} />
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px" }}>AI PREVIEW — FIX #{flagged[0]?.label}</span>
+                </div>
+              </div>
+
+              <div style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "16px", overflow: "hidden" }}>
+                {/* First fix — fully unlocked */}
+                <div style={{ padding: "24px 28px", borderBottom: "1px solid var(--border)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span style={{ background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.3)", borderRadius: "6px", padding: "3px 10px", fontSize: "11px", fontWeight: 700, color: "var(--green)" }}>Fix 1 of {flagged.length} — FREE PREVIEW</span>
+                      <span style={{ fontSize: "13px", fontWeight: 600, color: "#fff" }}>{flagged[0]?.label}</span>
+                    </div>
+                    <span style={{ fontSize: "11px", color: "#4ade80", fontWeight: 600 }}>✓ Unlocked</span>
+                  </div>
+
+                  {aiPreviewLoading && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "20px 0", color: "var(--text-muted)" }}>
+                      <span style={{ display: "inline-block", width: "16px", height: "16px", border: "2px solid rgba(0,255,180,0.3)", borderTopColor: "var(--green)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                      <span style={{ fontSize: "13px" }}>Claude AI is generating your fix…</span>
+                    </div>
+                  )}
+
+                  {aiPreview && !aiPreviewLoading && (
+                    <div style={{ fontFamily: "monospace", fontSize: "13px", lineHeight: 1.7 }}>
+                      {aiPreview.split("\n").map((line, i) => {
+                        if (line.startsWith("## ")) return <p key={i} style={{ fontWeight: 700, color: "var(--green)", fontSize: "12px", letterSpacing: "1px", textTransform: "uppercase", marginTop: "16px", marginBottom: "6px" }}>{line.replace("## ", "")}</p>;
+                        if (line.startsWith("```")) return null;
+                        if (line.startsWith("#") && !line.startsWith("##")) return <p key={i} style={{ color: "#6ee7b7", fontSize: "12px" }}>{line}</p>;
+                        return line.trim() ? <p key={i} style={{ color: line.startsWith(" ") || line.startsWith("aws") || line.startsWith("resource") || line.startsWith("terraform") ? "#93c5fd" : "var(--text-dim)", fontFamily: line.startsWith(" ") || line.startsWith("aws") ? "monospace" : "var(--body)", background: line.startsWith(" ") || line.startsWith("aws") || line.startsWith("resource") ? "rgba(147,197,253,0.06)" : "transparent", padding: line.startsWith(" ") || line.startsWith("aws") ? "2px 8px" : "0", borderRadius: "4px", marginBottom: "2px" }}>{line}</p> : <br key={i} />;
+                      })}
+                    </div>
+                  )}
+
+                  {!aiPreview && !aiPreviewLoading && (
+                    <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Fix preview unavailable — get the full Blueprint for all {flagged.length} fixes.</p>
+                  )}
+                </div>
+
+                {/* Remaining fixes — locked */}
+                {flagged.slice(1).map((f, i) => (
+                  <div key={f.id} style={{ padding: "16px 28px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center", filter: "blur(0px)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 10px", fontSize: "11px", fontWeight: 700, color: "var(--text-muted)" }}>Fix {i + 2} of {flagged.length}</span>
+                      <span style={{ fontSize: "13px", color: "var(--text-muted)", filter: "blur(3px)", userSelect: "none" }}>{f.label}</span>
+                    </div>
+                    <span style={{ fontSize: "11px", color: "#f87171", fontWeight: 600 }}>🔒 Blueprint only</span>
+                  </div>
+                ))}
+
+                {/* Unlock CTA inside preview */}
+                {flagged.length > 1 && (
+                  <div style={{ padding: "20px 28px", background: "rgba(0,255,180,0.04)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
+                    <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+                      <strong style={{ color: "#fff" }}>{flagged.length - 1} more fixes</strong> with exact CLI commands, Terraform snippets, and verification steps
+                    </p>
+                    <button onClick={() => setShowBlueprint(true)}
+                      style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "10px 22px", fontSize: "13px", fontWeight: 800, cursor: "pointer", boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap" }}>
+                      {`Unlock all fixes — ${currency.blueprintPrice} →`}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── 2. VERIFY IT YOURSELF ─────────────────────────────────────────── */}
+          {flagged.length > 0 && (
+            <div className="fade-up stagger-3" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "16px", padding: "24px 28px", marginBottom: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+                <span style={{ fontSize: "16px" }}>🔍</span>
+                <h3 className="display" style={{ fontSize: "15px", fontWeight: 700, color: "#a5b4fc" }}>Don't take our word for it — verify in 60 seconds</h3>
+              </div>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "16px", lineHeight: 1.6 }}>
+                Run these commands in your terminal right now. See the waste with your own eyes before deciding anything.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {flagged.slice(0, 3).map((f, i) => {
+                  const cmds = {
+                    rightsizing: `aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name CPUUtilization --statistics Average --period 86400 --start-time $(date -d '30 days ago' +%Y-%m-%dT%H:%M:%S) --end-time $(date +%Y-%m-%dT%H:%M:%S) --dimensions Name=InstanceId,Value=YOUR_INSTANCE_ID`,
+                    reserved: `aws ce get-savings-plans-purchase-recommendation --savings-plans-type COMPUTE_SP --term-in-years ONE_YEAR --payment-option NO_UPFRONT --lookback-period-in-days THIRTY_DAYS`,
+                    spot: `aws ec2 describe-spot-price-history --instance-types m5.xlarge --product-descriptions "Linux/UNIX" --start-time $(date +%Y-%m-%dT%H:%M:%S) --max-results 5`,
+                    s3_tier: `aws s3api list-buckets --query 'Buckets[*].Name' --output text | xargs -I{} aws s3 ls s3://{} --recursive --summarize 2>/dev/null | grep 'Total Size'`,
+                    unattached_volumes: `aws ec2 describe-volumes --filters Name=status,Values=available --query 'Volumes[*].{ID:VolumeId,Size:Size,Created:CreateTime}' --output table`,
+                    rds_idle: `aws rds describe-db-instances --query 'DBInstances[*].{ID:DBInstanceIdentifier,Class:DBInstanceClass,Status:DBInstanceStatus,MultiAZ:MultiAZ}' --output table`,
+                    rds_size: `aws cloudwatch get-metric-statistics --namespace AWS/RDS --metric-name DatabaseConnections --statistics Average --period 86400 --start-time $(date -d '7 days ago' +%Y-%m-%dT%H:%M:%S) --end-time $(date +%Y-%m-%dT%H:%M:%S) --dimensions Name=DBInstanceIdentifier,Value=YOUR_DB_ID`,
+                  };
+                  const cmd = cmds[f.id] || `aws ce get-cost-and-usage --time-period Start=$(date -d '30 days ago' +%Y-%m-%d),End=$(date +%Y-%m-%d) --granularity MONTHLY --metrics BlendedCost --group-by Type=DIMENSION,Key=SERVICE`;
+                  return (
+                    <div key={f.id} style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "14px 16px" }}>
+                      <p style={{ fontSize: "11px", fontWeight: 700, color: "#a5b4fc", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.8px" }}>Verify: {f.label}</p>
+                      <code style={{ fontSize: "11px", color: "#93c5fd", lineHeight: 1.6, wordBreak: "break-all", display: "block" }}>{cmd}</code>
+                    </div>
+                  );
+                })}
+              </div>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "14px" }}>
+                💡 Replace <code style={{ color: "#a5b4fc", background: "rgba(165,180,252,0.1)", padding: "1px 5px", borderRadius: "4px" }}>YOUR_INSTANCE_ID</code> with your actual resource ID from your AWS console.
+              </p>
+            </div>
+          )}
+
+          {/* ── 3. SECURITY & PRIVACY TRUST BLOCK ─────────────────────────────── */}
+          <div className="fade-up stagger-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px", padding: "24px 28px", marginBottom: "24px" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: "200px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                  <span style={{ fontSize: "18px" }}>🔒</span>
+                  <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#fff" }}>What KloudAudit never sees</h3>
+                </div>
+                {["Your AWS credentials or access keys", "Your actual resource IDs or account numbers", "Any live data from your cloud environment", "Your billing data or cost history"].map(item => (
+                  <div key={item} style={{ display: "flex", gap: "8px", alignItems: "flex-start", marginBottom: "6px" }}>
+                    <span style={{ color: "#f87171", fontSize: "12px", marginTop: "1px", flexShrink: 0 }}>✗</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ flex: 1, minWidth: "200px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                  <span style={{ fontSize: "18px" }}>✅</span>
+                  <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#fff" }}>What the Blueprint contains</h3>
+                </div>
+                {["CLI commands based on your flagged issue types", "Terraform snippets matched to your provider", "Savings estimates from your self-reported bill", "Everything generated by Claude AI using only what you told us"].map(item => (
+                  <div key={item} style={{ display: "flex", gap: "8px", alignItems: "flex-start", marginBottom: "6px" }}>
+                    <span style={{ color: "#4ade80", fontSize: "12px", marginTop: "1px", flexShrink: 0 }}>✓</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.65, textAlign: "center" }}>
+                🛡️ The Blueprint is generated by Claude AI using <strong style={{ color: "#fff" }}>only what you entered in this audit</strong>. We have zero access to your actual infrastructure. Your responses are never stored, sold, or shared.
+              </p>
+            </div>
           </div>
 
           {/* FIX #2: Tiered CTA with working Blueprint button */}
@@ -1838,6 +2340,7 @@ export default function App() {
                 flaggedCount={flagged.length}
                 totalChecks={allChecks.length}
                 provider={provider}
+                wasteScore={Math.max(0, Math.min(100, Math.round(100 - Math.min(flagged.length / allChecks.length, 1) * 30 - Math.min(savPct / 50, 1) * 70)))}
                 onClose={() => setShowShareCard(false)}
               />
             )}
