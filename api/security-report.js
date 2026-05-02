@@ -107,7 +107,7 @@ module.exports = async function handler(req, res) {
     const prompt = buildSecurityPrompt(req.body);
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1500,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -118,7 +118,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ report, provider, companyName });
 
   } catch (err) {
-    console.error('Security report error:', err.message);
-    return res.status(500).json({ error: 'Failed to generate security report. Please try again.' });
+    console.error('Security report error:', err.message, err.stack);
+    return res.status(500).json({ error: err.message || 'Failed to generate security report. Please try again.' });
   }
 };

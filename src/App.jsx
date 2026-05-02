@@ -2102,18 +2102,20 @@ Keep it concise, technical, and accurate. Real commands only.`;
       if (!gateEmail) { goTo("report"); return; }
       setGateSending(true);
       try {
-        await fetch("https://formspree.io/f/mlgarana", {
+        // Send actual report to user's email via SendGrid
+        await fetch("/api/send-report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: gateEmail,
-            provider: provider || "Unknown",
+            provider: provider || "AWS",
             monthlyBill: bill,
             savingsMin: savMin,
             savingsMax: savMax,
+            savPct,
             flaggedCount: flagged.length,
-            source: "audit_completion",
-            _subject: `New audit lead — ${gateEmail} · ${provider} · $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/mo`,
+            flaggedIssues: flagged.map(c => c.label),
+            companyName: companyName || "",
           }),
         });
       } catch (_) {}
@@ -2149,7 +2151,8 @@ Keep it concise, technical, and accurate. Real commands only.`;
             {gateSubmitted ? (
               <div style={{ textAlign: "center", padding: "20px 0" }}>
                 <div style={{ fontSize: "48px", marginBottom: "14px" }}>✅</div>
-                <p style={{ color: "#00ffb4", fontWeight: 800, fontSize: "20px", marginBottom: "6px" }}>Done — loading your report…</p>
+                <p style={{ color: "#00ffb4", fontWeight: 800, fontSize: "20px", marginBottom: "6px" }}>Report sent — check your inbox!</p>
+                <p style={{ color: "#94a3b8", fontSize: "14px" }}>Loading your report now…</p>
               </div>
             ) : (
               <>
@@ -2157,7 +2160,7 @@ Keep it concise, technical, and accurate. Real commands only.`;
                   Where should we send your report?
                 </h3>
                 <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.65, marginBottom: "24px" }}>
-                  We'll email you a copy so you can share it with your team or revisit later. Takes 2 seconds.
+                  We'll send your full findings report to this email — savings estimate, flagged issues, and priority ranking. Useful for sharing with your team or CFO.
                 </p>
                 <form onSubmit={handleGateSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   <input
@@ -2207,7 +2210,7 @@ Keep it concise, technical, and accurate. Real commands only.`;
                   </button>
                 </form>
                 <p style={{ fontSize: "12px", color: "#475569", textAlign: "center", marginTop: "16px" }}>
-                  🔒 No spam. No marketing. We use this only to send your report.
+                  🔒 One email only — your report. No follow-ups, no marketing, no spam.
                 </p>
               </>
             )}
