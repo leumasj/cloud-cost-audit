@@ -61,12 +61,24 @@ export const SEO_PAGES = [
   { slug: "azure-vs-aws-costs", provider: "Multi-cloud", keyword: "Azure vs AWS cost comparison", title: "Azure vs AWS vs GCP: Real Cost Comparison for 2026", issue: null, saving: "20–45%" },
   { slug: "cloud-cost-per-engineer", provider: "Multi-cloud", keyword: "cloud cost per engineer team", title: "What Should Cloud Cost Per Engineer? Benchmarks for 2026", issue: null, saving: "20–45%" },
   { slug: "startup-cloud-costs", provider: "Multi-cloud", keyword: "startup cloud costs too high", title: "Why Your Startup's Cloud Bill Is Too High (And the Fix)", issue: null, saving: "20–45%" },
+
+  // ── SECURITY SEO PAGES ─────────────────────────────────────────────────────
+  { slug: "aws-iam-security-audit", provider: "AWS", keyword: "AWS IAM security audit checklist", title: "AWS IAM Security Audit: Find Overprivileged Roles in 15 Minutes", issue: "iam_wildcards", saving: null, type: "security" },
+  { slug: "aws-s3-public-bucket-fix", provider: "AWS", keyword: "AWS S3 public bucket security risk", title: "Public S3 Buckets: The $4.45M Risk Hiding in Your AWS Account", issue: "public_buckets", saving: null, type: "security" },
+  { slug: "aws-cloudtrail-setup", provider: "AWS", keyword: "AWS CloudTrail audit logging setup", title: "How to Enable AWS CloudTrail Audit Logging in 5 Minutes", issue: "no_cloudtrail", saving: null, type: "security" },
+  { slug: "aws-mfa-enforcement-guide", provider: "AWS", keyword: "Enforce MFA all AWS IAM users", title: "Enforce MFA for Every AWS IAM User — Step-by-Step Guide", issue: "mfa_all", saving: null, type: "security" },
+  { slug: "aws-security-group-audit", provider: "AWS", keyword: "AWS security group 0.0.0.0/0 risk", title: "AWS Security Groups Open to the Internet: Find and Fix Them", issue: "open_security_groups", saving: null, type: "security" },
+  { slug: "aws-secrets-manager-guide", provider: "AWS", keyword: "Stop hardcoded AWS credentials code", title: "Hardcoded AWS Credentials: How to Find and Eliminate Them", issue: "hardcoded_secrets", saving: null, type: "security" },
+  { slug: "gcp-iam-security-checklist", provider: "GCP", keyword: "GCP IAM security best practices", title: "GCP IAM Security Checklist: 8 Things to Fix Before Your Next Audit", issue: "iam_wildcards", saving: null, type: "security" },
+  { slug: "azure-security-posture-review", provider: "Azure", keyword: "Azure security posture assessment", title: "Azure Security Posture Review: No Access Required Checklist", issue: "mfa_all", saving: null, type: "security" },
+  { slug: "cloud-security-audit-checklist", provider: "Multi-Cloud", keyword: "Cloud security audit checklist 2026", title: "The Complete Cloud Security Audit Checklist for AWS, GCP & Azure (2026)", issue: null, saving: null, type: "security" },
+  { slug: "devsecops-cloud-checklist", provider: "Multi-Cloud", keyword: "DevSecOps cloud security checklist", title: "DevSecOps Cloud Security Checklist: 16 Controls Every Team Needs", issue: null, saving: null, type: "security" },
 ];
 
 // ── SEO Head injector — sets real <title>, <meta>, canonical, JSON-LD ──────
 function useSEOHead(page) {
   useEffect(() => {
-    const BASE = "https://www.kloudaudit.eu";
+    const BASE = "https://kloudaudit.eu";
     const canonicalUrl = `${BASE}/${page.slug}/`;
     const description = `${page.title}. Typical savings: ${page.saving} of affected ${page.provider} spend. Free 15-minute audit at KloudAudit.eu — no cloud access required.`;
 
