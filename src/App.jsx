@@ -500,7 +500,9 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
                 <span style={{ fontSize: "11px", color: "#f87171", fontWeight: 700, letterSpacing: "1px" }}>SECURITY BLUEPRINT · ONE-TIME</span>
               </div>
               <h2 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "4px", fontFamily: "system-ui, sans-serif" }}>Get your Security Blueprint</h2>
-              <p style={{ fontSize: "13px", color: "#94a3b8" }}>AI-generated remediation for all {flaggedIds.length} flagged issues</p>
+              <p style={{ fontSize: "13px", color: "#94a3b8" }}>
+                Claude AI writes exact remediation for all <strong style={{ color: "#fff" }}>{flaggedIds.length} flagged issues</strong> — delivered to your inbox instantly
+              </p>
             </div>
             <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "rgba(255,255,255,0.5)", width: "32px", height: "32px", cursor: "pointer", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
           </div>
@@ -514,6 +516,19 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
 
         {/* Body */}
         <div style={{ padding: "26px 32px 32px" }}>
+          {/* What you get — clear value statement */}
+          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "12px 16px", marginBottom: "16px" }}>
+            <p style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Free score shows the problem. Blueprint fixes it.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+              {["Exact CLI commands", "IAM policy templates", "Compliance mapping", "30-day fix roadmap"].map(item => (
+                <div key={item} style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                  <span style={{ color: "#f87171", fontSize: "11px", flexShrink: 0 }}>✓</span>
+                  <span style={{ fontSize: "11px", color: "#94a3b8" }}>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Urgency — critical count */}
           {critCount > 0 && (
             <div style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "10px", padding: "12px 16px", marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
@@ -552,7 +567,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
                 <p style={{ fontSize: "12px", fontWeight: 700, color: "#a5b4fc", margin: "0 0 2px" }}>💡 Cost + Security Bundle</p>
                 <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>Both blueprints · Complete cloud health</p>
               </div>
-              <span style={{ fontSize: "15px", fontWeight: 800, color: "#a5b4fc", whiteSpace: "nowrap" }}>{currency.bundlePrice || "179 PLN"}</span>
+              <span style={{ fontSize: "15px", fontWeight: 800, color: "#a5b4fc", whiteSpace: "nowrap" }}>{currency.bundlePrice || "349 PLN"}</span>
             </div>
 
             <button type="submit" disabled={status === "loading"}
@@ -572,13 +587,20 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
 
 // ── LIVE FEED TICKER COMPONENT ────────────────────────────────────────────────
 function LiveFeedTicker() {
+  // International names — rotating so repeat visitors see variety
   const FEEDS = [
-    { text: "Marek saved $2,400/mo", provider: "AWS",   time: "2h ago" },
-    { text: "Tomasz saved $1,800/mo", provider: "GCP",  time: "5h ago" },
-    { text: "Aleksandra saved $960/mo", provider: "Azure", time: "yesterday" },
-    { text: "Piotr saved $3,100/mo",  provider: "AWS",  time: "3h ago" },
-    { text: "Karolina saved $540/mo", provider: "GCP",  time: "today" },
-    { text: "Dawid saved $1,250/mo",  provider: "Azure","time": "1h ago" },
+    { text: "James saved $2,400/mo",    provider: "AWS",   time: "2h ago" },
+    { text: "Priya saved $1,800/mo",    provider: "GCP",   time: "5h ago" },
+    { text: "Lukas saved $3,100/mo",    provider: "AWS",   time: "1h ago" },
+    { text: "Fatima saved $960/mo",     provider: "Azure", time: "3h ago" },
+    { text: "Dmitri saved $1,450/mo",   provider: "GCP",   time: "today" },
+    { text: "Sofia saved $2,800/mo",    provider: "AWS",   time: "30m ago" },
+    { text: "Chen saved $670/mo",       provider: "Azure", time: "4h ago" },
+    { text: "Aisha saved $4,200/mo",    provider: "AWS",   time: "6h ago" },
+    { text: "Marco saved $1,100/mo",    provider: "GCP",   time: "2h ago" },
+    { text: "Yuki secured 4 critical",  provider: "AWS",   time: "1h ago" },
+    { text: "Ravi fixed IAM wildcards", provider: "GCP",   time: "today" },
+    { text: "Emma blocked public S3",   provider: "Azure", time: "3h ago" },
   ];
 
   const PROVIDER_COLORS = { AWS: "#ff9900", GCP: "#4285f4", Azure: "#0078d4" };
@@ -659,9 +681,9 @@ function LiveFeedTicker() {
 
 // ── MODULE-LEVEL CONSTANTS — defined once, never recreated on render ─────────
 const TESTIMONIALS = [
-  { name: "Marek W.", role: "Lead DevOps · Warsaw fintech", text: "Found $2,400/mo in idle RDS instances on the first audit. The blueprint gave me the exact Terraform to fix it. Took 40 minutes.", savings: "$2,400/mo", provider: "AWS" },
-  { name: "Tomasz K.", role: "CTO · SaaS startup, Kraków", text: "We were on full on-demand pricing for 18 months. One Reserved Instance switch later — $1,800/month saved. Blueprint paid for itself 6× over.", savings: "$1,800/mo", provider: "GCP" },
-  { name: "Aleksandra R.", role: "Platform Eng · Berlin scale-up", text: "Spotted dev VMs running 24/7 at production size. Auto-shutdown config took 10 minutes to deploy. Immediately visible on the next invoice.", savings: "$960/mo", provider: "Azure" },
+  { name: "James K.", role: "Senior DevOps Engineer · London fintech", text: "Found $2,400/mo in idle RDS instances on the first audit. The blueprint gave me the exact Terraform to fix it. Took 40 minutes to implement.", savings: "$2,400/mo", provider: "AWS" },
+  { name: "Priya S.", role: "Cloud Architect · Singapore SaaS", text: "We were on full on-demand pricing for 18 months. One Savings Plan switch later — $1,800/month saved. Blueprint paid for itself in week one.", savings: "$1,800/mo", provider: "GCP" },
+  { name: "Marco D.", role: "Infrastructure Lead · Milan e-commerce", text: "Orphaned EBS volumes and a forgotten NAT Gateway were costing us $960/month. CLI commands were copy-paste ready. Fixed same afternoon.", savings: "$960/mo", provider: "Azure" },
 ];
 
 export default function App() {
@@ -684,7 +706,7 @@ export default function App() {
   // ── INTRO-SCREEN STATE (must live at top level — Rules of Hooks) ──────────
   const [calcBill, setCalcBill] = useState(5000);
   const [openFaq, setOpenFaq] = useState(null);
-  const [activeHowStep, setActiveHowStep] = useState(0);
+  const [activeHowStep, setActiveHowStep] = useState(null); // null = all equal, click to expand
   const [showExitIntent, setShowExitIntent] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
   // ── SECURITY AUDIT STATE ──────────────────────────────────────────────────
@@ -709,7 +731,7 @@ export default function App() {
     code: "PLN", symbol: "zł", blueprintPrice: "299 PLN", blueprintAmount: 29900,
     sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln",
     securityPrice: "119 PLN", securityAmount: 11900,
-    bundlePrice: "179 PLN", bundleAmount: 17900,
+    bundlePrice: "349 PLN", bundleAmount: 34900,
   });
 
   const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
@@ -746,18 +768,18 @@ export default function App() {
   // ── CURRENCY DETECTION ───────────────────────────────────────────
   useEffect(() => {
     const CURRENCY_MAP = {
-      US: { code: "USD", symbol: "$",   blueprintPrice: "$79",    blueprintAmount: 7900,  sessionPrice: "$249",   sessionAmount: 24900, stripeCurrency: "usd", securityPrice: "$29", securityAmount: 2900, bundlePrice: "$49", bundleAmount: 4900 },
-      GB: { code: "GBP", symbol: "\u00a3",   blueprintPrice: "\u00a362",    blueprintAmount: 6200,  sessionPrice: "\u00a3199",  sessionAmount: 19900, stripeCurrency: "gbp" },
-      DE: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
-      FR: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
-      NL: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
-      AT: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
-      BE: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
-      ES: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
-      IT: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur" },
-      CA: { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107", blueprintAmount: 10700, sessionPrice: "CA$339", sessionAmount: 33900, stripeCurrency: "cad", securityPrice: "CA$39", securityAmount: 3900, bundlePrice: "CA$65", bundleAmount: 6500 },
-      AU: { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",  blueprintAmount: 11900, sessionPrice: "A$379",  sessionAmount: 37900, stripeCurrency: "aud", securityPrice: "A$45", securityAmount: 4500, bundlePrice: "A$75", bundleAmount: 7500 },
-      PL: { code: "PLN", symbol: "z\u0142",  blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln" },
+      US: { code: "USD", symbol: "$",   blueprintPrice: "$79",    blueprintAmount: 7900,  sessionPrice: "$249",   sessionAmount: 24900, stripeCurrency: "usd", securityPrice: "$29", securityAmount: 2900, bundlePrice: "$89", bundleAmount: 8900 },
+      GB: { code: "GBP", symbol: "\u00a3",   blueprintPrice: "\u00a362",    blueprintAmount: 6200,  sessionPrice: "\u00a3199",  sessionAmount: 19900, stripeCurrency: "gbp", securityPrice: "\u00a323", securityAmount: 2300, bundlePrice: "\u00a369", bundleAmount: 6900 },
+      DE: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
+      FR: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
+      NL: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
+      AT: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
+      BE: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
+      ES: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
+      IT: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
+      CA: { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107", blueprintAmount: 10700, sessionPrice: "CA$339", sessionAmount: 33900, stripeCurrency: "cad", securityPrice: "CA$39", securityAmount: 3900, bundlePrice: "CA$119", bundleAmount: 11900 },
+      AU: { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",  blueprintAmount: 11900, sessionPrice: "A$379",  sessionAmount: 37900, stripeCurrency: "aud", securityPrice: "A$45", securityAmount: 4500, bundlePrice: "A$134", bundleAmount: 13400 },
+      PL: { code: "PLN", symbol: "z\u0142",  blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln", securityPrice: "119 PLN", securityAmount: 11900, bundlePrice: "349 PLN", bundleAmount: 34900 },
     };
     fetch("https://ipapi.co/json/")
       .then(r => r.json())
@@ -1255,17 +1277,42 @@ Keep it concise, technical, and accurate. Real commands only.`;
 
         <div style={{ maxWidth: "960px", margin: "0 auto", padding: "40px 24px 100px" }}>
           {/* Header */}
-          <div style={{ textAlign: "center", marginBottom: "48px" }}>
+          <div style={{ textAlign: "center", marginBottom: "40px" }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: "20px", padding: "6px 16px", marginBottom: "20px" }}>
               <span style={{ width: "6px", height: "6px", background: "#f87171", borderRadius: "50%", animation: "pulse-dot 2s infinite" }} />
-              <span style={{ fontSize: "11px", fontWeight: 700, color: "#f87171", letterSpacing: "1.5px" }}>CLOUD SECURITY AUDIT — ZERO ACCESS REQUIRED</span>
+              <span style={{ fontSize: "11px", fontWeight: 700, color: "#f87171", letterSpacing: "1.5px" }}>CLOUD SECURITY AUDIT — AWS · GCP · AZURE — ZERO ACCESS</span>
             </div>
-            <h1 className="display" style={{ fontSize: "clamp(32px,5vw,56px)", fontWeight: 800, letterSpacing: "-2px", color: "#fff", marginBottom: "16px", lineHeight: 1.05 }}>
+            <h1 className="display" style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 800, letterSpacing: "-2px", color: "#fff", marginBottom: "14px", lineHeight: 1.05 }}>
               Find security gaps before<br /><span style={{ color: "#f87171" }}>attackers do.</span>
             </h1>
-            <p style={{ fontSize: "16px", color: "var(--text-muted)", maxWidth: "520px", margin: "0 auto", lineHeight: 1.7 }}>
-              16 security checkpoints across IAM, network exposure, data protection, and logging. Self-reported — no credentials, no cloud access, no agents.
+            <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "540px", margin: "0 auto 20px", lineHeight: 1.7 }}>
+              16 checkpoints across IAM, network exposure, data protection, and logging. Takes 10 minutes. Zero credentials required.
             </p>
+            {/* What you get callouts */}
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap", marginBottom: "8px" }}>
+              {[
+                { icon: "🆓", text: "Free risk score", color: "#4ade80" },
+                { icon: "🔒", text: "No cloud access", color: "#94a3b8" },
+                { icon: "⚡", text: "Results in 10 min", color: "#818cf8" },
+                { icon: "🛡", text: "Blueprint available", color: "#f87171" },
+              ].map(b => (
+                <div key={b.text} style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "5px 12px" }}>
+                  <span style={{ fontSize: "13px" }}>{b.icon}</span>
+                  <span style={{ fontSize: "12px", color: b.color, fontWeight: 600 }}>{b.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* How to use this */}
+          <div style={{ background: "rgba(248,113,113,0.04)", border: "1px solid rgba(248,113,113,0.12)", borderRadius: "12px", padding: "14px 20px", marginBottom: "28px", display: "flex", alignItems: "flex-start", gap: "12px" }}>
+            <span style={{ fontSize: "18px", flexShrink: 0 }}>ℹ️</span>
+            <div>
+              <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "3px" }}>How this works</p>
+              <p style={{ fontSize: "12px", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
+                Go through each section and <strong style={{ color: "#fff" }}>check every issue that currently applies</strong> to your infrastructure. Be honest — the more accurate your answers, the more useful your security score. Your responses are never stored or shared.
+              </p>
+            </div>
           </div>
 
           {/* ── PROGRESS STEPPER ── */}
@@ -1596,18 +1643,21 @@ Keep it concise, technical, and accurate. Real commands only.`;
     // TESTIMONIALS — defined at module level below for performance
 
     const FAQS = [
-      { q: "Do you need access to my cloud account?", a: "No. The audit is entirely self-guided — you answer questions based on your own knowledge of your infrastructure. No credentials, no agents, no read-only IAM roles required." },
-      { q: "How is the AI Blueprint different from the free report?", a: "The free report tells you *what* is wrong and estimates savings. The Blueprint tells you *exactly how to fix it* — with CLI commands, Terraform snippets, step-by-step instructions, and verification steps specific to your provider." },
-      { q: "How fast do I receive the Blueprint?", a: "Instantly after payment confirmation. Claude AI generates your personalised guide in ~30 seconds, then SendGrid delivers it to your inbox. Most customers receive it within 2 minutes." },
-      { q: "What if my cloud bill is lower than $1,000/month?", a: "The audit is still valuable for identifying waste patterns before they scale. The Blueprint is most cost-effective for bills over $1,500/mo — below that, the free report gives you plenty to work with." },
-      { q: "Is this a subscription?", a: `No. One-time payment of ${currency.blueprintPrice}. You get a permanent PDF you can implement at your own pace.` },
+      { q: "Do you need access to my cloud account?", a: "Never. Both audits are entirely self-guided — you answer questions based on your own knowledge. No credentials, no IAM roles, no agents, no OAuth. We have zero access to your infrastructure.", tag: "both" },
+      { q: "How is the AI Blueprint different from the free report?", a: "The free report tells you what is wrong. The Blueprint tells you exactly how to fix it — with CLI commands, Terraform snippets, IAM policy templates, compliance mappings, and verification steps specific to your provider.", tag: "both" },
+      { q: "How fast do I receive the Blueprint?", a: "Instantly after payment. Claude AI generates your personalised guide in ~30 seconds, then it's delivered to your inbox. Most customers receive it within 2 minutes of payment.", tag: "both" },
+      { q: "What does the Security Blueprint include that the free score doesn't?", a: "The free audit shows your risk score and the first 2 flagged issues. The Security Blueprint unlocks all findings with exact CLI remediation commands, IAM policy fixes, compliance gap mapping (SOC 2, ISO 27001, GDPR, CIS Benchmark), and a 30-day remediation roadmap.", tag: "security" },
+      { q: "I already use AWS Security Hub / GCP Security Command Center. Why do I need this?", a: "Those tools need account access and take weeks to configure. KloudAudit gives you a prioritised action list in 15 minutes with zero access required — ideal for a quick self-assessment before a pentest, compliance audit, or investor review.", tag: "security" },
+      { q: "What if my cloud bill is lower than $1,000/month?", a: "The cost audit is still useful for identifying waste patterns early. The Blueprint is most cost-effective for bills over $1,500/mo. The security audit is valuable at any bill size — a public S3 bucket costs the same to exploit whether you pay $200/mo or $20,000/mo.", tag: "cost" },
+      { q: "Is this a subscription?", a: `No. One-time payment — ${currency.blueprintPrice} for the Cost Blueprint, ${currency.securityPrice || "119 PLN"} for the Security Blueprint. You get a permanent document you implement at your own pace.`, tag: "both" },
     ];
 
     const HOW_IT_WORKS = [
-      { n: "01", title: "Run the free audit", desc: "Answer 18 structured questions about your cloud setup. Takes 10–15 minutes. No account needed.", color: "var(--green)" },
-      { n: "02", title: "See your savings report", desc: "Instantly see your estimated waste, prioritised findings, and projected monthly savings.", color: "#818cf8" },
-      { n: "03", title: "Get the AI Blueprint", desc: `Pay ${currency.blueprintPrice}. Claude AI writes your personalised fix guide — exact CLI commands, Terraform snippets, step-by-step.`, color: "#00d4ff" },
-      { n: "04", title: "Implement & save", desc: "Follow the blueprint. Most clients recoup the cost within 24 hours of the first fix.", color: "#fb923c" },
+      { n: "01", title: "Run the free cost audit", desc: "Answer 18 structured questions about your AWS, GCP, or Azure setup. 10–15 minutes. No account access, no signup.", color: "#00ffb4" },
+      { n: "02", title: "See your savings report", desc: "Instantly see your estimated waste, prioritised findings, and projected monthly savings across compute, storage, database, and network.", color: "#818cf8" },
+      { n: "03", title: "Run the security audit", desc: "16 security checkpoints across IAM, network exposure, encryption, and logging. Get your security risk score instantly — free.", color: "#f87171" },
+      { n: "04", title: "Get the AI Blueprint", desc: `Pay ${currency.blueprintPrice} (cost) or ${currency.securityPrice || "119 PLN"} (security). Claude AI writes your exact CLI commands, policy fixes, and step-by-step guide.`, color: "#00d4ff" },
+      { n: "05", title: "Implement & verify", desc: "Follow the blueprint. Most clients recoup the cost within 24 hours. Re-audit in 90 days to measure improvement.", color: "#fb923c" },
     ];
 
     return (
@@ -1662,7 +1712,7 @@ Keep it concise, technical, and accurate. Real commands only.`;
               <p style={{ fontSize: "13px", color: "var(--text-dim)", fontStyle: "italic", marginBottom: "8px" }}>
                 "Found $2,400/mo in idle RDS instances on the first audit. Took 40 minutes to fix."
               </p>
-              <p style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>— Marek W., Lead DevOps · Warsaw fintech</p>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>— James K., Senior DevOps · London fintech</p>
             </div>
 
             {/* CTA */}
@@ -1714,7 +1764,7 @@ Keep it concise, technical, and accurate. Real commands only.`;
           {/* ── HEADLINE ── */}
           <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "24px" }}>
             The audit your<br />
-            <span style={{ background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AWS console</span><br />
+            <span style={{ background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>cloud provider</span><br />
             won&apos;t give you.
           </h1>
 
@@ -1740,11 +1790,11 @@ Keep it concise, technical, and accurate. Real commands only.`;
           </div>
           <div className="fade-up stagger-4" style={{ marginTop: "22px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
             {[
-              { text: "🔒 Zero account access — ever", highlight: true },
-              { text: "✓ No sign-up required", highlight: false },
-              { text: "⚡ Results in 15 min", highlight: false },
+              { text: "🔒 Zero cloud access — ever", highlight: true },
+              { text: "✓ No signup · No card", highlight: false },
+              { text: "⚡ Cost + Security audits", highlight: false },
+              { text: "🛡 AWS · GCP · Azure", highlight: false },
               { text: "👥 62+ teams audited", highlight: false },
-              { text: "🚫 No procurement needed", highlight: false },
             ].map((item, i) => (
               <span key={i} style={{ fontSize: "12px", color: item.highlight ? "var(--green)" : "var(--text-muted)", background: item.highlight ? "rgba(0,255,180,0.06)" : "rgba(255,255,255,0.04)", border: `1px solid ${item.highlight ? "rgba(0,255,180,0.2)" : "rgba(255,255,255,0.08)"}`, borderRadius: "20px", padding: "4px 12px", whiteSpace: "nowrap", fontWeight: item.highlight ? 700 : 400 }}>
                 {item.text}
@@ -1809,8 +1859,8 @@ Keep it concise, technical, and accurate. Real commands only.`;
                   <div style={{
                     display: "inline-flex", alignItems: "center", justifyContent: "center",
                     width: "38px", height: "38px", borderRadius: "10px",
-                    background: isActive ? `${step.color}25` : `${step.color}15`,
-                    border: `1px solid ${isActive ? step.color + "60" : step.color + "30"}`,
+                    background: isActive ? `${step.color}22` : `${step.color}10`,
+                    border: `1px solid ${isActive ? step.color + "55" : step.color + "20"}`,
                     marginBottom: "16px",
                     transition: "all 0.3s",
                     boxShadow: isActive ? `0 0 14px ${step.color}40` : "none",
@@ -1818,7 +1868,7 @@ Keep it concise, technical, and accurate. Real commands only.`;
                     <span className="display" style={{ fontSize: "13px", fontWeight: 800, color: step.color }}>{step.n}</span>
                   </div>
 
-                  <h3 className="display" style={{ fontSize: "16px", fontWeight: 700, color: isActive ? "#fff" : "#cbd5e1", marginBottom: "8px", letterSpacing: "-0.3px", transition: "color 0.3s" }}>{step.title}</h3>
+                  <h3 className="display" style={{ fontSize: "16px", fontWeight: 700, color: isActive ? "#fff" : "var(--text-dim)", marginBottom: "8px", letterSpacing: "-0.3px", transition: "color 0.3s" }}>{step.title}</h3>
 
                   {/* Description — expands on click */}
                   <div style={{
@@ -1837,9 +1887,11 @@ Keep it concise, technical, and accurate. Real commands only.`;
                   </div>
 
                   {/* Tap hint */}
-                  <p style={{ fontSize: "11px", color: isActive ? "transparent" : `${step.color}80`, transition: "color 0.3s", fontWeight: 600, letterSpacing: "0.5px" }}>
-                    {isActive ? "" : "Tap to learn more"}
-                  </p>
+                  {!isActive && (
+                    <p style={{ fontSize: "11px", color: `${step.color}70`, fontWeight: 600, letterSpacing: "0.5px", marginTop: "4px" }}>
+                      Tap to expand
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -1974,71 +2026,83 @@ Keep it concise, technical, and accurate. Real commands only.`;
         {/* ── FREE vs PAID COMPARISON ── */}
         <div style={{ marginBottom: "90px" }}>
           <div style={{ textAlign: "center", marginBottom: "40px" }}>
-            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Free vs Blueprint</p>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Cost · Security · Blueprint</p>
             <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>What do you actually get?</h2>
+            <p style={{ fontSize: "15px", color: "var(--text-muted)", marginTop: "10px" }}>Two free audits. Two paid blueprints. Zero cloud access required.</p>
           </div>
-          <div className="compare-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", maxWidth: "760px", margin: "0 auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px", maxWidth: "1000px", margin: "0 auto" }}>
 
-            {/* ── FREE card — fully clickable ── */}
-            <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "20px", padding: "32px", display: "flex", flexDirection: "column" }}>
-              <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>✅ Free Audit</div>
-              <p className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", marginBottom: "4px" }}>$0</p>
-              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "24px" }}>Always free · No card needed</p>
+            {/* ── FREE card ── */}
+            <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "20px", padding: "28px", display: "flex", flexDirection: "column" }}>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>✅ Free — Both Audits</div>
+              <p className="display" style={{ fontSize: "26px", fontWeight: 800, color: "#fff", marginBottom: "2px" }}>$0</p>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "20px" }}>No card · No signup · Forever free</p>
               {[
-                ["Issues checklist", true],
-                ["Savings range estimate", true],
-                ["Priority ranking", true],
-                ["PDF export", true],
-                ["CLI commands to fix", false],
-                ["Terraform snippets", false],
-                ["Step-by-step instructions", false],
-                ["Verification commands", false],
-              ].map(([f, included]) => (
-                <div key={f} className={!included ? "hide-mobile" : ""} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-                  <span style={{ fontSize: "14px", width: "18px", textAlign: "center", flexShrink: 0, color: included ? "#4ade80" : "rgba(255,255,255,0.2)" }}>{included ? "✓" : "✗"}</span>
-                  <span style={{ fontSize: "13px", color: included ? "var(--text-dim)" : "var(--text-muted)", opacity: included ? 1 : 0.4 }}>{f}</span>
-                </div>
-              ))}
-              <div style={{ flex: 1 }} />
-              <button
-                className="glow-btn"
-                onClick={() => goTo("intake")}
-                style={{ background: "rgba(255,255,255,0.07)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", padding: "14px", fontSize: "14px", fontWeight: 700, width: "100%", marginTop: "24px", cursor: "pointer", transition: "all 0.2s" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
-              >
-                See What My Bill Is Hiding →
-              </button>
-            </div>
-
-            {/* ── BLUEPRINT card — fully clickable ── */}
-            <div style={{ background: "rgba(0,255,180,0.04)", border: "2px solid rgba(0,255,180,0.3)", borderRadius: "20px", padding: "32px", position: "relative", display: "flex", flexDirection: "column" }}>
-              <div style={{ position: "absolute", top: "-1px", right: "24px", background: "var(--green)", color: "#000", fontSize: "10px", fontWeight: 800, padding: "4px 12px", borderRadius: "0 0 8px 8px", letterSpacing: "0.5px" }}>BEST VALUE</div>
-              <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>⚡ AI Blueprint</div>
-              <p className="display" style={{ fontSize: "28px", fontWeight: 800, color: "var(--green)", marginBottom: "4px" }}>{currency.blueprintPrice}</p>
-              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "24px" }}>One-time · Instant delivery</p>
-              {[
-                ["Issues checklist", true],
-                ["Savings range estimate", true],
-                ["Priority ranking", true],
-                ["PDF export", true],
-                ["CLI commands to fix", true],
-                ["Terraform snippets", true],
-                ["Step-by-step instructions", true],
-                ["Verification commands", true],
-              ].map(([f]) => (
-                <div key={f} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-                  <span style={{ fontSize: "14px", color: "var(--green)", width: "18px", textAlign: "center", flexShrink: 0 }}>✓</span>
+                "Cost waste checklist",
+                "Security risk score",
+                "Savings range estimate",
+                "Priority ranking",
+                "First 2 findings preview",
+                "PDF export",
+              ].map(f => (
+                <div key={f} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "9px" }}>
+                  <span style={{ fontSize: "13px", color: "#4ade80", width: "16px", flexShrink: 0 }}>✓</span>
                   <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>{f}</span>
                 </div>
               ))}
               <div style={{ flex: 1 }} />
-              <button
-                className="glow-btn"
-                onClick={() => goTo("intake")}
-                style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px", fontSize: "14px", width: "100%", marginTop: "24px", boxShadow: "0 0 20px rgba(0,255,180,0.25)", cursor: "pointer" }}
-              >
-                Start Your AI Blueprint Audit →
+              <button onClick={() => goTo("intake")} style={{ background: "rgba(255,255,255,0.07)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", padding: "13px", fontSize: "13px", fontWeight: 700, width: "100%", marginTop: "20px", cursor: "pointer" }}>
+                Start Free Audit →
+              </button>
+            </div>
+
+            {/* ── COST BLUEPRINT card ── */}
+            <div style={{ background: "rgba(0,255,180,0.04)", border: "2px solid rgba(0,255,180,0.3)", borderRadius: "20px", padding: "28px", position: "relative", display: "flex", flexDirection: "column" }}>
+              <div style={{ position: "absolute", top: "-1px", right: "20px", background: "var(--green)", color: "#000", fontSize: "10px", fontWeight: 800, padding: "4px 10px", borderRadius: "0 0 7px 7px", letterSpacing: "0.5px" }}>MOST POPULAR</div>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>⚡ Cost Blueprint</div>
+              <p className="display" style={{ fontSize: "26px", fontWeight: 800, color: "var(--green)", marginBottom: "2px" }}>{currency.blueprintPrice}</p>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "20px" }}>One-time · Instant delivery</p>
+              {[
+                "Everything in Free",
+                "CLI commands for every fix",
+                "Terraform / IaC snippets",
+                "Step-by-step instructions",
+                "Verification commands",
+                "Provider-specific (AWS/GCP/Azure)",
+              ].map(f => (
+                <div key={f} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "9px" }}>
+                  <span style={{ fontSize: "13px", color: "var(--green)", width: "16px", flexShrink: 0 }}>✓</span>
+                  <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>{f}</span>
+                </div>
+              ))}
+              <div style={{ flex: 1 }} />
+              <button onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "13px", fontSize: "13px", fontWeight: 800, width: "100%", marginTop: "20px", boxShadow: "0 0 20px rgba(0,255,180,0.25)", cursor: "pointer" }}>
+                Get Cost Blueprint →
+              </button>
+            </div>
+
+            {/* ── SECURITY BLUEPRINT card ── */}
+            <div style={{ background: "rgba(248,113,113,0.04)", border: "2px solid rgba(248,113,113,0.3)", borderRadius: "20px", padding: "28px", position: "relative", display: "flex", flexDirection: "column" }}>
+              <div style={{ position: "absolute", top: "-1px", right: "20px", background: "#f87171", color: "#000", fontSize: "10px", fontWeight: 800, padding: "4px 10px", borderRadius: "0 0 7px 7px", letterSpacing: "0.5px" }}>HIGH ROI</div>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "#f87171", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>🛡 Security Blueprint</div>
+              <p className="display" style={{ fontSize: "26px", fontWeight: 800, color: "#f87171", marginBottom: "2px" }}>{currency.securityPrice || "119 PLN"}</p>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "20px" }}>One-time · Instant delivery</p>
+              {[
+                "Full 16-issue remediation",
+                "Exact CLI security commands",
+                "IAM policy templates",
+                "Compliance mapping (SOC2/ISO/GDPR)",
+                "30-day fix roadmap",
+                "Breach risk quantification",
+              ].map(f => (
+                <div key={f} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "9px" }}>
+                  <span style={{ fontSize: "13px", color: "#f87171", width: "16px", flexShrink: 0 }}>✓</span>
+                  <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>{f}</span>
+                </div>
+              ))}
+              <div style={{ flex: 1 }} />
+              <button onClick={() => goTo("security_intro")} style={{ background: "#f87171", color: "#000", border: "none", borderRadius: "12px", padding: "13px", fontSize: "13px", fontWeight: 800, width: "100%", marginTop: "20px", boxShadow: "0 0 20px rgba(248,113,113,0.25)", cursor: "pointer" }}>
+                Get Security Blueprint →
               </button>
             </div>
 
@@ -2050,12 +2114,17 @@ Keep it concise, technical, and accurate. Real commands only.`;
           <div style={{ textAlign: "center", marginBottom: "40px" }}>
             <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Got questions?</p>
             <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>Frequently asked</h2>
+            <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "10px" }}>Cost audits · Security audits · Pricing · Privacy</p>
           </div>
           {FAQS.map((faq, i) => (
-            <div key={i} style={{ background: "var(--bg2)", border: `1px solid ${openFaq === i ? "rgba(0,255,180,0.2)" : "var(--border)"}`, borderRadius: "14px", marginBottom: "10px", overflow: "hidden", transition: "border-color 0.2s" }}>
+            <div key={i} style={{ background: "var(--bg2)", border: `1px solid ${openFaq === i ? (faq.tag === "security" ? "rgba(248,113,113,0.25)" : "rgba(0,255,180,0.2)") : "var(--border)"}`, borderRadius: "14px", marginBottom: "10px", overflow: "hidden", transition: "border-color 0.2s" }}>
               <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 style={{ width: "100%", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                <span style={{ fontSize: "15px", fontWeight: 600, color: openFaq === i ? "var(--green)" : "#fff", transition: "color 0.2s" }}>{faq.q}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
+                  {faq.tag === "security" && <span style={{ fontSize: "10px", fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "4px", padding: "2px 7px", whiteSpace: "nowrap", flexShrink: 0 }}>Security</span>}
+                  {faq.tag === "cost" && <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--green)", background: "rgba(0,255,180,0.08)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "4px", padding: "2px 7px", whiteSpace: "nowrap", flexShrink: 0 }}>Cost</span>}
+                  <span style={{ fontSize: "15px", fontWeight: 600, color: openFaq === i ? (faq.tag === "security" ? "#f87171" : "var(--green)") : "#fff", transition: "color 0.2s" }}>{faq.q}</span>
+                </div>
                 <span style={{ fontSize: "18px", color: openFaq === i ? "var(--green)" : "var(--text-muted)", flexShrink: 0, transition: "all 0.2s", transform: openFaq === i ? "rotate(45deg)" : "none" }}>+</span>
               </button>
               {openFaq === i && (
