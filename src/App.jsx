@@ -803,51 +803,20 @@ export default function App() {
     if (!flagged || flagged.length === 0) return;
     const firstIssue = flagged[0];
     setAiPreviewLoading(true);
-    const prompt = `You are a senior DevOps engineer writing a concise fix for a cloud cost issue.
-
-Provider: ${provider || "AWS"}
-Issue: ${firstIssue.label}
-Detail: ${firstIssue.detail}
-Monthly bill: $${bill || 5000}
-
-Write ONLY the fix for this ONE issue. Format exactly as:
-## What's happening
-1-2 sentences explaining the waste.
-
-## Fix it now (${provider || "AWS"} CLI)
-\`\`\`bash
-# One practical command with a real comment
-[command here]
-\`\`\`
-
-## Terraform (optional)
-\`\`\`hcl
-[snippet if applicable, else omit this section]
-\`\`\`
-
-## Verify savings
-\`\`\`bash
-[verification command]
-\`\`\`
-
-## Time to implement
-[X minutes/hours]
-
-Keep it concise, technical, and accurate. Real commands only.`;
-
-    fetch("https://api.anthropic.com/v1/messages", {
+    // Call our backend endpoint — keeps API key server-side + rate limited
+    fetch("/api/ai-preview", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 600,
-        messages: [{ role: "user", content: prompt }],
+        issueLabel: firstIssue.label,
+        issueDetail: firstIssue.detail,
+        provider: provider || "AWS",
+        bill: bill || 5000,
       }),
     })
       .then(r => r.json())
       .then(data => {
-        const text = data?.content?.[0]?.text || null;
-        setAiPreview(text);
+        setAiPreview(data.preview || null);
         setAiPreviewLoading(false);
       })
       .catch(() => setAiPreviewLoading(false));
