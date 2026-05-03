@@ -448,6 +448,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [errorMsg, setErrorMsg] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState("security"); // "security" | "bundle"
 
   const flaggedIds = Object.keys(secChecked).filter(k => secChecked[k]);
   const critCount  = [
@@ -459,6 +460,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
     if (!email || flaggedIds.length === 0) return;
     setStatus("loading");
     try {
+      const isBundle = selectedProduct === "bundle";
       const res = await fetch("/api/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -470,9 +472,9 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
           savingsMin: 0,
           savingsMax: 0,
           currency: currency.stripeCurrency || "pln",
-          currencyAmount: currency.securityAmount || 11900,
+          currencyAmount: isBundle ? (currency.bundleAmount || 34900) : (currency.securityAmount || 11900),
           flaggedIssues: flaggedIds.map(id => ({ id, label: id.replace(/_/g, " ") })),
-          productType: "security_blueprint",
+          productType: isBundle ? "bundle" : "security_blueprint",
         }),
       });
       const data = await res.json();
@@ -561,20 +563,38 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
               <span style={{ fontSize: "22px", fontWeight: 800, color: "#f87171" }}>{currency.securityPrice || "119 PLN"}</span>
             </div>
 
-            {/* Bundle upsell */}
-            <div style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "10px", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
-              <div>
-                <p style={{ fontSize: "12px", fontWeight: 700, color: "#a5b4fc", margin: "0 0 2px" }}>💡 Cost + Security Bundle</p>
-                <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>Both blueprints · Complete cloud health</p>
+            {/* Product selector — Security or Bundle */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              {/* Security only */}
+              <div onClick={() => setSelectedProduct("security")}
+                style={{ background: selectedProduct === "security" ? "rgba(248,113,113,0.1)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${selectedProduct === "security" ? "#f87171" : "rgba(255,255,255,0.08)"}`, borderRadius: "10px", padding: "12px 14px", cursor: "pointer", transition: "all 0.2s" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                  <div style={{ width: "14px", height: "14px", borderRadius: "50%", border: `2px solid ${selectedProduct === "security" ? "#f87171" : "rgba(255,255,255,0.2)"}`, background: selectedProduct === "security" ? "#f87171" : "transparent", flexShrink: 0, transition: "all 0.2s" }} />
+                  <p style={{ fontSize: "12px", fontWeight: 700, color: selectedProduct === "security" ? "#fff" : "#94a3b8" }}>Security Blueprint</p>
+                </div>
+                <p style={{ fontSize: "18px", fontWeight: 800, color: selectedProduct === "security" ? "#f87171" : "#64748b" }}>{currency.securityPrice || "119 PLN"}</p>
+                <p style={{ fontSize: "10px", color: "#475569" }}>Security fixes only</p>
               </div>
-              <span style={{ fontSize: "15px", fontWeight: 800, color: "#a5b4fc", whiteSpace: "nowrap" }}>{currency.bundlePrice || "349 PLN"}</span>
+              {/* Bundle */}
+              <div onClick={() => setSelectedProduct("bundle")}
+                style={{ background: selectedProduct === "bundle" ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${selectedProduct === "bundle" ? "#818cf8" : "rgba(255,255,255,0.08)"}`, borderRadius: "10px", padding: "12px 14px", cursor: "pointer", transition: "all 0.2s", position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: 0, right: 0, background: "#818cf8", color: "#000", fontSize: "9px", fontWeight: 800, padding: "2px 8px", borderRadius: "0 10px 0 6px" }}>SAVE {Math.round((1 - (currency.bundleAmount || 34900) / ((currency.blueprintAmount || 29900) + (currency.securityAmount || 11900))) * 100)}%</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                  <div style={{ width: "14px", height: "14px", borderRadius: "50%", border: `2px solid ${selectedProduct === "bundle" ? "#818cf8" : "rgba(255,255,255,0.2)"}`, background: selectedProduct === "bundle" ? "#818cf8" : "transparent", flexShrink: 0, transition: "all 0.2s" }} />
+                  <p style={{ fontSize: "12px", fontWeight: 700, color: selectedProduct === "bundle" ? "#fff" : "#94a3b8" }}>Cost + Security</p>
+                </div>
+                <p style={{ fontSize: "18px", fontWeight: 800, color: selectedProduct === "bundle" ? "#a5b4fc" : "#64748b" }}>{currency.bundlePrice || "349 PLN"}</p>
+                <p style={{ fontSize: "10px", color: "#475569" }}>Both blueprints</p>
+              </div>
             </div>
 
             <button type="submit" disabled={status === "loading"}
-              style={{ width: "100%", padding: "15px", borderRadius: "12px", border: "none", background: status === "loading" ? "rgba(248,113,113,0.5)" : "#f87171", color: "#000", fontWeight: 800, fontSize: "15px", cursor: status === "loading" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: "0 4px 20px rgba(248,113,113,0.3)", fontFamily: "system-ui, sans-serif" }}>
+              style={{ width: "100%", padding: "15px", borderRadius: "12px", border: "none", background: status === "loading" ? "rgba(99,102,241,0.5)" : selectedProduct === "bundle" ? "#818cf8" : "#f87171", color: "#000", fontWeight: 800, fontSize: "15px", cursor: status === "loading" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: `0 4px 20px ${selectedProduct === "bundle" ? "rgba(99,102,241,0.35)" : "rgba(248,113,113,0.35)"}`, fontFamily: "system-ui, sans-serif", transition: "all 0.2s" }}>
               {status === "loading"
                 ? <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Processing…</>
-                : `Pay ${currency.securityPrice || "119 PLN"} → Get Blueprint`}
+                : selectedProduct === "bundle"
+                  ? `Pay ${currency.bundlePrice || "349 PLN"} → Get Both Blueprints`
+                  : `Pay ${currency.securityPrice || "119 PLN"} → Get Security Blueprint`}
             </button>
             {status === "error" && <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>⚠ {errorMsg}</p>}
             <p style={{ fontSize: "11px", color: "#475569", textAlign: "center" }}>🔒 Secure checkout via Stripe · No cloud access ever required</p>
@@ -796,6 +816,16 @@ export default function App() {
       .catch(() => {}); // silently keep PLN default on failure
   }, []);
 
+
+  // ── BENCHMARK DATA — "teams like yours" on report page ──────────────────
+  const [reportBenchmarks, setReportBenchmarks] = useState(null);
+  useEffect(() => {
+    if (step !== "report" || !provider) return;
+    fetch(`/api/get-benchmarks?provider=${encodeURIComponent(provider)}`)
+      .then(r => r.json())
+      .then(data => data.hasData ? setReportBenchmarks(data) : null)
+      .catch(() => null);
+  }, [step]);
 
   // ── AI PREVIEW GENERATOR ─────────────────────────────────────────────────
   useEffect(() => {
@@ -2772,6 +2802,45 @@ export default function App() {
             ))}
           </div>
 
+
+          {/* ── TEAMS LIKE YOURS ───────────────────────────────────────────────── */}
+          {reportBenchmarks && reportBenchmarks.hasData && (
+            <div className="fade-up" style={{ background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: "16px", padding: "20px 24px", marginBottom: "24px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#818cf8", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>
+                📊 Teams like yours on {provider}
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px", marginBottom: "12px" }}>
+                {reportBenchmarks.issueFrequency !== null && (
+                  <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "10px", padding: "12px 14px", textAlign: "center" }}>
+                    <p style={{ fontSize: "26px", fontWeight: 800, color: "#a5b4fc", letterSpacing: "-1px", lineHeight: 1, marginBottom: "4px" }}>{reportBenchmarks.issueFrequency}%</p>
+                    <p style={{ fontSize: "11px", color: "#475569", lineHeight: 1.4 }}>of {provider} teams audited found the same issues</p>
+                  </div>
+                )}
+                {reportBenchmarks.avgSavingsMin > 0 && (
+                  <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "10px", padding: "12px 14px", textAlign: "center" }}>
+                    <p style={{ fontSize: "26px", fontWeight: 800, color: "#00ffb4", letterSpacing: "-1px", lineHeight: 1, marginBottom: "4px" }}>${reportBenchmarks.avgSavingsMin.toLocaleString()}+</p>
+                    <p style={{ fontSize: "11px", color: "#475569", lineHeight: 1.4 }}>average monthly savings found per {provider} audit</p>
+                  </div>
+                )}
+                <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "10px", padding: "12px 14px", textAlign: "center" }}>
+                  <p style={{ fontSize: "26px", fontWeight: 800, color: "#94a3b8", letterSpacing: "-1px", lineHeight: 1, marginBottom: "4px" }}>{reportBenchmarks.total}</p>
+                  <p style={{ fontSize: "11px", color: "#475569", lineHeight: 1.4 }}>total assessments in benchmark dataset</p>
+                </div>
+              </div>
+              {reportBenchmarks.topIssues && reportBenchmarks.topIssues.length > 0 && (
+                <div>
+                  <p style={{ fontSize: "11px", color: "#334155", fontWeight: 600, marginBottom: "6px" }}>Most common {provider} issues across all audits:</p>
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                    {reportBenchmarks.topIssues.map(issue => (
+                      <span key={issue.id} style={{ fontSize: "11px", color: "#64748b", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "6px", padding: "3px 9px" }}>
+                        {issue.id.replace(/_/g, " ")} · {issue.pct}%
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── 1. LIVE AI PREVIEW ─────────────────────────────────────────────── */}
           {flagged.length > 0 && (

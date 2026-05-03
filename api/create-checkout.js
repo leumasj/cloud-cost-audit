@@ -27,7 +27,9 @@ module.exports = async function handler(req, res)  {
 
     // Store audit data in Stripe metadata so we can use it in the webhook
     // Determine product type — routes webhook to correct delivery handler
-    const type = productType === 'security_blueprint' ? 'security_certificate' : 'blueprint';
+    const type = productType === 'security_blueprint' ? 'security_certificate'
+              : productType === 'bundle' ? 'bundle'
+              : 'blueprint';
 
     const metadata = {
       email,
@@ -50,10 +52,14 @@ module.exports = async function handler(req, res)  {
           product_data: {
             name: type === 'security_certificate'
               ? 'KloudAudit — Security Blueprint'
-              : 'KloudAudit — AI Implementation Blueprint',
+              : type === 'bundle'
+                ? 'KloudAudit — Cost + Security Bundle'
+                : 'KloudAudit — AI Cost Blueprint',
             description: type === 'security_certificate'
               ? `${provider} security remediation for ${flaggedIssues.length} flagged issues. CLI commands, IAM policy fixes, compliance mapping. Delivered to ${email} instantly.`
-              : `Personalised ${provider} fix guide for ${flaggedIssues.length} detected issues. CLI commands, Terraform snippets, step-by-step. Delivered to ${email} instantly.`,
+              : type === 'bundle'
+                ? `Complete ${provider} cloud health — Cost Blueprint (CLI fixes, Terraform) + Security Blueprint (IAM fixes, compliance mapping). Delivered to ${email} instantly.`
+                : `Personalised ${provider} fix guide for ${flaggedIssues.length} detected issues. CLI commands, Terraform snippets, step-by-step. Delivered to ${email} instantly.`,
             images: ['https://kloudaudit.eu/og-image.png'],
           },
           unit_amount: chargeAmount,
