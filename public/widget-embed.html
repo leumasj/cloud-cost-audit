@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Embed the Cloud Savings Widget — KloudAudit</title>
+  <meta name="description" content="Add a free interactive cloud savings estimator to your blog or website. One line of code. No signup required.">
+  <link rel="canonical" href="https://www.kloudaudit.eu/widget/">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #07070f;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+    }
+    .container { max-width: 860px; margin: 0 auto; padding: 60px 24px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(0,255,180,0.1); border: 1px solid rgba(0,255,180,0.25);
+      border-radius: 20px; padding: 5px 14px; margin-bottom: 24px;
+    }
+    .badge span { width: 6px; height: 6px; background: #00ffb4; border-radius: 50%; }
+    .badge p { font-size: 11px; font-weight: 700; color: #00ffb4; letter-spacing: 1.5px; }
+    h1 { font-size: clamp(28px,4vw,48px); font-weight: 800; letter-spacing: -2px; margin-bottom: 16px; }
+    h1 span { color: #00ffb4; }
+    .lead { font-size: 16px; color: #94a3b8; max-width: 580px; margin-bottom: 48px; line-height: 1.7; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; margin-bottom: 60px; }
+    @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+    .preview-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+    .code-section { }
+    .step { margin-bottom: 32px; }
+    .step-num { font-size: 11px; font-weight: 700; color: #00ffb4; letter-spacing: 1px; margin-bottom: 8px; }
+    .step h3 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .step p { font-size: 14px; color: #94a3b8; margin-bottom: 12px; }
+    .code-block {
+      background: #0d1117; border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; padding: 16px; position: relative;
+    }
+    code { font-family: 'Fira Code', 'Courier New', monospace; font-size: 13px; color: #7dd3fc; line-height: 1.6; }
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px; padding: 4px 10px; color: #64748b;
+      font-size: 11px; cursor: pointer; font-family: inherit;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+    .why-section { margin-bottom: 60px; }
+    .why-section h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 24px; }
+    .why-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .why-card {
+      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; padding: 20px;
+    }
+    .why-card .icon { font-size: 22px; margin-bottom: 10px; }
+    .why-card h4 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .why-card p { font-size: 13px; color: #64748b; line-height: 1.55; }
+    .back { display: inline-flex; align-items: center; gap: 8px; color: #475569; text-decoration: none; font-size: 13px; margin-bottom: 40px; transition: color 0.2s; }
+    .back:hover { color: #00ffb4; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="https://www.kloudaudit.eu">← Back to KloudAudit</a>
+
+    <div class="badge"><span></span><p>FREE WIDGET — NO SIGNUP</p></div>
+
+    <h1>Add a <span>savings estimator</span><br>to your site in 60 seconds</h1>
+    <p class="lead">
+      Give your readers an interactive cloud savings calculator — powered by real FinOps benchmarks.
+      One script tag. No API key. No account. Completely free forever.
+    </p>
+
+    <div class="grid">
+      <!-- Live preview -->
+      <div>
+        <div class="preview-label">Live preview</div>
+        <div id="kloudaudit-widget"></div>
+      </div>
+
+      <!-- Code -->
+      <div class="code-section">
+        <div class="step">
+          <div class="step-num">STEP 1</div>
+          <h3>Add the container</h3>
+          <p>Place this where you want the widget to appear.</p>
+          <div class="code-block">
+            <code>&lt;div id="kloudaudit-widget"&gt;&lt;/div&gt;</code>
+            <button class="copy-btn" onclick="copy(this, '<div id=&quot;kloudaudit-widget&quot;></div>')">Copy</button>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">STEP 2</div>
+          <h3>Load the widget</h3>
+          <p>Add this script tag before your closing <code style="font-size:12px;color:#7dd3fc;">&lt;/body&gt;</code>.</p>
+          <div class="code-block">
+            <code>&lt;script src="https://www.kloudaudit.eu/widget.js"&gt;&lt;/script&gt;</code>
+            <button class="copy-btn" onclick="copy(this, '<script src=&quot;https://www.kloudaudit.eu/widget.js&quot;></script>')">Copy</button>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">THAT'S IT</div>
+          <h3>No configuration needed</h3>
+          <p>The widget works immediately. Styles are isolated — it won't affect your site's CSS.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="why-section">
+      <h2>Why embed this?</h2>
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="icon">⚡</div>
+          <h4>Instant reader value</h4>
+          <p>Give visitors a personalised savings estimate while they're reading your cloud cost content.</p>
+        </div>
+        <div class="why-card">
+          <div class="icon">🔒</div>
+          <h4>Zero data collection</h4>
+          <p>The widget runs entirely client-side. No user data is sent anywhere. GDPR safe by design.</p>
+        </div>
+        <div class="why-card">
+          <div class="icon">📐</div>
+          <h4>Style-isolated</h4>
+          <p>Shadow DOM means it never conflicts with your existing CSS. Looks the same everywhere.</p>
+        </div>
+        <div class="why-card">
+          <div class="icon">🌐</div>
+          <h4>Always up to date</h4>
+          <p>Served from KloudAudit's CDN. Updates automatically — you never need to touch your code.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/widget.js"></script>
+  <script>
+    function copy(btn, text) {
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.style.color = '#00ffb4';
+        setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
