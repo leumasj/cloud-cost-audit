@@ -558,7 +558,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "10px", padding: "14px 16px" }}>
               <div>
                 <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", margin: "0 0 2px" }}>Security Blueprint</p>
-                <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>One-time · Delivered instantly after payment</p>
+                <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>One-time · Delivered within 2 minutes</p>
               </div>
               <span style={{ fontSize: "22px", fontWeight: 800, color: "#f87171" }}>{currency.securityPrice || "119 PLN"}</span>
             </div>
@@ -648,7 +648,9 @@ function LiveFeedTicker() {
   }, []);
 
   return (
-    <div className="fade-up stagger-5" style={{ marginTop: "40px", display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+    <div className="fade-up stagger-5" style={{ marginTop: "40px" }}>
+      <p style={{ textAlign: "center", fontSize: "10px", color: "rgba(148,163,184,0.3)", marginBottom: "8px", letterSpacing: "0.3px" }}>Illustrative examples based on typical findings</p>
+      <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
       <style>{`
         @keyframes pulse-dot {
           0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(74,222,128,0.6); }
@@ -695,6 +697,7 @@ function LiveFeedTicker() {
           </div>
         );
       })}
+    </div>
     </div>
   );
 }
@@ -2043,8 +2046,9 @@ export default function App() {
         {/* ── TESTIMONIALS ── */}
         <div style={{ marginBottom: "90px" }}>
           <div style={{ textAlign: "center", marginBottom: "40px" }}>
-            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Real results</p>
-            <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>What engineers say</h2>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Typical results</p>
+            <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>What engineers find</h2>
+            <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", marginTop: "8px" }}>Illustrative examples based on typical audit findings</p>
           </div>
           <div className="testimonials-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
             {TESTIMONIALS.map((t, i) => (
@@ -2274,10 +2278,15 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div style={{ width: "24px", height: "24px", background: "var(--green)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(0,255,180,0.3)", fontSize: "12px" }}>⚡</div>
               <span className="display" style={{ fontWeight: 800, fontSize: "14px", color: "#fff" }}>KloudAudit</span>
-              <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>© {new Date().getFullYear()}</span>
+              <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>© {new Date().getFullYear()} Samuel Ayodele Adomeh · Wrocław, Poland</span>
             </div>
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-              {[{ label: "LinkedIn", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh" }, { label: "GitHub", href: "https://github.com/leumasj" }].map(s => (
+              {[
+                { label: "Terms", href: "https://www.kloudaudit.eu/terms/" },
+                { label: "Privacy", href: "https://www.kloudaudit.eu/privacy/" },
+                { label: "LinkedIn", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh" },
+                { label: "GitHub", href: "https://github.com/leumasj" },
+              ].map(s => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                   style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--border)", borderRadius: "8px", background: "rgba(255,255,255,0.03)" }}>
                   {s.label}
@@ -2290,6 +2299,9 @@ export default function App() {
               </a>
             </div>
           </div>
+          <p style={{ fontSize: "11px", color: "rgba(148,163,184,0.25)", textAlign: "center", marginTop: "16px" }}>
+            admin@kloudaudit.eu · KloudAudit is a self-assessment tool. Savings estimates are projections based on self-reported data and industry benchmarks.
+          </p>
         </div>
 
       </div>
