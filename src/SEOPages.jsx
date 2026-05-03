@@ -2,7 +2,7 @@
 // 50 programmatic SEO landing pages — each targets a specific search query
 // These pages are indexed by Google and drive zero-cost organic traffic
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export const SEO_PAGES = [
   // AWS specific
@@ -51,16 +51,6 @@ export const SEO_PAGES = [
   { slug: "finops-guide-startups", provider: "Multi-cloud", keyword: "FinOps guide for startups", title: "FinOps for Startups: Cut Cloud Costs Without Cutting Features", issue: null, saving: "20–45%" },
   { slug: "cloud-cost-waste-common", provider: "Multi-cloud", keyword: "common cloud cost waste", title: "The 9 Most Common Cloud Cost Leaks (And How to Fix Them)", issue: null, saving: "20–45%" },
   { slug: "devops-cost-optimization", provider: "Multi-cloud", keyword: "DevOps cloud cost optimization", title: "DevOps Engineer's Complete Cloud Cost Optimisation Guide", issue: null, saving: "20–45%" },
-  { slug: "cloud-costs-poland", provider: "Multi-cloud", keyword: "cloud cost consulting Poland", title: "Cloud Cost Optimisation for Companies in Poland", issue: null, saving: "20–45%" },
-  { slug: "aws-bill-jumped", provider: "AWS", keyword: "AWS bill suddenly increased", title: "AWS Bill Suddenly Jumped? Here's How to Find the Cause", issue: null, saving: "20–45%" },
-  { slug: "cloud-cost-saving-tips-2026", provider: "Multi-cloud", keyword: "cloud cost saving tips 2026", title: "15 Cloud Cost Saving Tips That Actually Work in 2026", issue: null, saving: "20–45%" },
-  { slug: "infrastructure-cost-reduction", provider: "Multi-cloud", keyword: "reduce infrastructure costs", title: "How to Reduce Infrastructure Costs by 30% in 30 Days", issue: null, saving: "20–45%" },
-  { slug: "kubernetes-cost-optimization", provider: "Multi-cloud", keyword: "Kubernetes cost optimization", title: "Kubernetes Cost Optimisation: Right-Size Your Clusters", issue: null, saving: "20–45%" },
-  { slug: "terraform-cost-estimation", provider: "Multi-cloud", keyword: "Terraform cost estimation before deploy", title: "Terraform Cost Estimation: Know Your Bill Before You Deploy", issue: null, saving: "20–45%" },
-  { slug: "cloud-cost-monitoring-tools", provider: "Multi-cloud", keyword: "best cloud cost monitoring tools 2026", title: "Best Cloud Cost Monitoring Tools in 2026 (Compared)", issue: null, saving: "20–45%" },
-  { slug: "azure-vs-aws-costs", provider: "Multi-cloud", keyword: "Azure vs AWS cost comparison", title: "Azure vs AWS vs GCP: Real Cost Comparison for 2026", issue: null, saving: "20–45%" },
-  { slug: "cloud-cost-per-engineer", provider: "Multi-cloud", keyword: "cloud cost per engineer team", title: "What Should Cloud Cost Per Engineer? Benchmarks for 2026", issue: null, saving: "20–45%" },
-  { slug: "startup-cloud-costs", provider: "Multi-cloud", keyword: "startup cloud costs too high", title: "Why Your Startup's Cloud Bill Is Too High (And the Fix)", issue: null, saving: "20–45%" },
 
   // ── SECURITY SEO PAGES ─────────────────────────────────────────────────────
   { slug: "aws-iam-security-audit", provider: "AWS", keyword: "AWS IAM security audit checklist", title: "AWS IAM Security Audit: Find Overprivileged Roles in 15 Minutes", issue: "iam_wildcards", saving: null, type: "security" },
@@ -73,6 +63,16 @@ export const SEO_PAGES = [
   { slug: "azure-security-posture-review", provider: "Azure", keyword: "Azure security posture assessment", title: "Azure Security Posture Review: No Access Required Checklist", issue: "mfa_all", saving: null, type: "security" },
   { slug: "cloud-security-audit-checklist", provider: "Multi-Cloud", keyword: "Cloud security audit checklist 2026", title: "The Complete Cloud Security Audit Checklist for AWS, GCP & Azure (2026)", issue: null, saving: null, type: "security" },
   { slug: "devsecops-cloud-checklist", provider: "Multi-Cloud", keyword: "DevSecOps cloud security checklist", title: "DevSecOps Cloud Security Checklist: 16 Controls Every Team Needs", issue: null, saving: null, type: "security" },
+  { slug: "cloud-costs-poland", provider: "Multi-cloud", keyword: "cloud cost consulting Poland", title: "Cloud Cost Optimisation for Companies in Poland", issue: null, saving: "20–45%" },
+  { slug: "aws-bill-jumped", provider: "AWS", keyword: "AWS bill suddenly increased", title: "AWS Bill Suddenly Jumped? Here's How to Find the Cause", issue: null, saving: "20–45%" },
+  { slug: "cloud-cost-saving-tips-2026", provider: "Multi-cloud", keyword: "cloud cost saving tips 2026", title: "15 Cloud Cost Saving Tips That Actually Work in 2026", issue: null, saving: "20–45%" },
+  { slug: "infrastructure-cost-reduction", provider: "Multi-cloud", keyword: "reduce infrastructure costs", title: "How to Reduce Infrastructure Costs by 30% in 30 Days", issue: null, saving: "20–45%" },
+  { slug: "kubernetes-cost-optimization", provider: "Multi-cloud", keyword: "Kubernetes cost optimization", title: "Kubernetes Cost Optimisation: Right-Size Your Clusters", issue: null, saving: "20–45%" },
+  { slug: "terraform-cost-estimation", provider: "Multi-cloud", keyword: "Terraform cost estimation before deploy", title: "Terraform Cost Estimation: Know Your Bill Before You Deploy", issue: null, saving: "20–45%" },
+  { slug: "cloud-cost-monitoring-tools", provider: "Multi-cloud", keyword: "best cloud cost monitoring tools 2026", title: "Best Cloud Cost Monitoring Tools in 2026 (Compared)", issue: null, saving: "20–45%" },
+  { slug: "azure-vs-aws-costs", provider: "Multi-cloud", keyword: "Azure vs AWS cost comparison", title: "Azure vs AWS vs GCP: Real Cost Comparison for 2026", issue: null, saving: "20–45%" },
+  { slug: "cloud-cost-per-engineer", provider: "Multi-cloud", keyword: "cloud cost per engineer team", title: "What Should Cloud Cost Per Engineer? Benchmarks for 2026", issue: null, saving: "20–45%" },
+  { slug: "startup-cloud-costs", provider: "Multi-cloud", keyword: "startup cloud costs too high", title: "Why Your Startup's Cloud Bill Is Too High (And the Fix)", issue: null, saving: "20–45%" },
 ];
 
 // ── SEO Head injector — sets real <title>, <meta>, canonical, JSON-LD ──────
@@ -184,6 +184,18 @@ export default function SEOPage({ page, onStartAudit }) {
   // Inject all SEO tags and set real URL
   useSEOHead(page);
 
+  // ── Benchmark data from audits table ────────────────────────────────────
+  const [benchmarks, setBenchmarks] = useState(null);
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (page.provider && page.provider !== 'Multi-cloud') params.set('provider', page.provider);
+    if (page.issue) params.set('issue', page.issue);
+    fetch(`/api/get-benchmarks?${params}`)
+      .then(r => r.json())
+      .then(data => data.hasData ? setBenchmarks(data) : null)
+      .catch(() => null); // benchmarks are additive — never block page render
+  }, [page.slug]);
+
   const isAWS = page.provider === "AWS";
   const isAzure = page.provider === "Azure";
   const isGCP = page.provider === "GCP";
@@ -281,6 +293,52 @@ export default function SEOPage({ page, onStartAudit }) {
           This guide covers how to identify, diagnose, and fix this specific {page.provider} cost issue. Typical savings: <strong style={{ color: "var(--green)" }}>{page.saving}</strong> of the affected spend.
         </p>
       </div>
+
+      {/* ── BENCHMARK DATA BLOCK — shows real stats from audits table ── */}
+      {benchmarks && benchmarks.hasData && (
+        <div style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.18)", borderRadius: "16px", padding: "24px 28px", marginBottom: "32px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+            <span style={{ fontSize: "14px" }}>📊</span>
+            <p style={{ fontSize: "11px", fontWeight: 700, color: "#818cf8", letterSpacing: "1.5px", textTransform: "uppercase" }}>
+              Based on {benchmarks.total} KloudAudit assessments
+            </p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "16px" }}>
+            {benchmarks.issueFrequency !== null && (
+              <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "10px", padding: "14px 16px" }}>
+                <p style={{ fontSize: "28px", fontWeight: 800, color: "#a5b4fc", letterSpacing: "-1px", lineHeight: 1, marginBottom: "4px" }}>{benchmarks.issueFrequency}%</p>
+                <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.4 }}>of {page.provider} teams audited have this issue</p>
+              </div>
+            )}
+            {benchmarks.avgSavingsMin > 0 && (
+              <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "10px", padding: "14px 16px" }}>
+                <p style={{ fontSize: "28px", fontWeight: 800, color: "#00ffb4", letterSpacing: "-1px", lineHeight: 1, marginBottom: "4px" }}>
+                  ${benchmarks.avgSavingsMin.toLocaleString()}+
+                </p>
+                <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.4 }}>average monthly savings found per audit</p>
+              </div>
+            )}
+            {benchmarks.avgScore > 0 && (
+              <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "10px", padding: "14px 16px" }}>
+                <p style={{ fontSize: "28px", fontWeight: 800, color: benchmarks.avgScore >= 70 ? "#4ade80" : benchmarks.avgScore >= 50 ? "#fbbf24" : "#f87171", letterSpacing: "-1px", lineHeight: 1, marginBottom: "4px" }}>{benchmarks.avgScore}<span style={{ fontSize: "14px", fontWeight: 400 }}>/100</span></p>
+                <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.4 }}>average waste score across all {page.provider} audits</p>
+              </div>
+            )}
+          </div>
+          {benchmarks.topIssues && benchmarks.topIssues.length > 0 && (
+            <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "10px" }}>Most common issues found on {page.provider}</p>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {benchmarks.topIssues.map(issue => (
+                  <span key={issue.id} style={{ fontSize: "12px", color: "#94a3b8", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "4px 10px" }}>
+                    {issue.id.replace(/_/g, " ")} · {issue.pct}%
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Free audit CTA */}
       <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.08) 0%, rgba(99,102,241,0.08) 100%)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "16px", padding: "24px 28px", marginBottom: "40px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
