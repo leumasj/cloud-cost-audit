@@ -6,6 +6,8 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
+const sentry = require('./lib/sentry');
+
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 );
@@ -84,6 +86,7 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     // Non-critical — audit save failure should never block the user experience
     console.error('save-audit error:', err.message);
+    sentry.captureException(err, { context: 'save-audit' });
     return res.status(500).json({ error: err.message });
   }
 };

@@ -11,6 +11,8 @@ const Anthropic = require('@anthropic-ai/sdk');
 const sgMail    = require('@sendgrid/mail');
 const crypto    = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
+const sentry = require('./lib/sentry');
+
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -382,6 +384,7 @@ module.exports = async function handler(req, res) {
 
       } catch (jobErr) {
         console.error(`❌ Failed job ${job.id}:`, jobErr.message);
+        sentry.captureException(jobErr, { jobId: job.id, email: job.email, product: job.product_type });
 
         // Mark as failed (will retry on next cron run, up to MAX_ATTEMPTS)
         const isFinalAttempt = job.attempts + 1 >= MAX_ATTEMPTS;
@@ -419,6 +422,7 @@ module.exports = async function handler(req, res) {
 
   } catch (err) {
     console.error('process-pending error:', err.message);
+    sentry.captureException(err, { context: 'process-pending-outer' });
     return res.status(500).json({ error: err.message });
   }
 };

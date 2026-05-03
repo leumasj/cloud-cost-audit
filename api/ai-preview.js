@@ -12,6 +12,8 @@
 const Anthropic = require('@anthropic-ai/sdk');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const sentry = require('./lib/sentry');
+
 
 // ── IN-MEMORY RATE LIMITER ─────────────────────────────────────────────────
 // Resets on cold start — sufficient for abuse protection without Redis
@@ -102,6 +104,7 @@ Keep it concise, technical, and accurate. Real commands only.`;
 
   } catch (err) {
     console.error('ai-preview error:', err.message);
+    sentry.captureException(err, { context: 'ai-preview' });
     return res.status(500).json({ error: 'Preview unavailable' });
   }
 };

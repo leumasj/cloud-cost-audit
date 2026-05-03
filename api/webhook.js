@@ -11,6 +11,8 @@
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
+const sentry = require('./lib/sentry');
+
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -42,6 +44,7 @@ module.exports = async function handler(req, res) {
     );
   } catch (err) {
     console.error('Webhook signature failed:', err.message);
+    sentry.captureException(err, { context: 'stripe-signature' });
     return res.status(400).json({ error: `Webhook error: ${err.message}` });
   }
 
