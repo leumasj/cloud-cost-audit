@@ -722,6 +722,15 @@ export default function App() {
   const [secEmail, setSecEmail] = useState("");
   const [secPaymentLoading, setSecPaymentLoading] = useState(false);
   const [gateEmail, setGateEmail] = useState("");
+  // ── PERSISTENCE — anonymous session ID ────────────────────────────────────
+  const [sessionId] = useState(() => {
+    // Generate once per browser session, persist across page refreshes
+    const existing = localStorage.getItem('ka_session_id');
+    if (existing) return existing;
+    const newId = `ka_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    localStorage.setItem('ka_session_id', newId);
+    return newId;
+  });
   const [aiPreview, setAiPreview] = useState(null);
   const [aiPreviewLoading, setAiPreviewLoading] = useState(false);
   const [gateSubmitted, setGateSubmitted] = useState(false);
@@ -844,6 +853,31 @@ Keep it concise, technical, and accurate. Real commands only.`;
       .catch(() => setAiPreviewLoading(false));
   }, [step]);
 
+  // ── SAVE AUDIT — non-blocking, fires and forgets ─────────────────────────
+  const saveAudit = (emailOverride) => {
+    // Calculate waste score same formula as report page
+    const issueW  = Math.min(flagged.length / allChecks.length, 1) * 30;
+    const pctW    = Math.min(savPct / 50, 1) * 70;
+    const wScore  = Math.max(0, Math.min(100, Math.round(100 - issueW - pctW)));
+
+    fetch('/api/save-audit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId,
+        email:       emailOverride || gateEmail || null,
+        provider:    provider || 'AWS',
+        monthlyBill: bill,
+        companyName: companyName || null,
+        flaggedIds:  flagged.map(c => c.id),
+        wasteScore:  wScore,
+        savingsMin:  savMin,
+        savingsMax:  savMax,
+        auditType:   'cost',
+      }),
+    }).catch(() => {}); // silent — never block user on this
+  };
+
   // ── EXIT INTENT DETECTOR ─────────────────────────────────────────────────
   useEffect(() => {
     if (sessionStorage.getItem('exitShown')) return; // only once per session
@@ -906,6 +940,7 @@ Keep it concise, technical, and accurate. Real commands only.`;
           flaggedIssues: flagged.map(c => ({ id: c.id, label: c.label })),
           currency: currency.stripeCurrency,
           currencyAmount: currency.blueprintAmount,
+          sessionId,
         }),
       });
       const data = await res.json();
@@ -2427,6 +2462,8 @@ Keep it concise, technical, and accurate. Real commands only.`;
           }),
         });
       } catch (_) {}
+      // Save audit to Supabase (non-blocking — happens in background)
+      saveAudit(gateEmail);
       setGateSubmitted(true);
       setGateSending(false);
       setTimeout(() => goTo("report"), 800);
@@ -2505,7 +2542,7 @@ Keep it concise, technical, and accurate. Real commands only.`;
                   }}>
                     {gateSending ? "Saving…" : "Send Me the Report →"}
                   </button>
-                  <button type="button" onClick={() => goTo("report")} style={{
+                  <button type="button" onClick={() => { saveAudit(null); goTo("report"); }} style={{
                     width: "100%", padding: "12px", borderRadius: "10px",
                     border: "1px solid rgba(255,255,255,0.08)",
                     background: "transparent", color: "#64748b",

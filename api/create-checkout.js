@@ -15,7 +15,7 @@ module.exports = async function handler(req, res)  {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax, currency, currencyAmount, productType } = req.body;
+    const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax, currency, currencyAmount, productType, sessionId } = req.body;
 
     // Multi-currency: use values from frontend, fall back to PLN defaults
     const chargeCurrency = currency || "pln";
@@ -39,6 +39,7 @@ module.exports = async function handler(req, res)  {
       savingsMax: String(savingsMax || 0),
       flaggedIssueIds:    flaggedIssues.map(i => i.id).join(',').substring(0, 499),
       flaggedIssueLabels: flaggedIssues.map(i => i.label).join('||').substring(0, 499),
+      sessionId: sessionId || '',
     };
 
     const session = await stripe.checkout.sessions.create({
