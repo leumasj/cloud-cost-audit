@@ -163,6 +163,7 @@ const globalCss = `
 
   /* ── MOBILE RESPONSIVE ────────────────────────────────────────────── */
   @media (max-width: 768px) {
+    .sec-audit-grid { grid-template-columns: 1fr !important; }
     /* Audit: collapse sidebar below checklist */
     .audit-grid { grid-template-columns: 1fr !important; }
     .audit-sidebar { position: static !important; top: auto !important; }
@@ -588,6 +589,12 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
               </div>
             </div>
 
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px" }}>
+              <input type="checkbox" id="withdrawal-sec" required style={{ marginTop: "2px", accentColor: "#f87171", flexShrink: 0, cursor: "pointer" }} />
+              <label htmlFor="withdrawal-sec" style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.55, cursor: "pointer" }}>
+                I understand this is a digital product delivered immediately and I waive my right of withdrawal upon delivery. See <a href="https://www.kloudaudit.eu/terms/" target="_blank" rel="noopener" style={{ color: "#f87171" }}>Terms</a>.
+              </label>
+            </div>
             <button type="submit" disabled={status === "loading"}
               style={{ width: "100%", padding: "15px", borderRadius: "12px", border: "none", background: status === "loading" ? "rgba(99,102,241,0.5)" : selectedProduct === "bundle" ? "#818cf8" : "#f87171", color: "#000", fontWeight: 800, fontSize: "15px", cursor: status === "loading" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: `0 4px 20px ${selectedProduct === "bundle" ? "rgba(99,102,241,0.35)" : "rgba(248,113,113,0.35)"}`, fontFamily: "system-ui, sans-serif", transition: "all 0.2s" }}>
               {status === "loading"
@@ -597,7 +604,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
                   : `Pay ${currency.securityPrice || "119 PLN"} → Get Security Blueprint`}
             </button>
             {status === "error" && <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>⚠ {errorMsg}</p>}
-            <p style={{ fontSize: "11px", color: "#475569", textAlign: "center" }}>🔒 Secure checkout via Stripe · No cloud access ever required</p>
+            <p style={{ fontSize: "11px", color: "#475569", textAlign: "center" }}>🔒 Secure checkout via Stripe · Prices inclusive of applicable taxes · No cloud access required</p>
           </form>
         </div>
       </div>
@@ -1196,6 +1203,12 @@ export default function App() {
           style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.06)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "15px", fontFamily: "var(--body)", marginBottom: "14px" }}
           autoFocus
         />
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "14px", padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px" }}>
+          <input type="checkbox" id="withdrawal-cost" style={{ marginTop: "2px", accentColor: "#00ffb4", flexShrink: 0, cursor: "pointer" }} />
+          <label htmlFor="withdrawal-cost" style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.55, cursor: "pointer" }}>
+            I understand this is a digital product delivered immediately and I waive my right of withdrawal upon delivery. See <a href="https://www.kloudaudit.eu/terms/" target="_blank" rel="noopener" style={{ color: "#00ffb4" }}>Terms</a>.
+          </label>
+        </div>
         <button className="glow-btn" onClick={handleBuyBlueprint}
           disabled={blueprintStatus === "loading"}
           style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
@@ -1204,7 +1217,7 @@ export default function App() {
           ) : `Pay ${currency.blueprintPrice} → Get Blueprint`}
         </button>
         {blueprintStatus === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Something went wrong. Please try again or email admin@kloudaudit.eu</p>}
-        <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "12px" }}>🔒 Secure payment via Stripe · Instant delivery · admin@kloudaudit.eu</p>
+        <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "12px" }}>🔒 Secure payment via Stripe · Prices inclusive of applicable taxes · admin@kloudaudit.eu</p>
         <button onClick={() => { setShowBlueprint(false); setBlueprintStatus("idle"); }} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
       </div>
     </div>
@@ -1421,7 +1434,7 @@ export default function App() {
           </div>
 
           {/* ── MAIN GRID ── */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 250px", gap: "24px", alignItems: "start" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 250px", gap: "24px", alignItems: "start" }} className="sec-audit-grid">
             {/* Left — checks */}
             <div>
               <div style={{ marginBottom: "14px" }}>
@@ -1823,7 +1836,7 @@ export default function App() {
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", boxShadow: "0 0 8px var(--green)", flexShrink: 0 }} />
-          <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>Average team saves <strong style={{ color: "var(--green)" }}>$2,800+/month</strong> after their first audit</span>
+          <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>Teams typically find <strong style={{ color: "var(--green)" }}>$500–$4,000+/month</strong> in cloud waste — based on industry FinOps benchmarks</span>
         </div>
         <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap" }}>
           See What My Bill Is Hiding →
@@ -1854,8 +1867,24 @@ export default function App() {
 
           {/* ── COMPETITOR KILL LINE ── */}
           <p className="fade-up stagger-2" style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: "480px", margin: "0 auto 36px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "10px 16px" }}>
-            💡 Unlike ChatGPT or Copilot — KloudAudit knows your provider, your bill size, your flagged issues, and your company. The Blueprint isn&apos;t generic advice. It&apos;s written about <em>your</em> infrastructure specifically.
+            💡 The average team needs <strong style={{ color: "#fff" }}>4 months of procurement</strong> to connect a cloud cost tool. KloudAudit takes 15 minutes — no IT ticket, no security review, no boss approval. Zero access required.
           </p>
+
+          {/* ── 60-SECOND ESTIMATOR ── */}
+          <div className="fade-up stagger-3" style={{ maxWidth: "460px", margin: "0 auto 28px", background: "rgba(0,255,180,0.04)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "16px", padding: "20px 24px" }}>
+            <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "14px" }}>⚡ 60-second estimate</p>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
+              {["AWS", "GCP", "Azure"].map(p => (
+                <button key={p} onClick={() => { setProvider(p); goTo("intake"); }}
+                  style={{ padding: "8px 16px", borderRadius: "8px", border: "1.5px solid rgba(0,255,180,0.2)", background: "rgba(0,255,180,0.06)", color: "var(--green)", fontSize: "13px", fontWeight: 700, cursor: "pointer", transition: "all 0.18s" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,255,180,0.12)"; e.currentTarget.style.borderColor = "rgba(0,255,180,0.4)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,255,180,0.06)"; e.currentTarget.style.borderColor = "rgba(0,255,180,0.2)"; }}>
+                  {p}
+                </button>
+              ))}
+            </div>
+            <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Pick your cloud provider → enter your bill → see estimated savings in 60 seconds.</p>
+          </div>
 
           <div id="start-audit" className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
             <button className="glow-btn" onClick={() => goTo("intake")}
@@ -1864,7 +1893,7 @@ export default function App() {
             </button>
             <button className="ghost-btn" onClick={() => setShowSample(true)}
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "16px 28px", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>📄</span> See Sample Report
+              <span>📄</span> See a Real Report First
             </button>
           </div>
           <div className="fade-up stagger-4" style={{ marginTop: "22px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
@@ -2349,6 +2378,11 @@ export default function App() {
               </div>
             )}
           </div>
+          {bill > 0 && bill < 500 && (
+            <div style={{ padding: "12px 16px", background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.2)", borderRadius: "10px", fontSize: "13px", color: "#fbbf24" }}>
+              💡 For bills under $500/month, the free audit checklist gives you the most value. The paid Blueprint ROI is strongest at $1,500+/month.
+            </div>
+          )}
           <button className="glow-btn" disabled={!provider || !monthlyBill} onClick={() => { setActiveSection(0); goTo("audit"); }}
             style={{ background: provider && monthlyBill ? "var(--green)" : "rgba(255,255,255,0.06)", color: provider && monthlyBill ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "16px", fontSize: "15px", boxShadow: provider && monthlyBill ? "0 0 24px rgba(0,255,180,0.3)" : "none", cursor: provider && monthlyBill ? "pointer" : "not-allowed", marginTop: "8px" }}>
             Begin Audit →
@@ -3067,7 +3101,7 @@ export default function App() {
               </div>
             </div>
             <p style={{ fontSize: "13px", color: "var(--text-muted)", textAlign: "center", marginBottom: "20px" }}>
-              {savMin > 0 ? `You're looking at $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/mo in savings. The blueprint pays for itself in day one.` : "Average client saves $2,800+/month after implementing the blueprint."}
+              {savMin > 0 ? `You're looking at $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/mo in savings. The blueprint pays for itself in day one.` : "Teams typically find $500–$4,000+/month based on industry FinOps benchmarks."}
             </p>
 
             {/* Trust card */}
