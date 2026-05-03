@@ -9,6 +9,7 @@
 
 const Anthropic = require('@anthropic-ai/sdk');
 const sgMail    = require('@sendgrid/mail');
+const crypto    = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -25,6 +26,62 @@ const supabase = createClient(
 
 const MAX_ATTEMPTS = 3;
 const PROCESS_BATCH = 5; // process up to 5 jobs per cron run
+
+// ── CACHE HELPERS ─────────────────────────────────────────────────────────────
+// Cache key: sha256 of provider + sorted flagged issue IDs
+// Identical issue combinations across different customers = same fix commands
+function buildCacheKey(productType, meta) {
+  const provider  = (meta.provider || 'AWS').toLowerCase();
+  const issueIds  = (meta.flaggedIssueIds || '')
+    .split(',')
+    .filter(Boolean)
+    .sort() // sort so order doesn't matter
+    .join(',');
+  const raw = `${productType}:${provider}:${issueIds}`;
+  return crypto.createHash('sha256').update(raw).digest('hex');
+}
+
+async function getCachedReport(cacheKey) {
+  try {
+    const { data } = await supabase
+      .from('report_cache')
+      .select('report_text, hit_count')
+      .eq('cache_key', cacheKey)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+
+    if (data) {
+      // Increment hit count (fire and forget)
+      supabase
+        .from('report_cache')
+        .update({ hit_count: (data.hit_count || 0) + 1 })
+        .eq('cache_key', cacheKey)
+        .then(() => {});
+      return data.report_text;
+    }
+    return null;
+  } catch (_) {
+    return null; // cache miss or error — proceed with Claude
+  }
+}
+
+async function setCachedReport(cacheKey, productType, reportText) {
+  try {
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7-day TTL
+    await supabase
+      .from('report_cache')
+      .upsert({
+        cache_key:   cacheKey,
+        report_text: reportText,
+        product_type: productType,
+        hit_count:   0,
+        expires_at:  expiresAt.toISOString(),
+      }, { onConflict: 'cache_key' });
+  } catch (err) {
+    console.warn('Cache write failed (non-critical):', err.message);
+  }
+}
 
 // ── BLUEPRINT PROMPT ─────────────────────────────────────────────────────────
 function buildBlueprintPrompt(meta) {
@@ -250,14 +307,26 @@ module.exports = async function handler(req, res) {
         const email   = job.email;
         const isSecur = job.product_type === 'security_blueprint';
 
-        // 3. Call Claude AI (no timeout pressure here)
-        const prompt = isSecur ? buildSecurityPrompt(meta) : buildBlueprintPrompt(meta);
-        const aiResp = await anthropic.messages.create({
-          model:      'claude-sonnet-4-6',
-          max_tokens: isSecur ? 2500 : 2000,
-          messages:   [{ role: 'user', content: prompt }],
-        });
-        const report = aiResp.content[0].text;
+        // 3. Check cache first — same issue combination = same fix commands
+        const cacheKey    = buildCacheKey(job.product_type, meta);
+        let report        = await getCachedReport(cacheKey);
+        let cacheHit      = !!report;
+
+        if (!report) {
+          // Cache miss — call Claude AI
+          console.log(`Cache miss — calling Claude for job ${job.id}`);
+          const prompt = isSecur ? buildSecurityPrompt(meta) : buildBlueprintPrompt(meta);
+          const aiResp = await anthropic.messages.create({
+            model:      'claude-sonnet-4-6',
+            max_tokens: isSecur ? 2500 : 2000,
+            messages:   [{ role: 'user', content: prompt }],
+          });
+          report = aiResp.content[0].text;
+          // Store in cache for future identical requests (fire and forget)
+          setCachedReport(cacheKey, job.product_type, report);
+        } else {
+          console.log(`Cache hit — delivering cached report for job ${job.id}`);
+        }
 
         // 4. Build emails
         const provider     = meta.provider || 'AWS';
@@ -295,8 +364,20 @@ module.exports = async function handler(req, res) {
           .update({ status: 'delivered', delivered_at: new Date().toISOString() })
           .eq('id', job.id);
 
-        console.log(`✅ Delivered: ${job.id} | ${email} | ${job.product_type}`);
-        results.push({ id: job.id, status: 'delivered', email });
+        // 7. Mark blueprint_paid in audits table if session_id available
+        const sessionId = meta.session_id || meta.sessionId;
+        if (sessionId) {
+          await supabase
+            .from('audits')
+            .update({
+              blueprint_paid: true,
+              blueprint_type: job.product_type,
+            })
+            .eq('session_id', sessionId);
+        }
+
+        console.log(`✅ Delivered: ${job.id} | ${email} | ${job.product_type} | cache:${cacheHit}`);
+        results.push({ id: job.id, status: 'delivered', email, cacheHit });
         processed++;
 
       } catch (jobErr) {
