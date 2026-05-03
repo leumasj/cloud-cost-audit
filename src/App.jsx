@@ -764,7 +764,19 @@ export default function App() {
   });
 
   const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
-  const goTo = (s) => { setStep(s); setPageKey(k => k + 1); window.scrollTo(0, 0); };
+  const goTo = (s) => {
+    setStep(s);
+    setPageKey(k => k + 1);
+    window.scrollTo(0, 0);
+    // Push to browser history so back button returns to previous step
+    const stepsWithHistory = ["intake", "questions", "email_gate", "report", "security_intro", "security_report"];
+    const currentStep = step; // capture before update
+    if (stepsWithHistory.includes(s)) {
+      window.history.pushState({ step: s, from: currentStep }, "", `#${s}`);
+    } else if (s === "intro") {
+      window.history.pushState({ step: "intro", from: currentStep }, "", "/");
+    }
+  };
 
   const bill = useMemo(() => parseFloat(monthlyBill) || 0, [monthlyBill]);
   const allChecks = useMemo(() => AUDIT_SECTIONS.flatMap(s => s.checks), []);
@@ -787,11 +799,41 @@ export default function App() {
 
   // FIX #2: Payment success detection on mount
   useEffect(() => {
+    // Handle Stripe payment success redirect
     const params = new URLSearchParams(window.location.search);
     if (params.get("payment") === "success") {
       setStep("payment_success");
       window.history.replaceState({}, "", "/");
+      return;
     }
+
+    // Restore step from URL hash on initial load (e.g. user refreshes mid-audit)
+    const hash = window.location.hash.replace("#", "");
+    const validSteps = ["intake", "questions", "email_gate", "report", "security_intro", "security_report"];
+    if (hash && validSteps.includes(hash)) {
+      setStep(hash);
+    }
+
+    // Handle browser back/forward button
+    const handlePopState = (e) => {
+      const targetStep = (e.state && e.state.step) ? e.state.step : "intro";
+      const fromStep   = (e.state && e.state.from) ? e.state.from : null;
+      setStep(targetStep);
+      setPageKey(k => k + 1);
+
+      // If returning to intro from audit, scroll to the audit CTA section
+      if (targetStep === "intro" && fromStep && fromStep !== "intro") {
+        setTimeout(() => {
+          const el = document.getElementById("start-audit");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 100);
+      } else {
+        window.scrollTo(0, 0);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
   // ── CURRENCY DETECTION ───────────────────────────────────────────
@@ -1812,7 +1854,7 @@ export default function App() {
             💡 Unlike ChatGPT or Copilot — KloudAudit knows your provider, your bill size, your flagged issues, and your company. The Blueprint isn&apos;t generic advice. It&apos;s written about <em>your</em> infrastructure specifically.
           </p>
 
-          <div className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
+          <div id="start-audit" className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
             <button className="glow-btn" onClick={() => goTo("intake")}
               style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px 36px", fontSize: "16px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
               Calculate My Savings <span style={{ fontSize: "18px" }}>→</span>
@@ -2028,7 +2070,7 @@ export default function App() {
         </div>
 
         {/* ── SECURITY AUDIT PRODUCT CARD ── */}
-        <div style={{ marginBottom: "48px" }}>
+        <div id="security-audit" style={{ marginBottom: "48px" }}>
           <div onClick={() => goTo("security_intro")}
             style={{ background: "linear-gradient(135deg, rgba(248,113,113,0.07), rgba(251,146,60,0.05))", border: "1.5px solid rgba(248,113,113,0.2)", borderRadius: "20px", padding: "28px 32px", cursor: "pointer", transition: "all 0.25s", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.45)"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 16px 40px rgba(248,113,113,0.12)"; }}
