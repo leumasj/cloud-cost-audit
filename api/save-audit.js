@@ -4,10 +4,9 @@
 // Anonymous by default — email is optional and only saved if user provides it.
 
 const { createClient } = require('@supabase/supabase-js');
-
-const supabase = createClient(
 const sentry = require('./lib/sentry');
 
+const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 );
@@ -21,51 +20,48 @@ module.exports = async function handler(req, res) {
 
   try {
     const {
-      sessionId,      // anonymous ID from localStorage — identifies returning users
-      email,          // optional — only if provided at email gate
-      provider,       // AWS | GCP | Azure | Multi-Cloud
+      sessionId,
+      email,
+      provider,
       monthlyBill,
       companyName,
-      flaggedIds,     // array of check IDs
-      wasteScore,     // 0-100
+      flaggedIds,
+      wasteScore,
       savingsMin,
       savingsMax,
-      auditType,      // 'cost' | 'security'
+      auditType,
     } = req.body;
 
     if (!sessionId) {
       return res.status(400).json({ error: 'sessionId required' });
     }
 
-    // Calculate re-audit due date (90 days from now)
     const reAuditDue = new Date();
     reAuditDue.setDate(reAuditDue.getDate() + 90);
 
-    // Upsert — if same session runs audit again, update the record
     const { data, error } = await supabase
       .from('audits')
       .upsert({
-        session_id:    sessionId,
-        email:         email || null,
-        provider:      provider || 'AWS',
-        monthly_bill:  monthlyBill || 0,
-        company_name:  companyName || null,
-        flagged_ids:   flaggedIds || [],
-        waste_score:   wasteScore || 0,
-        savings_min:   savingsMin || 0,
-        savings_max:   savingsMax || 0,
-        audit_type:    auditType || 'cost',
-        re_audit_due:  reAuditDue.toISOString(),
+        session_id:   sessionId,
+        email:        email || null,
+        provider:     provider || 'AWS',
+        monthly_bill: monthlyBill || 0,
+        company_name: companyName || null,
+        flagged_ids:  flaggedIds || [],
+        waste_score:  wasteScore || 0,
+        savings_min:  savingsMin || 0,
+        savings_max:  savingsMax || 0,
+        audit_type:   auditType || 'cost',
+        re_audit_due: reAuditDue.toISOString(),
       }, {
         onConflict: 'session_id',
-        ignoreDuplicates: false, // update on conflict
+        ignoreDuplicates: false,
       })
       .select('id')
       .single();
 
     if (error) throw error;
 
-    // If email provided, upsert subscriber record for 90-day reminder
     if (email) {
       await supabase
         .from('subscribers')
@@ -84,7 +80,6 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ success: true, auditId: data.id });
 
   } catch (err) {
-    // Non-critical — audit save failure should never block the user experience
     console.error('save-audit error:', err.message);
     sentry.captureException(err, { context: 'save-audit' });
     return res.status(500).json({ error: err.message });
