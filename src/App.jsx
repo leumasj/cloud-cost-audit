@@ -2048,7 +2048,7 @@ export default function App() {
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
             <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Comprehensive coverage</p>
             <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>What we audit</h2>
-            <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "480px", margin: "12px auto 0" }}>Five critical areas where cloud spend leaks — and where the biggest savings hide.</p>
+            <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "560px", margin: "12px auto 0" }}>Five areas where cloud spend leaks — plus two where security gaps hide. Cost and security, one platform, zero access required.</p>
           </div>
           <div className="audit-cats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
             {AUDIT_SECTIONS.map((s, i) => (
@@ -2069,6 +2069,59 @@ export default function App() {
                 </div>
               </div>
             ))}
+
+            {/* ── SECURITY CARD 1 — Identity & Access ── */}
+            <div className="audit-cat-card fade-up" onClick={() => goTo("security_intro")}
+              style={{ animationDelay: "0.25s", background: "linear-gradient(135deg, rgba(248,113,113,0.07), rgba(251,146,60,0.04))", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden", cursor: "pointer", transition: "all 0.25s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.45)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.2)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+              <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "100px", height: "100px", background: "radial-gradient(circle, rgba(248,113,113,0.08) 0%, transparent 70%)", borderRadius: "50%" }} />
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                <span style={{ fontSize: "32px" }}>🔐</span>
+                <span style={{ fontSize: "10px", fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "20px", padding: "2px 10px", letterSpacing: "0.8px" }}>SECURITY</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                <h3 className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px" }}>Identity & Access</h3>
+                <span style={{ background: "rgba(248,113,113,0.1)", color: "#f87171", fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px", border: "1px solid rgba(248,113,113,0.2)" }}>8 checks</span>
+              </div>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>IAM wildcard permissions, MFA enforcement, root account usage, stale access keys, and privilege escalation paths that leave your account exposed.</p>
+              <div style={{ borderTop: "1px solid rgba(248,113,113,0.12)", paddingTop: "14px" }}>
+                <p style={{ fontSize: "11px", color: "rgba(148,163,184,0.5)", fontWeight: 600, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.8px" }}>Covers</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {["MFA enforcement", "IAM wildcards", "Root account usage"].map(label => (
+                    <span key={label} style={{ fontSize: "11px", color: "rgba(248,113,113,0.7)", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "6px", padding: "3px 8px" }}>{label}</span>
+                  ))}
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "3px 6px" }}>+5 more</span>
+                </div>
+              </div>
+            </div>
+
+            {/* ── SECURITY CARD 2 — Exposure & Data ── */}
+            <div className="audit-cat-card fade-up" onClick={() => goTo("security_intro")}
+              style={{ animationDelay: "0.30s", background: "linear-gradient(135deg, rgba(248,113,113,0.07), rgba(251,146,60,0.04))", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden", cursor: "pointer", transition: "all 0.25s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.45)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.2)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+              <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "100px", height: "100px", background: "radial-gradient(circle, rgba(248,113,113,0.08) 0%, transparent 70%)", borderRadius: "50%" }} />
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                <span style={{ fontSize: "32px" }}>🛡</span>
+                <span style={{ fontSize: "10px", fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "20px", padding: "2px 10px", letterSpacing: "0.8px" }}>SECURITY</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                <h3 className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px" }}>Exposure & Data</h3>
+                <span style={{ background: "rgba(248,113,113,0.1)", color: "#f87171", fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px", border: "1px solid rgba(248,113,113,0.2)" }}>8 checks</span>
+              </div>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>Public S3 buckets, open security groups (0.0.0.0/0), hardcoded secrets, unencrypted storage, missing audit logging — the vulnerabilities attackers scan for first.</p>
+              <div style={{ borderTop: "1px solid rgba(248,113,113,0.12)", paddingTop: "14px" }}>
+                <p style={{ fontSize: "11px", color: "rgba(148,163,184,0.5)", fontWeight: 600, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.8px" }}>Covers</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {["Public S3 buckets", "Open security groups", "Hardcoded secrets"].map(label => (
+                    <span key={label} style={{ fontSize: "11px", color: "rgba(248,113,113,0.7)", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "6px", padding: "3px 8px" }}>{label}</span>
+                  ))}
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "3px 6px" }}>+5 more</span>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
