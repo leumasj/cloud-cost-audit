@@ -130,7 +130,7 @@ for (const page of SEO_PAGES) {
     .replace(/<meta property="og:description"[^>]*\/>/,`<meta property="og:description" content="${t(description)}" />`)
     .replace(/<meta name="twitter:title"[^>]*\/>/,      `<meta name="twitter:title" content="${t(page.title)} | KloudAudit" />`)
     .replace(/<meta name="twitter:description"[^>]*\/>/,`<meta name="twitter:description" content="${t(description)}" />`)
-    .replace(/\s*<\/head>/,
+    .replace(/\s*<\/head>/, () =>
       `\n  <link rel="canonical" href="${url}" />` +
       `\n  <script type="application/ld+json">${jsonLd}</script>` +
       `\n</head>`
