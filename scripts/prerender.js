@@ -108,33 +108,22 @@ for (const page of SEO_PAGES) {
     }
   });
 
-  // Replace head tags in index.html template
+  // Replace head tags — replaces existing tags AND injects canonical
+  const t = (s) => s.replace(/"/g, '&quot;');
   let html = indexHtml
-    // Title
-    .replace(
-      /<title>.*?<\/title>/,
-      `<title>${page.title} | KloudAudit</title>`
-    )
-    // Meta description
-    .replace(
-      /<meta name="description"[^>]*>/,
-      `<meta name="description" content="${description.replace(/"/g, '&quot;')}" />`
-    )
-    // Canonical
-    .replace(
-      /<\/head>/,
-      `  <link rel="canonical" href="${url}" />\n` +
-      `  <meta name="robots" content="index, follow" />\n` +
-      `  <meta property="og:type" content="article" />\n` +
-      `  <meta property="og:url" content="${url}" />\n` +
-      `  <meta property="og:title" content="${page.title.replace(/"/g, '&quot;')} | KloudAudit" />\n` +
-      `  <meta property="og:description" content="${description.replace(/"/g, '&quot;')}" />\n` +
-      `  <meta property="og:image" content="${BASE}/android-chrome-512x512.png" />\n` +
-      `  <meta name="twitter:card" content="summary_large_image" />\n` +
-      `  <meta name="twitter:title" content="${page.title.replace(/"/g, '&quot;')} | KloudAudit" />\n` +
-      `  <meta name="twitter:description" content="${description.replace(/"/g, '&quot;')}" />\n` +
-      `  <script type="application/ld+json">${jsonLd}</script>\n` +
-      `</head>`
+    .replace(/<title>.*?<\/title>/, `<title>${page.title} | KloudAudit</title>`)
+    .replace(/<meta name="description"[^>]*\/>/,  `<meta name="description" content="${t(description)}" />`)
+    .replace(/<meta name="robots"[^>]*\/>/,       `<meta name="robots" content="index, follow" />`)
+    .replace(/<meta property="og:type"[^>]*\/>/,  `<meta property="og:type" content="article" />`)
+    .replace(/<meta property="og:url"[^>]*\/>/,   `<meta property="og:url" content="${url}" />`)
+    .replace(/<meta property="og:title"[^>]*\/>/,  `<meta property="og:title" content="${t(page.title)} | KloudAudit" />`)
+    .replace(/<meta property="og:description"[^>]*\/>/,`<meta property="og:description" content="${t(description)}" />`)
+    .replace(/<meta name="twitter:title"[^>]*\/>/,      `<meta name="twitter:title" content="${t(page.title)} | KloudAudit" />`)
+    .replace(/<meta name="twitter:description"[^>]*\/>/,`<meta name="twitter:description" content="${t(description)}" />`)
+    .replace(/\s*<\/head>/,
+      `\n  <link rel="canonical" href="${url}" />` +
+      `\n  <script type="application/ld+json">${jsonLd}</script>` +
+      `\n</head>`
     );
 
   // Write to dist/[slug]/index.html
