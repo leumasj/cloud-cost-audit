@@ -121,6 +121,7 @@ for (const page of SEO_PAGES) {
   // Replace head tags — replaces existing tags AND injects canonical
   const t = (s) => s.replace(/"/g, '&quot;');
   let html = indexHtml
+    .replace(/<link rel="canonical"[^>]*>/g, '') // remove hardcoded canonical
     .replace(/<title>.*?<\/title>/, `<title>${page.title} | KloudAudit</title>`)
     .replace(/<meta name="description"[^>]*\/>/,  `<meta name="description" content="${t(description)}" />`)
     .replace(/<meta name="robots"[^>]*\/>/,       `<meta name="robots" content="index, follow" />`)
@@ -142,6 +143,19 @@ for (const page of SEO_PAGES) {
   fs.writeFileSync(path.join(dir, 'index.html'), html);
   generated++;
 }
+
+// ── Also fix homepage canonical (index.html may have wrong/duplicate canonical) ──
+const homepageHtml = indexHtml
+  .replace(/<link rel="canonical"[^>]*>/g, '') // remove any existing canonicals
+  .replace(/\s*<\/head>/, () =>
+    `
+  <link rel="canonical" href="${BASE}/" />` +
+    `
+</head>`
+  );
+const fs2 = require('fs');
+fs2.writeFileSync(path.join(DIST, 'index.html'), homepageHtml);
+console.log('✅ Homepage canonical fixed');
 
 console.log(`✅ Pre-rendered ${generated} SEO pages to dist/`);
 console.log(`   Google will now read static HTML with correct meta tags for each page.`);
