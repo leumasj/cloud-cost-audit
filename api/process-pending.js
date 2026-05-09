@@ -290,19 +290,28 @@ module.exports = async function handler(req, res) {
   const results = [];
 
   try {
-    // 1. Atomically claim pending jobs — FOR UPDATE SKIP LOCKED prevents
-    //    duplicate delivery if two cron runs execute simultaneously.
-    //    Uses a Supabase RPC function that does fetch+lock in a single transaction.
-    const { data: jobs, error: fetchError } = await supabaseAdmin
-      .rpc('claim_pending_jobs', { batch_size: PROCESS_BATCH });
+    // 1. Fetch pending jobs
+    const { data: jobs, error: fetchError } = await supabase
+      .from('delivery_queue')
+      .select('*')
+      .eq('status', 'pending')
+      .lt('attempts', MAX_ATTEMPTS)
+      .order('created_at', { ascending: true })
+      .limit(PROCESS_BATCH);
 
     if (fetchError) throw fetchError;
     if (!jobs || jobs.length === 0) {
       return res.status(200).json({ processed: 0, message: 'No pending jobs' });
     }
 
-    // 2. Process each job (already marked as 'processing' by claim_pending_jobs)
+    // 2. Process each job — mark as processing immediately
     for (const job of jobs) {
+      // Mark processing to reduce (not eliminate) duplicate risk
+      await supabase
+        .from('delivery_queue')
+        .update({ status: 'processing', last_attempt_at: new Date().toISOString(), attempts: job.attempts + 1 })
+        .eq('id', job.id)
+        .eq('status', 'pending'); // only claim if still pending
 
       try {
         const meta    = job.metadata;
