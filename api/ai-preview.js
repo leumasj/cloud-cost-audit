@@ -10,35 +10,62 @@
 // but blocks scripts and automated abuse.
 
 const Anthropic = require('@anthropic-ai/sdk');
+const { AI_MODEL, AI_MAX_TOKENS_PREVIEW } = require('./lib/config');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const sentry = require('./lib/sentry');
 
 
-// ── IN-MEMORY RATE LIMITER ─────────────────────────────────────────────────
-// Resets on cold start — sufficient for abuse protection without Redis
-const ipRequests = new Map();
-const RATE_LIMIT  = 5;   // max requests per window
-const RATE_WINDOW = 60 * 60 * 1000; // 1 hour in ms
+const { createClient } = require('@supabase/supabase-js');
+const { RATE_LIMIT_REQUESTS, RATE_LIMIT_WINDOW_MS } = require('./lib/config');
 
-function isRateLimited(ip) {
-  const now    = Date.now();
-  const record = ipRequests.get(ip);
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
 
-  if (!record || now - record.window > RATE_WINDOW) {
-    ipRequests.set(ip, { count: 1, window: now });
+// ── PERSISTENT RATE LIMITER ───────────────────────────────────────────────────
+// Stored in Supabase so it survives cold starts — in-memory Map resets on every
+// Vercel cold start, making it trivially bypassable by waiting 5 minutes.
+async function isRateLimited(ip) {
+  try {
+    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+
+    // Count requests from this IP in the last hour
+    const { count, error } = await supabase
+      .from('rate_limits')
+      .select('*', { count: 'exact', head: true })
+      .eq('ip', ip)
+      .gte('created_at', windowStart);
+
+    if (error) {
+      // Supabase unavailable — fail open to not block legitimate users
+      console.warn('Rate limit check failed:', error.message);
+      return false;
+    }
+
+    if (count >= RATE_LIMIT_REQUESTS) return true;
+
+    // Record this request
+    await supabase.from('rate_limits').insert({ ip });
+    return false;
+
+  } catch (err) {
+    // Fail open on any unexpected error
+    console.warn('Rate limit error:', err.message);
     return false;
   }
-
-  if (record.count >= RATE_LIMIT) return true;
-
-  record.count++;
-  return false;
 }
 
 // ── HANDLER ───────────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS — restrict to KloudAudit domains only
+  const { ALLOWED_ORIGINS } = require('./lib/config');
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -92,8 +119,8 @@ Write ONLY the fix for this ONE issue. Format exactly as:
 Keep it concise, technical, and accurate. Real commands only.`;
 
     const response = await anthropic.messages.create({
-      model:      'claude-sonnet-4-6',
-      max_tokens: 500,
+      model:      AI_MODEL,
+      max_tokens: AI_MAX_TOKENS_PREVIEW,
       messages:   [{ role: 'user', content: prompt }],
     });
 

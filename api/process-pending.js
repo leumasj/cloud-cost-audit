@@ -17,9 +17,17 @@ const sentry = require('./lib/sentry');
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+// anon client — for operations that don't need elevated access
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
+);
+
+// service role client — bypasses RLS for admin operations (delivery, cache reads)
+// NEVER expose this key to the browser or frontend
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY // fallback for backward compat
 );
 
 // ── CRON GUARD — prevent concurrent runs ─────────────────────────────────────
@@ -45,7 +53,7 @@ function buildCacheKey(productType, meta) {
 
 async function getCachedReport(cacheKey) {
   try {
-    const { data } = await supabase
+    const { data } = await supabaseAdmin
       .from('report_cache')
       .select('report_text, hit_count')
       .eq('cache_key', cacheKey)
@@ -282,52 +290,74 @@ module.exports = async function handler(req, res) {
   const results = [];
 
   try {
-    // 1. Fetch pending jobs (up to PROCESS_BATCH)
-    const { data: jobs, error: fetchError } = await supabase
-      .from('delivery_queue')
-      .select('*')
-      .eq('status', 'pending')
-      .lt('attempts', MAX_ATTEMPTS)
-      .order('created_at', { ascending: true })
-      .limit(PROCESS_BATCH);
+    // 1. Atomically claim pending jobs — FOR UPDATE SKIP LOCKED prevents
+    //    duplicate delivery if two cron runs execute simultaneously.
+    //    Uses a Supabase RPC function that does fetch+lock in a single transaction.
+    const { data: jobs, error: fetchError } = await supabaseAdmin
+      .rpc('claim_pending_jobs', { batch_size: PROCESS_BATCH });
 
     if (fetchError) throw fetchError;
     if (!jobs || jobs.length === 0) {
       return res.status(200).json({ processed: 0, message: 'No pending jobs' });
     }
 
-    // 2. Process each job
+    // 2. Process each job (already marked as 'processing' by claim_pending_jobs)
     for (const job of jobs) {
-      // Mark as processing to prevent concurrent runs
-      await supabase
-        .from('delivery_queue')
-        .update({ status: 'processing', last_attempt_at: new Date().toISOString(), attempts: job.attempts + 1 })
-        .eq('id', job.id);
 
       try {
         const meta    = job.metadata;
         const email   = job.email;
-        const isSecur = job.product_type === 'security_blueprint';
+        const isSecur  = job.product_type === 'security_blueprint';
+        const isBundle = job.product_type === 'bundle';
 
-        // 3. Check cache first — same issue combination = same fix commands
-        const cacheKey    = buildCacheKey(job.product_type, meta);
-        let report        = await getCachedReport(cacheKey);
-        let cacheHit      = !!report;
+        // 3. Check cache + call Claude AI
+        let report   = null;
+        let cacheHit = false;
 
-        if (!report) {
-          // Cache miss — call Claude AI
-          console.log(`Cache miss — calling Claude for job ${job.id}`);
-          const prompt = isSecur ? buildSecurityPrompt(meta) : buildBlueprintPrompt(meta);
-          const aiResp = await anthropic.messages.create({
-            model:      'claude-sonnet-4-6',
-            max_tokens: isSecur ? 2500 : 2000,
-            messages:   [{ role: 'user', content: prompt }],
-          });
-          report = aiResp.content[0].text;
-          // Store in cache for future identical requests (fire and forget)
-          setCachedReport(cacheKey, job.product_type, report);
+        if (isBundle) {
+          // Bundle: generate both reports in parallel — 2x value for the customer
+          const [costKey, secKey] = [
+            buildCacheKey('blueprint', meta),
+            buildCacheKey('security_blueprint', meta),
+          ];
+          const [cachedCost, cachedSec] = await Promise.all([
+            getCachedReport(costKey),
+            getCachedReport(secKey),
+          ]);
+
+          const [costReport, secReport] = await Promise.all([
+            cachedCost ? Promise.resolve(cachedCost) : anthropic.messages.create({
+              model: 'claude-sonnet-4-6', max_tokens: 2000,
+              messages: [{ role: 'user', content: buildBlueprintPrompt(meta) }],
+            }).then(r => { const t = r.content[0].text; setCachedReport(costKey, 'blueprint', t); return t; }),
+            cachedSec ? Promise.resolve(cachedSec) : anthropic.messages.create({
+              model: 'claude-sonnet-4-6', max_tokens: 2000,
+              messages: [{ role: 'user', content: buildSecurityPrompt(meta) }],
+            }).then(r => { const t = r.content[0].text; setCachedReport(secKey, 'security_blueprint', t); return t; }),
+          ]);
+
+          report = `# COST BLUEPRINT\n\n${costReport}\n\n---\n\n# SECURITY BLUEPRINT\n\n${secReport}`;
+          cacheHit = !!(cachedCost && cachedSec);
+
         } else {
-          console.log(`Cache hit — delivering cached report for job ${job.id}`);
+          // Single product — check cache first
+          const cacheKey = buildCacheKey(job.product_type, meta);
+          report   = await getCachedReport(cacheKey);
+          cacheHit = !!report;
+
+          if (!report) {
+            console.log(`Cache miss — calling Claude for job ${job.id}`);
+            const prompt = isSecur ? buildSecurityPrompt(meta) : buildBlueprintPrompt(meta);
+            const aiResp = await anthropic.messages.create({
+              model:      'claude-sonnet-4-6',
+              max_tokens: isSecur ? 2500 : 2000,
+              messages:   [{ role: 'user', content: prompt }],
+            });
+            report = aiResp.content[0].text;
+            setCachedReport(cacheKey, job.product_type, report);
+          } else {
+            console.log(`Cache hit — delivering cached report for job ${job.id}`);
+          }
         }
 
         // 4. Build emails
@@ -347,36 +377,33 @@ module.exports = async function handler(req, res) {
             to:       email,
             from:     { email: 'admin@kloudaudit.eu', name: 'Samuel @ KloudAudit' },
             replyTo:  'admin@kloudaudit.eu',
-            subject:  isSecur
-              ? `🛡 Your Security Blueprint is ready — ${assessmentId}`
-              : `⚡ Your ${provider} Cost Blueprint is ready`,
+            subject:  isBundle
+              ? `🎯 Your Cost + Security Bundle is ready — ${assessmentId}`
+              : isSecur
+                ? `🛡 Your Security Blueprint is ready — ${assessmentId}`
+                : `⚡ Your ${provider} Cost Blueprint is ready`,
             html: customerHtml,
           }),
           sgMail.send({
             to:      'admin@kloudaudit.eu',
             from:    { email: 'admin@kloudaudit.eu', name: 'KloudAudit System' },
-            subject: `${isSecur ? '🛡' : '⚡'} Blueprint delivered — ${email} · ${provider} · ${chargeDisplay}`,
+            subject: `${isBundle ? '🎯' : isSecur ? '🛡' : '⚡'} Blueprint delivered — ${email} · ${provider} · ${chargeDisplay}`,
             text:    `Email: ${email}\nProvider: ${provider}\nProduct: ${job.product_type}\nCharge: ${chargeDisplay}\nJob ID: ${job.id}\nIssues: ${(meta.flaggedIssueLabels || '').split('||').filter(Boolean).join(', ')}`,
           }),
         ]);
 
-        // 6. Mark as delivered
-        await supabase
-          .from('delivery_queue')
-          .update({ status: 'delivered', delivered_at: new Date().toISOString() })
-          .eq('id', job.id);
-
-        // 7. Mark blueprint_paid in audits table if session_id available
+        // 6 + 7. Parallelise post-delivery writes — no data dependency between them
         const sessionId = meta.session_id || meta.sessionId;
-        if (sessionId) {
-          await supabase
+        await Promise.all([
+          supabaseAdmin
+            .from('delivery_queue')
+            .update({ status: 'delivered', delivered_at: new Date().toISOString() })
+            .eq('id', job.id),
+          sessionId && supabaseAdmin
             .from('audits')
-            .update({
-              blueprint_paid: true,
-              blueprint_type: job.product_type,
-            })
-            .eq('session_id', sessionId);
-        }
+            .update({ blueprint_paid: true, blueprint_type: job.product_type })
+            .eq('session_id', sessionId),
+        ].filter(Boolean));
 
         console.log(`✅ Delivered: ${job.id} | ${email} | ${job.product_type} | cache:${cacheHit}`);
         results.push({ id: job.id, status: 'delivered', email, cacheHit });
