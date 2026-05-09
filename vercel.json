@@ -52,5 +52,40 @@
         "Referrer-Policy": "strict-origin-when-cross-origin"
       }
     }
-  ]
+  ],
+  "functions": {
+    "api/webhook.js": {
+      "maxDuration": 10
+    },
+    "api/process-pending.js": {
+      "maxDuration": 60
+    },
+    "api/create-checkout.js": {
+      "maxDuration": 10
+    },
+    "api/save-audit.js": {
+      "maxDuration": 10
+    },
+    "api/ai-preview.js": {
+      "maxDuration": 30
+    },
+    "api/send-report.js": {
+      "maxDuration": 10
+    },
+    "api/send-reaudit.js": {
+      "maxDuration": 60
+    },
+    "api/get-benchmarks.js": {
+      "maxDuration": 10
+    },
+    "api/dashboard.js": {
+      "maxDuration": 10
+    },
+    "api/unsubscribe.js": {
+      "maxDuration": 10
+    },
+    "api/health.js": {
+      "maxDuration": 10
+    }
+  }
 }
