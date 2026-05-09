@@ -4,7 +4,7 @@
 // Anonymous by default — email is optional and only saved if user provides it.
 
 const { createClient } = require('@supabase/supabase-js');
-const sentry = require('./lib/sentry');
+const sentry = require('./lib/_sentry');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,

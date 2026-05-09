@@ -13,7 +13,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { AI_MODEL, AI_MAX_TOKENS_PREVIEW } = require('./lib/_config');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const sentry = require('./lib/sentry');
+const sentry = require('./lib/_sentry');
 
 
 const { createClient } = require('@supabase/supabase-js');

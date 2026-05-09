@@ -8,7 +8,7 @@
 // This data is KloudAudit's unique moat — no competitor has it.
 
 const { createClient } = require('@supabase/supabase-js');
-const sentry = require('./lib/sentry');
+const sentry = require('./lib/_sentry');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,

@@ -11,7 +11,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const sgMail    = require('@sendgrid/mail');
 const crypto    = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
-const sentry = require('./lib/sentry');
+const sentry = require('./lib/_sentry');
 
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
