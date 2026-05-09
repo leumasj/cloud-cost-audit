@@ -10,14 +10,14 @@
 // but blocks scripts and automated abuse.
 
 const Anthropic = require('@anthropic-ai/sdk');
-const { AI_MODEL, AI_MAX_TOKENS_PREVIEW } = require('./lib/config');
+const { AI_MODEL, AI_MAX_TOKENS_PREVIEW } = require('./lib/_config');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const sentry = require('./lib/sentry');
 
 
 const { createClient } = require('@supabase/supabase-js');
-const { RATE_LIMIT_REQUESTS, RATE_LIMIT_WINDOW_MS } = require('./lib/config');
+const { RATE_LIMIT_REQUESTS, RATE_LIMIT_WINDOW_MS } = require('./lib/_config');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -60,7 +60,7 @@ async function isRateLimited(ip) {
 // ── HANDLER ───────────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
   // CORS — restrict to KloudAudit domains only
-  const { ALLOWED_ORIGINS } = require('./lib/config');
+  const { ALLOWED_ORIGINS } = require('./lib/_config');
   const origin = req.headers.origin;
   if (ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);

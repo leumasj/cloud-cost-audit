@@ -9,7 +9,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 module.exports = async function handler(req, res)  {
   // CORS
   // CORS — restrict to KloudAudit domains only
-  const { ALLOWED_ORIGINS } = require('./lib/config');
+  const { ALLOWED_ORIGINS } = require('./lib/_config');
   const origin = req.headers.origin;
   if (ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
