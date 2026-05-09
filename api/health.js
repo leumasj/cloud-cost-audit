@@ -10,8 +10,13 @@
 const { createClient } = require('@supabase/supabase-js');
 
 module.exports = async function handler(req, res) {
-  if (req.method !== 'GET') {
+  // Allow both GET and HEAD — UptimeRobot uses HEAD for uptime checks
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+  // HEAD requests only need the status code, not the body
+  if (req.method === 'HEAD') {
+    return res.status(200).end();
   }
 
   const checks = {
