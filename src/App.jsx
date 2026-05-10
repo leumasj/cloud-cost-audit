@@ -336,7 +336,7 @@ Your role:
     <>
       {/* ── FLOATING BUTTON ── */}
       <div onClick={() => setOpen(o => !o)} style={{
-        position: 'fixed', bottom: '28px', right: '28px', zIndex: 9999,
+        position: 'fixed', bottom: '88px', right: '24px', zIndex: 9999,
         width: '56px', height: '56px', borderRadius: '50%',
         background: open ? '#1a1a2e' : 'linear-gradient(135deg, #00ffb4, #00d4ff)',
         border: open ? '2px solid rgba(255,255,255,0.15)' : 'none',
@@ -1500,7 +1500,7 @@ export default function App() {
         <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "14px", padding: "24px", marginBottom: "32px" }}>
           <p style={{ fontSize: "14px", color: "var(--text-dim)", marginBottom: "4px" }}>Check your email for a message from</p>
           <p style={{ fontSize: "16px", fontWeight: 700, color: "var(--green)" }}>admin@kloudaudit.eu</p>
-          <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>Subject: "Your Implementation Blueprint is ready ⚡"</p>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>Subject: "⚡ Your [Provider] Cost Blueprint is ready"</p>
           <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>Check spam if you don't see it within 5 minutes.</p>
         </div>
         <button className="glow-btn" onClick={() => { setStep("intro"); setChecked({}); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Run Another Audit →</button>
@@ -1575,7 +1575,7 @@ export default function App() {
               <span style={{ fontSize: "11px", fontWeight: 700, color: "#f87171", letterSpacing: "1.5px" }}>CLOUD SECURITY AUDIT — AWS · GCP · AZURE — ZERO ACCESS</span>
             </div>
             <h1 className="display" style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 800, letterSpacing: "-2px", color: "#fff", marginBottom: "14px", lineHeight: 1.05 }}>
-              Find security gaps before<br /><span style={{ color: "#f87171" }}>attackers do.</span>
+              Find the gaps attackers<br /><span style={{ color: "#f87171" }}>scan for first.</span>
             </h1>
             <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "540px", margin: "0 auto 20px", lineHeight: 1.7 }}>
               16 checkpoints across IAM, network exposure, data protection, and logging. Takes 10 minutes. Zero credentials required.
@@ -1937,7 +1937,7 @@ export default function App() {
     const FAQS = [
       { q: "Do you need access to my cloud account?", a: "Never. Both audits are entirely self-guided — you answer questions based on your own knowledge. No credentials, no IAM roles, no agents, no OAuth. We have zero access to your infrastructure.", tag: "both" },
       { q: "How is the AI Blueprint different from the free report?", a: "The free report tells you what is wrong. The Blueprint tells you exactly how to fix it — with CLI commands, Terraform snippets, IAM policy templates, compliance mappings, and verification steps specific to your provider.", tag: "both" },
-      { q: "How fast do I receive the Blueprint?", a: "Instantly after payment. Claude AI generates your personalised guide in ~30 seconds, then it's delivered to your inbox. Most customers receive it within 2 minutes of payment.", tag: "both" },
+      { q: "How fast do I receive the Blueprint?", a: "Within 2 minutes of payment. Claude AI generates your personalised guide in ~30 seconds, then SendGrid delivers it to your inbox. If you don't see it within 5 minutes, check spam or email admin@kloudaudit.eu.", tag: "both" },
       { q: "What does the Security Blueprint include that the free score doesn't?", a: "The free audit shows your risk score and the first 2 flagged issues. The Security Blueprint unlocks all findings with exact CLI remediation commands, IAM policy fixes, compliance gap mapping (SOC 2, ISO 27001, GDPR, CIS Benchmark), and a 30-day remediation roadmap.", tag: "security" },
       { q: "I already use AWS Security Hub / GCP Security Command Center. Why do I need this?", a: "Those tools need account access and take weeks to configure. KloudAudit gives you a prioritised action list in 15 minutes with zero access required — ideal for a quick self-assessment before a pentest, compliance audit, or investor review.", tag: "security" },
       { q: "What if my cloud bill is lower than $1,000/month?", a: "The cost audit is still useful for identifying waste patterns early. The Blueprint is most cost-effective for bills over $1,500/mo. The security audit is valuable at any bill size — a public S3 bucket costs the same to exploit whether you pay $200/mo or $20,000/mo.", tag: "cost" },
@@ -2062,7 +2062,7 @@ export default function App() {
 
           {/* ── SUBHEADING ── */}
           <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "560px", margin: "0 auto 20px" }}>
-            No AWS keys. No IAM roles. No procurement process. Answer 18 questions about your setup — get a prioritised savings report with exact CLI commands in 15 minutes.
+            Answer 18 questions about your own setup. Get a prioritised savings report with exact CLI commands — in 15 minutes. No credentials, no agents, no procurement.
           </p>
 
           {/* ── COMPETITOR KILL LINE ── */}
@@ -2102,7 +2102,7 @@ export default function App() {
               { text: "✓ No signup · No card", highlight: false },
               { text: "⚡ Cost + Security audits", highlight: false },
               { text: "🛡 AWS · GCP · Azure", highlight: false },
-              { text: "👥 62+ teams audited", highlight: false },
+              { text: "👥 Teams audited globally", highlight: false },
             ].map((item, i) => (
               <span key={i} style={{ fontSize: "12px", color: item.highlight ? "var(--green)" : "var(--text-muted)", background: item.highlight ? "rgba(0,255,180,0.06)" : "rgba(255,255,255,0.04)", border: `1px solid ${item.highlight ? "rgba(0,255,180,0.2)" : "rgba(255,255,255,0.08)"}`, borderRadius: "20px", padding: "4px 12px", whiteSpace: "nowrap", fontWeight: item.highlight ? 700 : 400 }}>
                 {item.text}
@@ -2369,7 +2369,7 @@ export default function App() {
                   <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1px" }}>CLOUD SECURITY AUDIT</span>
                 </div>
                 <h3 className="display" style={{ fontSize: "20px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "4px" }}>Find security vulnerabilities before attackers do</h3>
-                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>16 checkpoints across IAM, network exposure, encryption & logging. Free. No account access. AI-generated remediation report.</p>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>Find the gaps attackers scan for first — before your next pentest, compliance audit, or investor review. 16 checks. Free. Zero access required.</p>
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "10px", flexShrink: 0 }}>
@@ -2636,7 +2636,7 @@ export default function App() {
               💡 For bills under $500/month, the free audit checklist gives you the most value. The paid Blueprint ROI is strongest at $1,500+/month.
             </div>
           )}
-          <button className="glow-btn" disabled={!provider || !monthlyBill} onClick={() => { setActiveSection(0); goTo("audit"); }}
+          <button className="glow-btn" disabled={!provider || !monthlyBill || parseFloat(monthlyBill) <= 0} onClick={() => { setActiveSection(0); goTo("audit"); }}
             style={{ background: provider && monthlyBill ? "var(--green)" : "rgba(255,255,255,0.06)", color: provider && monthlyBill ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "16px", fontSize: "15px", boxShadow: provider && monthlyBill ? "0 0 24px rgba(0,255,180,0.3)" : "none", cursor: provider && monthlyBill ? "pointer" : "not-allowed", marginTop: "8px" }}>
             Begin Audit →
           </button>
