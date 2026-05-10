@@ -158,6 +158,7 @@ const globalCss = `
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 1; } 30% { transform: translateY(-6px); opacity: 0.6; } }
   .trust-link { display:flex; align-items:center; gap:10px; text-decoration:none; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; transition:all 0.2s; }
   .trust-link:hover { background:rgba(255,255,255,0.06) !important; transform:translateX(3px); }
 
@@ -238,7 +239,206 @@ const globalCss = `
   }
 `;
 
-// ── SHARE CARD MODAL ──────────────────────────────────────────────────────────
+// ── CHATBOT COMPONENT ────────────────────────────────────────────────────────
+function AuditChatBot({ provider, bill, flagged, savMin, savMax, savPct, wasteScore, allChecks, currency, onBuyBlueprint }) {
+  const [open, setOpen]       = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput]     = useState('');
+  const [loading, setLoading] = useState(false);
+  const [hasGreeted, setHasGreeted] = useState(false);
+  const messagesEndRef          = React.useRef(null);
+
+  // Auto-scroll to latest message
+  React.useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  // Greet user when chat opens for first time
+  React.useEffect(() => {
+    if (open && !hasGreeted) {
+      const issueCount = flagged.length;
+      const topIssue   = flagged[0]?.label || 'some optimisation opportunities';
+      const greeting   = issueCount > 0
+        ? `Hi! I've reviewed your ${provider} audit. You have ${issueCount} issue${issueCount > 1 ? 's' : ''} flagged with $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/month in estimated savings.
+
+The biggest one is **${topIssue}**. What would you like to know?`
+        : `Hi! I've reviewed your ${provider} audit. Looking clean — no major issues flagged. What would you like to know?`;
+      setMessages([{ role: 'assistant', text: greeting }]);
+      setHasGreeted(true);
+    }
+  }, [open]);
+
+  const sendMessage = async (text) => {
+    if (!text.trim() || loading) return;
+    const userMsg = text.trim();
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    setLoading(true);
+
+    // Build context-aware system prompt
+    const flaggedLabels = flagged.map(c => c.label).join(', ');
+    const systemContext = `You are a friendly cloud cost expert assistant embedded in KloudAudit.
+The user just completed a ${provider} cloud cost audit.
+Their monthly bill: $${bill}
+Waste Score: ${wasteScore}/100
+Estimated savings: $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/month
+Flagged issues (${flagged.length}): ${flaggedLabels || 'none'}
+
+Your role:
+- Answer their questions about the audit findings concisely
+- Explain specific issues in plain language
+- Help them prioritise what to fix first
+- If they ask about implementation details or exact commands, mention that the AI Blueprint (${currency.blueprintPrice}) includes exact CLI commands and Terraform snippets
+- Never be pushy — only mention the Blueprint if it's genuinely relevant
+- Keep responses under 150 words
+- Use simple formatting — no markdown headers, minimal bullet points`;
+
+    try {
+      const res = await fetch('/api/ai-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          issueLabel:  userMsg,
+          issueDetail: systemContext,
+          provider:    provider || 'AWS',
+          bill:        bill || 5000,
+        }),
+      });
+      const data = await res.json();
+      if (data.preview) {
+        setMessages(prev => [...prev, { role: 'assistant', text: data.preview }]);
+      } else if (res.status === 429) {
+        setMessages(prev => [...prev, { role: 'assistant', text: "I've answered a lot of questions this hour. Try again in a bit, or check the Blueprint for detailed guidance on all your findings." }]);
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', text: "Something went wrong on my end. Try again in a moment." }]);
+      }
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', text: "Connection issue. Please try again." }]);
+    }
+    setLoading(false);
+  };
+
+  // Quick reply suggestions based on audit state
+  const quickReplies = flagged.length > 0 ? [
+    `Explain the ${flagged[0]?.label || 'top issue'}`,
+    'Which should I fix first?',
+    'How long will fixes take?',
+    "What's in the Blueprint?",
+  ] : [
+    'Why is my score good?',
+    'What should I watch for?',
+    'Tell me about the security audit',
+  ];
+
+  return (
+    <>
+      {/* ── FLOATING BUTTON ── */}
+      <div onClick={() => setOpen(o => !o)} style={{
+        position: 'fixed', bottom: '28px', right: '28px', zIndex: 9999,
+        width: '56px', height: '56px', borderRadius: '50%',
+        background: open ? '#1a1a2e' : 'linear-gradient(135deg, #00ffb4, #00d4ff)',
+        border: open ? '2px solid rgba(255,255,255,0.15)' : 'none',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', boxShadow: '0 4px 24px rgba(0,255,180,0.35)',
+        transition: 'all 0.25s', fontSize: '22px',
+      }}>
+        {open ? '✕' : '💬'}
+      </div>
+
+      {/* ── CHAT PANEL ── */}
+      {open && (
+        <div style={{
+          position: 'fixed', bottom: '96px', right: '28px', zIndex: 9998,
+          width: '340px', maxHeight: '480px',
+          background: '#0d0d1a', border: '1px solid rgba(0,255,180,0.2)',
+          borderRadius: '20px', display: 'flex', flexDirection: 'column',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,255,180,0.05)',
+          fontFamily: 'system-ui, sans-serif', overflow: 'hidden',
+        }}>
+          {/* Header */}
+          <div style={{ padding: '14px 18px', background: 'rgba(0,255,180,0.06)', borderBottom: '1px solid rgba(0,255,180,0.1)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #00ffb4, #00d4ff)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>⚡</div>
+            <div>
+              <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff', margin: 0 }}>KloudAudit Assistant</p>
+              <p style={{ fontSize: '11px', color: '#00ffb4', margin: 0 }}>Knows your {provider} audit results</p>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '200px', maxHeight: '280px' }}>
+            {messages.map((msg, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                <div style={{
+                  maxWidth: '85%', padding: '10px 13px', borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                  background: msg.role === 'user' ? 'rgba(0,255,180,0.15)' : 'rgba(255,255,255,0.05)',
+                  border: msg.role === 'user' ? '1px solid rgba(0,255,180,0.25)' : '1px solid rgba(255,255,255,0.07)',
+                  fontSize: '13px', color: msg.role === 'user' ? '#00ffb4' : '#cbd5e1',
+                  lineHeight: 1.55, whiteSpace: 'pre-wrap',
+                }}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px 14px 14px 4px' }}>
+                  <span style={{ display: 'inline-flex', gap: '4px' }}>
+                    {[0,1,2].map(i => <span key={i} style={{ width: '6px', height: '6px', background: '#00ffb4', borderRadius: '50%', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />)}
+                  </span>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Quick replies */}
+          {messages.length <= 1 && !loading && (
+            <div style={{ padding: '0 12px 8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {quickReplies.map(q => (
+                <button key={q} onClick={() => sendMessage(q)} style={{
+                  fontSize: '11px', padding: '5px 10px', borderRadius: '20px',
+                  background: 'rgba(0,255,180,0.06)', border: '1px solid rgba(0,255,180,0.2)',
+                  color: '#94a3b8', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#00ffb4'; e.currentTarget.style.borderColor = 'rgba(0,255,180,0.4)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = 'rgba(0,255,180,0.2)'; }}>
+                  {q}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Input */}
+          <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '8px' }}>
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
+              placeholder='Ask about your findings...'
+              style={{
+                flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '10px', padding: '8px 12px', color: '#fff', fontSize: '13px',
+                fontFamily: 'inherit', outline: 'none',
+              }}
+            />
+            <button onClick={() => sendMessage(input)} disabled={loading || !input.trim()} style={{
+              width: '36px', height: '36px', borderRadius: '10px', border: 'none',
+              background: input.trim() ? '#00ffb4' : 'rgba(255,255,255,0.06)',
+              color: input.trim() ? '#000' : '#475569',
+              cursor: input.trim() ? 'pointer' : 'not-allowed',
+              fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s', flexShrink: 0,
+            }}>→</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ── SHARE CARD MODAL ──────────────────────────────────────────────────────────────
 function ShareCardModal({ savMin, savMax, savPct, flaggedCount, totalChecks, provider, wasteScore, onClose }) {
   const canvasRef = useRef(null);
   const [downloaded, setDownloaded] = useState(false);
@@ -1872,8 +2072,8 @@ export default function App() {
 
           {/* ── 60-SECOND ESTIMATOR ── */}
           <div className="fade-up stagger-3" style={{ maxWidth: "460px", margin: "0 auto 28px", background: "rgba(0,255,180,0.04)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "16px", padding: "20px 24px" }}>
-            <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "14px" }}>⚡ 60-second estimate</p>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
+            <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "14px", textAlign: "center" }}>⚡ 60-second estimate</p>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px", justifyContent: "center" }}>
               {["AWS", "GCP", "Azure"].map(p => (
                 <button key={p} onClick={() => { setProvider(p); goTo("intake"); }}
                   style={{ padding: "8px 16px", borderRadius: "8px", border: "1.5px solid rgba(0,255,180,0.2)", background: "rgba(0,255,180,0.06)", color: "var(--green)", fontSize: "13px", fontWeight: 700, cursor: "pointer", transition: "all 0.18s" }}
@@ -1883,7 +2083,7 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Pick your cloud provider → enter your bill → see estimated savings in 60 seconds.</p>
+            <p style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center" }}>Pick your cloud provider → enter your bill → see estimated savings in 60 seconds.</p>
           </div>
 
           <div id="start-audit" className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
@@ -3190,6 +3390,21 @@ export default function App() {
                 New Audit
               </button>
             </div>
+
+
+            {/* ── AUDIT CHATBOT ── */}
+            <AuditChatBot
+              provider={provider}
+              bill={bill}
+              flagged={flagged}
+              savMin={savMin}
+              savMax={savMax}
+              savPct={savPct}
+              wasteScore={Math.max(0, Math.min(100, Math.round(100 - Math.min(flagged.length / allChecks.length, 1) * 30 - Math.min(savPct / 50, 1) * 70)))}
+              allChecks={allChecks}
+              currency={currency}
+              onBuyBlueprint={() => setShowBlueprint(true)}
+            />
 
             {/* ── SHARE CARD MODAL ── */}
             {showShareCard && (
