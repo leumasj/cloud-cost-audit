@@ -111,7 +111,7 @@ function ProgressRing({ percent, size = 44, stroke = 3, color = "#00ffb4" }) {
 
 function ParticleBackground() {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none", willChange: "auto" }}>
       <div style={{ position: "absolute", top: "-200px", left: "-200px", width: "600px", height: "600px", background: "radial-gradient(circle, rgba(0,255,180,0.07) 0%, transparent 70%)", borderRadius: "50%" }} />
       <div style={{ position: "absolute", bottom: "-200px", right: "-100px", width: "500px", height: "500px", background: "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)", borderRadius: "50%" }} />
       <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
@@ -122,6 +122,9 @@ function ParticleBackground() {
 
 const globalCss = `
   /* Fonts loaded via <link rel=preload> in index.html for better LCP/FCP */
+  /* font-display: swap prevents invisible text while fonts load — reduces LCP */
+  @font-face { font-family: 'Bricolage Grotesque'; font-display: swap; src: local('Bricolage Grotesque'); }
+  @font-face { font-family: 'DM Sans'; font-display: swap; src: local('DM Sans'); }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #080810; color: #e2e8f0; }
   :root {
@@ -133,10 +136,10 @@ const globalCss = `
   }
   .app { font-family: var(--body); background: var(--bg); min-height: 100vh; color: var(--text); }
   .display { font-family: var(--display); }
-  .fade-up { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-  .stagger-1 { animation-delay: 0.05s; } .stagger-2 { animation-delay: 0.12s; }
-  .stagger-3 { animation-delay: 0.2s; } .stagger-4 { animation-delay: 0.28s; }
+  .fade-up { animation: fadeUp 0.4s ease both; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  .stagger-1 { animation-delay: 0.02s; } .stagger-2 { animation-delay: 0.06s; }
+  .stagger-3 { animation-delay: 0.1s; } .stagger-4 { animation-delay: 0.15s; }
   .glow-btn { transition: all 0.2s; cursor: pointer; font-family: var(--display); font-weight: 700; }
   .glow-btn:hover { box-shadow: 0 0 30px rgba(0,255,180,0.35), 0 0 60px rgba(0,255,180,0.15) !important; transform: translateY(-2px); }
   .glow-btn:active { transform: translateY(0); }
@@ -2046,7 +2049,7 @@ export default function App() {
       <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px", paddingBottom: "72px" }}>
 
         {/* ── HERO ── */}
-        <div className="hero-pad" style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center" }}>
+        <div className="hero-pad" style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center", minHeight: "85vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
           {/* ── CATEGORY BADGE ── */}
           <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "32px" }}>
             <span style={{ width: "6px", height: "6px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)", animation: "pulse-dot 2s infinite" }} />
