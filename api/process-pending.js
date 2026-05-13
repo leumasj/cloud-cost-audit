@@ -79,7 +79,7 @@ async function setCachedReport(cacheKey, productType, reportText) {
   try {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7-day TTL
-    await supabase
+    await supabaseAdmin
       .from('report_cache')
       .upsert({
         cache_key:   cacheKey,
@@ -291,7 +291,7 @@ module.exports = async function handler(req, res) {
 
   try {
     // 1. Fetch pending jobs
-    const { data: jobs, error: fetchError } = await supabase
+    const { data: jobs, error: fetchError } = await supabaseAdmin
       .from('delivery_queue')
       .select('*')
       .eq('status', 'pending')
@@ -307,7 +307,7 @@ module.exports = async function handler(req, res) {
     // 2. Process each job — mark as processing immediately
     for (const job of jobs) {
       // Mark processing to reduce (not eliminate) duplicate risk
-      await supabase
+      await supabaseAdmin
         .from('delivery_queue')
         .update({ status: 'processing', last_attempt_at: new Date().toISOString(), attempts: job.attempts + 1 })
         .eq('id', job.id)
