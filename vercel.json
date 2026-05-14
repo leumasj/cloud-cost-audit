@@ -1,16 +1,6 @@
 {
   "routes": [
     {
-      "src": "https://kloudaudit.eu/(.*)",
-      "destination": "https://www.kloudaudit.eu/$1",
-      "permanent": true
-    },
-    {
-      "src": "^/\\?(.*)$",
-      "destination": "/",
-      "permanent": true
-    },
-    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
@@ -61,6 +51,35 @@
         "X-Frame-Options": "DENY",
         "Referrer-Policy": "strict-origin-when-cross-origin"
       }
+    }
+  ],
+  "redirects": [
+    {
+      "source": "https://kloudaudit.eu/(.*)",
+      "destination": "https://www.kloudaudit.eu/$1",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "ref"
+        }
+      ],
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "utm_source"
+        }
+      ],
+      "destination": "/",
+      "permanent": true
     }
   ]
 }
