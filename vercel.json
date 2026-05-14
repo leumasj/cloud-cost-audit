@@ -13,7 +13,7 @@
       }
     },
     {
-      "src": "/roots.txt",
+      "src": "/robots.txt",
       "dest": "/robots.txt"
     },
     {
