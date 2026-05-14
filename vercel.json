@@ -45,41 +45,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html",
-      "headers": {
-        "X-Content-Type-Options": "nosniff",
-        "X-Frame-Options": "DENY",
-        "Referrer-Policy": "strict-origin-when-cross-origin"
-      }
-    }
-  ],
-  "redirects": [
-    {
-      "source": "https://kloudaudit.eu/(.*)",
-      "destination": "https://www.kloudaudit.eu/$1",
-      "permanent": true
-    },
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "query",
-          "key": "ref"
-        }
-      ],
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "query",
-          "key": "utm_source"
-        }
-      ],
-      "destination": "/",
-      "permanent": true
+      "dest": "/index.html"
     }
   ]
 }
