@@ -1,6 +1,16 @@
 {
   "routes": [
     {
+      "src": "https://kloudaudit.eu/(.*)",
+      "destination": "https://www.kloudaudit.eu/$1",
+      "permanent": true
+    },
+    {
+      "src": "^/\\?(.*)$",
+      "destination": "/",
+      "permanent": true
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
