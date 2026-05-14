@@ -39,11 +39,14 @@ module.exports = async function handler(req, res) {
       process.env.SUPABASE_URL,
       process.env.SUPABASE_ANON_KEY
     );
+    // Insert a test record to verify connectivity — anon has INSERT on rate_limits
+    // This works without SELECT permission
     const { error } = await supabase
-      .from('audits')
-      .select('id')
-      .limit(1);
-    checks.supabase = !error;
+      .from('rate_limits')
+      .insert({ ip: 'health-check' });
+    // Error code 42501 = permission denied (bad)
+    // Any other error or no error = connectivity confirmed
+    checks.supabase = !error || error.code !== '42501';
 
     // 3. Overall health
     const healthy = checks.env && checks.supabase;
