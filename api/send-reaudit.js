@@ -18,6 +18,12 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
+// Admin client for read operations — anon key only has INSERT/UPDATE
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+);
+
 // ── EMAIL TEMPLATE ────────────────────────────────────────────────────────────
 function buildReauditEmail(subscriber) {
   const provider    = subscriber.provider || 'AWS';
@@ -142,7 +148,7 @@ module.exports = async function handler(req, res) {
     const now      = new Date();
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-    const { data: subscribers, error } = await supabase
+    const { data: subscribers, error } = await supabaseAdmin
       .from('subscribers')
       .select(`
         email,

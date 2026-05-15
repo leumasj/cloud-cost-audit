@@ -10,6 +10,13 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
+// Admin client needed for all SELECT operations
+// anon key only has INSERT/UPDATE after security hardening
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+);
+
 module.exports = async function handler(req, res) {
   // Simple key auth — uses existing CRON_SECRET
   const key = req.query.key;
@@ -40,22 +47,22 @@ module.exports = async function handler(req, res) {
       { data: deliveryStats },
       { data: cacheStats },
     ] = await Promise.all([
-      supabase.from('audits').select('*', { count: 'exact', head: true }),
-      supabase.from('audits').select('*', { count: 'exact', head: true }).gte('created_at', day7ago),
-      supabase.from('subscribers').select('*', { count: 'exact', head: true }).eq('unsubscribed', false),
-      supabase.from('audits').select('*', { count: 'exact', head: true }).eq('blueprint_paid', true),
-      supabase.from('audits').select('provider').then(({ data }) => {
+      supabaseAdmin.from('audits').select('*', { count: 'exact', head: true }),
+      supabaseAdmin.from('audits').select('*', { count: 'exact', head: true }).gte('created_at', day7ago),
+      supabaseAdmin.from('subscribers').select('*', { count: 'exact', head: true }).eq('unsubscribed', false),
+      supabaseAdmin.from('audits').select('*', { count: 'exact', head: true }).eq('blueprint_paid', true),
+      supabaseAdmin.from('audits').select('provider').then(({ data }) => {
         const counts = {};
         (data || []).forEach(a => { counts[a.provider] = (counts[a.provider] || 0) + 1; });
         return { data: Object.entries(counts).sort((a,b) => b[1]-a[1]) };
       }),
-      supabase.from('audits').select('created_at, provider, monthly_bill, waste_score, savings_min, savings_max, blueprint_paid, audit_type').order('created_at', { ascending: false }).limit(10),
-      supabase.from('delivery_queue').select('status').then(({ data }) => {
+      supabaseAdmin.from('audits').select('created_at, provider, monthly_bill, waste_score, savings_min, savings_max, blueprint_paid, audit_type').order('created_at', { ascending: false }).limit(10),
+      supabaseAdmin.from('delivery_queue').select('status').then(({ data }) => {
         const counts = { pending: 0, processing: 0, delivered: 0, failed: 0 };
         (data || []).forEach(d => { counts[d.status] = (counts[d.status] || 0) + 1; });
         return { data: counts };
       }),
-      supabase.from('report_cache').select('hit_count, product_type').then(({ data }) => {
+      supabaseAdmin.from('report_cache').select('hit_count, product_type').then(({ data }) => {
         const total = (data || []).reduce((s, r) => s + r.hit_count, 0);
         const entries = (data || []).length;
         return { data: { total, entries } };
