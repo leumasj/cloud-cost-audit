@@ -35,7 +35,7 @@ const SEO_PAGES = [
   { slug: "aws-dev-environment-costs",        provider: "AWS",         title: "Your Dev Environment Shouldn't Cost as Much as Production",        saving: "30–50%",  keyword: "AWS dev environment too expensive" },
   { slug: "aws-load-balancer-costs",          provider: "AWS",         title: "Stop Paying for Idle AWS Load Balancers",                          saving: "3–10%",   keyword: "AWS load balancer idle cost" },
   { slug: "aws-snapshot-cleanup",             provider: "AWS",         title: "AWS Snapshot Retention Policy: Stop the Silent Cost Drain",        saving: "5–15%",   keyword: "AWS snapshot costs reduce" },
-  { slug: "aws-cost-optimization-checklist",  provider: "AWS",         title: "The Complete AWS Cost Optimisation Checklist for 2026",            saving: "20–45%",  keyword: "AWS cost optimization checklist 2026" },
+  { slug: "aws-cost-optimization-checklist",  provider: "AWS",         title: "Free AWS Cost Optimisation Checklist 2026 — 18 Checks, 20-45% Savings", saving: "20–45%",  keyword: "AWS cost optimization checklist 2026" },
   // GCP Cost (10)
   { slug: "gcp-cost-optimization",            provider: "GCP",         title: "Google Cloud Cost Optimisation: 10 Ways to Cut Your GCP Bill",     saving: "20–45%",  keyword: "GCP cost optimization guide" },
   { slug: "gcp-committed-use-discounts",      provider: "GCP",         title: "GCP Committed Use Discounts: Save 57% on Compute",                saving: "40–57%",  keyword: "GCP committed use discount savings" },
@@ -65,7 +65,7 @@ const SEO_PAGES = [
   { slug: "devops-cloud-cost-checklist",      provider: "Multi-Cloud", title: "DevOps Cloud Cost Checklist: 20 Things to Review Every Quarter",   saving: "20–45%",  keyword: "DevOps cloud cost review checklist" },
   { slug: "finops-guide-startups",            provider: "Multi-Cloud", title: "FinOps for Startups: Cut Cloud Costs Without Cutting Features",    saving: "20–45%",  keyword: "FinOps guide for startups" },
   // Security pages (10)
-  { slug: "aws-iam-security-audit",           provider: "AWS",         title: "AWS IAM Security Audit: Find Overprivileged Roles in 15 Minutes",  saving: null,      keyword: "AWS IAM security audit checklist",         type: "security" },
+  { slug: "aws-iam-security-audit",           provider: "AWS",         title: "Free AWS IAM Security Audit — Find Overprivileged Roles (15 Min)", saving: null,      keyword: "AWS IAM security audit checklist",         type: "security" },
   { slug: "aws-s3-public-bucket-fix",         provider: "AWS",         title: "Public S3 Buckets: The $4.45M Risk Hiding in Your AWS Account",    saving: null,      keyword: "AWS S3 public bucket security risk",        type: "security" },
   { slug: "aws-cloudtrail-setup",             provider: "AWS",         title: "How to Enable AWS CloudTrail Audit Logging in 5 Minutes",          saving: null,      keyword: "AWS CloudTrail audit logging setup",        type: "security" },
   { slug: "aws-mfa-enforcement-guide",        provider: "AWS",         title: "Enforce MFA for Every AWS IAM User — Step-by-Step Guide",          saving: null,      keyword: "Enforce MFA all AWS IAM users",             type: "security" },
@@ -73,7 +73,7 @@ const SEO_PAGES = [
   { slug: "aws-secrets-manager-guide",        provider: "AWS",         title: "Hardcoded AWS Credentials: How to Find and Eliminate Them",        saving: null,      keyword: "Stop hardcoded AWS credentials code",       type: "security" },
   { slug: "gcp-iam-security-checklist",       provider: "GCP",         title: "GCP IAM Security Checklist: 8 Things to Fix Before Your Next Audit", saving: null,    keyword: "GCP IAM security best practices",           type: "security" },
   { slug: "azure-security-posture-review",    provider: "Azure",       title: "Azure Security Posture Review: No Access Required Checklist",      saving: null,      keyword: "Azure security posture assessment",         type: "security" },
-  { slug: "cloud-security-audit-checklist",   provider: "Multi-Cloud", title: "The Complete Cloud Security Audit Checklist for AWS, GCP & Azure (2026)", saving: null, keyword: "Cloud security audit checklist 2026",      type: "security" },
+  { slug: "cloud-security-audit-checklist",   provider: "Multi-Cloud", title: "Free Cloud Security Audit Checklist — AWS, GCP & Azure (16 Checks)", saving: null, keyword: "Cloud security audit checklist 2026",      type: "security" },
   { slug: "devsecops-cloud-checklist",        provider: "Multi-Cloud", title: "DevSecOps Cloud Security Checklist: 16 Controls Every Team Needs", saving: null,     keyword: "DevSecOps cloud security checklist",        type: "security" },
   { slug: "aws-s3-public-bucket-fix",         provider: "AWS",         title: "Public S3 Buckets: The $4.45M Risk Hiding in Your AWS Account",    saving: null,     keyword: "AWS S3 public bucket security risk",        type: "security" },
   { slug: "aws-secrets-manager-guide",        provider: "AWS",         title: "Hardcoded AWS Credentials: How to Find and Eliminate Them",        saving: null,     keyword: "Stop hardcoded AWS credentials code",       type: "security" },

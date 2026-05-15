@@ -2051,54 +2051,74 @@ export default function App() {
         {/* ── HERO ── */}
         <div className="hero-pad" style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center", minHeight: "85vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
           {/* ── CATEGORY BADGE ── */}
-          <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "32px" }}>
+          <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "24px" }}>
             <span style={{ width: "6px", height: "6px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)", animation: "pulse-dot 2s infinite" }} />
-            <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 700, letterSpacing: "1.5px" }}>THE ONLY CLOUD COST AUDIT — ZERO ACCESS. ZERO SETUP. ZERO RISK.</span>
+            <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 700, letterSpacing: "1.5px" }}>FREE · NO AWS CREDENTIALS · 15 MINUTES</span>
           </div>
 
           {/* ── HEADLINE ── */}
-          <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "24px" }}>
+          <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "20px" }}>
             The audit your<br />
             <span style={{ background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>cloud provider</span><br />
             won&apos;t give you.
           </h1>
 
           {/* ── SUBHEADING ── */}
-          <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "560px", margin: "0 auto 20px" }}>
-            Answer 18 questions about your own setup. Get a prioritised savings report with exact CLI commands — in 15 minutes. No credentials, no agents, no procurement.
+          <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "480px", margin: "0 auto 28px" }}>
+            Pick your cloud provider and start your free audit in 60 seconds.
           </p>
 
-          {/* ── COMPETITOR KILL LINE ── */}
-          <p className="fade-up stagger-2" style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: "480px", margin: "0 auto 36px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "10px 16px" }}>
-            💡 The average team needs <strong style={{ color: "#fff" }}>4 months of procurement</strong> to connect a cloud cost tool. KloudAudit takes 15 minutes — no IT ticket, no security review, no boss approval. Zero access required.
-          </p>
-
-          {/* ── 60-SECOND ESTIMATOR ── */}
-          <div className="fade-up stagger-3" style={{ maxWidth: "460px", margin: "0 auto 28px", background: "rgba(0,255,180,0.04)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "16px", padding: "20px 24px" }}>
-            <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "14px", textAlign: "center" }}>⚡ 60-second estimate</p>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px", justifyContent: "center" }}>
-              {["AWS", "GCP", "Azure"].map(p => (
-                <button key={p} onClick={() => { setProvider(p); goTo("intake"); }}
-                  style={{ padding: "8px 16px", borderRadius: "8px", border: "1.5px solid rgba(0,255,180,0.2)", background: "rgba(0,255,180,0.06)", color: "var(--green)", fontSize: "13px", fontWeight: 700, cursor: "pointer", transition: "all 0.18s" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,255,180,0.12)"; e.currentTarget.style.borderColor = "rgba(0,255,180,0.4)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,255,180,0.06)"; e.currentTarget.style.borderColor = "rgba(0,255,180,0.2)"; }}>
-                  {p}
+          {/* ── PRIMARY ACTION — Provider buttons front and centre ── */}
+          <div className="fade-up stagger-2" style={{ marginBottom: "16px" }}>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap", marginBottom: "12px" }}>
+              {[
+                { label: "AWS", color: "#ff9900" },
+                { label: "GCP", color: "#4285f4" },
+                { label: "Azure", color: "#0078d4" },
+                { label: "Multi-Cloud", color: "#00ffb4" },
+              ].map(p => (
+                <button key={p.label} onClick={() => { setProvider(p.label); goTo("intake"); }}
+                  style={{ padding: "14px 24px", borderRadius: "12px", border: `2px solid ${p.color}40`, background: `${p.color}12`, color: p.label === "Multi-Cloud" ? "var(--green)" : p.color, fontSize: "15px", fontWeight: 700, cursor: "pointer", transition: "all 0.18s", fontFamily: "inherit", minWidth: "100px" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = `${p.color}22`; e.currentTarget.style.borderColor = `${p.color}80`; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = `${p.color}12`; e.currentTarget.style.borderColor = `${p.color}40`; e.currentTarget.style.transform = "translateY(0)"; }}>
+                  {p.label}
                 </button>
               ))}
             </div>
-            <p style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center" }}>Pick your cloud provider → enter your bill → see estimated savings in 60 seconds.</p>
+            <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>No signup · No credit card · No cloud access required</p>
           </div>
 
-          <div id="start-audit" className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
+          {/* ── SECONDARY CTA ── */}
+          <div id="start-audit" className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
             <button className="glow-btn" onClick={() => goTo("intake")}
-              style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px 36px", fontSize: "16px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
-              Calculate My Savings <span style={{ fontSize: "18px" }}>→</span>
+              style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
+              Start Free Audit <span style={{ fontSize: "18px" }}>→</span>
             </button>
             <button className="ghost-btn" onClick={() => setShowSample(true)}
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "16px 28px", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px", display: "flex", alignItems: "center", gap: "8px" }}>
               <span>📄</span> See a Real Report First
             </button>
           </div>
+
+          {/* ── SOCIAL PROOF ── */}
+          <div className="fade-up stagger-4" style={{ display: "flex", gap: "24px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
+            {[
+              { icon: "⚡", text: "15 minutes" },
+              { icon: "🔒", text: "Zero cloud access" },
+              { icon: "💰", text: "20–45% savings found" },
+              { icon: "🌍", text: "AWS · GCP · Azure" },
+            ].map(item => (
+              <div key={item.text} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "14px" }}>{item.icon}</span>
+                <span style={{ fontSize: "13px", color: "var(--text-muted)", fontWeight: 500 }}>{item.text}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── COMPETITOR KILL LINE ── */}
+          <p className="fade-up stagger-4" style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: "440px", margin: "0 auto", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "10px 16px" }}>
+            💡 The average team needs <strong style={{ color: "#fff" }}>4 months of procurement</strong> to connect a cloud cost tool. KloudAudit takes 15 minutes — no IT ticket, no security review, no approval needed.
+          </p>
           <div className="fade-up stagger-4" style={{ marginTop: "22px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
             {[
               { text: "🔒 Zero cloud access — ever", highlight: true },
@@ -2543,7 +2563,7 @@ export default function App() {
                   { icon: "✉️", label: "admin@kloudaudit.eu", href: "mailto:admin@kloudaudit.eu", color: "#00d4ff" },
                   { icon: "💼", label: "linkedin.com/in/samuel-ayodele-adomeh", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh", color: "#0077b5" },
                   { icon: "💻", label: "github.com/leumasj", href: "https://github.com/leumasj", color: "var(--text-dim)" },
-                  { icon: "🟢", label: "Hire me on Upwork · $8K+ earned · Top Rated", href: "https://www.upwork.com/freelancers/~015c346a56b09a2a89", color: "#14a34a" },
+                  { icon: "✓", label: "Verified Cloud Engineer · $8K+ delivered", href: "https://www.upwork.com/freelancers/~015c346a56b09a2a89", color: "#14a34a" },
                 ].map(link => (
                   <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="trust-link" style={{ "--hover-color": link.color }}>
                     <span style={{ fontSize: "16px" }}>{link.icon}</span>
@@ -2559,13 +2579,13 @@ export default function App() {
               </div>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div style={{ width: "24px", height: "24px", background: "var(--green)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(0,255,180,0.3)", fontSize: "12px" }}>⚡</div>
               <span className="display" style={{ fontWeight: 800, fontSize: "14px", color: "#fff" }}>KloudAudit</span>
               <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>© {new Date().getFullYear()} Samuel Ayodele Adomeh · Wrocław, Poland</span>
             </div>
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
               {[
                 { label: "Terms", href: "https://www.kloudaudit.eu/terms/" },
                 { label: "Privacy", href: "https://www.kloudaudit.eu/privacy/" },
@@ -2580,7 +2600,7 @@ export default function App() {
               <a href="https://www.upwork.com/freelancers/~015c346a56b09a2a89" target="_blank" rel="noopener noreferrer"
                 style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#14a34a", textDecoration: "none", padding: "6px 14px", border: "1px solid rgba(20,163,74,0.3)", borderRadius: "8px", background: "rgba(20,163,74,0.08)" }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.561 13.158c-1.102 0-2.135-.467-3.074-1.227l.228-1.076.008-.042c.207-1.143.849-3.06 2.839-3.06 1.492 0 2.703 1.212 2.703 2.703-.001 1.489-1.212 2.702-2.704 2.702zm0-8.14c-2.539 0-4.51 1.649-5.31 4.366-1.22-1.834-2.148-4.036-2.687-5.892H7.828v7.112c-.002 1.406-1.141 2.546-2.547 2.546-1.405 0-2.543-1.14-2.543-2.546V3.492H0v7.112c0 2.914 2.37 5.303 5.281 5.303 2.913 0 5.283-2.389 5.283-5.303v-1.19c.529 1.107 1.182 2.229 1.974 3.221l-1.673 7.873h2.797l1.213-5.71c1.063.679 2.285 1.109 3.686 1.109 3 0 5.439-2.452 5.439-5.45 0-3-2.439-5.439-5.439-5.439z"/></svg>
-                Upwork · $8K+ earned
+                ✓ Verified Cloud Engineer · $8K+ delivered
               </a>
             </div>
           </div>
