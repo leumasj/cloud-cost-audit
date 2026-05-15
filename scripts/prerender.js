@@ -161,35 +161,4 @@ console.log(`✅ Pre-rendered ${generated} SEO pages to dist/`);
 console.log(`   Google will now read static HTML with correct meta tags for each page.`);
 console.log(`   No more "redirect" or "canonical" indexing issues.`);
 
-// ── INDEXNOW PING — notify Bing of all URLs instantly ────────────────────────
-// Replace INDEXNOW_KEY with your actual key from Bing Webmaster Tools
-const INDEXNOW_KEY = process.env.INDEXNOW_KEY || '';
-
-if (INDEXNOW_KEY) {
-  const https = require('https');
-  const allUrls = SEO_PAGES.map(p => `${BASE}/${p.slug}/`);
-  allUrls.push(BASE + '/'); // include homepage
-
-  const payload = JSON.stringify({
-    host: 'www.kloudaudit.eu',
-    key: INDEXNOW_KEY,
-    keyLocation: `${BASE}/${INDEXNOW_KEY}.txt`,
-    urlList: allUrls,
-  });
-
-  const options = {
-    hostname: 'api.indexnow.org',
-    path: '/indexnow',
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': Buffer.byteLength(payload) }
-  };
-
-  const req = https.request(options, res => {
-    console.log(`✅ IndexNow ping sent — ${allUrls.length} URLs — HTTP ${res.statusCode}`);
-  });
-  req.on('error', e => console.warn('IndexNow ping failed (non-critical):', e.message));
-  req.write(payload);
-  req.end();
-} else {
-  console.log('ℹ️  Set INDEXNOW_KEY env var to enable automatic Bing IndexNow pings on deploy');
-}
+// IndexNow: submit URLs manually via Bing Webmaster Tools → IndexNow tab
