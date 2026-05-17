@@ -111,7 +111,7 @@ function ProgressRing({ percent, size = 44, stroke = 3, color = "#00ffb4" }) {
 
 function ParticleBackground() {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none", willChange: "auto" }}>
       <div style={{ position: "absolute", top: "-200px", left: "-200px", width: "600px", height: "600px", background: "radial-gradient(circle, rgba(0,255,180,0.07) 0%, transparent 70%)", borderRadius: "50%" }} />
       <div style={{ position: "absolute", bottom: "-200px", right: "-100px", width: "500px", height: "500px", background: "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)", borderRadius: "50%" }} />
       <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
@@ -122,6 +122,9 @@ function ParticleBackground() {
 
 const globalCss = `
   /* Fonts loaded via <link rel=preload> in index.html for better LCP/FCP */
+  /* font-display: swap prevents invisible text while fonts load — reduces LCP */
+  @font-face { font-family: 'Bricolage Grotesque'; font-display: swap; src: local('Bricolage Grotesque'); }
+  @font-face { font-family: 'DM Sans'; font-display: swap; src: local('DM Sans'); }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #080810; color: #e2e8f0; }
   :root {
@@ -133,10 +136,10 @@ const globalCss = `
   }
   .app { font-family: var(--body); background: var(--bg); min-height: 100vh; color: var(--text); }
   .display { font-family: var(--display); }
-  .fade-up { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-  .stagger-1 { animation-delay: 0.05s; } .stagger-2 { animation-delay: 0.12s; }
-  .stagger-3 { animation-delay: 0.2s; } .stagger-4 { animation-delay: 0.28s; }
+  .fade-up { animation: fadeUp 0.4s ease both; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  .stagger-1 { animation-delay: 0.02s; } .stagger-2 { animation-delay: 0.06s; }
+  .stagger-3 { animation-delay: 0.1s; } .stagger-4 { animation-delay: 0.15s; }
   .glow-btn { transition: all 0.2s; cursor: pointer; font-family: var(--display); font-weight: 700; }
   .glow-btn:hover { box-shadow: 0 0 30px rgba(0,255,180,0.35), 0 0 60px rgba(0,255,180,0.15) !important; transform: translateY(-2px); }
   .glow-btn:active { transform: translateY(0); }
@@ -158,6 +161,7 @@ const globalCss = `
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 1; } 30% { transform: translateY(-6px); opacity: 0.6; } }
   .trust-link { display:flex; align-items:center; gap:10px; text-decoration:none; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; transition:all 0.2s; }
   .trust-link:hover { background:rgba(255,255,255,0.06) !important; transform:translateX(3px); }
 
@@ -238,7 +242,7 @@ const globalCss = `
   }
 `;
 
-// ── SHARE CARD MODAL ──────────────────────────────────────────────────────────
+// ── SHARE CARD MODAL ──────────────────────────────────────────────────────────────
 function ShareCardModal({ savMin, savMax, savPct, flaggedCount, totalChecks, provider, wasteScore, onClose }) {
   const canvasRef = useRef(null);
   const [downloaded, setDownloaded] = useState(false);
@@ -716,6 +720,7 @@ const TESTIMONIALS = [
   { name: "Marco D.", role: "Infrastructure Lead · Milan e-commerce", text: "Orphaned EBS volumes and a forgotten NAT Gateway were costing us $960/month. CLI commands were copy-paste ready. Fixed same afternoon.", savings: "$960/mo", provider: "Azure" },
 ];
 
+
 export default function App() {
   const [step, setStep] = useState("intro");
   const [provider, setProvider] = useState("");
@@ -904,29 +909,35 @@ export default function App() {
       .catch(() => setAiPreviewLoading(false));
   }, [step]);
 
-  // ── SAVE AUDIT — non-blocking, fires and forgets ─────────────────────────
+  // ── SAVE AUDIT — non-blocking, fires and forgets with one retry ─────────
   const saveAudit = (emailOverride) => {
-    // Calculate waste score same formula as report page
     const issueW  = Math.min(flagged.length / allChecks.length, 1) * 30;
     const pctW    = Math.min(savPct / 50, 1) * 70;
     const wScore  = Math.max(0, Math.min(100, Math.round(100 - issueW - pctW)));
 
-    fetch('/api/save-audit', {
+    const payload = JSON.stringify({
+      sessionId,
+      email:       emailOverride || gateEmail || null,
+      provider:    provider || 'AWS',
+      monthlyBill: bill,
+      companyName: companyName || null,
+      flaggedIds:  flagged.map(c => c.id),
+      wasteScore:  wScore,
+      savingsMin:  savMin,
+      savingsMax:  savMax,
+      auditType:   'cost',
+    });
+
+    const attempt = () => fetch('/api/save-audit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId,
-        email:       emailOverride || gateEmail || null,
-        provider:    provider || 'AWS',
-        monthlyBill: bill,
-        companyName: companyName || null,
-        flaggedIds:  flagged.map(c => c.id),
-        wasteScore:  wScore,
-        savingsMin:  savMin,
-        savingsMax:  savMax,
-        auditType:   'cost',
-      }),
-    }).catch(() => {}); // silent — never block user on this
+      body: payload,
+    });
+
+    // Try immediately, retry once after 3s if first attempt fails
+    attempt().catch(() => {
+      setTimeout(() => attempt().catch(() => {}), 3000);
+    });
   };
 
   // ── EXIT INTENT DETECTOR ─────────────────────────────────────────────────
@@ -1300,7 +1311,7 @@ export default function App() {
         <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "14px", padding: "24px", marginBottom: "32px" }}>
           <p style={{ fontSize: "14px", color: "var(--text-dim)", marginBottom: "4px" }}>Check your email for a message from</p>
           <p style={{ fontSize: "16px", fontWeight: 700, color: "var(--green)" }}>admin@kloudaudit.eu</p>
-          <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>Subject: "Your Implementation Blueprint is ready ⚡"</p>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>Subject: "⚡ Your [Provider] Cost Blueprint is ready"</p>
           <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>Check spam if you don't see it within 5 minutes.</p>
         </div>
         <button className="glow-btn" onClick={() => { setStep("intro"); setChecked({}); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Run Another Audit →</button>
@@ -1375,7 +1386,7 @@ export default function App() {
               <span style={{ fontSize: "11px", fontWeight: 700, color: "#f87171", letterSpacing: "1.5px" }}>CLOUD SECURITY AUDIT — AWS · GCP · AZURE — ZERO ACCESS</span>
             </div>
             <h1 className="display" style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 800, letterSpacing: "-2px", color: "#fff", marginBottom: "14px", lineHeight: 1.05 }}>
-              Find security gaps before<br /><span style={{ color: "#f87171" }}>attackers do.</span>
+              Find the gaps attackers<br /><span style={{ color: "#f87171" }}>scan for first.</span>
             </h1>
             <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "540px", margin: "0 auto 20px", lineHeight: 1.7 }}>
               16 checkpoints across IAM, network exposure, data protection, and logging. Takes 10 minutes. Zero credentials required.
@@ -1737,7 +1748,7 @@ export default function App() {
     const FAQS = [
       { q: "Do you need access to my cloud account?", a: "Never. Both audits are entirely self-guided — you answer questions based on your own knowledge. No credentials, no IAM roles, no agents, no OAuth. We have zero access to your infrastructure.", tag: "both" },
       { q: "How is the AI Blueprint different from the free report?", a: "The free report tells you what is wrong. The Blueprint tells you exactly how to fix it — with CLI commands, Terraform snippets, IAM policy templates, compliance mappings, and verification steps specific to your provider.", tag: "both" },
-      { q: "How fast do I receive the Blueprint?", a: "Instantly after payment. Claude AI generates your personalised guide in ~30 seconds, then it's delivered to your inbox. Most customers receive it within 2 minutes of payment.", tag: "both" },
+      { q: "How fast do I receive the Blueprint?", a: "Within 2 minutes of payment. Claude AI generates your personalised guide in ~30 seconds, then SendGrid delivers it to your inbox. If you don't see it within 5 minutes, check spam or email admin@kloudaudit.eu.", tag: "both" },
       { q: "What does the Security Blueprint include that the free score doesn't?", a: "The free audit shows your risk score and the first 2 flagged issues. The Security Blueprint unlocks all findings with exact CLI remediation commands, IAM policy fixes, compliance gap mapping (SOC 2, ISO 27001, GDPR, CIS Benchmark), and a 30-day remediation roadmap.", tag: "security" },
       { q: "I already use AWS Security Hub / GCP Security Command Center. Why do I need this?", a: "Those tools need account access and take weeks to configure. KloudAudit gives you a prioritised action list in 15 minutes with zero access required — ideal for a quick self-assessment before a pentest, compliance audit, or investor review.", tag: "security" },
       { q: "What if my cloud bill is lower than $1,000/month?", a: "The cost audit is still useful for identifying waste patterns early. The Blueprint is most cost-effective for bills over $1,500/mo. The security audit is valuable at any bill size — a public S3 bucket costs the same to exploit whether you pay $200/mo or $20,000/mo.", tag: "cost" },
@@ -1846,63 +1857,83 @@ export default function App() {
       <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px", paddingBottom: "72px" }}>
 
         {/* ── HERO ── */}
-        <div className="hero-pad" style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center" }}>
+        <div className="hero-pad" style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center", minHeight: "85vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
           {/* ── CATEGORY BADGE ── */}
-          <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "32px" }}>
+          <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "24px" }}>
             <span style={{ width: "6px", height: "6px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)", animation: "pulse-dot 2s infinite" }} />
-            <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 700, letterSpacing: "1.5px" }}>THE ONLY CLOUD COST AUDIT — ZERO ACCESS. ZERO SETUP. ZERO RISK.</span>
+            <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 700, letterSpacing: "1.5px" }}>FREE · NO AWS CREDENTIALS · 15 MINUTES</span>
           </div>
 
           {/* ── HEADLINE ── */}
-          <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "24px" }}>
+          <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "20px" }}>
             The audit your<br />
             <span style={{ background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>cloud provider</span><br />
             won&apos;t give you.
           </h1>
 
           {/* ── SUBHEADING ── */}
-          <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "560px", margin: "0 auto 20px" }}>
-            No AWS keys. No IAM roles. No procurement process. Answer 18 questions about your setup — get a prioritised savings report with exact CLI commands in 15 minutes.
+          <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "480px", margin: "0 auto 28px" }}>
+            Pick your cloud provider and start your free audit in 60 seconds.
           </p>
 
-          {/* ── COMPETITOR KILL LINE ── */}
-          <p className="fade-up stagger-2" style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: "480px", margin: "0 auto 36px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "10px 16px" }}>
-            💡 The average team needs <strong style={{ color: "#fff" }}>4 months of procurement</strong> to connect a cloud cost tool. KloudAudit takes 15 minutes — no IT ticket, no security review, no boss approval. Zero access required.
-          </p>
-
-          {/* ── 60-SECOND ESTIMATOR ── */}
-          <div className="fade-up stagger-3" style={{ maxWidth: "460px", margin: "0 auto 28px", background: "rgba(0,255,180,0.04)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "16px", padding: "20px 24px" }}>
-            <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "14px" }}>⚡ 60-second estimate</p>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
-              {["AWS", "GCP", "Azure"].map(p => (
-                <button key={p} onClick={() => { setProvider(p); goTo("intake"); }}
-                  style={{ padding: "8px 16px", borderRadius: "8px", border: "1.5px solid rgba(0,255,180,0.2)", background: "rgba(0,255,180,0.06)", color: "var(--green)", fontSize: "13px", fontWeight: 700, cursor: "pointer", transition: "all 0.18s" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,255,180,0.12)"; e.currentTarget.style.borderColor = "rgba(0,255,180,0.4)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,255,180,0.06)"; e.currentTarget.style.borderColor = "rgba(0,255,180,0.2)"; }}>
-                  {p}
+          {/* ── PRIMARY ACTION — Provider buttons front and centre ── */}
+          <div className="fade-up stagger-2" style={{ marginBottom: "16px" }}>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap", marginBottom: "12px" }}>
+              {[
+                { label: "AWS", color: "#ff9900" },
+                { label: "GCP", color: "#4285f4" },
+                { label: "Azure", color: "#0078d4" },
+                { label: "Multi-Cloud", color: "#00ffb4" },
+              ].map(p => (
+                <button key={p.label} onClick={() => { setProvider(p.label); goTo("intake"); }}
+                  style={{ padding: "14px 24px", borderRadius: "12px", border: `2px solid ${p.color}40`, background: `${p.color}12`, color: p.label === "Multi-Cloud" ? "var(--green)" : p.color, fontSize: "15px", fontWeight: 700, cursor: "pointer", transition: "all 0.18s", fontFamily: "inherit", minWidth: "100px" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = `${p.color}22`; e.currentTarget.style.borderColor = `${p.color}80`; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = `${p.color}12`; e.currentTarget.style.borderColor = `${p.color}40`; e.currentTarget.style.transform = "translateY(0)"; }}>
+                  {p.label}
                 </button>
               ))}
             </div>
-            <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Pick your cloud provider → enter your bill → see estimated savings in 60 seconds.</p>
+            <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>No signup · No credit card · No cloud access required</p>
           </div>
 
-          <div id="start-audit" className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
+          {/* ── SECONDARY CTA ── */}
+          <div id="start-audit" className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
             <button className="glow-btn" onClick={() => goTo("intake")}
-              style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px 36px", fontSize: "16px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
-              Calculate My Savings <span style={{ fontSize: "18px" }}>→</span>
+              style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
+              Start Free Audit <span style={{ fontSize: "18px" }}>→</span>
             </button>
             <button className="ghost-btn" onClick={() => setShowSample(true)}
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "16px 28px", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px", display: "flex", alignItems: "center", gap: "8px" }}>
               <span>📄</span> See a Real Report First
             </button>
           </div>
+
+          {/* ── SOCIAL PROOF ── */}
+          <div className="fade-up stagger-4" style={{ display: "flex", gap: "24px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
+            {[
+              { icon: "⚡", text: "15 minutes" },
+              { icon: "🔒", text: "Zero cloud access" },
+              { icon: "💰", text: "20–45% savings found" },
+              { icon: "🌍", text: "AWS · GCP · Azure" },
+            ].map(item => (
+              <div key={item.text} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "14px" }}>{item.icon}</span>
+                <span style={{ fontSize: "13px", color: "var(--text-muted)", fontWeight: 500 }}>{item.text}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── COMPETITOR KILL LINE ── */}
+          <p className="fade-up stagger-4" style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: "440px", margin: "0 auto", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "10px 16px" }}>
+            💡 The average team needs <strong style={{ color: "#fff" }}>4 months of procurement</strong> to connect a cloud cost tool. KloudAudit takes 15 minutes — no IT ticket, no security review, no approval needed.
+          </p>
           <div className="fade-up stagger-4" style={{ marginTop: "22px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
             {[
               { text: "🔒 Zero cloud access — ever", highlight: true },
               { text: "✓ No signup · No card", highlight: false },
               { text: "⚡ Cost + Security audits", highlight: false },
               { text: "🛡 AWS · GCP · Azure", highlight: false },
-              { text: "👥 62+ teams audited", highlight: false },
+              { text: "👥 Teams audited globally", highlight: false },
             ].map((item, i) => (
               <span key={i} style={{ fontSize: "12px", color: item.highlight ? "var(--green)" : "var(--text-muted)", background: item.highlight ? "rgba(0,255,180,0.06)" : "rgba(255,255,255,0.04)", border: `1px solid ${item.highlight ? "rgba(0,255,180,0.2)" : "rgba(255,255,255,0.08)"}`, borderRadius: "20px", padding: "4px 12px", whiteSpace: "nowrap", fontWeight: item.highlight ? 700 : 400 }}>
                 {item.text}
@@ -2169,7 +2200,7 @@ export default function App() {
                   <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1px" }}>CLOUD SECURITY AUDIT</span>
                 </div>
                 <h3 className="display" style={{ fontSize: "20px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "4px" }}>Find security vulnerabilities before attackers do</h3>
-                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>16 checkpoints across IAM, network exposure, encryption & logging. Free. No account access. AI-generated remediation report.</p>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>Find the gaps attackers scan for first — before your next pentest, compliance audit, or investor review. 16 checks. Free. Zero access required.</p>
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "10px", flexShrink: 0 }}>
@@ -2340,7 +2371,7 @@ export default function App() {
                   { icon: "✉️", label: "admin@kloudaudit.eu", href: "mailto:admin@kloudaudit.eu", color: "#00d4ff" },
                   { icon: "💼", label: "linkedin.com/in/samuel-ayodele-adomeh", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh", color: "#0077b5" },
                   { icon: "💻", label: "github.com/leumasj", href: "https://github.com/leumasj", color: "var(--text-dim)" },
-                  { icon: "🟢", label: "Hire me on Upwork · $8K+ earned · Top Rated", href: "https://www.upwork.com/freelancers/~015c346a56b09a2a89", color: "#14a34a" },
+                  { icon: "✓", label: "Verified Cloud Engineer · $8K+ delivered", href: "https://www.upwork.com/freelancers/~015c346a56b09a2a89", color: "#14a34a" },
                 ].map(link => (
                   <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="trust-link" style={{ "--hover-color": link.color }}>
                     <span style={{ fontSize: "16px" }}>{link.icon}</span>
@@ -2356,13 +2387,13 @@ export default function App() {
               </div>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div style={{ width: "24px", height: "24px", background: "var(--green)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(0,255,180,0.3)", fontSize: "12px" }}>⚡</div>
               <span className="display" style={{ fontWeight: 800, fontSize: "14px", color: "#fff" }}>KloudAudit</span>
               <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>© {new Date().getFullYear()} Samuel Ayodele Adomeh · Wrocław, Poland</span>
             </div>
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
               {[
                 { label: "Terms", href: "https://www.kloudaudit.eu/terms/" },
                 { label: "Privacy", href: "https://www.kloudaudit.eu/privacy/" },
@@ -2377,7 +2408,7 @@ export default function App() {
               <a href="https://www.upwork.com/freelancers/~015c346a56b09a2a89" target="_blank" rel="noopener noreferrer"
                 style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#14a34a", textDecoration: "none", padding: "6px 14px", border: "1px solid rgba(20,163,74,0.3)", borderRadius: "8px", background: "rgba(20,163,74,0.08)" }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.561 13.158c-1.102 0-2.135-.467-3.074-1.227l.228-1.076.008-.042c.207-1.143.849-3.06 2.839-3.06 1.492 0 2.703 1.212 2.703 2.703-.001 1.489-1.212 2.702-2.704 2.702zm0-8.14c-2.539 0-4.51 1.649-5.31 4.366-1.22-1.834-2.148-4.036-2.687-5.892H7.828v7.112c-.002 1.406-1.141 2.546-2.547 2.546-1.405 0-2.543-1.14-2.543-2.546V3.492H0v7.112c0 2.914 2.37 5.303 5.281 5.303 2.913 0 5.283-2.389 5.283-5.303v-1.19c.529 1.107 1.182 2.229 1.974 3.221l-1.673 7.873h2.797l1.213-5.71c1.063.679 2.285 1.109 3.686 1.109 3 0 5.439-2.452 5.439-5.45 0-3-2.439-5.439-5.439-5.439z"/></svg>
-                Upwork · $8K+ earned
+                ✓ Verified Cloud Engineer · $8K+ delivered
               </a>
             </div>
           </div>
@@ -2436,7 +2467,7 @@ export default function App() {
               💡 For bills under $500/month, the free audit checklist gives you the most value. The paid Blueprint ROI is strongest at $1,500+/month.
             </div>
           )}
-          <button className="glow-btn" disabled={!provider || !monthlyBill} onClick={() => { setActiveSection(0); goTo("audit"); }}
+          <button className="glow-btn" disabled={!provider || !monthlyBill || parseFloat(monthlyBill) <= 0} onClick={() => { setActiveSection(0); goTo("audit"); }}
             style={{ background: provider && monthlyBill ? "var(--green)" : "rgba(255,255,255,0.06)", color: provider && monthlyBill ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "16px", fontSize: "15px", boxShadow: provider && monthlyBill ? "0 0 24px rgba(0,255,180,0.3)" : "none", cursor: provider && monthlyBill ? "pointer" : "not-allowed", marginTop: "8px" }}>
             Begin Audit →
           </button>
@@ -2682,7 +2713,7 @@ export default function App() {
                   }}>
                     {gateSending ? "Saving…" : "Send Me the Report →"}
                   </button>
-                  <button type="button" onClick={() => { saveAudit(null); goTo("report"); }} style={{
+                  <button type="button" onClick={() => { try { saveAudit(null); } catch(_) {} goTo("report"); }} style={{
                     width: "100%", padding: "12px", borderRadius: "10px",
                     border: "1px solid rgba(255,255,255,0.08)",
                     background: "transparent", color: "#64748b",
@@ -2757,93 +2788,33 @@ export default function App() {
           )}
 
 
-          {/* ── WASTE SCORE ── */}
-          {bill > 0 && flagged.length > 0 && (() => {
-            const score = Math.max(0, Math.min(100, Math.round(100 - savPct)));
-            const grade = score >= 80 ? { label: "Well Optimised", color: "#4ade80", bg: "rgba(74,222,128,0.08)", border: "rgba(74,222,128,0.25)", desc: "Your infrastructure is in good shape. A few quick wins remain.", emoji: "🟢" }
-              : score >= 60 ? { label: "Needs Attention", color: "#fbbf24", bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.25)", desc: "Meaningful waste detected. Fixable without architecture changes.", emoji: "🟡" }
-              : score >= 40 ? { label: "Significant Waste", color: "#fb923c", bg: "rgba(251,146,60,0.08)", border: "rgba(251,146,60,0.25)", desc: "Your bill is substantially higher than it needs to be. Act now.", emoji: "🟠" }
-              : { label: "Critical Overspend", color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.25)", desc: "Serious waste across multiple categories. Every week costs you.", emoji: "🔴" };
-
-            return (
-              <div className="fade-up stagger-1" style={{ background: grade.bg, border: `1px solid ${grade.border}`, borderRadius: "20px", padding: "28px 32px", marginBottom: "28px", display: "flex", alignItems: "center", gap: "28px", flexWrap: "wrap" }}>
-                {/* Score circle */}
-                <div style={{ position: "relative", flexShrink: 0 }}>
-                  <svg width="110" height="110" viewBox="0 0 110 110">
-                    <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
-                    <circle cx="55" cy="55" r="46" fill="none" stroke={grade.color} strokeWidth="10"
-                      strokeDasharray={`${2 * Math.PI * 46}`}
-                      strokeDashoffset={`${2 * Math.PI * 46 * (1 - score / 100)}`}
-                      strokeLinecap="round"
-                      transform="rotate(-90 55 55)"
-                      style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)" }}
-                    />
-                    <text x="55" y="50" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="800" fontFamily="var(--display)">{score}</text>
-                    <text x="55" y="66" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="10">/100</text>
-                  </svg>
-                </div>
-                {/* Score details */}
-                <div style={{ flex: 1, minWidth: "200px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                    <span style={{ fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "2px", textTransform: "uppercase" }}>KloudAudit Waste Score</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-                    <span style={{ fontSize: "22px" }}>{grade.emoji}</span>
-                    <span className="display" style={{ fontSize: "26px", fontWeight: 800, color: grade.color, letterSpacing: "-0.5px" }}>{grade.label}</span>
-                  </div>
-                  <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.6, marginBottom: "14px" }}>{grade.desc}</p>
-                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "3px 10px" }}>~{savPct}% waste rate</span>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "3px 10px" }}>{flagged.length} of {allChecks.length} checks flagged</span>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "3px 10px" }}>${savMin.toLocaleString()}–${savMax.toLocaleString()}/mo recoverable</span>
-                  </div>
-                </div>
-                {/* Share nudge */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "flex-end" }}>
-                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", textAlign: "right", maxWidth: "140px", lineHeight: 1.4 }}>Share your score with your team or on LinkedIn</p>
-                  <button onClick={() => setShowShareCard(true)}
-                    style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 14px", color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 700, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "#fff"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>
-                    📤 Share Score
-                  </button>
-                </div>
-              </div>
-            );
-          })()}
-
-
           {/* ── WASTE SCORE ────────────────────────────────────────────────────── */}
           {bill > 0 && flagged.length > 0 && (() => {
-            // Score: 100 = perfectly clean, 0 = catastrophic waste
-            // Derived from waste pct + issue count weighting
-            const issueWeight = Math.min(flagged.length / allChecks.length, 1) * 30;
-            const pctWeight   = Math.min(savPct / 50, 1) * 70;
-            const rawScore    = Math.round(100 - issueWeight - pctWeight);
-            const score       = Math.max(0, Math.min(100, rawScore));
-            const grade       = score >= 80 ? { label: "Well Optimised",    color: "#4ade80", ring: "#4ade80" }
-                              : score >= 60 ? { label: "Needs Attention",   color: "#fbbf24", ring: "#fbbf24" }
-                              : score >= 40 ? { label: "Significant Waste", color: "#fb923c", ring: "#fb923c" }
-                              :               { label: "Critical Waste",    color: "#f87171", ring: "#f87171" };
-            const circumference = 2 * Math.PI * 54;
-            const dashOffset    = circumference * (1 - score / 100);
-
+            const _issueWeight = Math.min(flagged.length / allChecks.length, 1) * 30;
+            const _pctWeight   = Math.min(savPct / 50, 1) * 70;
+            const _score       = Math.max(0, Math.min(100, Math.round(100 - _issueWeight - _pctWeight)));
+            const _grade       = __score >= 80 ? { label: "Well Optimised",    color: "#4ade80", ring: "#4ade80" }
+                               : __score >= 60 ? { label: "Needs Attention",   color: "#fbbf24", ring: "#fbbf24" }
+                               : __score >= 40 ? { label: "Significant Waste", color: "#fb923c", ring: "#fb923c" }
+                               :                { label: "Critical Waste",    color: "#f87171", ring: "#f87171" };
+            const _circ        = 2 * Math.PI * 54;
+            const _offset      = _circ * (1 - _score / 100);
             return (
-              <div className="fade-up" style={{ background: "var(--bg2)", border: `1px solid ${grade.ring}30`, borderRadius: "20px", padding: "36px", marginBottom: "24px", display: "flex", alignItems: "center", gap: "40px", flexWrap: "wrap" }}>
+              <div className="fade-up" style={{ background: "var(--bg2)", border: `1px solid ${_grade.ring}30`, borderRadius: "20px", padding: "36px", marginBottom: "24px", display: "flex", alignItems: "center", gap: "40px", flexWrap: "wrap" }}>
                 {/* Score ring */}
                 <div style={{ position: "relative", flexShrink: 0 }}>
                   <svg width="130" height="130" style={{ transform: "rotate(-90deg)" }}>
                     <circle cx="65" cy="65" r="54" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
                     <circle cx="65" cy="65" r="54" fill="none"
-                      stroke={grade.ring} strokeWidth="10"
-                      strokeDasharray={circumference}
-                      strokeDashoffset={dashOffset}
+                      stroke={_grade.ring} strokeWidth="10"
+                      strokeDasharray={_circ}
+                      strokeDashoffset={_offset}
                       strokeLinecap="round"
-                      style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)", filter: `drop-shadow(0 0 8px ${grade.ring}60)` }}
+                      style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)", filter: `drop-shadow(0 0 8px ${_grade.ring}60)` }}
                     />
                   </svg>
                   <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                    <span className="display" style={{ fontSize: "32px", fontWeight: 800, color: grade.color, letterSpacing: "-1px", lineHeight: 1 }}>{score}</span>
+                    <span className="display" style={{ fontSize: "32px", fontWeight: 800, color: _grade.color, letterSpacing: "-1px", lineHeight: 1 }}>{__score}</span>
                     <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600, letterSpacing: "1px" }}>/ 100</span>
                   </div>
                 </div>
@@ -2853,13 +2824,13 @@ export default function App() {
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                     <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase" }}>KloudAudit Waste Score</p>
                   </div>
-                  <h2 className="display" style={{ fontSize: "28px", fontWeight: 800, color: grade.color, letterSpacing: "-0.8px", marginBottom: "8px" }}>{grade.label}</h2>
+                  <h2 className="display" style={{ fontSize: "28px", fontWeight: 800, color: _grade.color, letterSpacing: "-0.8px", marginBottom: "8px" }}>{_grade.label}</h2>
                   <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>
-                    {score >= 80
+                    {_score >= 80
                       ? `Your infrastructure is well managed. The ${flagged.length} issue${flagged.length > 1 ? "s" : ""} found are optimisation opportunities rather than critical problems.`
-                      : score >= 60
+                      : _score >= 60
                       ? `Your bill has identifiable waste that should be addressed. The ${flagged.length} flagged issue${flagged.length > 1 ? "s" : ""} represent ~${savPct}% of your monthly spend.`
-                      : score >= 40
+                      : _score >= 40
                       ? `Significant waste detected. Your team is paying roughly $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/month more than necessary. This is fixable.`
                       : `Critical waste level. At your current bill size, unaddressed issues are costing $${(savMin * 12).toLocaleString()}+ per year. Immediate action recommended.`
                     }
@@ -2869,10 +2840,10 @@ export default function App() {
                     <p style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "8px", fontWeight: 600 }}>Industry benchmark comparison</p>
                     <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
                       {[
-                        { range: "0–39", label: "Critical", color: "#f87171", active: score < 40 },
-                        { range: "40–59", label: "Poor",     color: "#fb923c", active: score >= 40 && score < 60 },
-                        { range: "60–79", label: "Fair",     color: "#fbbf24", active: score >= 60 && score < 80 },
-                        { range: "80–100",label: "Good",     color: "#4ade80", active: score >= 80 },
+                        { range: "0–39", label: "Critical", color: "#f87171", active: _score < 40 },
+                        { range: "40–59", label: "Poor",     color: "#fb923c", active: _score >= 40 && _score < 60 },
+                        { range: "60–79", label: "Fair",     color: "#fbbf24", active: _score >= 60 && _score < 80 },
+                        { range: "80–100",label: "Good",     color: "#4ade80", active: _score >= 80 },
                       ].map(b => (
                         <div key={b.range} style={{ flex: 1, height: "6px", borderRadius: "3px", background: b.active ? b.color : `${b.color}30`, boxShadow: b.active ? `0 0 8px ${b.color}60` : "none", transition: "all 0.3s" }} />
                       ))}
@@ -2896,19 +2867,24 @@ export default function App() {
             );
           })()}
 
-          {/* Findings */}
+          {/* ── FINDINGS — Sorted by implementation ease ── */}
+                    {/* ── FINDINGS ── */}
           <div className="fade-up stagger-2">
-            {[{ label: "🔴 Critical & High Impact", items: high, color: "#f87171" }, { label: "🟡 Medium Impact", items: med, color: "#fbbf24" }, { label: "🟢 Quick Wins", items: low, color: "#4ade80" }].filter(g => g.items.length > 0).map(group => (
+            {[
+              { label: "🔴 Critical & High Impact", items: high, color: "#f87171" },
+              { label: "🟡 Medium Impact",          items: med,  color: "#fbbf24" },
+              { label: "🟢 Quick Wins",             items: low,  color: "#4ade80" },
+            ].filter(g => g.items.length > 0).map(group => (
               <div key={group.label} style={{ marginBottom: "28px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
                   <h3 className="display" style={{ fontSize: "15px", fontWeight: 700, color: group.color }}>{group.label}</h3>
-                  <span style={{ background: `${group.color}15`, color: group.color, fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px" }}>{group.items.length}</span>
+                  <span style={{ background: group.color + "15", color: group.color, fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px" }}>{group.items.length}</span>
                 </div>
                 {group.items.map(check => {
                   const sMin2 = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
                   const sMax2 = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
                   return (
-                    <div key={check.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderLeft: `3px solid ${group.color}`, borderRadius: "0 12px 12px 0", padding: "16px 20px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+                    <div key={check.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderLeft: "3px solid " + group.color, borderRadius: "0 12px 12px 0", padding: "16px 20px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
                       <div>
                         <p style={{ fontWeight: 600, fontSize: "15px", color: "#fff", marginBottom: "4px" }}>{check.label}</p>
                         <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>{check.detail}</p>
@@ -3190,6 +3166,7 @@ export default function App() {
                 New Audit
               </button>
             </div>
+
 
             {/* ── SHARE CARD MODAL ── */}
             {showShareCard && (
