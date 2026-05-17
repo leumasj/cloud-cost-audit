@@ -3220,7 +3220,7 @@ export default function App() {
             setExpandedFinding={setExpandedFinding}
           />}
 
-          {/* Action plan */}}
+          {/* Action plan */}
           <div className="fade-up stagger-3" style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", marginBottom: "24px" }}>
             <h3 className="display" style={{ fontSize: "18px", fontWeight: 700, marginBottom: "20px", color: "#fff", letterSpacing: "-0.3px" }}>Recommended action plan</h3>
             {[
