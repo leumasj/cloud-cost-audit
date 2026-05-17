@@ -111,7 +111,7 @@ function ProgressRing({ percent, size = 44, stroke = 3, color = "#00ffb4" }) {
 
 function ParticleBackground() {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none", willChange: "auto" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
       <div style={{ position: "absolute", top: "-200px", left: "-200px", width: "600px", height: "600px", background: "radial-gradient(circle, rgba(0,255,180,0.07) 0%, transparent 70%)", borderRadius: "50%" }} />
       <div style={{ position: "absolute", bottom: "-200px", right: "-100px", width: "500px", height: "500px", background: "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)", borderRadius: "50%" }} />
       <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
@@ -122,9 +122,6 @@ function ParticleBackground() {
 
 const globalCss = `
   /* Fonts loaded via <link rel=preload> in index.html for better LCP/FCP */
-  /* font-display: swap prevents invisible text while fonts load — reduces LCP */
-  @font-face { font-family: 'Bricolage Grotesque'; font-display: swap; src: local('Bricolage Grotesque'); }
-  @font-face { font-family: 'DM Sans'; font-display: swap; src: local('DM Sans'); }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #080810; color: #e2e8f0; }
   :root {
@@ -136,10 +133,10 @@ const globalCss = `
   }
   .app { font-family: var(--body); background: var(--bg); min-height: 100vh; color: var(--text); }
   .display { font-family: var(--display); }
-  .fade-up { animation: fadeUp 0.4s ease both; }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
-  .stagger-1 { animation-delay: 0.02s; } .stagger-2 { animation-delay: 0.06s; }
-  .stagger-3 { animation-delay: 0.1s; } .stagger-4 { animation-delay: 0.15s; }
+  .fade-up { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .stagger-1 { animation-delay: 0.05s; } .stagger-2 { animation-delay: 0.12s; }
+  .stagger-3 { animation-delay: 0.2s; } .stagger-4 { animation-delay: 0.28s; }
   .glow-btn { transition: all 0.2s; cursor: pointer; font-family: var(--display); font-weight: 700; }
   .glow-btn:hover { box-shadow: 0 0 30px rgba(0,255,180,0.35), 0 0 60px rgba(0,255,180,0.15) !important; transform: translateY(-2px); }
   .glow-btn:active { transform: translateY(0); }
@@ -161,7 +158,6 @@ const globalCss = `
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 1; } 30% { transform: translateY(-6px); opacity: 0.6; } }
   .trust-link { display:flex; align-items:center; gap:10px; text-decoration:none; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; transition:all 0.2s; }
   .trust-link:hover { background:rgba(255,255,255,0.06) !important; transform:translateX(3px); }
 
@@ -242,206 +238,7 @@ const globalCss = `
   }
 `;
 
-// ── CHATBOT COMPONENT ────────────────────────────────────────────────────────
-function AuditChatBot({ provider, bill, flagged, savMin, savMax, savPct, wasteScore, allChecks, currency, onBuyBlueprint }) {
-  const [open, setOpen]       = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [input, setInput]     = useState('');
-  const [loading, setLoading] = useState(false);
-  const [hasGreeted, setHasGreeted] = useState(false);
-  const messagesEndRef          = React.useRef(null);
-
-  // Auto-scroll to latest message
-  React.useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
-  // Greet user when chat opens for first time
-  React.useEffect(() => {
-    if (open && !hasGreeted) {
-      const issueCount = flagged.length;
-      const topIssue   = flagged[0]?.label || 'some optimisation opportunities';
-      const greeting   = issueCount > 0
-        ? `Hi! I've reviewed your ${provider} audit. You have ${issueCount} issue${issueCount > 1 ? 's' : ''} flagged with $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/month in estimated savings.
-
-The biggest one is **${topIssue}**. What would you like to know?`
-        : `Hi! I've reviewed your ${provider} audit. Looking clean — no major issues flagged. What would you like to know?`;
-      setMessages([{ role: 'assistant', text: greeting }]);
-      setHasGreeted(true);
-    }
-  }, [open]);
-
-  const sendMessage = async (text) => {
-    if (!text.trim() || loading) return;
-    const userMsg = text.trim();
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
-    setLoading(true);
-
-    // Build context-aware system prompt
-    const flaggedLabels = flagged.map(c => c.label).join(', ');
-    const systemContext = `You are a friendly cloud cost expert assistant embedded in KloudAudit.
-The user just completed a ${provider} cloud cost audit.
-Their monthly bill: $${bill}
-Waste Score: ${wasteScore}/100
-Estimated savings: $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/month
-Flagged issues (${flagged.length}): ${flaggedLabels || 'none'}
-
-Your role:
-- Answer their questions about the audit findings concisely
-- Explain specific issues in plain language
-- Help them prioritise what to fix first
-- If they ask about implementation details or exact commands, mention that the AI Blueprint (${currency.blueprintPrice}) includes exact CLI commands and Terraform snippets
-- Never be pushy — only mention the Blueprint if it's genuinely relevant
-- Keep responses under 150 words
-- Use simple formatting — no markdown headers, minimal bullet points`;
-
-    try {
-      const res = await fetch('/api/ai-preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          issueLabel:  userMsg,
-          issueDetail: systemContext,
-          provider:    provider || 'AWS',
-          bill:        bill || 5000,
-        }),
-      });
-      const data = await res.json();
-      if (data.preview) {
-        setMessages(prev => [...prev, { role: 'assistant', text: data.preview }]);
-      } else if (res.status === 429) {
-        setMessages(prev => [...prev, { role: 'assistant', text: "I've answered a lot of questions this hour. Try again in a bit, or check the Blueprint for detailed guidance on all your findings." }]);
-      } else {
-        setMessages(prev => [...prev, { role: 'assistant', text: "Something went wrong on my end. Try again in a moment." }]);
-      }
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', text: "Connection issue. Please try again." }]);
-    }
-    setLoading(false);
-  };
-
-  // Quick reply suggestions based on audit state
-  const quickReplies = flagged.length > 0 ? [
-    `Explain the ${flagged[0]?.label || 'top issue'}`,
-    'Which should I fix first?',
-    'How long will fixes take?',
-    "What's in the Blueprint?",
-  ] : [
-    'Why is my score good?',
-    'What should I watch for?',
-    'Tell me about the security audit',
-  ];
-
-  return (
-    <>
-      {/* ── FLOATING BUTTON ── */}
-      <div onClick={() => setOpen(o => !o)} style={{
-        position: 'fixed', bottom: '88px', right: '24px', zIndex: 9999,
-        width: '56px', height: '56px', borderRadius: '50%',
-        background: open ? '#1a1a2e' : 'linear-gradient(135deg, #00ffb4, #00d4ff)',
-        border: open ? '2px solid rgba(255,255,255,0.15)' : 'none',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', boxShadow: '0 4px 24px rgba(0,255,180,0.35)',
-        transition: 'all 0.25s', fontSize: '22px',
-      }}>
-        {open ? '✕' : '💬'}
-      </div>
-
-      {/* ── CHAT PANEL ── */}
-      {open && (
-        <div style={{
-          position: 'fixed', bottom: '96px', right: '28px', zIndex: 9998,
-          width: '340px', maxHeight: '480px',
-          background: '#0d0d1a', border: '1px solid rgba(0,255,180,0.2)',
-          borderRadius: '20px', display: 'flex', flexDirection: 'column',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,255,180,0.05)',
-          fontFamily: 'system-ui, sans-serif', overflow: 'hidden',
-        }}>
-          {/* Header */}
-          <div style={{ padding: '14px 18px', background: 'rgba(0,255,180,0.06)', borderBottom: '1px solid rgba(0,255,180,0.1)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #00ffb4, #00d4ff)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>⚡</div>
-            <div>
-              <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff', margin: 0 }}>KloudAudit Assistant</p>
-              <p style={{ fontSize: '11px', color: '#00ffb4', margin: 0 }}>Knows your {provider} audit results</p>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '200px', maxHeight: '280px' }}>
-            {messages.map((msg, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                <div style={{
-                  maxWidth: '85%', padding: '10px 13px', borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                  background: msg.role === 'user' ? 'rgba(0,255,180,0.15)' : 'rgba(255,255,255,0.05)',
-                  border: msg.role === 'user' ? '1px solid rgba(0,255,180,0.25)' : '1px solid rgba(255,255,255,0.07)',
-                  fontSize: '13px', color: msg.role === 'user' ? '#00ffb4' : '#cbd5e1',
-                  lineHeight: 1.55, whiteSpace: 'pre-wrap',
-                }}>
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-            {loading && (
-              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px 14px 14px 4px' }}>
-                  <span style={{ display: 'inline-flex', gap: '4px' }}>
-                    {[0,1,2].map(i => <span key={i} style={{ width: '6px', height: '6px', background: '#00ffb4', borderRadius: '50%', animation: `bounce 1.2s ${i * 0.2}s infinite` }} />)}
-                  </span>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Quick replies */}
-          {messages.length <= 1 && !loading && (
-            <div style={{ padding: '0 12px 8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {quickReplies.map(q => (
-                <button key={q} onClick={() => sendMessage(q)} style={{
-                  fontSize: '11px', padding: '5px 10px', borderRadius: '20px',
-                  background: 'rgba(0,255,180,0.06)', border: '1px solid rgba(0,255,180,0.2)',
-                  color: '#94a3b8', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#00ffb4'; e.currentTarget.style.borderColor = 'rgba(0,255,180,0.4)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = 'rgba(0,255,180,0.2)'; }}>
-                  {q}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Input */}
-          <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '8px' }}>
-            <input
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
-              placeholder='Ask about your findings...'
-              style={{
-                flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '10px', padding: '8px 12px', color: '#fff', fontSize: '13px',
-                fontFamily: 'inherit', outline: 'none',
-              }}
-            />
-            <button onClick={() => sendMessage(input)} disabled={loading || !input.trim()} style={{
-              width: '36px', height: '36px', borderRadius: '10px', border: 'none',
-              background: input.trim() ? '#00ffb4' : 'rgba(255,255,255,0.06)',
-              color: input.trim() ? '#000' : '#475569',
-              cursor: input.trim() ? 'pointer' : 'not-allowed',
-              fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 0.2s', flexShrink: 0,
-            }}>→</button>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-// ── SHARE CARD MODAL ──────────────────────────────────────────────────────────────
+// ── SHARE CARD MODAL ──────────────────────────────────────────────────────────
 function ShareCardModal({ savMin, savMax, savPct, flaggedCount, totalChecks, provider, wasteScore, onClose }) {
   const canvasRef = useRef(null);
   const [downloaded, setDownloaded] = useState(false);
@@ -1503,7 +1300,7 @@ export default function App() {
         <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "14px", padding: "24px", marginBottom: "32px" }}>
           <p style={{ fontSize: "14px", color: "var(--text-dim)", marginBottom: "4px" }}>Check your email for a message from</p>
           <p style={{ fontSize: "16px", fontWeight: 700, color: "var(--green)" }}>admin@kloudaudit.eu</p>
-          <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>Subject: "⚡ Your [Provider] Cost Blueprint is ready"</p>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>Subject: "Your Implementation Blueprint is ready ⚡"</p>
           <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>Check spam if you don't see it within 5 minutes.</p>
         </div>
         <button className="glow-btn" onClick={() => { setStep("intro"); setChecked({}); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Run Another Audit →</button>
@@ -1578,7 +1375,7 @@ export default function App() {
               <span style={{ fontSize: "11px", fontWeight: 700, color: "#f87171", letterSpacing: "1.5px" }}>CLOUD SECURITY AUDIT — AWS · GCP · AZURE — ZERO ACCESS</span>
             </div>
             <h1 className="display" style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 800, letterSpacing: "-2px", color: "#fff", marginBottom: "14px", lineHeight: 1.05 }}>
-              Find the gaps attackers<br /><span style={{ color: "#f87171" }}>scan for first.</span>
+              Find security gaps before<br /><span style={{ color: "#f87171" }}>attackers do.</span>
             </h1>
             <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "540px", margin: "0 auto 20px", lineHeight: 1.7 }}>
               16 checkpoints across IAM, network exposure, data protection, and logging. Takes 10 minutes. Zero credentials required.
@@ -1940,7 +1737,7 @@ export default function App() {
     const FAQS = [
       { q: "Do you need access to my cloud account?", a: "Never. Both audits are entirely self-guided — you answer questions based on your own knowledge. No credentials, no IAM roles, no agents, no OAuth. We have zero access to your infrastructure.", tag: "both" },
       { q: "How is the AI Blueprint different from the free report?", a: "The free report tells you what is wrong. The Blueprint tells you exactly how to fix it — with CLI commands, Terraform snippets, IAM policy templates, compliance mappings, and verification steps specific to your provider.", tag: "both" },
-      { q: "How fast do I receive the Blueprint?", a: "Within 2 minutes of payment. Claude AI generates your personalised guide in ~30 seconds, then SendGrid delivers it to your inbox. If you don't see it within 5 minutes, check spam or email admin@kloudaudit.eu.", tag: "both" },
+      { q: "How fast do I receive the Blueprint?", a: "Instantly after payment. Claude AI generates your personalised guide in ~30 seconds, then it's delivered to your inbox. Most customers receive it within 2 minutes of payment.", tag: "both" },
       { q: "What does the Security Blueprint include that the free score doesn't?", a: "The free audit shows your risk score and the first 2 flagged issues. The Security Blueprint unlocks all findings with exact CLI remediation commands, IAM policy fixes, compliance gap mapping (SOC 2, ISO 27001, GDPR, CIS Benchmark), and a 30-day remediation roadmap.", tag: "security" },
       { q: "I already use AWS Security Hub / GCP Security Command Center. Why do I need this?", a: "Those tools need account access and take weeks to configure. KloudAudit gives you a prioritised action list in 15 minutes with zero access required — ideal for a quick self-assessment before a pentest, compliance audit, or investor review.", tag: "security" },
       { q: "What if my cloud bill is lower than $1,000/month?", a: "The cost audit is still useful for identifying waste patterns early. The Blueprint is most cost-effective for bills over $1,500/mo. The security audit is valuable at any bill size — a public S3 bucket costs the same to exploit whether you pay $200/mo or $20,000/mo.", tag: "cost" },
@@ -2049,83 +1846,63 @@ export default function App() {
       <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px", paddingBottom: "72px" }}>
 
         {/* ── HERO ── */}
-        <div className="hero-pad" style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center", minHeight: "85vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div className="hero-pad" style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center" }}>
           {/* ── CATEGORY BADGE ── */}
-          <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "24px" }}>
+          <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "32px" }}>
             <span style={{ width: "6px", height: "6px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)", animation: "pulse-dot 2s infinite" }} />
-            <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 700, letterSpacing: "1.5px" }}>FREE · NO AWS CREDENTIALS · 15 MINUTES</span>
+            <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 700, letterSpacing: "1.5px" }}>THE ONLY CLOUD COST AUDIT — ZERO ACCESS. ZERO SETUP. ZERO RISK.</span>
           </div>
 
           {/* ── HEADLINE ── */}
-          <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "20px" }}>
+          <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "24px" }}>
             The audit your<br />
             <span style={{ background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>cloud provider</span><br />
             won&apos;t give you.
           </h1>
 
           {/* ── SUBHEADING ── */}
-          <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "480px", margin: "0 auto 28px" }}>
-            Pick your cloud provider and start your free audit in 60 seconds.
+          <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "560px", margin: "0 auto 20px" }}>
+            No AWS keys. No IAM roles. No procurement process. Answer 18 questions about your setup — get a prioritised savings report with exact CLI commands in 15 minutes.
           </p>
 
-          {/* ── PRIMARY ACTION — Provider buttons front and centre ── */}
-          <div className="fade-up stagger-2" style={{ marginBottom: "16px" }}>
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap", marginBottom: "12px" }}>
-              {[
-                { label: "AWS", color: "#ff9900" },
-                { label: "GCP", color: "#4285f4" },
-                { label: "Azure", color: "#0078d4" },
-                { label: "Multi-Cloud", color: "#00ffb4" },
-              ].map(p => (
-                <button key={p.label} onClick={() => { setProvider(p.label); goTo("intake"); }}
-                  style={{ padding: "14px 24px", borderRadius: "12px", border: `2px solid ${p.color}40`, background: `${p.color}12`, color: p.label === "Multi-Cloud" ? "var(--green)" : p.color, fontSize: "15px", fontWeight: 700, cursor: "pointer", transition: "all 0.18s", fontFamily: "inherit", minWidth: "100px" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = `${p.color}22`; e.currentTarget.style.borderColor = `${p.color}80`; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = `${p.color}12`; e.currentTarget.style.borderColor = `${p.color}40`; e.currentTarget.style.transform = "translateY(0)"; }}>
-                  {p.label}
+          {/* ── COMPETITOR KILL LINE ── */}
+          <p className="fade-up stagger-2" style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: "480px", margin: "0 auto 36px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "10px 16px" }}>
+            💡 The average team needs <strong style={{ color: "#fff" }}>4 months of procurement</strong> to connect a cloud cost tool. KloudAudit takes 15 minutes — no IT ticket, no security review, no boss approval. Zero access required.
+          </p>
+
+          {/* ── 60-SECOND ESTIMATOR ── */}
+          <div className="fade-up stagger-3" style={{ maxWidth: "460px", margin: "0 auto 28px", background: "rgba(0,255,180,0.04)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "16px", padding: "20px 24px" }}>
+            <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "14px" }}>⚡ 60-second estimate</p>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
+              {["AWS", "GCP", "Azure"].map(p => (
+                <button key={p} onClick={() => { setProvider(p); goTo("intake"); }}
+                  style={{ padding: "8px 16px", borderRadius: "8px", border: "1.5px solid rgba(0,255,180,0.2)", background: "rgba(0,255,180,0.06)", color: "var(--green)", fontSize: "13px", fontWeight: 700, cursor: "pointer", transition: "all 0.18s" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,255,180,0.12)"; e.currentTarget.style.borderColor = "rgba(0,255,180,0.4)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,255,180,0.06)"; e.currentTarget.style.borderColor = "rgba(0,255,180,0.2)"; }}>
+                  {p}
                 </button>
               ))}
             </div>
-            <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>No signup · No credit card · No cloud access required</p>
+            <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Pick your cloud provider → enter your bill → see estimated savings in 60 seconds.</p>
           </div>
 
-          {/* ── SECONDARY CTA ── */}
-          <div id="start-audit" className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
+          <div id="start-audit" className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
             <button className="glow-btn" onClick={() => goTo("intake")}
-              style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
-              Start Free Audit <span style={{ fontSize: "18px" }}>→</span>
+              style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "16px 36px", fontSize: "16px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
+              Calculate My Savings <span style={{ fontSize: "18px" }}>→</span>
             </button>
             <button className="ghost-btn" onClick={() => setShowSample(true)}
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px", display: "flex", alignItems: "center", gap: "8px" }}>
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "16px 28px", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
               <span>📄</span> See a Real Report First
             </button>
           </div>
-
-          {/* ── SOCIAL PROOF ── */}
-          <div className="fade-up stagger-4" style={{ display: "flex", gap: "24px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
-            {[
-              { icon: "⚡", text: "15 minutes" },
-              { icon: "🔒", text: "Zero cloud access" },
-              { icon: "💰", text: "20–45% savings found" },
-              { icon: "🌍", text: "AWS · GCP · Azure" },
-            ].map(item => (
-              <div key={item.text} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ fontSize: "14px" }}>{item.icon}</span>
-                <span style={{ fontSize: "13px", color: "var(--text-muted)", fontWeight: 500 }}>{item.text}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* ── COMPETITOR KILL LINE ── */}
-          <p className="fade-up stagger-4" style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: "440px", margin: "0 auto", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "10px 16px" }}>
-            💡 The average team needs <strong style={{ color: "#fff" }}>4 months of procurement</strong> to connect a cloud cost tool. KloudAudit takes 15 minutes — no IT ticket, no security review, no approval needed.
-          </p>
           <div className="fade-up stagger-4" style={{ marginTop: "22px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
             {[
               { text: "🔒 Zero cloud access — ever", highlight: true },
               { text: "✓ No signup · No card", highlight: false },
               { text: "⚡ Cost + Security audits", highlight: false },
               { text: "🛡 AWS · GCP · Azure", highlight: false },
-              { text: "👥 Teams audited globally", highlight: false },
+              { text: "👥 62+ teams audited", highlight: false },
             ].map((item, i) => (
               <span key={i} style={{ fontSize: "12px", color: item.highlight ? "var(--green)" : "var(--text-muted)", background: item.highlight ? "rgba(0,255,180,0.06)" : "rgba(255,255,255,0.04)", border: `1px solid ${item.highlight ? "rgba(0,255,180,0.2)" : "rgba(255,255,255,0.08)"}`, borderRadius: "20px", padding: "4px 12px", whiteSpace: "nowrap", fontWeight: item.highlight ? 700 : 400 }}>
                 {item.text}
@@ -2392,7 +2169,7 @@ export default function App() {
                   <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1px" }}>CLOUD SECURITY AUDIT</span>
                 </div>
                 <h3 className="display" style={{ fontSize: "20px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "4px" }}>Find security vulnerabilities before attackers do</h3>
-                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>Find the gaps attackers scan for first — before your next pentest, compliance audit, or investor review. 16 checks. Free. Zero access required.</p>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>16 checkpoints across IAM, network exposure, encryption & logging. Free. No account access. AI-generated remediation report.</p>
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "10px", flexShrink: 0 }}>
@@ -2563,7 +2340,7 @@ export default function App() {
                   { icon: "✉️", label: "admin@kloudaudit.eu", href: "mailto:admin@kloudaudit.eu", color: "#00d4ff" },
                   { icon: "💼", label: "linkedin.com/in/samuel-ayodele-adomeh", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh", color: "#0077b5" },
                   { icon: "💻", label: "github.com/leumasj", href: "https://github.com/leumasj", color: "var(--text-dim)" },
-                  { icon: "✓", label: "Verified Cloud Engineer · $8K+ delivered", href: "https://www.upwork.com/freelancers/~015c346a56b09a2a89", color: "#14a34a" },
+                  { icon: "🟢", label: "Hire me on Upwork · $8K+ earned · Top Rated", href: "https://www.upwork.com/freelancers/~015c346a56b09a2a89", color: "#14a34a" },
                 ].map(link => (
                   <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="trust-link" style={{ "--hover-color": link.color }}>
                     <span style={{ fontSize: "16px" }}>{link.icon}</span>
@@ -2579,13 +2356,13 @@ export default function App() {
               </div>
             </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div style={{ width: "24px", height: "24px", background: "var(--green)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(0,255,180,0.3)", fontSize: "12px" }}>⚡</div>
               <span className="display" style={{ fontWeight: 800, fontSize: "14px", color: "#fff" }}>KloudAudit</span>
               <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>© {new Date().getFullYear()} Samuel Ayodele Adomeh · Wrocław, Poland</span>
             </div>
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
               {[
                 { label: "Terms", href: "https://www.kloudaudit.eu/terms/" },
                 { label: "Privacy", href: "https://www.kloudaudit.eu/privacy/" },
@@ -2600,7 +2377,7 @@ export default function App() {
               <a href="https://www.upwork.com/freelancers/~015c346a56b09a2a89" target="_blank" rel="noopener noreferrer"
                 style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#14a34a", textDecoration: "none", padding: "6px 14px", border: "1px solid rgba(20,163,74,0.3)", borderRadius: "8px", background: "rgba(20,163,74,0.08)" }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.561 13.158c-1.102 0-2.135-.467-3.074-1.227l.228-1.076.008-.042c.207-1.143.849-3.06 2.839-3.06 1.492 0 2.703 1.212 2.703 2.703-.001 1.489-1.212 2.702-2.704 2.702zm0-8.14c-2.539 0-4.51 1.649-5.31 4.366-1.22-1.834-2.148-4.036-2.687-5.892H7.828v7.112c-.002 1.406-1.141 2.546-2.547 2.546-1.405 0-2.543-1.14-2.543-2.546V3.492H0v7.112c0 2.914 2.37 5.303 5.281 5.303 2.913 0 5.283-2.389 5.283-5.303v-1.19c.529 1.107 1.182 2.229 1.974 3.221l-1.673 7.873h2.797l1.213-5.71c1.063.679 2.285 1.109 3.686 1.109 3 0 5.439-2.452 5.439-5.45 0-3-2.439-5.439-5.439-5.439z"/></svg>
-                ✓ Verified Cloud Engineer · $8K+ delivered
+                Upwork · $8K+ earned
               </a>
             </div>
           </div>
@@ -2659,7 +2436,7 @@ export default function App() {
               💡 For bills under $500/month, the free audit checklist gives you the most value. The paid Blueprint ROI is strongest at $1,500+/month.
             </div>
           )}
-          <button className="glow-btn" disabled={!provider || !monthlyBill || parseFloat(monthlyBill) <= 0} onClick={() => { setActiveSection(0); goTo("audit"); }}
+          <button className="glow-btn" disabled={!provider || !monthlyBill} onClick={() => { setActiveSection(0); goTo("audit"); }}
             style={{ background: provider && monthlyBill ? "var(--green)" : "rgba(255,255,255,0.06)", color: provider && monthlyBill ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "16px", fontSize: "15px", boxShadow: provider && monthlyBill ? "0 0 24px rgba(0,255,180,0.3)" : "none", cursor: provider && monthlyBill ? "pointer" : "not-allowed", marginTop: "8px" }}>
             Begin Audit →
           </button>
@@ -2737,7 +2514,7 @@ export default function App() {
                 {activeSection < AUDIT_SECTIONS.length - 1 ? (
                   <button className="glow-btn" onClick={() => setActiveSection(a => a + 1)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)" }}>Next: {AUDIT_SECTIONS[activeSection + 1].label} →</button>
                 ) : (
-                  <button className="glow-btn" onClick={() => { saveAudit(null); goTo("email_gate"); }} style={{ background: "linear-gradient(135deg, var(--green), #00d4ff)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 32px", fontSize: "14px", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Generate Report →</button>
+                  <button className="glow-btn" onClick={() => goTo("email_gate")} style={{ background: "linear-gradient(135deg, var(--green), #00d4ff)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 32px", fontSize: "14px", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Generate Report →</button>
                 )}
               </div>
             </div>
@@ -3413,21 +3190,6 @@ export default function App() {
                 New Audit
               </button>
             </div>
-
-
-            {/* ── AUDIT CHATBOT ── */}
-            <AuditChatBot
-              provider={provider}
-              bill={bill}
-              flagged={flagged}
-              savMin={savMin}
-              savMax={savMax}
-              savPct={savPct}
-              wasteScore={Math.max(0, Math.min(100, Math.round(100 - Math.min(flagged.length / allChecks.length, 1) * 30 - Math.min(savPct / 50, 1) * 70)))}
-              allChecks={allChecks}
-              currency={currency}
-              onBuyBlueprint={() => setShowBlueprint(true)}
-            />
 
             {/* ── SHARE CARD MODAL ── */}
             {showShareCard && (
