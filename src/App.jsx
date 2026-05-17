@@ -930,6 +930,138 @@ const TESTIMONIALS = [
   { name: "Marco D.", role: "Infrastructure Lead · Milan e-commerce", text: "Orphaned EBS volumes and a forgotten NAT Gateway were costing us $960/month. CLI commands were copy-paste ready. Fixed same afternoon.", savings: "$960/mo", provider: "Azure" },
 ];
 
+// ── FINDINGS SECTION COMPONENT ────────────────────────────────────────────────
+function FindingsSection({ flagged, bill, reportSort, setReportSort, expandedFinding, setExpandedFinding }) {
+  const EFFORT_ORDER  = { Low: 0, Medium: 1, High: 2 };
+  const IMPACT_ORDER  = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+  const EFFORT_CFG = {
+    Low:    { label: "Quick win",   color: "#22c55e", bg: "rgba(34,197,94,0.08)",   border: "rgba(34,197,94,0.2)",   dot: "#22c55e" },
+    Medium: { label: "Some effort", color: "#f59e0b", bg: "rgba(245,158,11,0.08)",  border: "rgba(245,158,11,0.2)",  dot: "#f59e0b" },
+    High:   { label: "Complex",     color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.2)", dot: "#f87171" },
+  };
+  const IMPACT_COLORS = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24", Low: "#94a3b8" };
+
+  const sorted = [...flagged].sort((a, b) => {
+    if (reportSort === "effort") {
+      const e = (EFFORT_ORDER[a.effort] ?? 1) - (EFFORT_ORDER[b.effort] ?? 1);
+      return e !== 0 ? e : (IMPACT_ORDER[a.impact] ?? 2) - (IMPACT_ORDER[b.impact] ?? 2);
+    }
+    if (reportSort === "impact") return (IMPACT_ORDER[a.impact] ?? 2) - (IMPACT_ORDER[b.impact] ?? 2);
+    const aAvg = (a.savingsRange[0] + a.savingsRange[1]) / 2;
+    const bAvg = (b.savingsRange[0] + b.savingsRange[1]) / 2;
+    return bAvg - aAvg;
+  });
+
+  const quickWins = flagged.filter(c => c.effort === "Low").length;
+  const maxSav = bill > 0 ? Math.round(bill * 0.7) : 700;
+
+  return (
+    <div className="fade-up stagger-2">
+      {/* Sort controls */}
+      <div style={{ marginBottom: "16px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "10px" }}>
+          <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "#475569" }}>
+            {flagged.length} findings
+          </p>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {[
+              { id: "effort",  label: "Quick wins first" },
+              { id: "impact",  label: "Highest impact" },
+              { id: "savings", label: "Largest savings" },
+            ].map(o => (
+              <button key={o.id}
+                className={`sort-pill${reportSort === o.id ? " active-sort" : ""}`}
+                onClick={() => setReportSort(o.id)}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {reportSort === "effort" && (
+          <div className="thomas-callout">
+            <span style={{ fontSize: "14px", flexShrink: 0 }}>💡</span>
+            <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.55 }}>
+              <strong style={{ color: "#00ffb4" }}>Quick wins first</strong> — {quickWins} of your {flagged.length} issues are low-effort fixes you can implement today. Start here before tackling complex optimisations.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Findings list */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "28px" }}>
+        {sorted.map((check, i) => {
+          const eff = EFFORT_CFG[check.effort] || EFFORT_CFG.Medium;
+          const impColor = IMPACT_COLORS[check.impact] || "#94a3b8";
+          const sMin2 = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
+          const sMax2 = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
+          const isOpen = expandedFinding === check.id;
+
+          return (
+            <div key={check.id}
+              className={`finding-row${isOpen ? " expanded-finding" : ""}`}
+              onClick={() => setExpandedFinding(isOpen ? null : check.id)}>
+              <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px" }}>
+                <span style={{ fontSize: "11px", color: "#334155", fontWeight: 600, minWidth: "20px", flexShrink: 0 }}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="effort-tag" style={{ background: eff.bg, border: `1px solid ${eff.border}`, color: eff.color, minWidth: "90px", justifyContent: "center", flexShrink: 0 }}>
+                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: eff.dot, display: "inline-block", flexShrink: 0 }} />
+                  {eff.label}
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: "14px", color: "#e2e8f0", fontWeight: 500, marginBottom: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {check.label}
+                  </p>
+                  <p style={{ fontSize: "11px", color: "#475569" }}>
+                    {check.detail}
+                    {check.fixTime && <span style={{ marginLeft: "6px", color: "#334155" }}>· {check.fixTime} to fix</span>}
+                  </p>
+                </div>
+                <span style={{ fontSize: "11px", color: impColor, fontWeight: 700, flexShrink: 0, minWidth: "55px", textAlign: "right" }}>
+                  {check.impact || ""}
+                </span>
+                {bill > 0 && sMin2 !== null && (
+                  <span style={{ fontSize: "13px", color: "#00ffb4", fontWeight: 700, flexShrink: 0, minWidth: "130px", textAlign: "right" }}>
+                    ${sMin2.toLocaleString()}–${sMax2.toLocaleString()}/mo
+                  </span>
+                )}
+                <span style={{ fontSize: "11px", color: "#334155", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none", flexShrink: 0 }}>▾</span>
+              </div>
+              {isOpen && (
+                <div style={{ padding: "0 18px 16px 52px", borderTop: "1px solid rgba(255,255,255,0.04)" }}
+                  onClick={e => e.stopPropagation()}>
+                  <div style={{ paddingTop: "14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                    <div>
+                      <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "#475569", marginBottom: "6px" }}>Implementation</p>
+                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                        <span className="effort-tag" style={{ background: eff.bg, border: `1px solid ${eff.border}`, color: eff.color }}>{check.effort || "Medium"} effort</span>
+                        <span className="effort-tag" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: impColor }}>{check.impact || ""} impact</span>
+                        {check.fixTime && <span className="effort-tag" style={{ background: "rgba(0,255,180,0.06)", border: "1px solid rgba(0,255,180,0.15)", color: "#00ffb4" }}>⏱ {check.fixTime}</span>}
+                      </div>
+                    </div>
+                    {bill > 0 && sMax2 > 0 && (
+                      <div>
+                        <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "#475569", marginBottom: "6px" }}>Monthly recovery</p>
+                        <div className="progress-track">
+                          <div className="progress-fill" style={{ width: `${Math.min((sMax2 / maxSav) * 100, 100)}%` }} />
+                        </div>
+                        <p style={{ fontSize: "11px", color: "#00ffb4", marginTop: "5px" }}>${sMin2?.toLocaleString()} – ${sMax2?.toLocaleString()}/month</p>
+                      </div>
+                    )}
+                  </div>
+                  <p style={{ fontSize: "12px", color: "#475569", marginTop: "12px", lineHeight: 1.55 }}>
+                    The <strong style={{ color: "#00ffb4" }}>Cost Blueprint</strong> includes exact CLI commands, Terraform snippets, and step-by-step instructions for this fix.
+                  </p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [step, setStep] = useState("intro");
   const [provider, setProvider] = useState("");
@@ -3139,151 +3271,16 @@ export default function App() {
           })()}
 
           {/* ── FINDINGS — Sorted by implementation ease ── */}
-          {flagged.length > 0 && (() => {
-            const EFFORT_ORDER = { Low: 0, Medium: 1, High: 2 };
-            const IMPACT_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 };
-            const EFFORT_CFG = {
-              Low:    { label: "Quick win",    color: "#22c55e", bg: "rgba(34,197,94,0.08)",   border: "rgba(34,197,94,0.2)",   dot: "#22c55e" },
-              Medium: { label: "Some effort",  color: "#f59e0b", bg: "rgba(245,158,11,0.08)",  border: "rgba(245,158,11,0.2)",  dot: "#f59e0b" },
-              High:   { label: "Complex",      color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.2)", dot: "#f87171" },
-            };
-            const IMPACT_COLORS = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24", Low: "#94a3b8" };
+          {flagged.length > 0 && <FindingsSection
+            flagged={flagged}
+            bill={bill}
+            reportSort={reportSort}
+            setReportSort={setReportSort}
+            expandedFinding={expandedFinding}
+            setExpandedFinding={setExpandedFinding}
+          />}
 
-            const sorted = [...flagged].sort((a, b) => {
-              if (reportSort === "effort") {
-                const e = (EFFORT_ORDER[a.effort]??1) - (EFFORT_ORDER[b.effort]??1);
-                return e !== 0 ? e : (IMPACT_ORDER[a.impact]??2) - (IMPACT_ORDER[b.impact]??2);
-              }
-              if (reportSort === "impact") return (IMPACT_ORDER[a.impact]??2) - (IMPACT_ORDER[b.impact]??2);
-              // savings
-              const aAvg = (a.savingsRange[0]+a.savingsRange[1])/2;
-              const bAvg = (b.savingsRange[0]+b.savingsRange[1])/2;
-              return bAvg - aAvg;
-            });
-
-            const quickWins = flagged.filter(c => c.effort === "Low").length;
-
-            return (
-              <div className="fade-up stagger-2">
-                {/* Sort controls */}
-                <div style={{ marginBottom: "16px" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "10px" }}>
-                    <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "#475569" }}>
-                      {flagged.length} findings
-                    </p>
-                    <div style={{ display: "flex", gap: "6px" }}>
-                      {[
-                        { id: "effort",  label: "Quick wins first" },
-                        { id: "impact",  label: "Highest impact" },
-                        { id: "savings", label: "Largest savings" },
-                      ].map(o => (
-                        <button key={o.id}
-                          className={`sort-pill${reportSort === o.id ? " active-sort" : ""}`}
-                          onClick={() => setReportSort(o.id)}>
-                          {o.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  {reportSort === "effort" && (
-                    <div className="thomas-callout">
-                      <span style={{ fontSize: "14px", flexShrink: 0 }}>💡</span>
-                      <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.55 }}>
-                        <strong style={{ color: "#00ffb4" }}>Quick wins first</strong> — {quickWins} of your {flagged.length} issues are low-effort fixes you can implement today. Start here before tackling complex optimisations.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Findings list */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "28px" }}>
-                  {sorted.map((check, i) => {
-                    const eff = EFFORT_CFG[check.effort] || EFFORT_CFG.Medium;
-                    const impColor = IMPACT_COLORS[check.impact] || "#94a3b8";
-                    const sMin2 = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
-                    const sMax2 = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
-                    const isOpen = expandedFinding === check.id;
-                    const maxSav = bill > 0 ? Math.round(bill * 0.7) : 700;
-
-                    return (
-                      <div key={check.id}
-                        className={`finding-row${isOpen ? " expanded-finding" : ""}`}
-                        onClick={() => setExpandedFinding(isOpen ? null : check.id)}>
-
-                        {/* Main row */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px" }}>
-                          <span style={{ fontSize: "11px", color: "#334155", fontWeight: 600, minWidth: "20px", flexShrink: 0 }}>
-                            {String(i + 1).padStart(2, "0")}
-                          </span>
-                          <span className="effort-tag" style={{ background: eff.bg, border: `1px solid ${eff.border}`, color: eff.color, minWidth: "90px", justifyContent: "center", flexShrink: 0 }}>
-                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: eff.dot, display: "inline-block", flexShrink: 0 }} />
-                            {eff.label}
-                          </span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: "14px", color: "#e2e8f0", fontWeight: 500, marginBottom: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                              {check.label}
-                            </p>
-                            <p style={{ fontSize: "11px", color: "#475569" }}>
-                              {check.detail}
-                              {check.fixTime && <span style={{ marginLeft: "6px", color: "#334155" }}>· {check.fixTime} to fix</span>}
-                            </p>
-                          </div>
-                          <span style={{ fontSize: "11px", color: impColor, fontWeight: 700, flexShrink: 0, minWidth: "55px", textAlign: "right" }}>
-                            {check.impact || ""}
-                          </span>
-                          {bill > 0 && sMin2 !== null && (
-                            <span style={{ fontSize: "13px", color: "#00ffb4", fontWeight: 700, flexShrink: 0, minWidth: "130px", textAlign: "right", fontFamily: "inherit" }}>
-                              ${sMin2.toLocaleString()}–${sMax2.toLocaleString()}/mo
-                            </span>
-                          )}
-                          <span style={{ fontSize: "11px", color: "#334155", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none", flexShrink: 0 }}>▾</span>
-                        </div>
-
-                        {/* Expanded detail */}
-                        {isOpen && (
-                          <div style={{ padding: "0 18px 16px 52px", borderTop: "1px solid rgba(255,255,255,0.04)" }}
-                            onClick={e => e.stopPropagation()}>
-                            <div style={{ paddingTop: "14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                              <div>
-                                <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "#475569", marginBottom: "6px" }}>Implementation</p>
-                                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                                  <span className="effort-tag" style={{ background: eff.bg, border: `1px solid ${eff.border}`, color: eff.color }}>
-                                    {check.effort || "Medium"} effort
-                                  </span>
-                                  <span className="effort-tag" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: impColor }}>
-                                    {check.impact || ""} impact
-                                  </span>
-                                  {check.fixTime && (
-                                    <span className="effort-tag" style={{ background: "rgba(0,255,180,0.06)", border: "1px solid rgba(0,255,180,0.15)", color: "#00ffb4" }}>
-                                      ⏱ {check.fixTime}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              {bill > 0 && sMax2 > 0 && (
-                                <div>
-                                  <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "#475569", marginBottom: "6px" }}>Monthly recovery potential</p>
-                                  <div className="progress-track">
-                                    <div className="progress-fill" style={{ width: `${Math.min((sMax2 / maxSav) * 100, 100)}%` }} />
-                                  </div>
-                                  <p style={{ fontSize: "11px", color: "#00ffb4", marginTop: "5px" }}>${sMin2?.toLocaleString()} – ${sMax2?.toLocaleString()}/month</p>
-                                </div>
-                              )}
-                            </div>
-                            <p style={{ fontSize: "12px", color: "#475569", marginTop: "12px", lineHeight: 1.55 }}>
-                              The <strong style={{ color: "#00ffb4" }}>Cost Blueprint</strong> includes exact CLI commands, Terraform snippets, and step-by-step instructions for this fix.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Action plan */}
+          {/* Action plan */}}
           <div className="fade-up stagger-3" style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", marginBottom: "24px" }}>
             <h3 className="display" style={{ fontSize: "18px", fontWeight: 700, marginBottom: "20px", color: "#fff", letterSpacing: "-0.3px" }}>Recommended action plan</h3>
             {[
