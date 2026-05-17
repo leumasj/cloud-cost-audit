@@ -1120,29 +1120,35 @@ export default function App() {
       .catch(() => setAiPreviewLoading(false));
   }, [step]);
 
-  // ── SAVE AUDIT — non-blocking, fires and forgets ─────────────────────────
+  // ── SAVE AUDIT — non-blocking, fires and forgets with one retry ─────────
   const saveAudit = (emailOverride) => {
-    // Calculate waste score same formula as report page
     const issueW  = Math.min(flagged.length / allChecks.length, 1) * 30;
     const pctW    = Math.min(savPct / 50, 1) * 70;
     const wScore  = Math.max(0, Math.min(100, Math.round(100 - issueW - pctW)));
 
-    fetch('/api/save-audit', {
+    const payload = JSON.stringify({
+      sessionId,
+      email:       emailOverride || gateEmail || null,
+      provider:    provider || 'AWS',
+      monthlyBill: bill,
+      companyName: companyName || null,
+      flaggedIds:  flagged.map(c => c.id),
+      wasteScore:  wScore,
+      savingsMin:  savMin,
+      savingsMax:  savMax,
+      auditType:   'cost',
+    });
+
+    const attempt = () => fetch('/api/save-audit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId,
-        email:       emailOverride || gateEmail || null,
-        provider:    provider || 'AWS',
-        monthlyBill: bill,
-        companyName: companyName || null,
-        flaggedIds:  flagged.map(c => c.id),
-        wasteScore:  wScore,
-        savingsMin:  savMin,
-        savingsMax:  savMax,
-        auditType:   'cost',
-      }),
-    }).catch(() => {}); // silent — never block user on this
+      body: payload,
+    });
+
+    // Try immediately, retry once after 3s if first attempt fails
+    attempt().catch(() => {
+      setTimeout(() => attempt().catch(() => {}), 3000);
+    });
   };
 
   // ── EXIT INTENT DETECTOR ─────────────────────────────────────────────────
