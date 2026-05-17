@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 
 const AUDIT_SECTIONS = [
   {
@@ -260,17 +260,17 @@ function AuditChatBot({ provider, bill, flagged, savMin, savMax, savPct, wasteSc
   const [input, setInput]     = useState('');
   const [loading, setLoading] = useState(false);
   const [hasGreeted, setHasGreeted] = useState(false);
-  const messagesEndRef          = React.useRef(null);
+  const messagesEndRef          = useRef(null);
 
   // Auto-scroll to latest message
-  React.useEffect(() => {
+  useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
 
   // Greet user when chat opens for first time
-  React.useEffect(() => {
+  useEffect(() => {
     if (open && !hasGreeted) {
       const issueCount = flagged.length;
       const topIssue   = flagged[0]?.label || 'some optimisation opportunities';
