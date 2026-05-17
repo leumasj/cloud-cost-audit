@@ -161,6 +161,17 @@ const globalCss = `
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
+  /* ── REPORT REDESIGN STYLES ── */
+  .finding-row { border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; background: rgba(255,255,255,0.02); transition: all 0.18s; cursor: pointer; overflow: hidden; }
+  .finding-row:hover { border-color: rgba(0,255,180,0.15); background: rgba(0,255,180,0.02); }
+  .finding-row.expanded-finding { border-color: rgba(0,255,180,0.25); background: rgba(0,255,180,0.03); }
+  .sort-pill { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #64748b; font-family: inherit; font-size: 12px; padding: 7px 14px; cursor: pointer; transition: all 0.15s; font-weight: 500; }
+  .sort-pill:hover { color: #e2e8f0; border-color: rgba(255,255,255,0.15); }
+  .sort-pill.active-sort { background: rgba(0,255,180,0.08); border-color: rgba(0,255,180,0.3); color: #00ffb4; }
+  .effort-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.2px; }
+  .thomas-callout { background: linear-gradient(135deg,rgba(0,255,180,0.04),rgba(0,212,255,0.02)); border: 1px solid rgba(0,255,180,0.12); border-radius: 10px; padding: 12px 16px; display: flex; gap: 10px; align-items: flex-start; }
+  .progress-track { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg,#00ffb4,#00d4ff); transition: width 0.6s ease; }
   @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 1; } 30% { transform: translateY(-6px); opacity: 0.6; } }
   .trust-link { display:flex; align-items:center; gap:10px; text-decoration:none; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; transition:all 0.2s; }
   .trust-link:hover { background:rgba(255,255,255,0.06) !important; transform:translateX(3px); }
@@ -942,6 +953,8 @@ export default function App() {
   const [activeHowStep, setActiveHowStep] = useState(null); // null = all equal, click to expand
   const [showExitIntent, setShowExitIntent] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
+  const [reportSort, setReportSort] = useState("effort");   // 'effort' | 'impact' | 'savings'
+  const [expandedFinding, setExpandedFinding] = useState(null);
   // ── SECURITY AUDIT STATE ──────────────────────────────────────────────────
   const [secChecked, setSecChecked] = useState({});
   const [secStep, setSecStep] = useState(0);
@@ -3119,33 +3132,150 @@ export default function App() {
             );
           })()}
 
-          {/* Findings */}
-          <div className="fade-up stagger-2">
-            {[{ label: "🔴 Critical & High Impact", items: high, color: "#f87171" }, { label: "🟡 Medium Impact", items: med, color: "#fbbf24" }, { label: "🟢 Quick Wins", items: low, color: "#4ade80" }].filter(g => g.items.length > 0).map(group => (
-              <div key={group.label} style={{ marginBottom: "28px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
-                  <h3 className="display" style={{ fontSize: "15px", fontWeight: 700, color: group.color }}>{group.label}</h3>
-                  <span style={{ background: `${group.color}15`, color: group.color, fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px" }}>{group.items.length}</span>
-                </div>
-                {group.items.map(check => {
-                  const sMin2 = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
-                  const sMax2 = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
-                  return (
-                    <div key={check.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderLeft: `3px solid ${group.color}`, borderRadius: "0 12px 12px 0", padding: "16px 20px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
-                      <div>
-                        <p style={{ fontWeight: 600, fontSize: "15px", color: "#fff", marginBottom: "4px" }}>{check.label}</p>
-                        <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>{check.detail}</p>
-                      </div>
-                      {bill > 0 && <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "8px 14px", textAlign: "right", flexShrink: 0 }}>
-                        <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--green)" }}>${sMin2?.toLocaleString()} – ${sMax2?.toLocaleString()}</p>
-                        <p style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ month</p>
-                      </div>}
+          {/* ── FINDINGS — Redesigned with Thomas Vallely's recommendations ── */}
+          {flagged.length > 0 && (() => {
+            const EFFORT_ORDER = { Low: 0, Medium: 1, High: 2 };
+            const IMPACT_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+            const EFFORT_CFG = {
+              Low:    { label: "Quick win",    color: "#22c55e", bg: "rgba(34,197,94,0.08)",   border: "rgba(34,197,94,0.2)",   dot: "#22c55e" },
+              Medium: { label: "Some effort",  color: "#f59e0b", bg: "rgba(245,158,11,0.08)",  border: "rgba(245,158,11,0.2)",  dot: "#f59e0b" },
+              High:   { label: "Complex",      color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.2)", dot: "#f87171" },
+            };
+            const IMPACT_COLORS = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24", Low: "#94a3b8" };
+
+            const sorted = [...flagged].sort((a, b) => {
+              if (reportSort === "effort") {
+                const e = (EFFORT_ORDER[a.effort]??1) - (EFFORT_ORDER[b.effort]??1);
+                return e !== 0 ? e : (IMPACT_ORDER[a.impact]??2) - (IMPACT_ORDER[b.impact]??2);
+              }
+              if (reportSort === "impact") return (IMPACT_ORDER[a.impact]??2) - (IMPACT_ORDER[b.impact]??2);
+              // savings
+              const aAvg = (a.savingsRange[0]+a.savingsRange[1])/2;
+              const bAvg = (b.savingsRange[0]+b.savingsRange[1])/2;
+              return bAvg - aAvg;
+            });
+
+            const quickWins = flagged.filter(c => c.effort === "Low").length;
+
+            return (
+              <div className="fade-up stagger-2">
+                {/* Sort controls */}
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "10px" }}>
+                    <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "#475569" }}>
+                      {flagged.length} findings
+                    </p>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      {[
+                        { id: "effort",  label: "Quick wins first" },
+                        { id: "impact",  label: "Highest impact" },
+                        { id: "savings", label: "Largest savings" },
+                      ].map(o => (
+                        <button key={o.id}
+                          className={`sort-pill${reportSort === o.id ? " active-sort" : ""}`}
+                          onClick={() => setReportSort(o.id)}>
+                          {o.label}
+                        </button>
+                      ))}
                     </div>
-                  );
-                })}
+                  </div>
+                  {reportSort === "effort" && (
+                    <div className="thomas-callout">
+                      <span style={{ fontSize: "14px", flexShrink: 0 }}>💡</span>
+                      <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.55 }}>
+                        <strong style={{ color: "#00ffb4" }}>Quick wins first</strong> — {quickWins} of your {flagged.length} issues are low-effort fixes you can implement today. Recommended by Thomas Vallely, Head of FinOps & SAM at Nokia.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Findings list */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "28px" }}>
+                  {sorted.map((check, i) => {
+                    const eff = EFFORT_CFG[check.effort] || EFFORT_CFG.Medium;
+                    const impColor = IMPACT_COLORS[check.impact] || "#94a3b8";
+                    const sMin2 = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
+                    const sMax2 = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
+                    const isOpen = expandedFinding === check.id;
+                    const maxSav = bill > 0 ? Math.round(bill * 0.7) : 700;
+
+                    return (
+                      <div key={check.id}
+                        className={`finding-row${isOpen ? " expanded-finding" : ""}`}
+                        onClick={() => setExpandedFinding(isOpen ? null : check.id)}>
+
+                        {/* Main row */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px" }}>
+                          <span style={{ fontSize: "11px", color: "#334155", fontWeight: 600, minWidth: "20px", flexShrink: 0 }}>
+                            {String(i + 1).padStart(2, "0")}
+                          </span>
+                          <span className="effort-tag" style={{ background: eff.bg, border: `1px solid ${eff.border}`, color: eff.color, minWidth: "90px", justifyContent: "center", flexShrink: 0 }}>
+                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: eff.dot, display: "inline-block", flexShrink: 0 }} />
+                            {eff.label}
+                          </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: "14px", color: "#e2e8f0", fontWeight: 500, marginBottom: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {check.label}
+                            </p>
+                            <p style={{ fontSize: "11px", color: "#475569" }}>
+                              {check.detail}
+                              {check.fixTime && <span style={{ marginLeft: "6px", color: "#334155" }}>· {check.fixTime} to fix</span>}
+                            </p>
+                          </div>
+                          <span style={{ fontSize: "11px", color: impColor, fontWeight: 700, flexShrink: 0, minWidth: "55px", textAlign: "right" }}>
+                            {check.impact || ""}
+                          </span>
+                          {bill > 0 && sMin2 !== null && (
+                            <span style={{ fontSize: "13px", color: "#00ffb4", fontWeight: 700, flexShrink: 0, minWidth: "130px", textAlign: "right", fontFamily: "inherit" }}>
+                              ${sMin2.toLocaleString()}–${sMax2.toLocaleString()}/mo
+                            </span>
+                          )}
+                          <span style={{ fontSize: "11px", color: "#334155", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none", flexShrink: 0 }}>▾</span>
+                        </div>
+
+                        {/* Expanded detail */}
+                        {isOpen && (
+                          <div style={{ padding: "0 18px 16px 52px", borderTop: "1px solid rgba(255,255,255,0.04)" }}
+                            onClick={e => e.stopPropagation()}>
+                            <div style={{ paddingTop: "14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                              <div>
+                                <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "#475569", marginBottom: "6px" }}>Implementation</p>
+                                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                                  <span className="effort-tag" style={{ background: eff.bg, border: `1px solid ${eff.border}`, color: eff.color }}>
+                                    {check.effort || "Medium"} effort
+                                  </span>
+                                  <span className="effort-tag" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: impColor }}>
+                                    {check.impact || ""} impact
+                                  </span>
+                                  {check.fixTime && (
+                                    <span className="effort-tag" style={{ background: "rgba(0,255,180,0.06)", border: "1px solid rgba(0,255,180,0.15)", color: "#00ffb4" }}>
+                                      ⏱ {check.fixTime}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              {bill > 0 && sMax2 > 0 && (
+                                <div>
+                                  <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "#475569", marginBottom: "6px" }}>Monthly recovery potential</p>
+                                  <div className="progress-track">
+                                    <div className="progress-fill" style={{ width: `${Math.min((sMax2 / maxSav) * 100, 100)}%` }} />
+                                  </div>
+                                  <p style={{ fontSize: "11px", color: "#00ffb4", marginTop: "5px" }}>${sMin2?.toLocaleString()} – ${sMax2?.toLocaleString()}/month</p>
+                                </div>
+                              )}
+                            </div>
+                            <p style={{ fontSize: "12px", color: "#475569", marginTop: "12px", lineHeight: 1.55 }}>
+                              The <strong style={{ color: "#00ffb4" }}>Cost Blueprint</strong> includes exact CLI commands, Terraform snippets, and step-by-step instructions for this fix.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })()}
 
           {/* Action plan */}
           <div className="fade-up stagger-3" style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", marginBottom: "24px" }}>
