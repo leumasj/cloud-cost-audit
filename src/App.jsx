@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 
 const AUDIT_SECTIONS = [
   {
@@ -161,17 +161,6 @@ const globalCss = `
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
-  /* ── REPORT REDESIGN STYLES ── */
-  .finding-row { border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; background: rgba(255,255,255,0.02); transition: all 0.18s; cursor: pointer; overflow: hidden; }
-  .finding-row:hover { border-color: rgba(0,255,180,0.15); background: rgba(0,255,180,0.02); }
-  .finding-row.expanded-finding { border-color: rgba(0,255,180,0.25); background: rgba(0,255,180,0.03); }
-  .sort-pill { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #64748b; font-family: inherit; font-size: 12px; padding: 7px 14px; cursor: pointer; transition: all 0.15s; font-weight: 500; }
-  .sort-pill:hover { color: #e2e8f0; border-color: rgba(255,255,255,0.15); }
-  .sort-pill.active-sort { background: rgba(0,255,180,0.08); border-color: rgba(0,255,180,0.3); color: #00ffb4; }
-  .effort-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.2px; }
-  .thomas-callout { background: linear-gradient(135deg,rgba(0,255,180,0.04),rgba(0,212,255,0.02)); border: 1px solid rgba(0,255,180,0.12); border-radius: 10px; padding: 12px 16px; display: flex; gap: 10px; align-items: flex-start; }
-  .progress-track { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-top: 8px; }
-  .progress-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg,#00ffb4,#00d4ff); transition: width 0.6s ease; }
   @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 1; } 30% { transform: translateY(-6px); opacity: 0.6; } }
   .trust-link { display:flex; align-items:center; gap:10px; text-decoration:none; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; transition:all 0.2s; }
   .trust-link:hover { background:rgba(255,255,255,0.06) !important; transform:translateX(3px); }
@@ -260,17 +249,17 @@ function AuditChatBot({ provider, bill, flagged, savMin, savMax, savPct, wasteSc
   const [input, setInput]     = useState('');
   const [loading, setLoading] = useState(false);
   const [hasGreeted, setHasGreeted] = useState(false);
-  const messagesEndRef          = useRef(null);
+  const messagesEndRef          = React.useRef(null);
 
   // Auto-scroll to latest message
-  useEffect(() => {
+  React.useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
 
   // Greet user when chat opens for first time
-  useEffect(() => {
+  React.useEffect(() => {
     if (open && !hasGreeted) {
       const issueCount = flagged.length;
       const topIssue   = flagged[0]?.label || 'some optimisation opportunities';
@@ -930,138 +919,6 @@ const TESTIMONIALS = [
   { name: "Marco D.", role: "Infrastructure Lead · Milan e-commerce", text: "Orphaned EBS volumes and a forgotten NAT Gateway were costing us $960/month. CLI commands were copy-paste ready. Fixed same afternoon.", savings: "$960/mo", provider: "Azure" },
 ];
 
-// ── FINDINGS SECTION COMPONENT ────────────────────────────────────────────────
-function FindingsSection({ flagged, bill, reportSort, setReportSort, expandedFinding, setExpandedFinding }) {
-  const EFFORT_ORDER  = { Low: 0, Medium: 1, High: 2 };
-  const IMPACT_ORDER  = { Critical: 0, High: 1, Medium: 2, Low: 3 };
-  const EFFORT_CFG = {
-    Low:    { label: "Quick win",   color: "#22c55e", bg: "rgba(34,197,94,0.08)",   border: "rgba(34,197,94,0.2)",   dot: "#22c55e" },
-    Medium: { label: "Some effort", color: "#f59e0b", bg: "rgba(245,158,11,0.08)",  border: "rgba(245,158,11,0.2)",  dot: "#f59e0b" },
-    High:   { label: "Complex",     color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.2)", dot: "#f87171" },
-  };
-  const IMPACT_COLORS = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24", Low: "#94a3b8" };
-
-  const sorted = [...flagged].sort((a, b) => {
-    if (reportSort === "effort") {
-      const e = (EFFORT_ORDER[a.effort] ?? 1) - (EFFORT_ORDER[b.effort] ?? 1);
-      return e !== 0 ? e : (IMPACT_ORDER[a.impact] ?? 2) - (IMPACT_ORDER[b.impact] ?? 2);
-    }
-    if (reportSort === "impact") return (IMPACT_ORDER[a.impact] ?? 2) - (IMPACT_ORDER[b.impact] ?? 2);
-    const aAvg = (a.savingsRange[0] + a.savingsRange[1]) / 2;
-    const bAvg = (b.savingsRange[0] + b.savingsRange[1]) / 2;
-    return bAvg - aAvg;
-  });
-
-  const quickWins = flagged.filter(c => c.effort === "Low").length;
-  const maxSav = bill > 0 ? Math.round(bill * 0.7) : 700;
-
-  return (
-    <div className="fade-up stagger-2">
-      {/* Sort controls */}
-      <div style={{ marginBottom: "16px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "10px" }}>
-          <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "#475569" }}>
-            {flagged.length} findings
-          </p>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-            {[
-              { id: "effort",  label: "Quick wins first" },
-              { id: "impact",  label: "Highest impact" },
-              { id: "savings", label: "Largest savings" },
-            ].map(o => (
-              <button key={o.id}
-                className={`sort-pill${reportSort === o.id ? " active-sort" : ""}`}
-                onClick={() => setReportSort(o.id)}>
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        {reportSort === "effort" && (
-          <div className="thomas-callout">
-            <span style={{ fontSize: "14px", flexShrink: 0 }}>💡</span>
-            <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.55 }}>
-              <strong style={{ color: "#00ffb4" }}>Quick wins first</strong> — {quickWins} of your {flagged.length} issues are low-effort fixes you can implement today. Start here before tackling complex optimisations.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Findings list */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "28px" }}>
-        {sorted.map((check, i) => {
-          const eff = EFFORT_CFG[check.effort] || EFFORT_CFG.Medium;
-          const impColor = IMPACT_COLORS[check.impact] || "#94a3b8";
-          const sMin2 = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
-          const sMax2 = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
-          const isOpen = expandedFinding === check.id;
-
-          return (
-            <div key={check.id}
-              className={`finding-row${isOpen ? " expanded-finding" : ""}`}
-              onClick={() => setExpandedFinding(isOpen ? null : check.id)}>
-              <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px" }}>
-                <span style={{ fontSize: "11px", color: "#334155", fontWeight: 600, minWidth: "20px", flexShrink: 0 }}>
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <span className="effort-tag" style={{ background: eff.bg, border: `1px solid ${eff.border}`, color: eff.color, minWidth: "90px", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: eff.dot, display: "inline-block", flexShrink: 0 }} />
-                  {eff.label}
-                </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: "14px", color: "#e2e8f0", fontWeight: 500, marginBottom: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {check.label}
-                  </p>
-                  <p style={{ fontSize: "11px", color: "#475569" }}>
-                    {check.detail}
-                    {check.fixTime && <span style={{ marginLeft: "6px", color: "#334155" }}>· {check.fixTime} to fix</span>}
-                  </p>
-                </div>
-                <span style={{ fontSize: "11px", color: impColor, fontWeight: 700, flexShrink: 0, minWidth: "55px", textAlign: "right" }}>
-                  {check.impact || ""}
-                </span>
-                {bill > 0 && sMin2 !== null && (
-                  <span style={{ fontSize: "13px", color: "#00ffb4", fontWeight: 700, flexShrink: 0, minWidth: "130px", textAlign: "right" }}>
-                    ${sMin2.toLocaleString()}–${sMax2.toLocaleString()}/mo
-                  </span>
-                )}
-                <span style={{ fontSize: "11px", color: "#334155", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none", flexShrink: 0 }}>▾</span>
-              </div>
-              {isOpen && (
-                <div style={{ padding: "0 18px 16px 52px", borderTop: "1px solid rgba(255,255,255,0.04)" }}
-                  onClick={e => e.stopPropagation()}>
-                  <div style={{ paddingTop: "14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                    <div>
-                      <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "#475569", marginBottom: "6px" }}>Implementation</p>
-                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                        <span className="effort-tag" style={{ background: eff.bg, border: `1px solid ${eff.border}`, color: eff.color }}>{check.effort || "Medium"} effort</span>
-                        <span className="effort-tag" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: impColor }}>{check.impact || ""} impact</span>
-                        {check.fixTime && <span className="effort-tag" style={{ background: "rgba(0,255,180,0.06)", border: "1px solid rgba(0,255,180,0.15)", color: "#00ffb4" }}>⏱ {check.fixTime}</span>}
-                      </div>
-                    </div>
-                    {bill > 0 && sMax2 > 0 && (
-                      <div>
-                        <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "#475569", marginBottom: "6px" }}>Monthly recovery</p>
-                        <div className="progress-track">
-                          <div className="progress-fill" style={{ width: `${Math.min((sMax2 / maxSav) * 100, 100)}%` }} />
-                        </div>
-                        <p style={{ fontSize: "11px", color: "#00ffb4", marginTop: "5px" }}>${sMin2?.toLocaleString()} – ${sMax2?.toLocaleString()}/month</p>
-                      </div>
-                    )}
-                  </div>
-                  <p style={{ fontSize: "12px", color: "#475569", marginTop: "12px", lineHeight: 1.55 }}>
-                    The <strong style={{ color: "#00ffb4" }}>Cost Blueprint</strong> includes exact CLI commands, Terraform snippets, and step-by-step instructions for this fix.
-                  </p>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
   const [step, setStep] = useState("intro");
   const [provider, setProvider] = useState("");
@@ -1085,8 +942,6 @@ export default function App() {
   const [activeHowStep, setActiveHowStep] = useState(null); // null = all equal, click to expand
   const [showExitIntent, setShowExitIntent] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
-  const [reportSort, setReportSort] = useState("effort");   // 'effort' | 'impact' | 'savings'
-  const [expandedFinding, setExpandedFinding] = useState(null);
   // ── SECURITY AUDIT STATE ──────────────────────────────────────────────────
   const [secChecked, setSecChecked] = useState({});
   const [secStep, setSecStep] = useState(0);
@@ -1252,35 +1107,29 @@ export default function App() {
       .catch(() => setAiPreviewLoading(false));
   }, [step]);
 
-  // ── SAVE AUDIT — non-blocking, fires and forgets with one retry ─────────
+  // ── SAVE AUDIT — non-blocking, fires and forgets ─────────────────────────
   const saveAudit = (emailOverride) => {
+    // Calculate waste score same formula as report page
     const issueW  = Math.min(flagged.length / allChecks.length, 1) * 30;
     const pctW    = Math.min(savPct / 50, 1) * 70;
     const wScore  = Math.max(0, Math.min(100, Math.round(100 - issueW - pctW)));
 
-    const payload = JSON.stringify({
-      sessionId,
-      email:       emailOverride || gateEmail || null,
-      provider:    provider || 'AWS',
-      monthlyBill: bill,
-      companyName: companyName || null,
-      flaggedIds:  flagged.map(c => c.id),
-      wasteScore:  wScore,
-      savingsMin:  savMin,
-      savingsMax:  savMax,
-      auditType:   'cost',
-    });
-
-    const attempt = () => fetch('/api/save-audit', {
+    fetch('/api/save-audit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: payload,
-    });
-
-    // Try immediately, retry once after 3s if first attempt fails
-    attempt().catch(() => {
-      setTimeout(() => attempt().catch(() => {}), 3000);
-    });
+      body: JSON.stringify({
+        sessionId,
+        email:       emailOverride || gateEmail || null,
+        provider:    provider || 'AWS',
+        monthlyBill: bill,
+        companyName: companyName || null,
+        flaggedIds:  flagged.map(c => c.id),
+        wasteScore:  wScore,
+        savingsMin:  savMin,
+        savingsMax:  savMax,
+        auditType:   'cost',
+      }),
+    }).catch(() => {}); // silent — never block user on this
   };
 
   // ── EXIT INTENT DETECTOR ─────────────────────────────────────────────────
@@ -2888,7 +2737,7 @@ export default function App() {
                 {activeSection < AUDIT_SECTIONS.length - 1 ? (
                   <button className="glow-btn" onClick={() => setActiveSection(a => a + 1)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)" }}>Next: {AUDIT_SECTIONS[activeSection + 1].label} →</button>
                 ) : (
-                  <button className="glow-btn" onClick={() => goTo("email_gate")} style={{ background: "linear-gradient(135deg, var(--green), #00d4ff)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 32px", fontSize: "14px", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Generate Report →</button>
+                  <button className="glow-btn" onClick={() => { saveAudit(null); goTo("email_gate"); }} style={{ background: "linear-gradient(135deg, var(--green), #00d4ff)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 32px", fontSize: "14px", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Generate Report →</button>
                 )}
               </div>
             </div>
@@ -3056,7 +2905,7 @@ export default function App() {
                   }}>
                     {gateSending ? "Saving…" : "Send Me the Report →"}
                   </button>
-                  <button type="button" onClick={() => { try { saveAudit(null); } catch(_) {} goTo("report"); }} style={{
+                  <button type="button" onClick={() => { saveAudit(null); goTo("report"); }} style={{
                     width: "100%", padding: "12px", borderRadius: "10px",
                     border: "1px solid rgba(255,255,255,0.08)",
                     background: "transparent", color: "#64748b",
@@ -3131,33 +2980,93 @@ export default function App() {
           )}
 
 
+          {/* ── WASTE SCORE ── */}
+          {bill > 0 && flagged.length > 0 && (() => {
+            const score = Math.max(0, Math.min(100, Math.round(100 - savPct)));
+            const grade = score >= 80 ? { label: "Well Optimised", color: "#4ade80", bg: "rgba(74,222,128,0.08)", border: "rgba(74,222,128,0.25)", desc: "Your infrastructure is in good shape. A few quick wins remain.", emoji: "🟢" }
+              : score >= 60 ? { label: "Needs Attention", color: "#fbbf24", bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.25)", desc: "Meaningful waste detected. Fixable without architecture changes.", emoji: "🟡" }
+              : score >= 40 ? { label: "Significant Waste", color: "#fb923c", bg: "rgba(251,146,60,0.08)", border: "rgba(251,146,60,0.25)", desc: "Your bill is substantially higher than it needs to be. Act now.", emoji: "🟠" }
+              : { label: "Critical Overspend", color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.25)", desc: "Serious waste across multiple categories. Every week costs you.", emoji: "🔴" };
+
+            return (
+              <div className="fade-up stagger-1" style={{ background: grade.bg, border: `1px solid ${grade.border}`, borderRadius: "20px", padding: "28px 32px", marginBottom: "28px", display: "flex", alignItems: "center", gap: "28px", flexWrap: "wrap" }}>
+                {/* Score circle */}
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <svg width="110" height="110" viewBox="0 0 110 110">
+                    <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+                    <circle cx="55" cy="55" r="46" fill="none" stroke={grade.color} strokeWidth="10"
+                      strokeDasharray={`${2 * Math.PI * 46}`}
+                      strokeDashoffset={`${2 * Math.PI * 46 * (1 - score / 100)}`}
+                      strokeLinecap="round"
+                      transform="rotate(-90 55 55)"
+                      style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)" }}
+                    />
+                    <text x="55" y="50" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="800" fontFamily="var(--display)">{score}</text>
+                    <text x="55" y="66" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="10">/100</text>
+                  </svg>
+                </div>
+                {/* Score details */}
+                <div style={{ flex: 1, minWidth: "200px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "2px", textTransform: "uppercase" }}>KloudAudit Waste Score</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                    <span style={{ fontSize: "22px" }}>{grade.emoji}</span>
+                    <span className="display" style={{ fontSize: "26px", fontWeight: 800, color: grade.color, letterSpacing: "-0.5px" }}>{grade.label}</span>
+                  </div>
+                  <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.6, marginBottom: "14px" }}>{grade.desc}</p>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "3px 10px" }}>~{savPct}% waste rate</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "3px 10px" }}>{flagged.length} of {allChecks.length} checks flagged</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "3px 10px" }}>${savMin.toLocaleString()}–${savMax.toLocaleString()}/mo recoverable</span>
+                  </div>
+                </div>
+                {/* Share nudge */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "flex-end" }}>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", textAlign: "right", maxWidth: "140px", lineHeight: 1.4 }}>Share your score with your team or on LinkedIn</p>
+                  <button onClick={() => setShowShareCard(true)}
+                    style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 14px", color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 700, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "#fff"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>
+                    📤 Share Score
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+
           {/* ── WASTE SCORE ────────────────────────────────────────────────────── */}
           {bill > 0 && flagged.length > 0 && (() => {
-            const _issueWeight = Math.min(flagged.length / allChecks.length, 1) * 30;
-            const _pctWeight   = Math.min(savPct / 50, 1) * 70;
-            const _score       = Math.max(0, Math.min(100, Math.round(100 - _issueWeight - _pctWeight)));
-            const _grade       = __score >= 80 ? { label: "Well Optimised",    color: "#4ade80", ring: "#4ade80" }
-                               : __score >= 60 ? { label: "Needs Attention",   color: "#fbbf24", ring: "#fbbf24" }
-                               : __score >= 40 ? { label: "Significant Waste", color: "#fb923c", ring: "#fb923c" }
-                               :                { label: "Critical Waste",    color: "#f87171", ring: "#f87171" };
-            const _circ        = 2 * Math.PI * 54;
-            const _offset      = _circ * (1 - _score / 100);
+            // Score: 100 = perfectly clean, 0 = catastrophic waste
+            // Derived from waste pct + issue count weighting
+            const issueWeight = Math.min(flagged.length / allChecks.length, 1) * 30;
+            const pctWeight   = Math.min(savPct / 50, 1) * 70;
+            const rawScore    = Math.round(100 - issueWeight - pctWeight);
+            const score       = Math.max(0, Math.min(100, rawScore));
+            const grade       = score >= 80 ? { label: "Well Optimised",    color: "#4ade80", ring: "#4ade80" }
+                              : score >= 60 ? { label: "Needs Attention",   color: "#fbbf24", ring: "#fbbf24" }
+                              : score >= 40 ? { label: "Significant Waste", color: "#fb923c", ring: "#fb923c" }
+                              :               { label: "Critical Waste",    color: "#f87171", ring: "#f87171" };
+            const circumference = 2 * Math.PI * 54;
+            const dashOffset    = circumference * (1 - score / 100);
+
             return (
-              <div className="fade-up" style={{ background: "var(--bg2)", border: `1px solid ${_grade.ring}30`, borderRadius: "20px", padding: "36px", marginBottom: "24px", display: "flex", alignItems: "center", gap: "40px", flexWrap: "wrap" }}>
+              <div className="fade-up" style={{ background: "var(--bg2)", border: `1px solid ${grade.ring}30`, borderRadius: "20px", padding: "36px", marginBottom: "24px", display: "flex", alignItems: "center", gap: "40px", flexWrap: "wrap" }}>
                 {/* Score ring */}
                 <div style={{ position: "relative", flexShrink: 0 }}>
                   <svg width="130" height="130" style={{ transform: "rotate(-90deg)" }}>
                     <circle cx="65" cy="65" r="54" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
                     <circle cx="65" cy="65" r="54" fill="none"
-                      stroke={_grade.ring} strokeWidth="10"
-                      strokeDasharray={_circ}
-                      strokeDashoffset={_offset}
+                      stroke={grade.ring} strokeWidth="10"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={dashOffset}
                       strokeLinecap="round"
-                      style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)", filter: `drop-shadow(0 0 8px ${_grade.ring}60)` }}
+                      style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)", filter: `drop-shadow(0 0 8px ${grade.ring}60)` }}
                     />
                   </svg>
                   <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                    <span className="display" style={{ fontSize: "32px", fontWeight: 800, color: _grade.color, letterSpacing: "-1px", lineHeight: 1 }}>{__score}</span>
+                    <span className="display" style={{ fontSize: "32px", fontWeight: 800, color: grade.color, letterSpacing: "-1px", lineHeight: 1 }}>{score}</span>
                     <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600, letterSpacing: "1px" }}>/ 100</span>
                   </div>
                 </div>
@@ -3167,13 +3076,13 @@ export default function App() {
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                     <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase" }}>KloudAudit Waste Score</p>
                   </div>
-                  <h2 className="display" style={{ fontSize: "28px", fontWeight: 800, color: _grade.color, letterSpacing: "-0.8px", marginBottom: "8px" }}>{_grade.label}</h2>
+                  <h2 className="display" style={{ fontSize: "28px", fontWeight: 800, color: grade.color, letterSpacing: "-0.8px", marginBottom: "8px" }}>{grade.label}</h2>
                   <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>
-                    {_score >= 80
+                    {score >= 80
                       ? `Your infrastructure is well managed. The ${flagged.length} issue${flagged.length > 1 ? "s" : ""} found are optimisation opportunities rather than critical problems.`
-                      : _score >= 60
+                      : score >= 60
                       ? `Your bill has identifiable waste that should be addressed. The ${flagged.length} flagged issue${flagged.length > 1 ? "s" : ""} represent ~${savPct}% of your monthly spend.`
-                      : _score >= 40
+                      : score >= 40
                       ? `Significant waste detected. Your team is paying roughly $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/month more than necessary. This is fixable.`
                       : `Critical waste level. At your current bill size, unaddressed issues are costing $${(savMin * 12).toLocaleString()}+ per year. Immediate action recommended.`
                     }
@@ -3183,10 +3092,10 @@ export default function App() {
                     <p style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "8px", fontWeight: 600 }}>Industry benchmark comparison</p>
                     <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
                       {[
-                        { range: "0–39", label: "Critical", color: "#f87171", active: _score < 40 },
-                        { range: "40–59", label: "Poor",     color: "#fb923c", active: _score >= 40 && _score < 60 },
-                        { range: "60–79", label: "Fair",     color: "#fbbf24", active: _score >= 60 && _score < 80 },
-                        { range: "80–100",label: "Good",     color: "#4ade80", active: _score >= 80 },
+                        { range: "0–39", label: "Critical", color: "#f87171", active: score < 40 },
+                        { range: "40–59", label: "Poor",     color: "#fb923c", active: score >= 40 && score < 60 },
+                        { range: "60–79", label: "Fair",     color: "#fbbf24", active: score >= 60 && score < 80 },
+                        { range: "80–100",label: "Good",     color: "#4ade80", active: score >= 80 },
                       ].map(b => (
                         <div key={b.range} style={{ flex: 1, height: "6px", borderRadius: "3px", background: b.active ? b.color : `${b.color}30`, boxShadow: b.active ? `0 0 8px ${b.color}60` : "none", transition: "all 0.3s" }} />
                       ))}
@@ -3210,15 +3119,33 @@ export default function App() {
             );
           })()}
 
-          {/* ── FINDINGS — Sorted by implementation ease ── */}
-          {flagged.length > 0 && <FindingsSection
-            flagged={flagged}
-            bill={bill}
-            reportSort={reportSort}
-            setReportSort={setReportSort}
-            expandedFinding={expandedFinding}
-            setExpandedFinding={setExpandedFinding}
-          />}
+          {/* Findings */}
+          <div className="fade-up stagger-2">
+            {[{ label: "🔴 Critical & High Impact", items: high, color: "#f87171" }, { label: "🟡 Medium Impact", items: med, color: "#fbbf24" }, { label: "🟢 Quick Wins", items: low, color: "#4ade80" }].filter(g => g.items.length > 0).map(group => (
+              <div key={group.label} style={{ marginBottom: "28px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+                  <h3 className="display" style={{ fontSize: "15px", fontWeight: 700, color: group.color }}>{group.label}</h3>
+                  <span style={{ background: `${group.color}15`, color: group.color, fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px" }}>{group.items.length}</span>
+                </div>
+                {group.items.map(check => {
+                  const sMin2 = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
+                  const sMax2 = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
+                  return (
+                    <div key={check.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderLeft: `3px solid ${group.color}`, borderRadius: "0 12px 12px 0", padding: "16px 20px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+                      <div>
+                        <p style={{ fontWeight: 600, fontSize: "15px", color: "#fff", marginBottom: "4px" }}>{check.label}</p>
+                        <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>{check.detail}</p>
+                      </div>
+                      {bill > 0 && <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "8px 14px", textAlign: "right", flexShrink: 0 }}>
+                        <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--green)" }}>${sMin2?.toLocaleString()} – ${sMax2?.toLocaleString()}</p>
+                        <p style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ month</p>
+                      </div>}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
 
           {/* Action plan */}
           <div className="fade-up stagger-3" style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", marginBottom: "24px" }}>
