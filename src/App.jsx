@@ -3131,93 +3131,33 @@ export default function App() {
           )}
 
 
-          {/* ── WASTE SCORE ── */}
-          {bill > 0 && flagged.length > 0 && (() => {
-            const score = Math.max(0, Math.min(100, Math.round(100 - savPct)));
-            const grade = score >= 80 ? { label: "Well Optimised", color: "#4ade80", bg: "rgba(74,222,128,0.08)", border: "rgba(74,222,128,0.25)", desc: "Your infrastructure is in good shape. A few quick wins remain.", emoji: "🟢" }
-              : score >= 60 ? { label: "Needs Attention", color: "#fbbf24", bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.25)", desc: "Meaningful waste detected. Fixable without architecture changes.", emoji: "🟡" }
-              : score >= 40 ? { label: "Significant Waste", color: "#fb923c", bg: "rgba(251,146,60,0.08)", border: "rgba(251,146,60,0.25)", desc: "Your bill is substantially higher than it needs to be. Act now.", emoji: "🟠" }
-              : { label: "Critical Overspend", color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.25)", desc: "Serious waste across multiple categories. Every week costs you.", emoji: "🔴" };
-
-            return (
-              <div className="fade-up stagger-1" style={{ background: grade.bg, border: `1px solid ${grade.border}`, borderRadius: "20px", padding: "28px 32px", marginBottom: "28px", display: "flex", alignItems: "center", gap: "28px", flexWrap: "wrap" }}>
-                {/* Score circle */}
-                <div style={{ position: "relative", flexShrink: 0 }}>
-                  <svg width="110" height="110" viewBox="0 0 110 110">
-                    <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
-                    <circle cx="55" cy="55" r="46" fill="none" stroke={grade.color} strokeWidth="10"
-                      strokeDasharray={`${2 * Math.PI * 46}`}
-                      strokeDashoffset={`${2 * Math.PI * 46 * (1 - score / 100)}`}
-                      strokeLinecap="round"
-                      transform="rotate(-90 55 55)"
-                      style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)" }}
-                    />
-                    <text x="55" y="50" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="800" fontFamily="var(--display)">{score}</text>
-                    <text x="55" y="66" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="10">/100</text>
-                  </svg>
-                </div>
-                {/* Score details */}
-                <div style={{ flex: 1, minWidth: "200px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                    <span style={{ fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "2px", textTransform: "uppercase" }}>KloudAudit Waste Score</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-                    <span style={{ fontSize: "22px" }}>{grade.emoji}</span>
-                    <span className="display" style={{ fontSize: "26px", fontWeight: 800, color: grade.color, letterSpacing: "-0.5px" }}>{grade.label}</span>
-                  </div>
-                  <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.6, marginBottom: "14px" }}>{grade.desc}</p>
-                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "3px 10px" }}>~{savPct}% waste rate</span>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "3px 10px" }}>{flagged.length} of {allChecks.length} checks flagged</span>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "3px 10px" }}>${savMin.toLocaleString()}–${savMax.toLocaleString()}/mo recoverable</span>
-                  </div>
-                </div>
-                {/* Share nudge */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "flex-end" }}>
-                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", textAlign: "right", maxWidth: "140px", lineHeight: 1.4 }}>Share your score with your team or on LinkedIn</p>
-                  <button onClick={() => setShowShareCard(true)}
-                    style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 14px", color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 700, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "#fff"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>
-                    📤 Share Score
-                  </button>
-                </div>
-              </div>
-            );
-          })()}
-
-
           {/* ── WASTE SCORE ────────────────────────────────────────────────────── */}
           {bill > 0 && flagged.length > 0 && (() => {
-            // Score: 100 = perfectly clean, 0 = catastrophic waste
-            // Derived from waste pct + issue count weighting
-            const issueWeight = Math.min(flagged.length / allChecks.length, 1) * 30;
-            const pctWeight   = Math.min(savPct / 50, 1) * 70;
-            const rawScore    = Math.round(100 - issueWeight - pctWeight);
-            const score       = Math.max(0, Math.min(100, rawScore));
-            const grade       = score >= 80 ? { label: "Well Optimised",    color: "#4ade80", ring: "#4ade80" }
-                              : score >= 60 ? { label: "Needs Attention",   color: "#fbbf24", ring: "#fbbf24" }
-                              : score >= 40 ? { label: "Significant Waste", color: "#fb923c", ring: "#fb923c" }
-                              :               { label: "Critical Waste",    color: "#f87171", ring: "#f87171" };
-            const circumference = 2 * Math.PI * 54;
-            const dashOffset    = circumference * (1 - score / 100);
-
+            const _issueWeight = Math.min(flagged.length / allChecks.length, 1) * 30;
+            const _pctWeight   = Math.min(savPct / 50, 1) * 70;
+            const _score       = Math.max(0, Math.min(100, Math.round(100 - _issueWeight - _pctWeight)));
+            const _grade       = __score >= 80 ? { label: "Well Optimised",    color: "#4ade80", ring: "#4ade80" }
+                               : __score >= 60 ? { label: "Needs Attention",   color: "#fbbf24", ring: "#fbbf24" }
+                               : __score >= 40 ? { label: "Significant Waste", color: "#fb923c", ring: "#fb923c" }
+                               :                { label: "Critical Waste",    color: "#f87171", ring: "#f87171" };
+            const _circ        = 2 * Math.PI * 54;
+            const _offset      = _circ * (1 - _score / 100);
             return (
-              <div className="fade-up" style={{ background: "var(--bg2)", border: `1px solid ${grade.ring}30`, borderRadius: "20px", padding: "36px", marginBottom: "24px", display: "flex", alignItems: "center", gap: "40px", flexWrap: "wrap" }}>
+              <div className="fade-up" style={{ background: "var(--bg2)", border: `1px solid ${_grade.ring}30`, borderRadius: "20px", padding: "36px", marginBottom: "24px", display: "flex", alignItems: "center", gap: "40px", flexWrap: "wrap" }}>
                 {/* Score ring */}
                 <div style={{ position: "relative", flexShrink: 0 }}>
                   <svg width="130" height="130" style={{ transform: "rotate(-90deg)" }}>
                     <circle cx="65" cy="65" r="54" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
                     <circle cx="65" cy="65" r="54" fill="none"
-                      stroke={grade.ring} strokeWidth="10"
-                      strokeDasharray={circumference}
-                      strokeDashoffset={dashOffset}
+                      stroke={_grade.ring} strokeWidth="10"
+                      strokeDasharray={_circ}
+                      strokeDashoffset={_offset}
                       strokeLinecap="round"
-                      style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)", filter: `drop-shadow(0 0 8px ${grade.ring}60)` }}
+                      style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)", filter: `drop-shadow(0 0 8px ${_grade.ring}60)` }}
                     />
                   </svg>
                   <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                    <span className="display" style={{ fontSize: "32px", fontWeight: 800, color: grade.color, letterSpacing: "-1px", lineHeight: 1 }}>{score}</span>
+                    <span className="display" style={{ fontSize: "32px", fontWeight: 800, color: _grade.color, letterSpacing: "-1px", lineHeight: 1 }}>{__score}</span>
                     <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600, letterSpacing: "1px" }}>/ 100</span>
                   </div>
                 </div>
@@ -3227,13 +3167,13 @@ export default function App() {
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                     <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase" }}>KloudAudit Waste Score</p>
                   </div>
-                  <h2 className="display" style={{ fontSize: "28px", fontWeight: 800, color: grade.color, letterSpacing: "-0.8px", marginBottom: "8px" }}>{grade.label}</h2>
+                  <h2 className="display" style={{ fontSize: "28px", fontWeight: 800, color: _grade.color, letterSpacing: "-0.8px", marginBottom: "8px" }}>{_grade.label}</h2>
                   <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>
-                    {score >= 80
+                    {_score >= 80
                       ? `Your infrastructure is well managed. The ${flagged.length} issue${flagged.length > 1 ? "s" : ""} found are optimisation opportunities rather than critical problems.`
-                      : score >= 60
+                      : _score >= 60
                       ? `Your bill has identifiable waste that should be addressed. The ${flagged.length} flagged issue${flagged.length > 1 ? "s" : ""} represent ~${savPct}% of your monthly spend.`
-                      : score >= 40
+                      : _score >= 40
                       ? `Significant waste detected. Your team is paying roughly $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/month more than necessary. This is fixable.`
                       : `Critical waste level. At your current bill size, unaddressed issues are costing $${(savMin * 12).toLocaleString()}+ per year. Immediate action recommended.`
                     }
@@ -3243,10 +3183,10 @@ export default function App() {
                     <p style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "8px", fontWeight: 600 }}>Industry benchmark comparison</p>
                     <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
                       {[
-                        { range: "0–39", label: "Critical", color: "#f87171", active: score < 40 },
-                        { range: "40–59", label: "Poor",     color: "#fb923c", active: score >= 40 && score < 60 },
-                        { range: "60–79", label: "Fair",     color: "#fbbf24", active: score >= 60 && score < 80 },
-                        { range: "80–100",label: "Good",     color: "#4ade80", active: score >= 80 },
+                        { range: "0–39", label: "Critical", color: "#f87171", active: _score < 40 },
+                        { range: "40–59", label: "Poor",     color: "#fb923c", active: _score >= 40 && _score < 60 },
+                        { range: "60–79", label: "Fair",     color: "#fbbf24", active: _score >= 60 && _score < 80 },
+                        { range: "80–100",label: "Good",     color: "#4ade80", active: _score >= 80 },
                       ].map(b => (
                         <div key={b.range} style={{ flex: 1, height: "6px", borderRadius: "3px", background: b.active ? b.color : `${b.color}30`, boxShadow: b.active ? `0 0 8px ${b.color}60` : "none", transition: "all 0.3s" }} />
                       ))}
