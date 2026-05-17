@@ -3132,7 +3132,7 @@ export default function App() {
             );
           })()}
 
-          {/* ── FINDINGS — Redesigned with Thomas Vallely's recommendations ── */}
+          {/* ── FINDINGS — Sorted by implementation ease ── */}
           {flagged.length > 0 && (() => {
             const EFFORT_ORDER = { Low: 0, Medium: 1, High: 2 };
             const IMPACT_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 };
@@ -3183,7 +3183,7 @@ export default function App() {
                     <div className="thomas-callout">
                       <span style={{ fontSize: "14px", flexShrink: 0 }}>💡</span>
                       <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.55 }}>
-                        <strong style={{ color: "#00ffb4" }}>Quick wins first</strong> — {quickWins} of your {flagged.length} issues are low-effort fixes you can implement today. Recommended by Thomas Vallely, Head of FinOps & SAM at Nokia.
+                        <strong style={{ color: "#00ffb4" }}>Quick wins first</strong> — {quickWins} of your {flagged.length} issues are low-effort fixes you can implement today. Start here before tackling complex optimisations.
                       </p>
                     </div>
                   )}
