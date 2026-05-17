@@ -10,9 +10,11 @@
 const { createClient } = require('@supabase/supabase-js');
 const sentry = require('./lib/_sentry');
 
+// Service role used here — server-side only, never exposed to browser
+// Needed to SELECT from audits table for benchmark aggregation
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
 );
 
 module.exports = async function handler(req, res) {
