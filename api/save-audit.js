@@ -67,7 +67,7 @@ module.exports = async function handler(req, res) {
     if (error) throw error;
 
     if (email) {
-      await supabase
+      const { error: subError } = await supabase
         .from('subscribers')
         .upsert({
           email,
@@ -78,6 +78,10 @@ module.exports = async function handler(req, res) {
           onConflict: 'email',
           ignoreDuplicates: false,
         });
+      if (subError) {
+        console.error('subscribers upsert error:', subError.message);
+        // Don't throw — audit save succeeded, subscriber is non-critical
+      }
     }
 
     return res.status(200).json({ success: true });
