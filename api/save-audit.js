@@ -45,7 +45,7 @@ module.exports = async function handler(req, res) {
     const reAuditDue = new Date();
     reAuditDue.setDate(reAuditDue.getDate() + 90);
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('audits')
       .upsert({
         session_id:   sessionId,
@@ -62,9 +62,7 @@ module.exports = async function handler(req, res) {
       }, {
         onConflict: 'session_id',
         ignoreDuplicates: false,
-      })
-      .select('id')
-      .single();
+      });
 
     if (error) throw error;
 
@@ -73,17 +71,16 @@ module.exports = async function handler(req, res) {
         .from('subscribers')
         .upsert({
           email,
-          provider:      provider || 'AWS',
-          last_audit_id: data.id,
-          re_audit_due:  reAuditDue.toISOString(),
-          unsubscribed:  false,
+          provider:     provider || 'AWS',
+          re_audit_due: reAuditDue.toISOString(),
+          unsubscribed: false,
         }, {
           onConflict: 'email',
           ignoreDuplicates: false,
         });
     }
 
-    return res.status(200).json({ success: true, auditId: data.id });
+    return res.status(200).json({ success: true });
 
   } catch (err) {
     console.error('save-audit error:', err.message);
