@@ -28,7 +28,6 @@ const SEO_PAGES = [
 // Each page gets its own HTML file with correct meta tags baked in.
 // Google reads the static HTML — no JS execution needed for indexing.
 
-const path = require('path');
 
 const BASE    = 'https://www.kloudaudit.eu';
 const DIST    = path.join(__dirname, '..', 'dist');
