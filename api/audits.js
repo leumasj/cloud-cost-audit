@@ -70,12 +70,21 @@ async function handleSaveAudit(req, res, supabase) {
 
   // Input validation
   const { action, ...auditData } = req.body; // Remove action from validation
+  
+  // DEBUG: Log what we're validating
+  console.log('Validating audit data:', JSON.stringify(auditData, null, 2));
+  
   const validation = validate(auditData, SaveAuditSchema);
+  
+  // DEBUG: Log validation result
+  console.log('Validation result:', JSON.stringify(validation, null, 2));
+  
   if (!validation.success) {
     return res.status(400).json({ 
       error: 'Validation failed', 
       message: validation.error,
       details: validation.details, // Include full error details
+      receivedData: Object.keys(auditData), // Show what fields we received
     });
   }
 
