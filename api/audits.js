@@ -69,7 +69,8 @@ async function handleSaveAudit(req, res) {
   }
 
   // Input validation
-  const validation = validate(req.body, SaveAuditSchema);
+  const { action, ...auditData } = req.body; // Remove action from validation
+  const validation = validate(auditData, SaveAuditSchema);
   if (!validation.success) {
     return res.status(400).json({ 
       error: 'Validation failed', 
