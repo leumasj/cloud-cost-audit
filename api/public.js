@@ -25,9 +25,9 @@ module.exports = async function handler(req, res) {
     // Route based on type parameter
     switch (type) {
       case 'audit':
-        return await handleViewAudit(req, res, id);
+        return await handleViewAudit(req, res, supabase, id);
       case 'leaderboard':
-        return await handleLeaderboard(req, res, provider, limit);
+        return await handleLeaderboard(req, res, supabase, provider, limit);
       default:
         return res.status(400).json({ error: 'Invalid type. Use ?type=audit&id=... or ?type=leaderboard' });
     }
@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
 };
 
 // ── VIEW PUBLIC AUDIT ─────────────────────────────────────────────────────────
-async function handleViewAudit(req, res, auditId) {
+async function handleViewAudit(req, res, supabase, auditId) {
   const rateLimit = checkRateLimit(req, 'public-audit', 50, 60 * 60 * 1000);
   if (rateLimit.limited) {
     return res.status(429).json({ error: 'Too many requests' });
@@ -103,7 +103,7 @@ async function handleViewAudit(req, res, auditId) {
 }
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────────
-async function handleLeaderboard(req, res, provider, limitStr) {
+async function handleLeaderboard(req, res, supabase, provider, limitStr) {
   const rateLimit = checkRateLimit(req, 'leaderboard', 100, 60 * 60 * 1000);
   if (rateLimit.limited) {
     return res.status(429).json({ error: 'Too many requests' });

@@ -33,13 +33,13 @@ module.exports = async function handler(req, res) {
     // Route to appropriate handler based on action
     switch (action) {
       case 'save':
-        return await handleSaveAudit(req, res);
+        return await handleSaveAudit(req, res, supabase);
       case 'calculate-score':
         return await handleCalculateScore(req, res);
       case 'share':
-        return await handleShareAudit(req, res);
+        return await handleShareAudit(req, res, supabase);
       case 'leaderboard-opt-in':
-        return await handleLeaderboardOptIn(req, res);
+        return await handleLeaderboardOptIn(req, res, supabase);
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
@@ -51,7 +51,7 @@ module.exports = async function handler(req, res) {
 };
 
 // ── SAVE AUDIT ────────────────────────────────────────────────────────────────
-async function handleSaveAudit(req, res) {
+async function handleSaveAudit(req, res, supabase) {
   // Rate limiting
   const rateLimit = checkRateLimit(req, 'save-audit', 10, 60 * 60 * 1000);
   res.setHeader('X-RateLimit-Limit', rateLimit.limit);
@@ -191,7 +191,7 @@ async function handleCalculateScore(req, res) {
 }
 
 // ── SHARE AUDIT ───────────────────────────────────────────────────────────────
-async function handleShareAudit(req, res) {
+async function handleShareAudit(req, res, supabase) {
   const rateLimit = checkRateLimit(req, 'share-audit', 20, 60 * 60 * 1000);
   if (rateLimit.limited) {
     return res.status(429).json({ error: 'Too many requests' });
@@ -245,7 +245,7 @@ async function handleShareAudit(req, res) {
 }
 
 // ── LEADERBOARD OPT-IN ────────────────────────────────────────────────────────
-async function handleLeaderboardOptIn(req, res) {
+async function handleLeaderboardOptIn(req, res, supabase) {
   const rateLimit = checkRateLimit(req, 'leaderboard-opt-in', 10, 60 * 60 * 1000);
   if (rateLimit.limited) {
     return res.status(429).json({ error: 'Too many requests' });
