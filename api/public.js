@@ -6,12 +6,12 @@
 const { createClient } = require('@supabase/supabase-js');
 const { checkRateLimit } = require('./lib/_ratelimit');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
-
 module.exports = async function handler(req, res) {
+  // Create Supabase client inside handler to avoid early connection
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY
+  );
   // Allow public CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');

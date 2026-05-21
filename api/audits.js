@@ -9,12 +9,12 @@ const { SaveAuditSchema, validate } = require('./lib/_validation');
 const { checkRateLimit } = require('./lib/_ratelimit');
 const { calculateScores } = require('./lib/_scoring');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
-
 module.exports = async function handler(req, res) {
+  // Create Supabase client inside handler to avoid early connection
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY
+  );
   // CORS
   const { ALLOWED_ORIGINS } = require('./lib/_config');
   const origin = req.headers.origin;
