@@ -20,6 +20,30 @@ const indexHtml = fs.readFileSync(INDEX, 'utf8');
 
 // ── ALL 60 SEO PAGES ─────────────────────────────────────────────────────────
 const SEO_PAGES = [
+// AWS Cost (15)
+  
+]/ scripts/prerender.js
+// Generates static HTML pages for all 60 SEO landing pages.
+// Run after vite build: node scripts/prerender.js
+// Each page gets its own HTML file with correct meta tags baked in.
+// Google reads the static HTML — no JS execution needed for indexing.
+
+const fs   = require('fs');
+const path = require('path');
+
+const BASE    = 'https://www.kloudaudit.eu';
+const DIST    = path.join(__dirname, '..', 'dist');
+const INDEX   = path.join(DIST, 'index.html');
+
+if (!fs.existsSync(INDEX)) {
+  console.error('dist/index.html not found — run vite build first');
+  process.exit(1);
+}
+
+const indexHtml = fs.readFileSync(INDEX, 'utf8');
+
+// ── ALL 60 SEO PAGES ─────────────────────────────────────────────────────────
+const SEO_PAGES = [
   // AWS Cost (25)
   { slug: "fix-aws-nat-gateway-charges",      provider: "AWS",         title: "How to Fix Excessive AWS NAT Gateway Charges",                      saving: "10–30%",  keyword: "Excessive NAT Gateway charges AWS" },
   { slug: "reduce-aws-ec2-cost",              provider: "AWS",         title: "How to Reduce AWS EC2 Costs by 40% This Week",                      saving: "15–40%",  keyword: "Reduce AWS EC2 costs" },
@@ -73,18 +97,8 @@ const SEO_PAGES = [
   { slug: "aws-secrets-manager-guide",        provider: "AWS",         title: "Hardcoded AWS Credentials: How to Find and Eliminate Them",        saving: null,      keyword: "Stop hardcoded AWS credentials code",       type: "security" },
   { slug: "gcp-iam-security-checklist",       provider: "GCP",         title: "GCP IAM Security Checklist: 8 Things to Fix Before Your Next Audit", saving: null,    keyword: "GCP IAM security best practices",           type: "security" },
   { slug: "azure-security-posture-review",    provider: "Azure",       title: "Azure Security Posture Review: No Access Required Checklist",      saving: null,      keyword: "Azure security posture assessment",         type: "security" },
-  { slug: "cloud-security-audit-checklist",   provider: "Multi-Cloud", title: "Free Cloud Security Audit Checklist — AWS, GCP & Azure (16 Checks)", saving: null, keyword: "Cloud security audit checklist 2026",      type: "security" },
+  { slug: "cloud-security-audit-checklist",   provider: "Multi-Cloud", title: "Cloud Security Audit Checklist 2026 — 16 Checks for AWS, GCP & Azure", saving: null, keyword: "Cloud security audit checklist 2026",      type: "security" },
   { slug: "devsecops-cloud-checklist",        provider: "Multi-Cloud", title: "DevSecOps Cloud Security Checklist: 16 Controls Every Team Needs", saving: null,     keyword: "DevSecOps cloud security checklist",        type: "security" },
-  { slug: "aws-s3-public-bucket-fix",         provider: "AWS",         title: "Public S3 Buckets: The $4.45M Risk Hiding in Your AWS Account",    saving: null,     keyword: "AWS S3 public bucket security risk",        type: "security" },
-  { slug: "aws-secrets-manager-guide",        provider: "AWS",         title: "Hardcoded AWS Credentials: How to Find and Eliminate Them",        saving: null,     keyword: "Stop hardcoded AWS credentials code",       type: "security" },
-  { slug: "finops-guide-startups",            provider: "Multi-Cloud", title: "FinOps for Startups: Cut Cloud Costs Without Cutting Features",    saving: "20-45%", keyword: "FinOps guide for startups" },
-  { slug: "devops-cloud-cost-checklist",      provider: "Multi-Cloud", title: "DevOps Cloud Cost Checklist: 20 Things to Review Every Quarter",   saving: "20-45%", keyword: "DevOps cloud cost review checklist" },
-  { slug: "cloud-cost-tagging-strategy",      provider: "Multi-Cloud", title: "Cloud Cost Tagging Strategy: Allocate Costs to Teams and Projects", saving: "5-20%", keyword: "Cloud cost tagging best practices" },
-  { slug: "multi-cloud-cost-comparison",      provider: "Multi-Cloud", title: "AWS vs GCP vs Azure Cost Comparison for Common Workloads",         saving: "10-30%", keyword: "AWS GCP Azure cost comparison" },
-  { slug: "gcp-billing-export-setup",         provider: "GCP",         title: "GCP Billing Export to BigQuery: Full Setup Guide",                 saving: "5-20%",  keyword: "GCP billing export BigQuery setup" },
-  { slug: "gcp-cloud-run-optimization",       provider: "GCP",         title: "GCP Cloud Run Cost Optimization: Stop Over-Provisioning",          saving: "20-40%", keyword: "GCP Cloud Run cost optimization" },
-  { slug: "azure-cost-management-setup",      provider: "Azure",       title: "Azure Cost Management: Budgets, Alerts, and Reports Setup",        saving: "5-20%",  keyword: "Azure cost management setup guide" },
-  { slug: "cloud-finops-guide",               provider: "Multi-Cloud", title: "The DevOps Team's FinOps Guide: Cut Cloud Costs Without Slowing Down", saving: "20-45%", keyword: "Cloud FinOps guide teams" },
 ];
 
 // ── GENERATE HTML FOR EACH PAGE ──────────────────────────────────────────────
@@ -94,7 +108,7 @@ for (const page of SEO_PAGES) {
   const url         = `${BASE}/${page.slug}/`;
   const isSecure    = page.type === 'security';
   const description = isSecure
-    ? `${page.title}. Free 15-minute self-assessment — no cloud account access required. KloudAudit.eu`
+    ? `${page.title}. Free interactive checklist — complete in 15 minutes, no cloud credentials required. Used by engineers at AWS, GCP and Azure environments. KloudAudit.eu`
     : `${page.title}. Typical savings: ${page.saving} of affected ${page.provider} spend. Free 15-minute audit at KloudAudit.eu — no cloud access required.`;
 
   const jsonLd = JSON.stringify({
