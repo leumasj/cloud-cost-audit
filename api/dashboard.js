@@ -5,18 +5,6 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
-
-// Admin client needed for all SELECT operations
-// anon key only has INSERT/UPDATE after security hardening
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
-
 module.exports = async function handler(req, res) {
   // Simple key auth — uses existing CRON_SECRET
   const key = req.query.key;
@@ -30,6 +18,13 @@ module.exports = async function handler(req, res) {
       </body></html>
     `);
   }
+
+  // Create Supabase client INSIDE the handler function
+  // This prevents early connection attempts blocked by Vercel
+  const supabaseAdmin = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+  );
 
   try {
     const now      = new Date();
