@@ -225,31 +225,20 @@ async function handleShareAudit(req, res, supabase) {
     updateData.public_slug = null;
   }
 
-  const { data: audit, error } = await supabase
+  const { error } = await supabase
     .from('audits')
     .update(updateData)
-    .eq('session_id', sessionId)
-    .select()
-    .single();
+    .eq('session_id', sessionId);
 
   if (error) {
     console.error('Share audit error:', error);
     return res.status(500).json({ error: 'Failed to update audit' });
   }
 
-  if (!audit) {
-    return res.status(404).json({ error: 'Audit not found' });
-  }
-
-  const shareUrl = audit.is_public && audit.public_slug
-    ? `https://kloudaudit.eu/audit/${audit.public_slug}`
-    : null;
-
   return res.status(200).json({
     success: true,
-    isPublic: audit.is_public,
-    shareUrl,
-    publicSlug: audit.public_slug,
+    isPublic: isPublic === true,
+    shareUrl: null, // public_slug feature requires additional DB columns
   });
 }
 
@@ -283,40 +272,20 @@ async function handleLeaderboardOptIn(req, res, supabase) {
     updateData.leaderboard_opt_in_at = new Date().toISOString();
   }
 
-  const { data: audit, error } = await supabase
+  const { error } = await supabase
     .from('audits')
     .update(updateData)
-    .eq('session_id', sessionId)
-    .select()
-    .single();
+    .eq('session_id', sessionId);
 
   if (error) {
     console.error('Leaderboard opt-in error:', error);
     return res.status(500).json({ error: 'Failed to update audit' });
   }
 
-  if (!audit) {
-    return res.status(404).json({ error: 'Audit not found' });
-  }
-
-  let rank = null;
-  if (audit.public_display) {
-    const { count } = await supabase
-      .from('audits')
-      .select('*', { count: 'exact', head: true })
-      .eq('public_display', true)
-      .eq('audit_type', audit.audit_type)
-      .gt('waste_score', audit.waste_score);
-    
-    rank = (count || 0) + 1;
-  }
-
   return res.status(200).json({
     success: true,
-    publicDisplay: audit.public_display,
-    displayName: audit.display_name,
-    rank,
-    wasteScore: audit.waste_score,
-    letterGrade: audit.letter_grade,
+    publicDisplay: publicDisplay === true,
+    displayName: displayName || null,
+    rank: null, // rank calculation requires SELECT — available after RLS SELECT policy added
   });
 }

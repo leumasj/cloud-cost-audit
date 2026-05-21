@@ -7,7 +7,9 @@ const { createClient } = require('@supabase/supabase-js');
 const { checkRateLimit } = require('./lib/_ratelimit');
 
 module.exports = async function handler(req, res) {
-  // Create Supabase client inside handler to avoid early connection
+  // NOTE: This endpoint requires SELECT RLS policy on audits table for anon role
+  // Run in Supabase: CREATE POLICY "anon_select_public_audits" ON public.audits
+  //   FOR SELECT TO anon USING (is_public = true);
   const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_ANON_KEY

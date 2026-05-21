@@ -19,7 +19,7 @@ const EmailSchema = z.union([
 ]).optional();
 
 // ── PROVIDER ──────────────────────────────────────────────────────────────────
-const ProviderSchema = z.enum(['AWS', 'GCP', 'Azure', 'Multi-cloud'], {
+const ProviderSchema = z.enum(['AWS', 'GCP', 'Azure', 'Multi-cloud', 'Multi-Cloud'], {
   errorMap: () => ({ message: 'Provider must be AWS, GCP, Azure, or Multi-cloud' })
 });
 
@@ -33,10 +33,10 @@ const SaveAuditSchema = z.object({
   sessionId: SessionIdSchema,
   email: EmailSchema,
   provider: ProviderSchema,
-  monthlyBill: z.number()
-    .int('Monthly bill must be an integer')
+  monthlyBill: z.coerce.number()
     .min(0, 'Monthly bill cannot be negative')
-    .max(100000000, 'Monthly bill exceeds maximum'), // $100M cap
+    .max(100000000, 'Monthly bill exceeds maximum')
+    .transform(v => Math.round(v)), // round floats to int
   companyName: z.union([
     z.string().max(200, 'Company name too long'),
     z.literal(null),
@@ -45,18 +45,18 @@ const SaveAuditSchema = z.object({
   ]).optional(),
   flaggedIds: z.array(z.string().max(50))
     .max(50, 'Too many flagged issues (max 50)'),
-  wasteScore: z.number()
-    .int('Waste score must be an integer')
+  wasteScore: z.coerce.number()
     .min(0, 'Waste score cannot be negative')
-    .max(100, 'Waste score cannot exceed 100'),
-  savingsMin: z.number()
-    .int('Savings min must be an integer')
+    .max(100, 'Waste score cannot exceed 100')
+    .transform(v => Math.round(v)),
+  savingsMin: z.coerce.number()
     .min(0, 'Savings min cannot be negative')
-    .max(100000000, 'Savings min exceeds maximum'),
-  savingsMax: z.number()
-    .int('Savings max must be an integer')
+    .max(100000000, 'Savings min exceeds maximum')
+    .transform(v => Math.round(v)),
+  savingsMax: z.coerce.number()
     .min(0, 'Savings max cannot be negative')
-    .max(100000000, 'Savings max exceeds maximum'),
+    .max(100000000, 'Savings max exceeds maximum')
+    .transform(v => Math.round(v)),
   auditType: AuditTypeSchema,
 });
 
