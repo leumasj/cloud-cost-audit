@@ -720,6 +720,253 @@ const TESTIMONIALS = [
   { name: "Marco D.", role: "Infrastructure Lead · Milan e-commerce", text: "Orphaned EBS volumes and a forgotten NAT Gateway were costing us $960/month. CLI commands were copy-paste ready. Fixed same afternoon.", savings: "$960/mo", provider: "Azure" },
 ];
 
+// ══════════════════════════════════════════════════════════════════════════════
+// PUBLIC AUDIT VIEWER - Shows shared audits at /audit/{slug}
+// ══════════════════════════════════════════════════════════════════════════════
+function PublicAuditViewer({ slug }) {
+  const [audit, setAudit] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchAudit = async () => {
+      try {
+        const res = await fetch(`/api/public?type=audit&id=${slug}`);
+        const data = await res.json();
+        
+        if (data.success) {
+          setAudit(data.audit);
+        } else {
+          setError(data.error || 'Audit not found');
+        }
+      } catch (err) {
+        setError('Failed to load audit');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchAudit();
+  }, [slug]);
+
+  const getGradeColor = (grade) => {
+    if (!grade) return '#94a3b8';
+    if (grade.startsWith('A')) return '#4ade80';
+    if (grade.startsWith('B')) return '#fbbf24';
+    if (grade.startsWith('C')) return '#fb923c';
+    return '#f87171';
+  };
+
+  if (loading) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        background: '#07070f', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        padding: '24px',
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
+          <p style={{ color: '#94a3b8', fontSize: '16px' }}>Loading audit...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !audit) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        background: '#07070f', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        padding: '24px',
+      }}>
+        <div style={{ textAlign: 'center', maxWidth: '500px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔍</div>
+          <h1 style={{ color: '#fff', fontSize: '32px', fontWeight: 800, marginBottom: '12px' }}>
+            Audit Not Found
+          </h1>
+          <p style={{ color: '#94a3b8', fontSize: '16px', marginBottom: '24px' }}>
+            {error || 'This audit does not exist or has not been shared publicly.'}
+          </p>
+          <a href="/" style={{
+            display: 'inline-block',
+            background: 'var(--green)',
+            color: '#000',
+            padding: '14px 28px',
+            borderRadius: '10px',
+            fontWeight: 700,
+            textDecoration: 'none',
+          }}>
+            Run Your Own Audit →
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ 
+      minHeight: '100vh', 
+      background: '#07070f', 
+      padding: '40px 24px',
+    }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <a href="/" style={{ 
+            display: 'inline-block',
+            fontSize: '24px',
+            fontWeight: 800,
+            color: 'var(--green)',
+            textDecoration: 'none',
+            marginBottom: '32px',
+          }}>
+            KloudAudit
+          </a>
+          <h1 style={{ 
+            fontSize: 'clamp(28px, 4vw, 42px)', 
+            fontWeight: 800, 
+            color: '#fff',
+            marginBottom: '8px',
+            letterSpacing: '-1px',
+          }}>
+            {audit.companyName}'s Cloud Audit
+          </h1>
+          <p style={{ color: '#94a3b8', fontSize: '16px' }}>
+            {audit.provider} · {new Date(audit.createdAt).toLocaleDateString()} · {audit.viewCount} views
+          </p>
+        </div>
+
+        {/* Score Badge */}
+        <div style={{
+          background: `${getGradeColor(audit.letterGrade)}10`,
+          border: `2px solid ${getGradeColor(audit.letterGrade)}`,
+          borderRadius: '20px',
+          padding: '40px',
+          marginBottom: '32px',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            fontSize: '72px',
+            fontWeight: 900,
+            color: getGradeColor(audit.letterGrade),
+            marginBottom: '8px',
+            lineHeight: 1,
+          }}>
+            {audit.letterGrade}
+          </div>
+          <div style={{ fontSize: '16px', color: '#94a3b8', marginBottom: '4px' }}>
+            EFFICIENCY SCORE
+          </div>
+          <div style={{ fontSize: '42px', fontWeight: 800, color: getGradeColor(audit.letterGrade) }}>
+            {audit.wasteScore}<span style={{ fontSize: '24px', opacity: 0.6 }}>/100</span>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          gap: '16px',
+          marginBottom: '32px',
+        }}>
+          <div style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '16px',
+            padding: '24px',
+          }}>
+            <div style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>
+              Monthly Bill
+            </div>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: '#fff' }}>
+              ${audit.monthlyBill?.toLocaleString() || 'N/A'}
+            </div>
+          </div>
+
+          <div style={{
+            background: 'rgba(0,255,180,0.05)',
+            border: '1px solid rgba(0,255,180,0.2)',
+            borderRadius: '16px',
+            padding: '24px',
+          }}>
+            <div style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>
+              Potential Savings
+            </div>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--green)' }}>
+              ${audit.savingsMin?.toLocaleString()}–${audit.savingsMax?.toLocaleString()}
+            </div>
+            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+              /month
+            </div>
+          </div>
+
+          <div style={{
+            background: 'rgba(251,146,60,0.05)',
+            border: '1px solid rgba(251,146,60,0.2)',
+            borderRadius: '16px',
+            padding: '24px',
+          }}>
+            <div style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>
+              Issues Found
+            </div>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: '#fb923c' }}>
+              {audit.flaggedCount}
+            </div>
+            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+              optimization opportunities
+            </div>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(0,255,180,0.1), rgba(99,102,241,0.1))',
+          border: '1px solid rgba(0,255,180,0.3)',
+          borderRadius: '20px',
+          padding: '40px',
+          textAlign: 'center',
+        }}>
+          <h2 style={{ 
+            fontSize: '24px', 
+            fontWeight: 800, 
+            color: '#fff', 
+            marginBottom: '12px',
+          }}>
+            Want to audit your own cloud?
+          </h2>
+          <p style={{ color: '#94a3b8', fontSize: '16px', marginBottom: '24px' }}>
+            Free audit takes 15 minutes. No account access needed.
+          </p>
+          <a href="/" style={{
+            display: 'inline-block',
+            background: 'var(--green)',
+            color: '#000',
+            padding: '16px 32px',
+            borderRadius: '12px',
+            fontWeight: 800,
+            fontSize: '16px',
+            textDecoration: 'none',
+            boxShadow: '0 4px 20px rgba(0,255,180,0.3)',
+          }}>
+            Start Free Audit →
+          </a>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SCORE BADGE - Shows A-F grade
+// ══════════════════════════════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SCORE BADGE - Shows A-F grade
@@ -1049,6 +1296,13 @@ function WasteScoreCard({ flagged, allChecks, savPct, savMin, savMax, onShare })
 
 
 export default function App() {
+  // ── DETECT PUBLIC AUDIT VIEW ────────────────────────────────────────────────
+  const pathMatch = window.location.pathname.match(/^\/audit\/([a-z0-9]+)$/i);
+  if (pathMatch) {
+    const auditSlug = pathMatch[1];
+    return <PublicAuditViewer slug={auditSlug} />;
+  }
+  
   const [step, setStep] = useState("intro");
   const [provider, setProvider] = useState("");
   const [monthlyBill, setMonthlyBill] = useState("");
