@@ -51,5 +51,18 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "kloudaudit.eu"
+        }
+      ],
+      "destination": "https://www.kloudaudit.eu/:path*",
+      "permanent": true
+    }
   ]
 }
