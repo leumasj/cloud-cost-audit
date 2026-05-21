@@ -989,6 +989,7 @@ export default function App() {
     const wScore  = Math.max(0, Math.min(100, Math.round(100 - issueW - pctW)));
 
     const payload = JSON.stringify({
+      action: 'save',
       sessionId,
       email:       emailOverride || gateEmail || null,
       provider:    provider || 'AWS',
@@ -1001,7 +1002,7 @@ export default function App() {
       auditType:   'cost',
     });
 
-    const attempt = () => fetch('/api/save-audit', {
+    const attempt = () => fetch('/api/audit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: payload,
