@@ -720,6 +720,254 @@ const TESTIMONIALS = [
   { name: "Marco D.", role: "Infrastructure Lead · Milan e-commerce", text: "Orphaned EBS volumes and a forgotten NAT Gateway were costing us $960/month. CLI commands were copy-paste ready. Fixed same afternoon.", savings: "$960/mo", provider: "Azure" },
 ];
 
+// ══════════════════════════════════════════════════════════════════════════════
+// SCORE BADGE - Shows A-F grade
+// ══════════════════════════════════════════════════════════════════════════════
+function ScoreBadge({ letterGrade, wasteScore }) {
+  const getColor = (grade) => {
+    if (grade.startsWith('A')) return '#4ade80';
+    if (grade.startsWith('B')) return '#fbbf24';
+    if (grade.startsWith('C')) return '#fb923c';
+    return '#f87171';
+  };
+
+  return (
+    <div style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '16px',
+      background: `${getColor(letterGrade)}10`,
+      border: `2px solid ${getColor(letterGrade)}`,
+      borderRadius: '16px',
+      padding: '20px 28px',
+      marginTop: '32px',
+      marginBottom: '24px',
+    }}>
+      <div style={{
+        fontSize: '56px',
+        fontWeight: 900,
+        color: getColor(letterGrade),
+        lineHeight: 1,
+      }}>
+        {letterGrade}
+      </div>
+      <div>
+        <div style={{ fontSize: '13px', opacity: 0.6, marginBottom: '4px', letterSpacing: '0.5px' }}>
+          EFFICIENCY SCORE
+        </div>
+        <div style={{ fontSize: '32px', fontWeight: 800, color: getColor(letterGrade) }}>
+          {wasteScore}<span style={{ fontSize: '20px', opacity: 0.6 }}>/100</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SHARE BUTTON - Generate shareable public link
+// ══════════════════════════════════════════════════════════════════════════════
+function ShareButton({ sessionId, companyName, onShareUrl }) {
+  const [sharing, setSharing] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleShare = async () => {
+    setSharing(true);
+    setError(null);
+    
+    try {
+      const res = await fetch('/api/audits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'share',
+          sessionId: sessionId,
+          isPublic: true,
+          displayName: companyName || 'Anonymous Company',
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.success && data.shareUrl) {
+        onShareUrl(data.shareUrl);
+        await navigator.clipboard.writeText(data.shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 3000);
+      } else {
+        setError('Failed to generate share link');
+      }
+    } catch (err) {
+      console.error('Share failed:', err);
+      setError('Network error. Please try again.');
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: '20px' }}>
+      <button 
+        onClick={handleShare}
+        disabled={sharing}
+        style={{
+          background: copied ? '#4ade80' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '12px',
+          padding: '16px 32px',
+          fontSize: '16px',
+          fontWeight: 700,
+          cursor: sharing ? 'not-allowed' : 'pointer',
+          transition: 'all 0.3s',
+          opacity: sharing ? 0.7 : 1,
+          transform: sharing ? 'scale(0.98)' : 'scale(1)',
+          boxShadow: '0 4px 20px rgba(102, 126, 234, 0.3)',
+        }}
+      >
+        {sharing ? '⏳ Generating Link...' : copied ? '✓ Link Copied to Clipboard!' : '🔗 Share Your Results'}
+      </button>
+      
+      {error && (
+        <div style={{
+          marginTop: '12px',
+          padding: '12px',
+          background: 'rgba(248, 113, 113, 0.1)',
+          border: '1px solid rgba(248, 113, 113, 0.3)',
+          borderRadius: '8px',
+          fontSize: '13px',
+          color: '#f87171',
+        }}>
+          {error}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LEADERBOARD OPT-IN - Add to public rankings
+// ══════════════════════════════════════════════════════════════════════════════
+function LeaderboardOptIn({ sessionId, companyName, onRank }) {
+  const [opted, setOpted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleOptIn = async (checked) => {
+    setLoading(true);
+    
+    try {
+      const res = await fetch('/api/audits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'leaderboard-opt-in',
+          sessionId: sessionId,
+          publicDisplay: checked,
+          displayName: companyName || 'Anonymous',
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        setOpted(data.publicDisplay);
+        if (data.rank) {
+          onRank(data.rank);
+        }
+      }
+    } catch (err) {
+      console.error('Opt-in failed:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{
+      background: 'rgba(74, 222, 128, 0.06)',
+      border: '1px solid rgba(74, 222, 128, 0.2)',
+      borderRadius: '14px',
+      padding: '20px',
+      marginTop: '24px',
+    }}>
+      <label style={{ 
+        display: 'flex', 
+        alignItems: 'flex-start', 
+        gap: '14px', 
+        cursor: loading ? 'wait' : 'pointer',
+      }}>
+        <input 
+          type="checkbox" 
+          checked={opted}
+          onChange={(e) => handleOptIn(e.target.checked)}
+          disabled={loading}
+          style={{ 
+            width: '22px', 
+            height: '22px', 
+            marginTop: '2px',
+            cursor: loading ? 'wait' : 'pointer',
+          }}
+        />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 700, fontSize: '16px', marginBottom: '6px', color: '#fff' }}>
+            🏆 Add my score to the public leaderboard
+          </div>
+          <div style={{ fontSize: '13px', opacity: 0.7, lineHeight: 1.5 }}>
+            Showcase your optimized cloud infrastructure and compete with other companies
+          </div>
+        </div>
+      </label>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SHARE URL DISPLAY - Show the generated link
+// ══════════════════════════════════════════════════════════════════════════════
+function ShareUrlDisplay({ url, rank }) {
+  return (
+    <div style={{
+      background: 'rgba(102, 126, 234, 0.08)',
+      border: '1px solid rgba(102, 126, 234, 0.25)',
+      borderRadius: '12px',
+      padding: '20px',
+      marginTop: '20px',
+    }}>
+      <div style={{ fontSize: '13px', fontWeight: 700, color: '#667eea', marginBottom: '10px', letterSpacing: '0.5px' }}>
+        ✨ YOUR SHAREABLE LINK
+      </div>
+      <a 
+        href={url} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        style={{ 
+          color: '#667eea', 
+          fontSize: '14px', 
+          wordBreak: 'break-all',
+          textDecoration: 'underline',
+          fontWeight: 600,
+        }}
+      >
+        {url}
+      </a>
+      
+      {rank && (
+        <div style={{
+          marginTop: '16px',
+          padding: '12px',
+          background: 'rgba(74, 222, 128, 0.1)',
+          borderRadius: '8px',
+          textAlign: 'center',
+        }}>
+          <span style={{ fontSize: '14px', fontWeight: 700, color: '#4ade80' }}>
+            🎯 You're ranked #{rank} on the leaderboard!
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 // ── WASTE SCORE CARD ──────────────────────────────────────────────────────────
 function WasteScoreCard({ flagged, allChecks, savPct, savMin, savMax, onShare }) {
@@ -829,7 +1077,9 @@ export default function App() {
   const [secScore, setSecScore] = useState(null); // computed after audit
   const [secEmail, setSecEmail] = useState("");
   const [secPaymentLoading, setSecPaymentLoading] = useState(false);
-  const [gateEmail, setGateEmail] = useState("");
+  const [scores, setScores] = useState(null);
+  const [shareUrl, setShareUrl] = useState(null);
+  const [leaderboardRank, setLeaderboardRank] = useState(null);
   // ── PERSISTENCE — anonymous session ID ────────────────────────────────────
   const [sessionId] = useState(() => {
     // Generate once per browser session, persist across page refreshes
@@ -983,36 +1233,48 @@ export default function App() {
   }, [step]);
 
   // ── SAVE AUDIT — non-blocking, fires and forgets with one retry ─────────
-  const saveAudit = (emailOverride) => {
-    const issueW  = Math.min(flagged.length / allChecks.length, 1) * 30;
-    const pctW    = Math.min(savPct / 50, 1) * 70;
-    const wScore  = Math.max(0, Math.min(100, Math.round(100 - issueW - pctW)));
+const saveAudit = async (emailOverride) => {
+  const issueW  = Math.min(flagged.length / allChecks.length, 1) * 30;
+  const pctW    = Math.min(savPct / 50, 1) * 70;
+  const wScore  = Math.max(0, Math.min(100, Math.round(100 - issueW - pctW)));
 
-    const payload = JSON.stringify({
-      action: 'save',
-      sessionId,
-      email:       emailOverride || gateEmail || null,
-      provider:    provider || 'AWS',
-      monthlyBill: bill,
-      companyName: companyName || null,
-      flaggedIds:  flagged.map(c => c.id),
-      wasteScore:  wScore,
-      savingsMin:  savMin,
-      savingsMax:  savMax,
-      auditType:   'cost',
+  const payload = JSON.stringify({
+    action: 'save',
+    sessionId,
+    email:       emailOverride || gateEmail || null,
+    provider:    provider || 'AWS',
+    monthlyBill: bill,
+    companyName: companyName || null,
+    flaggedIds:  flagged.map(c => c.id),
+    wasteScore:  wScore,
+    savingsMin:  savMin,
+    savingsMax:  savMax,
+    auditType:   'cost',
+  });
+
+  try {
+    const response = await fetch('/api/audits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
     });
-
+    
+    const data = await response.json();
+    
+    if (data.success && data.scores) {
+      setScores(data.scores);
+    }
+  } catch (err) {
+    console.error('Save audit error:', err);
+    // Still save for retry
     const attempt = () => fetch('/api/audits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: payload,
     });
-
-    // Try immediately, retry once after 3s if first attempt fails
-    attempt().catch(() => {
-      setTimeout(() => attempt().catch(() => {}), 3000);
-    });
-  };
+    setTimeout(() => attempt().catch(() => {}), 3000);
+  }
+};
 
   // ── EXIT INTENT DETECTOR ─────────────────────────────────────────────────
   useEffect(() => {
@@ -2862,15 +3124,46 @@ export default function App() {
           )}
 
 
-          {/* ── WASTE SCORE ── */}
-          {bill > 0 && flagged.length > 0 && <WasteScoreCard
-            flagged={flagged}
-            allChecks={allChecks}
-            savPct={savPct}
-            savMin={savMin}
-            savMax={savMax}
-            onShare={() => setShowShareCard(true)}
-          />}
+          {/* ── SCORE BADGE ── */}
+          {scores && scores.letterGrade && (
+            <div className="fade-up">
+              <ScoreBadge 
+                letterGrade={scores.letterGrade} 
+                wasteScore={scores.wasteScore} 
+    />
+  </div>
+)}
+
+{/* ── WASTE SCORE CARD ── */}
+{bill > 0 && flagged.length > 0 && <WasteScoreCard
+  flagged={flagged}
+  allChecks={allChecks}
+  savPct={savPct}
+  savMin={savMin}
+  savMax={savMax}
+  onShare={() => setShowShareCard(true)}
+/>}
+
+{/* ── SHARE & LEADERBOARD ── */}
+{scores && scores.letterGrade && (
+  <div className="fade-up stagger-1" style={{ marginTop: '32px' }}>
+    <ShareButton 
+      sessionId={sessionId}
+      companyName={companyName}
+      onShareUrl={setShareUrl}
+    />
+    
+    <LeaderboardOptIn 
+      sessionId={sessionId}
+      companyName={companyName}
+      onRank={setLeaderboardRank}
+    />
+    
+    {shareUrl && (
+      <ShareUrlDisplay url={shareUrl} rank={leaderboardRank} />
+    )}
+  </div>
+)}
 
           {/* ── FINDINGS — Sorted by implementation ease ── */}
                     {/* ── FINDINGS ── */}
