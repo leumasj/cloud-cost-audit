@@ -11,12 +11,12 @@ const SessionIdSchema = z.string()
   .max(100);
 
 // ── EMAIL ─────────────────────────────────────────────────────────────────────
-const EmailSchema = z.string()
-  .email('Invalid email address')
-  .max(255)
-  .optional()
-  .or(z.literal(null))
-  .or(z.literal(''));
+const EmailSchema = z.union([
+  z.string().email('Invalid email address').max(255),
+  z.literal(null),
+  z.literal(''),
+  z.undefined()
+]).optional();
 
 // ── PROVIDER ──────────────────────────────────────────────────────────────────
 const ProviderSchema = z.enum(['AWS', 'GCP', 'Azure', 'Multi-cloud'], {
@@ -37,11 +37,12 @@ const SaveAuditSchema = z.object({
     .int('Monthly bill must be an integer')
     .min(0, 'Monthly bill cannot be negative')
     .max(100000000, 'Monthly bill exceeds maximum'), // $100M cap
-  companyName: z.string()
-    .max(200, 'Company name too long')
-    .optional()
-    .or(z.literal(null))
-    .or(z.literal('')),
+  companyName: z.union([
+    z.string().max(200, 'Company name too long'),
+    z.literal(null),
+    z.literal(''),
+    z.undefined()
+  ]).optional(),
   flaggedIds: z.array(z.string().max(50))
     .max(50, 'Too many flagged issues (max 50)'),
   wasteScore: z.number()

@@ -75,6 +75,7 @@ async function handleSaveAudit(req, res) {
     return res.status(400).json({ 
       error: 'Validation failed', 
       message: validation.error,
+      details: validation.details, // Include full error details
     });
   }
 
