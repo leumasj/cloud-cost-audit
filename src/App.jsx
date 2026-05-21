@@ -1002,7 +1002,7 @@ export default function App() {
       auditType:   'cost',
     });
 
-    const attempt = () => fetch('/api/audit', {
+    const attempt = () => fetch('/api/audits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: payload,
