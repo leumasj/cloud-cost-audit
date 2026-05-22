@@ -2999,6 +2999,7 @@ export default function App() {
                 { label: "Privacy", href: "https://www.kloudaudit.eu/privacy/" },
                 { label: "LinkedIn", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh" },
                 { label: "GitHub", href: "https://github.com/leumasj" },
+                { label: "𝕏 @kloudaudit", href: "https://twitter.com/kloudaudit" },
               ].map(s => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                   style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--border)", borderRadius: "8px", background: "rgba(255,255,255,0.03)" }}>
