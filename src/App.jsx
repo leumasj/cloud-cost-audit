@@ -219,11 +219,14 @@ const globalCss = `
     .hero-h1 { letter-spacing: -1.5px !important; }
   }
 
-  @media (max-width: 480px) {
-    /* Very small phones */
-    .stats-grid { grid-template-columns: 1fr 1fr !important; }
-    .kpi-grid { grid-template-columns: 1fr 1fr !important; }
-  }
+ @media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr !important; }
+  .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+  .hero-provider-btns { flex-direction: column !important; width: 100% !important; }
+  .hero-provider-btns button { width: 100% !important; }
+  .sticky-bottom-cta { flex-direction: column !important; gap: 8px !important; padding: 10px 16px !important; }
+  .sticky-bottom-cta span { font-size: 11px !important; }
+}
 
   /* ── Fix browser autofill overriding dark input backgrounds ── */
   input:-webkit-autofill,
@@ -660,7 +663,7 @@ function LiveFeedTicker() {
 
   return (
     <div className="fade-up stagger-5" style={{ marginTop: "40px" }}>
-      <p style={{ textAlign: "center", fontSize: "10px", color: "rgba(148,163,184,0.3)", marginBottom: "8px", letterSpacing: "0.3px" }}>Illustrative examples based on typical findings</p>
+      
       <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
       <style>{`
         @keyframes pulse-dot {
@@ -2458,7 +2461,7 @@ useEffect(() => {
       <Nav />
 
       {/* ── STICKY BOTTOM CTA BAR ── */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+      <div className="sticky-bottom-cta" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", boxShadow: "0 0 8px var(--green)", flexShrink: 0 }} />
           <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>Teams typically find <strong style={{ color: "var(--green)" }}>$500–$4,000+/month</strong> in cloud waste — based on industry FinOps benchmarks</span>
