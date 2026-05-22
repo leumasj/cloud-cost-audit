@@ -1985,40 +1985,7 @@ useEffect(() => {
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
-        {showLeadMagnet && (
-  <div onClick={() => setShowLeadMagnet(false)} style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px" }}>
-    <div onClick={e => e.stopPropagation()} style={{ background:"linear-gradient(145deg,#0f0f1a,#13131f)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"20px",padding:"40px 36px",maxWidth:"460px",width:"100%",position:"relative" }}>
-      <button onClick={() => setShowLeadMagnet(false)} style={{ position:"absolute",top:"16px",right:"16px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"8px",color:"var(--text-muted)",width:"30px",height:"30px",cursor:"pointer",fontSize:"16px",display:"flex",alignItems:"center",justifyContent:"center" }}>×</button>
-      <div style={{ display:"inline-flex",alignItems:"center",gap:"6px",background:"rgba(0,255,180,0.1)",border:"1px solid rgba(0,255,180,0.25)",borderRadius:"20px",padding:"4px 12px",marginBottom:"20px" }}>
-        <span style={{ fontSize:"11px",fontWeight:700,color:"var(--green)",letterSpacing:"1px" }}>FREE DOWNLOAD</span>
-      </div>
-      <h2 className="display" style={{ fontSize:"24px",fontWeight:800,letterSpacing:"-0.8px",color:"#fff",marginBottom:"10px",lineHeight:1.2 }}>
-        2026 Cloud Cost<br/>Optimisation Checklist
-      </h2>
-      <p style={{ fontSize:"14px",color:"var(--text-muted)",lineHeight:1.65,marginBottom:"20px" }}>
-        18 actionable checks across compute, storage, network, database and governance. Find 20–45% savings on AWS, GCP or Azure.
-      </p>
-      <div style={{ display:"flex",flexDirection:"column",gap:"6px",marginBottom:"24px" }}>
-        {["18 checks across all cost categories","Typical savings range for each issue","No credentials required to use","Pairs with the free interactive audit"].map(f => (
-          <div key={f} style={{ display:"flex",alignItems:"center",gap:"8px" }}>
-            <span style={{ color:"var(--green)",fontSize:"12px",fontWeight:700 }}>✓</span>
-            <span style={{ fontSize:"13px",color:"var(--text-dim)" }}>{f}</span>
-          </div>
-        ))}
-      </div>
-      <a href="/KloudAudit-2026-Cloud-Cost-Checklist.pdf" download
-        onClick={() => { localStorage.setItem('ka_lead_shown','1'); setShowLeadMagnet(false); }}
-        style={{ display:"block",width:"100%",padding:"14px",borderRadius:"12px",textDecoration:"none",textAlign:"center",background:"linear-gradient(135deg,var(--green),#00c896)",color:"#000",fontWeight:800,fontSize:"15px",boxShadow:"0 4px 20px rgba(0,255,180,0.3)" }}>
-        Download Free PDF →
-      </a>
-      <p onClick={() => { localStorage.setItem('ka_lead_shown','1'); setShowLeadMagnet(false); }} style={{ textAlign:"center",fontSize:"12px",color:"var(--text-muted)",marginTop:"12px",cursor:"pointer" }}>
-        No thanks
-      </p>
-    </div>
-  </div>
-)}
-{showContact && <ContactModal />}
-
+       {showContact && <ContactModal />}
         {showContact && <ContactModal />}
         {showBooking && <BookingModal />}
         <Nav showBack onBack={() => goTo("intro")} />
@@ -2517,7 +2484,39 @@ useEffect(() => {
             <span style={{ background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>cloud provider</span><br />
             won&apos;t give you.
           </h1>
-
+                {showLeadMagnet && (
+        <div onClick={() => setShowLeadMagnet(false)} style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:"linear-gradient(145deg,#0f0f1a,#13131f)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"20px",padding:"40px 36px",maxWidth:"460px",width:"100%",position:"relative" }}>
+            <button onClick={() => setShowLeadMagnet(false)} style={{ position:"absolute",top:"16px",right:"16px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"8px",color:"var(--text-muted)",width:"30px",height:"30px",cursor:"pointer",fontSize:"16px",display:"flex",alignItems:"center",justifyContent:"center" }}>×</button>
+            <div style={{ display:"inline-flex",alignItems:"center",gap:"6px",background:"rgba(0,255,180,0.1)",border:"1px solid rgba(0,255,180,0.25)",borderRadius:"20px",padding:"4px 12px",marginBottom:"20px" }}>
+              <span style={{ fontSize:"11px",fontWeight:700,color:"var(--green)",letterSpacing:"1px" }}>FREE DOWNLOAD</span>
+            </div>
+            <h2 className="display" style={{ fontSize:"24px",fontWeight:800,letterSpacing:"-0.8px",color:"#fff",marginBottom:"10px",lineHeight:1.2 }}>
+              2026 Cloud Cost<br/>Optimisation Checklist
+            </h2>
+            <p style={{ fontSize:"14px",color:"var(--text-muted)",lineHeight:1.65,marginBottom:"20px" }}>
+              18 actionable checks across compute, storage, network, database and governance. Find 20–45% savings on AWS, GCP or Azure.
+            </p>
+            <div style={{ display:"flex",flexDirection:"column",gap:"6px",marginBottom:"24px" }}>
+              {["18 checks across all cost categories","Typical savings range for each issue","No credentials required to use","Pairs with the free interactive audit"].map(f => (
+                <div key={f} style={{ display:"flex",alignItems:"center",gap:"8px" }}>
+                  <span style={{ color:"var(--green)",fontSize:"12px",fontWeight:700 }}>✓</span>
+                  <span style={{ fontSize:"13px",color:"var(--text-dim)" }}>{f}</span>
+                </div>
+              ))}
+            </div>
+            <a href="/KloudAudit-2026-Cloud-Cost-Checklist.pdf" download
+              onClick={() => { localStorage.setItem('ka_lead_shown','1'); setShowLeadMagnet(false); }}
+              style={{ display:"block",width:"100%",padding:"14px",borderRadius:"12px",textDecoration:"none",textAlign:"center",background:"linear-gradient(135deg,var(--green),#00c896)",color:"#000",fontWeight:800,fontSize:"15px",boxShadow:"0 4px 20px rgba(0,255,180,0.3)" }}>
+              Download Free PDF →
+            </a>
+            <p onClick={() => { localStorage.setItem('ka_lead_shown','1'); setShowLeadMagnet(false); }} style={{ textAlign:"center",fontSize:"12px",color:"var(--text-muted)",marginTop:"12px",cursor:"pointer" }}>
+              No thanks
+            </p>
+          </div>
+        </div>
+      )}
+      {showContact && <ContactModal />}
           {/* ── SUBHEADING ── */}
           <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "480px", margin: "0 auto 28px" }}>
             Pick your cloud provider and start your free audit in 60 seconds.
