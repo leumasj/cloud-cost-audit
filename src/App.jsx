@@ -1328,6 +1328,7 @@ export default function App() {
   const [activeHowStep, setActiveHowStep] = useState(null); // null = all equal, click to expand
   const [showExitIntent, setShowExitIntent] = useState(false);
   const [showLeadMagnet, setShowLeadMagnet] = useState(false);   // ← ADD THIS LINE
+  const [showStickyBar, setShowStickyBar] = useState(false);  // ← ADD THIS
   const [showShareCard, setShowShareCard] = useState(false);
   // ── SECURITY AUDIT STATE ──────────────────────────────────────────────────
   const [secChecked, setSecChecked] = useState({});
@@ -1567,12 +1568,19 @@ export default function App() {
   // ── 30-SECOND LEAD MAGNET TRIGGER ───────────────────────────────────────────
 useEffect(() => {
   if (step !== 'intro') return;
-  if (localStorage.getItem('ka_lead_shown')) return;
-  const timer = setTimeout(() => {
-    setShowLeadMagnet(true);
-    localStorage.setItem('ka_lead_shown', '1');
-  }, 30000);
-  return () => clearTimeout(timer);
+  // Show sticky bar after 10 seconds
+  const stickyTimer = setTimeout(() => setShowStickyBar(true), 10000);
+  // Show lead magnet after 30 seconds (once per visitor)
+  const leadTimer = localStorage.getItem('ka_lead_shown')
+    ? null
+    : setTimeout(() => {
+        setShowLeadMagnet(true);
+        localStorage.setItem('ka_lead_shown', '1');
+      }, 30000);
+  return () => {
+    clearTimeout(stickyTimer);
+    if (leadTimer) clearTimeout(leadTimer);
+  };
 }, [step]);
 
 
@@ -2460,16 +2468,18 @@ useEffect(() => {
       {showBlueprint && <BlueprintModal />}
       <Nav />
 
-      {/* ── STICKY BOTTOM CTA BAR ── */}
-      <div className="sticky-bottom-cta" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", boxShadow: "0 0 8px var(--green)", flexShrink: 0 }} />
-          <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>Teams typically find <strong style={{ color: "var(--green)" }}>$500–$4,000+/month</strong> in cloud waste — based on industry FinOps benchmarks</span>
+            {/* ── STICKY BOTTOM CTA BAR ── */}
+      {showStickyBar && (
+        <div className="sticky-bottom-cta" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", boxShadow: "0 0 8px var(--green)", flexShrink: 0 }} />
+            <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>Teams typically find <strong style={{ color: "var(--green)" }}>$500–$4,000+/month</strong> in cloud waste — based on industry FinOps benchmarks</span>
+          </div>
+          <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap" }}>
+            See What My Bill Is Hiding →
+          </button>
         </div>
-        <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap" }}>
-          See What My Bill Is Hiding →
-        </button>
-      </div>
+      )}
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px", paddingBottom: "72px" }}>
 
@@ -3874,8 +3884,14 @@ useEffect(() => {
               </div>
             </div>
             <p style={{ fontSize: "13px", color: "var(--text-muted)", textAlign: "center", marginBottom: "20px" }}>
-              {savMin > 0 ? `You're looking at $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/mo in savings. The blueprint pays for itself in day one.` : "Teams typically find $500–$4,000+/month based on industry FinOps benchmarks."}
-            </p>
+              {savMin > 0
+                ? (() => {
+                    const bpCost = currency.blueprintAmount / 100;
+                    const daysToROI = Math.ceil(bpCost / (savMin / 30));
+                    return `You're looking at $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/mo in savings. At $${savMin.toLocaleString()}/month, the ${currency.blueprintPrice} blueprint pays for itself in ${daysToROI <= 1 ? "the first day" : daysToROI <= 7 ? `${daysToROI} days` : "the first week"} — then saves you $${(savMin * 12).toLocaleString()}+ per year.`;
+                  })()
+                : "Teams typically find $500–$4,000+/month based on industry FinOps benchmarks. The blueprint pays for itself within days."}
+                          </p>
 
             {/* Trust card */}
             <div style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" }}>
