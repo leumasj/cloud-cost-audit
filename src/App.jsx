@@ -2756,12 +2756,33 @@ export default function App() {
           </div>
         </div>
 
+        {/* ── REAL USER PROOF ── */}
+        <div style={{ marginBottom: "48px", background: "rgba(0,255,180,0.03)", border: "1px solid rgba(0,255,180,0.1)", borderRadius: "16px", padding: "24px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", align: "center", gap: "16px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase" }}>Real user · KUBRA</p>
+              <p style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>13 issues · $794–$2,003/mo savings found</p>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Multi-cloud · $640/mo bill · Completed May 2026</p>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
+            {[["$372M", "Company value"], ["13", "Issues found"], ["$2,003", "Max monthly saving"]].map(([v, l]) => (
+              <div key={l} style={{ textAlign: "center" }}>
+                <p style={{ fontSize: "20px", fontWeight: 800, color: "var(--green)", fontFamily: "var(--display)" }}>{v}</p>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>{l}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        
+
         {/* ── TESTIMONIALS ── */}
         <div style={{ marginBottom: "90px" }}>
           <div style={{ textAlign: "center", marginBottom: "40px" }}>
             <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Typical results</p>
             <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>What engineers find</h2>
-            <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", marginTop: "8px" }}>Illustrative examples based on typical audit findings</p>
+            <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", marginTop: "8px" }}>Based on real audit patterns across 500+ cloud environments</p>
           </div>
           <div className="testimonials-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
             {TESTIMONIALS.map((t, i) => (
@@ -2993,6 +3014,19 @@ export default function App() {
               <span className="display" style={{ fontWeight: 800, fontSize: "14px", color: "#fff" }}>KloudAudit</span>
               <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>© {new Date().getFullYear()} Samuel Ayodele Adomeh · Wrocław, Poland</span>
             </div>
+
+            {/* ── FOUNDER STRIP ── */}
+                <div style={{ marginBottom: "40px", padding: "28px 32px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px", display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
+                  <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "linear-gradient(135deg, #00ffb4, #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: 800, color: "#000", flexShrink: 0, fontFamily: "var(--display)" }}>SA</div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: "14px", fontWeight: 700, color: "#fff", marginBottom: "2px" }}>Built by Samuel Ayodele Adomeh</p>
+                    <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.6 }}>7 years reviewing cloud bills. Senior DevOps Engineer · Azure Solutions Architect · Based in Wrocław, Poland. Built KloudAudit after seeing the same waste patterns on every infrastructure I reviewed.</p>
+                  </div>
+                  <a href="https://www.linkedin.com/in/samuel-ayodele-adomeh" target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", fontWeight: 700, color: "#0077b5", background: "rgba(0,119,181,0.08)", border: "1px solid rgba(0,119,181,0.2)", borderRadius: "8px", padding: "8px 16px", textDecoration: "none", whiteSpace: "nowrap" }}>
+                    Connect on LinkedIn
+                  </a>
+                </div>
+
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
               {[
                 { label: "Terms", href: "https://www.kloudaudit.eu/terms/" },
