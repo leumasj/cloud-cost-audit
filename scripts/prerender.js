@@ -59,6 +59,10 @@ const SEO_PAGES = [
   { slug: "cloud-cost-tagging-strategy",      provider: "Multi-Cloud", title: "Cloud Cost Tagging Strategy Allocate Costs to Teams and Projects",      saving: "5-20%",   keyword: "Cloud cost tagging best practices" },
   { slug: "devops-cloud-cost-checklist",      provider: "Multi-Cloud", title: "DevOps Cloud Cost Checklist 20 Things to Review Every Quarter",         saving: "20-45%",  keyword: "DevOps cloud cost review checklist" },
   { slug: "finops-guide-startups",            provider: "Multi-Cloud", title: "FinOps for Startups Cut Cloud Costs Without Cutting Features",          saving: "20-45%",  keyword: "FinOps guide for startups" },
+  // Blog posts (3)
+  { slug: "blog/how-we-found-2400-month-cloud-waste",     provider: "AWS",         title: "How We Found $2,400/Month in Cloud Waste in 15 Minutes",                saving: null, keyword: "find cloud waste fast", type: "blog" },
+  { slug: "blog/cloud-cost-audit-no-credentials",         provider: "Multi-Cloud", title: "How to Audit Cloud Costs Without Giving Anyone Your AWS Keys",          saving: null, keyword: "cloud cost audit no credentials", type: "blog" },
+  { slug: "blog/finops-for-small-teams",                  provider: "Multi-Cloud", title: "FinOps for Small Teams: Cut Cloud Costs Without a Dedicated Engineer",   saving: null, keyword: "finops small team cloud costs", type: "blog" },
   // Security (10)
   { slug: "aws-iam-security-audit",           provider: "AWS",         title: "Free AWS IAM Security Audit Find Overprivileged Roles in 15 Minutes",   saving: null, keyword: "AWS IAM security audit checklist",     type: "security" },
   { slug: "aws-s3-public-bucket-fix",         provider: "AWS",         title: "Public S3 Buckets The Risk Hiding in Your AWS Account",                 saving: null, keyword: "AWS S3 public bucket security risk",   type: "security" },
@@ -76,8 +80,11 @@ let generated = 0;
 for (const page of SEO_PAGES) {
   const url      = `${BASE}/${page.slug}/`;
   const isSecure = page.type === 'security';
+  const isBlog = page.type === 'blog';
   const description = isSecure
     ? `${page.title}. Free interactive checklist complete in 15 minutes, no cloud credentials required. Used by engineers across AWS, GCP and Azure. KloudAudit.eu`
+    : isBlog
+    ? `${page.title}. Practical cloud cost advice from KloudAudit — the zero-access cloud audit tool. kloudaudit.eu`
     : `${page.title}. Typical savings: ${page.saving} of affected ${page.provider} spend. Free 15-minute audit at KloudAudit.eu, no cloud access required.`;
 
   const jsonLd = JSON.stringify({

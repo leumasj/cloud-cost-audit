@@ -1324,6 +1324,7 @@ export default function App() {
   const [openFaq, setOpenFaq] = useState(null);
   const [activeHowStep, setActiveHowStep] = useState(null); // null = all equal, click to expand
   const [showExitIntent, setShowExitIntent] = useState(false);
+  const [showLeadMagnet, setShowLeadMagnet] = useState(false);   // ← ADD THIS LINE
   const [showShareCard, setShowShareCard] = useState(false);
   // ── SECURITY AUDIT STATE ──────────────────────────────────────────────────
   const [secChecked, setSecChecked] = useState({});
@@ -1559,6 +1560,18 @@ export default function App() {
       document.removeEventListener('mouseleave', handleMouseLeave);
     };
   }, []);
+
+  // ── 30-SECOND LEAD MAGNET TRIGGER ───────────────────────────────────────────
+useEffect(() => {
+  if (step !== 'intro') return;
+  if (localStorage.getItem('ka_lead_shown')) return;
+  const timer = setTimeout(() => {
+    setShowLeadMagnet(true);
+    localStorage.setItem('ka_lead_shown', '1');
+  }, 30000);
+  return () => clearTimeout(timer);
+}, [step]);
+
 
   // ── Formspree contact ──────────────────────────────────────────────────────
   const handleContactSubmit = async (e) => {
@@ -1972,6 +1985,40 @@ export default function App() {
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
+        {showLeadMagnet && (
+  <div onClick={() => setShowLeadMagnet(false)} style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px" }}>
+    <div onClick={e => e.stopPropagation()} style={{ background:"linear-gradient(145deg,#0f0f1a,#13131f)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"20px",padding:"40px 36px",maxWidth:"460px",width:"100%",position:"relative" }}>
+      <button onClick={() => setShowLeadMagnet(false)} style={{ position:"absolute",top:"16px",right:"16px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"8px",color:"var(--text-muted)",width:"30px",height:"30px",cursor:"pointer",fontSize:"16px",display:"flex",alignItems:"center",justifyContent:"center" }}>×</button>
+      <div style={{ display:"inline-flex",alignItems:"center",gap:"6px",background:"rgba(0,255,180,0.1)",border:"1px solid rgba(0,255,180,0.25)",borderRadius:"20px",padding:"4px 12px",marginBottom:"20px" }}>
+        <span style={{ fontSize:"11px",fontWeight:700,color:"var(--green)",letterSpacing:"1px" }}>FREE DOWNLOAD</span>
+      </div>
+      <h2 className="display" style={{ fontSize:"24px",fontWeight:800,letterSpacing:"-0.8px",color:"#fff",marginBottom:"10px",lineHeight:1.2 }}>
+        2026 Cloud Cost<br/>Optimisation Checklist
+      </h2>
+      <p style={{ fontSize:"14px",color:"var(--text-muted)",lineHeight:1.65,marginBottom:"20px" }}>
+        18 actionable checks across compute, storage, network, database and governance. Find 20–45% savings on AWS, GCP or Azure.
+      </p>
+      <div style={{ display:"flex",flexDirection:"column",gap:"6px",marginBottom:"24px" }}>
+        {["18 checks across all cost categories","Typical savings range for each issue","No credentials required to use","Pairs with the free interactive audit"].map(f => (
+          <div key={f} style={{ display:"flex",alignItems:"center",gap:"8px" }}>
+            <span style={{ color:"var(--green)",fontSize:"12px",fontWeight:700 }}>✓</span>
+            <span style={{ fontSize:"13px",color:"var(--text-dim)" }}>{f}</span>
+          </div>
+        ))}
+      </div>
+      <a href="/KloudAudit-2026-Cloud-Cost-Checklist.pdf" download
+        onClick={() => { localStorage.setItem('ka_lead_shown','1'); setShowLeadMagnet(false); }}
+        style={{ display:"block",width:"100%",padding:"14px",borderRadius:"12px",textDecoration:"none",textAlign:"center",background:"linear-gradient(135deg,var(--green),#00c896)",color:"#000",fontWeight:800,fontSize:"15px",boxShadow:"0 4px 20px rgba(0,255,180,0.3)" }}>
+        Download Free PDF →
+      </a>
+      <p onClick={() => { localStorage.setItem('ka_lead_shown','1'); setShowLeadMagnet(false); }} style={{ textAlign:"center",fontSize:"12px",color:"var(--text-muted)",marginTop:"12px",cursor:"pointer" }}>
+        No thanks
+      </p>
+    </div>
+  </div>
+)}
+{showContact && <ContactModal />}
+
         {showContact && <ContactModal />}
         {showBooking && <BookingModal />}
         <Nav showBack onBack={() => goTo("intro")} />
@@ -2521,6 +2568,15 @@ export default function App() {
                 <span style={{ fontSize: "13px", color: "var(--text-muted)", fontWeight: 500 }}>{item.text}</span>
               </div>
             ))}
+          </div>
+
+
+          {/* ── LEAD MAGNET CTA ── */}
+          <div className="fade-up stagger-4" style={{ marginBottom: "16px" }}>
+            <button onClick={() => setShowLeadMagnet(true)}
+              style={{ background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"10px",padding:"10px 20px",color:"var(--text-dim)",fontSize:"13px",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"8px" }}>
+              <span>📥</span> Free PDF: 2026 Cloud Cost Checklist
+            </button>
           </div>
 
           {/* ── COMPETITOR KILL LINE ── */}
