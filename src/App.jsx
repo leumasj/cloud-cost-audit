@@ -110,6 +110,26 @@ function ProgressRing({ percent, size = 44, stroke = 3, color = "#00ffb4" }) {
 }
 
 function ParticleBackground() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const activate = () => { if (!cancelled) setReady(true); };
+    const timer = setTimeout(activate, 2000);
+    window.addEventListener("mousemove", activate, { once: true, passive: true });
+    window.addEventListener("touchstart", activate, { once: true, passive: true });
+    window.addEventListener("scroll", activate, { once: true, passive: true, capture: true });
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      window.removeEventListener("mousemove", activate);
+      window.removeEventListener("touchstart", activate);
+      window.removeEventListener("scroll", activate, { capture: true });
+    };
+  }, []);
+
+  if (!ready) return null;
+
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none", willChange: "auto" }}>
       <div style={{ position: "absolute", top: "-200px", left: "-200px", width: "600px", height: "600px", background: "radial-gradient(circle, rgba(0,255,180,0.07) 0%, transparent 70%)", borderRadius: "50%" }} />
@@ -145,6 +165,7 @@ const globalCss = `
   .glow-btn:active { transform: translateY(0); }
   .ghost-btn { transition: all 0.2s; cursor: pointer; font-family: var(--body); }
   .ghost-btn:hover { border-color: rgba(255,255,255,0.25) !important; color: #fff !important; background: rgba(255,255,255,0.05) !important; }
+  button, [role="button"], [role="checkbox"], [role="radio"], [role="link"] { touch-action: manipulation; }
   .check-card { transition: all 0.2s cubic-bezier(0.4,0,0.2,1); cursor: pointer; }
   .check-card:hover { transform: translateX(4px); border-color: rgba(0,255,180,0.2) !important; }
   .audit-cat-card { transition: all 0.25s cubic-bezier(0.4,0,0.2,1); cursor: default; }
