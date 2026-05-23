@@ -131,7 +131,7 @@ const globalCss = `
     --bg: #080810; --bg2: #0d0d1a; --bg3: #12121f;
     --border: rgba(255,255,255,0.08); --border-hover: rgba(0,255,180,0.3);
     --green: #00ffb4; --green-dim: rgba(0,255,180,0.12); --green-border: rgba(0,255,180,0.25);
-    --text: #e2e8f0; --text-muted: #64748b; --text-dim: #94a3b8;
+    --text: #e2e8f0; --text-muted: #8899aa; --text-dim: #94a3b8;
     --display: 'Bricolage Grotesque', sans-serif; --body: 'DM Sans', sans-serif;
   }
   .app { font-family: var(--body); background: var(--bg); min-height: 100vh; color: var(--text); }
@@ -2483,7 +2483,7 @@ useEffect(() => {
         </div>
       )}
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px", paddingBottom: "72px" }}>
+      <main style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px", paddingBottom: "72px" }}>
 
 
         {/* ── HERO ── */}
@@ -2717,10 +2717,10 @@ useEffect(() => {
             <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>How much are you leaving on the table?</h2>
           </div>
           <div style={{ maxWidth: "600px", margin: "0 auto" }}>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>
+            <label htmlFor="calc-range" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>
               Your monthly cloud bill: <span style={{ color: "#fff", fontFamily: "var(--display)", fontSize: "18px" }}>${calcBill.toLocaleString()}</span>
             </label>
-            <input type="range" aria-label="Monthly cloud bill amount" min="500" max="50000" step="500" value={calcBill} onChange={e => setCalcBill(Number(e.target.value))}
+            <input id="calc-range" type="range" aria-label="Monthly cloud bill amount" min="500" max="50000" step="500" value={calcBill} onChange={e => setCalcBill(Number(e.target.value))}
               style={{ width: "100%", accentColor: "var(--green)", height: "4px", cursor: "pointer", marginBottom: "32px" }} />
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", marginBottom: "28px" }}>
               {[
@@ -3215,7 +3215,7 @@ useEffect(() => {
           </p>
         </div>
 
-      </div>
+      </main>
     </div>
     );
   }
