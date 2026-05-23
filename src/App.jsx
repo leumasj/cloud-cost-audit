@@ -420,12 +420,12 @@ function ShareCardModal({ savMin, savMax, savPct, flaggedCount, totalChecks, pro
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", animation: "fadeIn 0.2s ease" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "linear-gradient(145deg, #0f0f1a, #13131f)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "32px", maxWidth: "700px", width: "100%", position: "relative" }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="share-dialog-title" style={{ background: "linear-gradient(145deg, #0f0f1a, #13131f)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "32px", maxWidth: "700px", width: "100%", position: "relative" }}>
         {/* Close */}
-        <button onClick={onClose} style={{ position: "absolute", top: "16px", right: "16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "rgba(255,255,255,0.5)", width: "30px", height: "30px", cursor: "pointer", fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+        <button onClick={onClose} aria-label="Close" style={{ position: "absolute", top: "16px", right: "16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "rgba(255,255,255,0.5)", width: "30px", height: "30px", cursor: "pointer", fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
 
         <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px" }}>Your shareable results card</p>
-        <h2 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", marginBottom: "4px", letterSpacing: "-0.5px" }}>Share your audit results</h2>
+        <h2 id="share-dialog-title" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", marginBottom: "4px", letterSpacing: "-0.5px" }}>Share your audit results</h2>
         <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "20px" }}>Download as PNG and share on LinkedIn or Twitter. Every share helps others find savings too.</p>
 
         {/* Canvas preview */}
@@ -499,7 +499,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(12px)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", animation: "fadeIn 0.2s ease" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "linear-gradient(145deg, #0f0f1a, #13131f)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "24px", maxWidth: "480px", width: "100%", overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(248,113,113,0.08)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="sec-blueprint-dialog-title" style={{ background: "linear-gradient(145deg, #0f0f1a, #13131f)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "24px", maxWidth: "480px", width: "100%", overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(248,113,113,0.08)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
 
         {/* Header */}
         <div style={{ background: "linear-gradient(135deg, rgba(248,113,113,0.1), rgba(251,146,60,0.08))", borderBottom: "1px solid rgba(248,113,113,0.15)", padding: "28px 32px 22px" }}>
@@ -509,12 +509,12 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
                 <span style={{ width: "5px", height: "5px", background: "#f87171", borderRadius: "50%", animation: "pulse-dot 2s infinite" }} />
                 <span style={{ fontSize: "11px", color: "#f87171", fontWeight: 700, letterSpacing: "1px" }}>SECURITY BLUEPRINT · ONE-TIME</span>
               </div>
-              <h2 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "4px", fontFamily: "system-ui, sans-serif" }}>Get your Security Blueprint</h2>
+              <h2 id="sec-blueprint-dialog-title" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "4px", fontFamily: "system-ui, sans-serif" }}>Get your Security Blueprint</h2>
               <p style={{ fontSize: "13px", color: "#94a3b8" }}>
                 Claude AI writes exact remediation for all <strong style={{ color: "#fff" }}>{flaggedIds.length} flagged issues</strong> — delivered to your inbox instantly
               </p>
             </div>
-            <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "rgba(255,255,255,0.5)", width: "32px", height: "32px", cursor: "pointer", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
+            <button onClick={onClose} aria-label="Close" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "rgba(255,255,255,0.5)", width: "32px", height: "32px", cursor: "pointer", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
           </div>
           {/* What's included */}
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "14px" }}>
@@ -551,8 +551,9 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
 
           <form onSubmit={handlePurchase} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#f87171", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email — Blueprint delivered here</label>
+              <label htmlFor="sec-blueprint-email" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#f87171", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email — Blueprint delivered here</label>
               <input
+                id="sec-blueprint-email"
                 type="email" required value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="security@yourcompany.com"
@@ -574,7 +575,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
             {/* Product selector — Security or Bundle */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
               {/* Security only */}
-              <div onClick={() => setSelectedProduct("security")}
+              <div role="radio" aria-checked={selectedProduct === "security"} tabIndex={0} onKeyDown={e => (e.key === "Enter" || e.key === " ") && setSelectedProduct("security")} onClick={() => setSelectedProduct("security")}
                 style={{ background: selectedProduct === "security" ? "rgba(248,113,113,0.1)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${selectedProduct === "security" ? "#f87171" : "rgba(255,255,255,0.08)"}`, borderRadius: "10px", padding: "12px 14px", cursor: "pointer", transition: "all 0.2s" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
                   <div style={{ width: "14px", height: "14px", borderRadius: "50%", border: `2px solid ${selectedProduct === "security" ? "#f87171" : "rgba(255,255,255,0.2)"}`, background: selectedProduct === "security" ? "#f87171" : "transparent", flexShrink: 0, transition: "all 0.2s" }} />
@@ -584,7 +585,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
                 <p style={{ fontSize: "10px", color: "#475569" }}>Security fixes only</p>
               </div>
               {/* Bundle */}
-              <div onClick={() => setSelectedProduct("bundle")}
+              <div role="radio" aria-checked={selectedProduct === "bundle"} tabIndex={0} onKeyDown={e => (e.key === "Enter" || e.key === " ") && setSelectedProduct("bundle")} onClick={() => setSelectedProduct("bundle")}
                 style={{ background: selectedProduct === "bundle" ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${selectedProduct === "bundle" ? "#818cf8" : "rgba(255,255,255,0.08)"}`, borderRadius: "10px", padding: "12px 14px", cursor: "pointer", transition: "all 0.2s", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", top: 0, right: 0, background: "#818cf8", color: "#000", fontSize: "9px", fontWeight: 800, padding: "2px 8px", borderRadius: "0 10px 0 6px" }}>SAVE {Math.round((1 - (currency.bundleAmount || 34900) / ((currency.blueprintAmount || 29900) + (currency.securityAmount || 11900))) * 100)}%</div>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
@@ -1647,7 +1648,7 @@ useEffect(() => {
     <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(8,8,16,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid var(--border)", padding: "0 24px", height: "58px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         {showBack && <button className="ghost-btn" onClick={onBack} style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-dim)", fontSize: "13px", padding: "6px 12px", marginRight: "4px" }}>← Back</button>}
-        <div onClick={() => goTo("intro")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}>
+        <div role="link" tabIndex={0} onKeyDown={e => e.key === "Enter" && goTo("intro")} onClick={() => goTo("intro")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}>
           <div style={{ width: "30px", height: "30px", background: "var(--green)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 16px rgba(0,255,180,0.4)" }}>⚡</div>
           <span className="display" style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "-0.5px", color: "#fff" }}>KloudAudit</span>
         </div>
@@ -1668,7 +1669,7 @@ useEffect(() => {
   // ── CONTACT MODAL ──────────────────────────────────────────────────────────
   const ContactModal = () => (
     <div onClick={() => { setShowContact(false); setFormStatus("idle"); }} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", overflow: "hidden" }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="contact-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", overflow: "hidden" }}>
         {/* Header — same gradient banner as BookingModal */}
         <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.1) 0%, rgba(99,102,241,0.1) 100%)", borderBottom: "1px solid rgba(0,255,180,0.12)", padding: "28px 32px 22px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -1677,10 +1678,10 @@ useEffect(() => {
                 <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px var(--green)" }} />
                 <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>GET IN TOUCH · WE REPLY WITHIN 24HRS</span>
               </div>
-              <h2 className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "5px" }}>Contact us</h2>
+              <h2 id="contact-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "5px" }}>Contact us</h2>
               <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Questions, partnerships or custom audits — we're here</p>
             </div>
-            <button onClick={() => { setShowContact(false); setFormStatus("idle"); }} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "20px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>×</button>
+            <button onClick={() => { setShowContact(false); setFormStatus("idle"); }} aria-label="Close" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "20px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>×</button>
           </div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "14px" }}>
             {["✓ Cloud cost questions", "✓ Custom audit requests", "✓ Partnership enquiries", "✓ Technical support"].map(item => (
@@ -1702,21 +1703,21 @@ useEffect(() => {
               <input type="hidden" name="form_type" value="contact" />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>First Name</label>
-                  <input required type="text" name="first_name" placeholder="Jan" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                  <label htmlFor="contact-first-name" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>First Name</label>
+                  <input id="contact-first-name" required type="text" name="first_name" placeholder="Jan" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Last Name</label>
-                  <input required type="text" name="last_name" placeholder="Kowalski" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                  <label htmlFor="contact-last-name" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Last Name</label>
+                  <input id="contact-last-name" required type="text" name="last_name" placeholder="Kowalski" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
                 </div>
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email</label>
-                <input required type="email" name="email" placeholder="jan@company.com" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                <label htmlFor="contact-email" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email</label>
+                <input id="contact-email" required type="email" name="email" placeholder="jan@company.com" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Company</label>
-                <input type="text" name="company" placeholder="Acme Corp" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                <label htmlFor="contact-company" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Company</label>
+                <input id="contact-company" type="text" name="company" placeholder="Acme Corp" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>How can we help? <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>(optional)</span></label>
@@ -1738,7 +1739,7 @@ useEffect(() => {
   // ── BOOKING MODAL ──────────────────────────────────────────────────────────
   const BookingModal = () => (
     <div onClick={() => { setShowBooking(false); setBookingStatus("idle"); }} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", overflow: "hidden" }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="booking-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", overflow: "hidden" }}>
         <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.1) 0%, rgba(99,102,241,0.1) 100%)", borderBottom: "1px solid rgba(0,255,180,0.12)", padding: "28px 32px 22px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
@@ -1746,10 +1747,10 @@ useEffect(() => {
                 <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px var(--green)" }} />
                 <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>{`IMPLEMENTATION SESSION · ${currency.sessionPrice}`}</span>
               </div>
-              <h2 className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "5px" }}>Book your session</h2>
+              <h2 id="booking-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "5px" }}>Book your session</h2>
               <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Senior DevOps engineer · Remote · Delivered within 48hrs</p>
             </div>
-            <button onClick={() => { setShowBooking(false); setBookingStatus("idle"); }} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "20px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>×</button>
+            <button onClick={() => { setShowBooking(false); setBookingStatus("idle"); }} aria-label="Close" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "20px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>×</button>
           </div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "14px" }}>
             {["✓ Full audit review", "✓ Implementation roadmap", "✓ 1hr live session", "✓ 30-day follow-up"].map(item => (
@@ -1770,25 +1771,25 @@ useEffect(() => {
               <input type="hidden" name="form_type" value="booking_999pln" />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>First Name</label>
-                  <input required type="text" name="first_name" placeholder="Jan" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                  <label htmlFor="booking-first-name" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>First Name</label>
+                  <input id="booking-first-name" required type="text" name="first_name" placeholder="Jan" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Last Name</label>
-                  <input required type="text" name="last_name" placeholder="Kowalski" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                  <label htmlFor="booking-last-name" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Last Name</label>
+                  <input id="booking-last-name" required type="text" name="last_name" placeholder="Kowalski" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
                 </div>
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email</label>
-                <input required type="email" name="email" placeholder="jan@company.com" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                <label htmlFor="booking-email" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email</label>
+                <input id="booking-email" required type="email" name="email" placeholder="jan@company.com" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Company</label>
-                <input required type="text" name="company" placeholder="Acme Corp" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                <label htmlFor="booking-company" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Company</label>
+                <input id="booking-company" required type="text" name="company" placeholder="Acme Corp" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Cloud Provider & Monthly Bill</label>
-                <input type="text" name="cloud_details" placeholder="e.g. AWS · ~$4,500/month" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                <label htmlFor="booking-cloud-details" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Cloud Provider & Monthly Bill</label>
+                <input id="booking-cloud-details" type="text" name="cloud_details" placeholder="e.g. AWS · ~$4,500/month" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Biggest challenge <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>(optional)</span></label>
@@ -1810,10 +1811,10 @@ useEffect(() => {
   // ── BLUEPRINT MODAL — FIX #3: stable input, no flicker ───────────────────
   const BlueprintModal = () => (
     <div onClick={() => { setShowBlueprint(false); setBlueprintStatus("idle"); }} style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "460px", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="blueprint-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "460px", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>📄</div>
-          <h2 className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>Get Your AI Blueprint</h2>
+          <h2 id="blueprint-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>Get Your AI Blueprint</h2>
           <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
             Enter your email and you'll be redirected to secure payment. Your personalised {provider || "cloud"} implementation guide lands in your inbox within 2 minutes of payment.
           </p>
@@ -1827,9 +1828,10 @@ useEffect(() => {
             </div>
           ))}
         </div>
-        <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Your Email</label>
+        <label htmlFor="blueprint-email" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Your Email</label>
         {/* FIX #3: uncontrolled input with defaultValue — prevents re-render flicker */}
         <input
+          id="blueprint-email"
           type="email"
           placeholder="you@company.com"
           defaultValue={blueprintEmail}
@@ -1866,17 +1868,17 @@ useEffect(() => {
     const sLow = sampleFlagged.filter(c => getSev(c) === "low");
     return (
       <div onClick={() => setShowSample(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "780px", width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.7)" }}>
+        <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="sample-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "780px", width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.7)" }}>
           <div style={{ padding: "28px 32px 20px", borderBottom: "1px solid var(--border)", position: "sticky", top: 0, background: "var(--bg2)", zIndex: 10, borderRadius: "20px 20px 0 0" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
                   {["Sample Report", SAMPLE_REPORT.provider, "Apr 2026"].map(t => <span key={t} style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-dim)", fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "20px", border: "1px solid var(--border)" }}>{t}</span>)}
                 </div>
-                <h2 className="display" style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>{SAMPLE_REPORT.companyName} · Cost Report</h2>
+                <h2 id="sample-dialog-title" className="display" style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>{SAMPLE_REPORT.companyName} · Cost Report</h2>
                 <p style={{ color: "var(--text-muted)", fontSize: "14px", marginTop: "4px" }}>Monthly bill: ${SAMPLE_REPORT.monthlyBill.toLocaleString()} · {sampleFlagged.length} issues found</p>
               </div>
-              <button onClick={() => setShowSample(false)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "18px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
+              <button onClick={() => setShowSample(false)} aria-label="Close" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "18px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
             </div>
           </div>
           <div style={{ padding: "24px 32px" }}>
@@ -2083,7 +2085,7 @@ useEffect(() => {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {currentSection.checks.map(check => (
-                  <div key={check.id} onClick={() => setSecChecked(p => ({ ...p, [check.id]: !p[check.id] }))}
+                  <div key={check.id} role="checkbox" aria-checked={!!secChecked[check.id]} tabIndex={0} onKeyDown={e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setSecChecked(p => ({ ...p, [check.id]: !p[check.id] })))} onClick={() => setSecChecked(p => ({ ...p, [check.id]: !p[check.id] }))}
                     style={{ background: secChecked[check.id] ? RISK_COLOR[check.risk] + "0e" : "rgba(255,255,255,0.02)", border: `1.5px solid ${secChecked[check.id] ? RISK_COLOR[check.risk] + "55" : "rgba(255,255,255,0.07)"}`, borderRadius: "12px", padding: "15px 18px", cursor: "pointer", transition: "all 0.2s", boxShadow: secChecked[check.id] ? `0 0 0 1px ${RISK_COLOR[check.risk]}18` : "none" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
                       <div style={{ flex: 1 }}>
@@ -2401,7 +2403,7 @@ useEffect(() => {
           zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px",
           animation: "fadeIn 0.25s ease"
         }}>
-          <div onClick={e => e.stopPropagation()} style={{
+          <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="exit-intent-dialog-title" style={{
             background: "linear-gradient(145deg, #0f0f1a, #13131f)",
             border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px",
             padding: "40px 36px", maxWidth: "420px", width: "100%", position: "relative",
@@ -2415,7 +2417,7 @@ useEffect(() => {
               }
             `}</style>
             {/* Close */}
-            <button onClick={() => setShowExitIntent(false)} style={{
+            <button onClick={() => setShowExitIntent(false)} aria-label="Close" style={{
               position: "absolute", top: "16px", right: "16px", background: "rgba(255,255,255,0.06)",
               border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "var(--text-muted)",
               width: "30px", height: "30px", cursor: "pointer", fontSize: "16px", lineHeight: 1,
@@ -2428,7 +2430,7 @@ useEffect(() => {
               <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px" }}>WAIT — FREE AUDIT TAKES 15 MIN</span>
             </div>
 
-            <h2 className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "10px", lineHeight: 1.2 }}>
+            <h2 id="exit-intent-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "10px", lineHeight: 1.2 }}>
               Your cloud bill is hiding savings right now.
             </h2>
             <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "24px" }}>
@@ -2457,9 +2459,9 @@ useEffect(() => {
             >
               Run My Free Audit →
             </button>
-            <p onClick={() => setShowExitIntent(false)} style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "12px", cursor: "pointer" }}>
+            <button onClick={() => setShowExitIntent(false)} style={{ display: "block", width: "100%", background: "none", border: "none", textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "12px", cursor: "pointer", fontFamily: "inherit", padding: 0 }}>
               No thanks, I'll keep overpaying
-            </p>
+            </button>
           </div>
         </div>
       )}
@@ -2483,6 +2485,7 @@ useEffect(() => {
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: "1140px", margin: "0 auto", padding: "0 24px", paddingBottom: "72px" }}>
 
+
         {/* ── HERO ── */}
         <div className="hero-pad" style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center", minHeight: "85vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
           {/* ── CATEGORY BADGE ── */}
@@ -2499,12 +2502,12 @@ useEffect(() => {
           </h1>
                 {showLeadMagnet && (
         <div onClick={() => setShowLeadMagnet(false)} style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px" }}>
-          <div onClick={e => e.stopPropagation()} style={{ background:"linear-gradient(145deg,#0f0f1a,#13131f)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"20px",padding:"40px 36px",maxWidth:"460px",width:"100%",position:"relative" }}>
-            <button onClick={() => setShowLeadMagnet(false)} style={{ position:"absolute",top:"16px",right:"16px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"8px",color:"var(--text-muted)",width:"30px",height:"30px",cursor:"pointer",fontSize:"16px",display:"flex",alignItems:"center",justifyContent:"center" }}>×</button>
+          <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="lead-magnet-dialog-title" style={{ background:"linear-gradient(145deg,#0f0f1a,#13131f)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"20px",padding:"40px 36px",maxWidth:"460px",width:"100%",position:"relative" }}>
+            <button onClick={() => setShowLeadMagnet(false)} aria-label="Close" style={{ position:"absolute",top:"16px",right:"16px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"8px",color:"var(--text-muted)",width:"30px",height:"30px",cursor:"pointer",fontSize:"16px",display:"flex",alignItems:"center",justifyContent:"center" }}>×</button>
             <div style={{ display:"inline-flex",alignItems:"center",gap:"6px",background:"rgba(0,255,180,0.1)",border:"1px solid rgba(0,255,180,0.25)",borderRadius:"20px",padding:"4px 12px",marginBottom:"20px" }}>
               <span style={{ fontSize:"11px",fontWeight:700,color:"var(--green)",letterSpacing:"1px" }}>FREE DOWNLOAD</span>
             </div>
-            <h2 className="display" style={{ fontSize:"24px",fontWeight:800,letterSpacing:"-0.8px",color:"#fff",marginBottom:"10px",lineHeight:1.2 }}>
+            <h2 id="lead-magnet-dialog-title" className="display" style={{ fontSize:"24px",fontWeight:800,letterSpacing:"-0.8px",color:"#fff",marginBottom:"10px",lineHeight:1.2 }}>
               2026 Cloud Cost<br/>Optimisation Checklist
             </h2>
             <p style={{ fontSize:"14px",color:"var(--text-muted)",lineHeight:1.65,marginBottom:"20px" }}>
@@ -2523,9 +2526,9 @@ useEffect(() => {
               style={{ display:"block",width:"100%",padding:"14px",borderRadius:"12px",textDecoration:"none",textAlign:"center",background:"linear-gradient(135deg,var(--green),#00c896)",color:"#000",fontWeight:800,fontSize:"15px",boxShadow:"0 4px 20px rgba(0,255,180,0.3)" }}>
               Download Free PDF →
             </a>
-            <p onClick={() => { localStorage.setItem('ka_lead_shown','1'); setShowLeadMagnet(false); }} style={{ textAlign:"center",fontSize:"12px",color:"var(--text-muted)",marginTop:"12px",cursor:"pointer" }}>
+            <button onClick={() => { localStorage.setItem('ka_lead_shown','1'); setShowLeadMagnet(false); }} style={{ display:"block",width:"100%",background:"none",border:"none",textAlign:"center",fontSize:"12px",color:"var(--text-muted)",marginTop:"12px",cursor:"pointer",fontFamily:"inherit",padding:0 }}>
               No thanks
-            </p>
+            </button>
           </div>
         </div>
       )}
@@ -2640,6 +2643,7 @@ useEffect(() => {
               const isActive = activeHowStep === i;
               return (
                 <div key={i}
+                  role="button" tabIndex={0} aria-expanded={isActive} onKeyDown={e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setActiveHowStep(isActive ? null : i))}
                   onClick={() => setActiveHowStep(isActive ? null : i)}
                   style={{
                     background: isActive ? `linear-gradient(145deg, ${step.color}12, var(--bg2))` : "var(--bg2)",
@@ -2716,7 +2720,7 @@ useEffect(() => {
             <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>
               Your monthly cloud bill: <span style={{ color: "#fff", fontFamily: "var(--display)", fontSize: "18px" }}>${calcBill.toLocaleString()}</span>
             </label>
-            <input type="range" min="500" max="50000" step="500" value={calcBill} onChange={e => setCalcBill(Number(e.target.value))}
+            <input type="range" aria-label="Monthly cloud bill amount" min="500" max="50000" step="500" value={calcBill} onChange={e => setCalcBill(Number(e.target.value))}
               style={{ width: "100%", accentColor: "var(--green)", height: "4px", cursor: "pointer", marginBottom: "32px" }} />
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", marginBottom: "28px" }}>
               {[
@@ -2770,7 +2774,7 @@ useEffect(() => {
             ))}
 
             {/* ── SECURITY CARD 1 — Identity & Access ── */}
-            <div className="audit-cat-card fade-up" onClick={() => goTo("security_intro")}
+            <div className="audit-cat-card fade-up" role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && goTo("security_intro")} onClick={() => goTo("security_intro")}
               style={{ animationDelay: "0.25s", background: "linear-gradient(135deg, rgba(248,113,113,0.07), rgba(251,146,60,0.04))", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden", cursor: "pointer", transition: "all 0.25s" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.45)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.2)"; e.currentTarget.style.transform = "translateY(0)"; }}>
@@ -2796,7 +2800,7 @@ useEffect(() => {
             </div>
 
             {/* ── SECURITY CARD 2 — Exposure & Data ── */}
-            <div className="audit-cat-card fade-up" onClick={() => goTo("security_intro")}
+            <div className="audit-cat-card fade-up" role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && goTo("security_intro")} onClick={() => goTo("security_intro")}
               style={{ animationDelay: "0.30s", background: "linear-gradient(135deg, rgba(248,113,113,0.07), rgba(251,146,60,0.04))", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden", cursor: "pointer", transition: "all 0.25s" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.45)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.2)"; e.currentTarget.style.transform = "translateY(0)"; }}>
@@ -2968,7 +2972,7 @@ useEffect(() => {
 
         {/* ── SECURITY AUDIT PRODUCT CARD ── */}
         <div id="security-audit" style={{ marginBottom: "48px" }}>
-          <div onClick={() => goTo("security_intro")}
+          <div role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && goTo("security_intro")} onClick={() => goTo("security_intro")}
             style={{ background: "linear-gradient(135deg, rgba(248,113,113,0.07), rgba(251,146,60,0.05))", border: "1.5px solid rgba(248,113,113,0.2)", borderRadius: "20px", padding: "28px 32px", cursor: "pointer", transition: "all 0.25s", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.45)"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 16px 40px rgba(248,113,113,0.12)"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.2)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
@@ -3233,8 +3237,8 @@ useEffect(() => {
         </div>
         <div className="fade-up stagger-1" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Company or project</label>
-            <input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="e.g. Acme Corp" style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "12px", color: "#fff", fontSize: "15px", transition: "all 0.2s" }} />
+            <label htmlFor="intake-company" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Company or project</label>
+            <input id="intake-company" value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="e.g. Acme Corp" style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "12px", color: "#fff", fontSize: "15px", transition: "all 0.2s" }} />
           </div>
           <div>
             <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Cloud provider</label>
@@ -3245,10 +3249,10 @@ useEffect(() => {
             </div>
           </div>
           <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Monthly cloud bill (USD)</label>
+            <label htmlFor="intake-monthly-bill" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Monthly cloud bill (USD)</label>
             <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: "18px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontSize: "16px", fontWeight: 700 }}>$</span>
-              <input type="number" value={monthlyBill} onChange={e => setMonthlyBill(e.target.value)} placeholder="3,500" style={{ width: "100%", padding: "14px 18px 14px 34px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "12px", color: "#fff", fontSize: "15px", transition: "all 0.2s" }} />
+              <span aria-hidden="true" style={{ position: "absolute", left: "18px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontSize: "16px", fontWeight: 700 }}>$</span>
+              <input id="intake-monthly-bill" type="number" value={monthlyBill} onChange={e => setMonthlyBill(e.target.value)} placeholder="3,500" style={{ width: "100%", padding: "14px 18px 14px 34px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "12px", color: "#fff", fontSize: "15px", transition: "all 0.2s" }} />
             </div>
             {bill > 0 && (
               <div style={{ marginTop: "10px", padding: "12px 16px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "10px", fontSize: "13px", color: "var(--green)", fontWeight: 600 }}>
@@ -3310,7 +3314,7 @@ useEffect(() => {
                   const sMin = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
                   const sMax = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
                   return (
-                    <div key={check.id} className="check-card" onClick={() => toggle(check.id)}
+                    <div key={check.id} className="check-card" role="checkbox" aria-checked={on} tabIndex={0} onKeyDown={e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), toggle(check.id))} onClick={() => toggle(check.id)}
                       style={{ background: on ? "rgba(0,255,180,0.05)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${on ? "rgba(0,255,180,0.25)" : "var(--border)"}`, borderRadius: "14px", padding: "18px 20px", display: "flex", gap: "14px", alignItems: "flex-start", boxShadow: on ? "0 4px 20px rgba(0,255,180,0.08)" : "0 1px 4px rgba(0,0,0,0.2)" }}>
                       <div style={{ width: "24px", height: "24px", borderRadius: "7px", flexShrink: 0, marginTop: "1px", background: on ? "var(--green)" : "transparent", border: `2px solid ${on ? "var(--green)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: on ? "0 0 12px rgba(0,255,180,0.5)" : "none" }}>
                         {on && <svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4L4.5 7.5L11 1" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
@@ -3379,7 +3383,7 @@ useEffect(() => {
                   const done = s.checks.filter(c => checked[c.id] !== undefined).length;
                   const pct = Math.round((done / s.checks.length) * 100);
                   return (
-                    <div key={s.id} onClick={() => setActiveSection(i)} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px", cursor: "pointer", opacity: i === activeSection ? 1 : 0.6, transition: "opacity 0.15s" }}>
+                    <div key={s.id} role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && setActiveSection(i)} onClick={() => setActiveSection(i)} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px", cursor: "pointer", opacity: i === activeSection ? 1 : 0.6, transition: "opacity 0.15s" }}>
                       <span style={{ fontSize: "14px", width: "18px" }}>{s.icon}</span>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
@@ -3475,6 +3479,7 @@ useEffect(() => {
                 <form onSubmit={handleGateSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   <input
                     type="email"
+                    aria-label="Your work email address"
                     value={gateEmail}
                     onChange={e => setGateEmail(e.target.value)}
                     placeholder="you@company.com"
@@ -3582,44 +3587,44 @@ useEffect(() => {
           )}
 
 
-          {/* ── SCORE BADGE ── */}
-{scores && scores.letterGrade && (
-  <div className="fade-up">
-    <ScoreBadge 
-      letterGrade={scores.letterGrade} 
-      wasteScore={scores.wasteScore} 
-    />
-  </div>
-)}
+                        {/* ── SCORE BADGE ── */}
+              {scores && scores.letterGrade && (
+                <div className="fade-up">
+                  <ScoreBadge 
+                    letterGrade={scores.letterGrade} 
+                    wasteScore={scores.wasteScore} 
+                  />
+                </div>
+              )}
 
-{/* ── WASTE SCORE ── */}
-{bill > 0 && flagged.length > 0 && <WasteScoreCard
-  flagged={flagged}
-  allChecks={allChecks}
-  savPct={savPct}
-  savMin={savMin}
-  savMax={savMax}
-  onShare={() => setShowShareCard(true)}
-/>}
+          {/* ── WASTE SCORE ── */}
+          {bill > 0 && flagged.length > 0 && <WasteScoreCard
+            flagged={flagged}
+            allChecks={allChecks}
+            savPct={savPct}
+            savMin={savMin}
+            savMax={savMax}
+            onShare={() => setShowShareCard(true)}
+          />}
 
-{/* ── SHARE & LEADERBOARD ── */}
-{scores && scores.letterGrade && (
-  <div className="fade-up stagger-1" style={{ marginTop: '32px' }}>
-    <ShareButton 
-      sessionId={sessionId}
-      companyName={companyName}
-      onShareUrl={setShareUrl}
-    />
-    
-    <LeaderboardOptIn 
-      sessionId={sessionId}
-      companyName={companyName}
-      onRank={setLeaderboardRank}
-    />
-    
-    <ShareUrlDisplay url={shareUrl} rank={leaderboardRank} />
-  </div>
-)}
+          {/* ── SHARE & LEADERBOARD ── */}
+          {scores && scores.letterGrade && (
+            <div className="fade-up stagger-1" style={{ marginTop: '32px' }}>
+              <ShareButton 
+                sessionId={sessionId}
+                companyName={companyName}
+                onShareUrl={setShareUrl}
+              />
+              
+              <LeaderboardOptIn 
+                sessionId={sessionId}
+                companyName={companyName}
+                onRank={setLeaderboardRank}
+              />
+              
+              <ShareUrlDisplay url={shareUrl} rank={leaderboardRank} />
+            </div>
+          )}
 
           {/* ── FINDINGS — Sorted by implementation ease ── */}
                     {/* ── FINDINGS ── */}
