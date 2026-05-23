@@ -2,14 +2,22 @@
 <html lang="en">
   <head>
 
-          <!-- Google Analytics -->
-      <script async src="https://www.googletagmanager.com/gtag/js?id=G-BRXYEY5FPP"></script>
-    <script>
+      
+      <!-- Google Analytics — deferred to avoid blocking LCP -->
+<script>
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      var s = document.createElement('script');
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-BRXYEY5FPP';
+      s.async = true;
+      document.head.appendChild(s);
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-BRXYEY5FPP');
-    </script>
+      gtag('config', 'G-BRXYEY5FPP', { 'send_page_view': true });
+    }, 3000);
+  });
+</script>
 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

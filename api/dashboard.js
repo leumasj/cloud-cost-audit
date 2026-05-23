@@ -5,6 +5,14 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
+// first 3 chars of local part + *** + @domain  e.g. "sam***@example.com"
+function maskEmail(email) {
+  if (!email) return '—';
+  const at = email.indexOf('@');
+  if (at < 0) return '***';
+  return `${email.slice(0, 3)}***@${email.slice(at + 1)}`;
+}
+
 module.exports = async function handler(req, res) {
   // Simple key auth — uses existing CRON_SECRET
   const key = req.query.key;
@@ -51,7 +59,7 @@ module.exports = async function handler(req, res) {
         (data || []).forEach(a => { counts[a.provider] = (counts[a.provider] || 0) + 1; });
         return { data: Object.entries(counts).sort((a,b) => b[1]-a[1]) };
       }),
-      supabaseAdmin.from('audits').select('created_at, provider, monthly_bill, waste_score, savings_min, savings_max, blueprint_paid, audit_type').order('created_at', { ascending: false }).limit(10),
+      supabaseAdmin.from('audits').select('created_at, email, provider, monthly_bill, waste_score, savings_min, savings_max, blueprint_paid, audit_type').order('created_at', { ascending: false }).limit(10),
       supabaseAdmin.from('delivery_queue').select('status').then(({ data }) => {
         const counts = { pending: 0, processing: 0, delivered: 0, failed: 0 };
         (data || []).forEach(d => { counts[d.status] = (counts[d.status] || 0) + 1; });
@@ -185,11 +193,12 @@ module.exports = async function handler(req, res) {
   <div class="section">
     <h2>Recent Audits (last 10)</h2>
     <table>
-      <thead><tr><th>Date</th><th>Provider</th><th>Bill/mo</th><th>Waste Score</th><th>Savings Found</th><th>Type</th><th>Blueprint</th></tr></thead>
+      <thead><tr><th>Date</th><th>Email</th><th>Provider</th><th>Bill/mo</th><th>Waste Score</th><th>Savings Found</th><th>Type</th><th>Blueprint</th></tr></thead>
       <tbody>
         ${(recentAudits || []).map(a => `
           <tr>
             <td>${new Date(a.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
+            <td style="font-family:monospace;font-size:11px">${maskEmail(a.email)}</td>
             <td>${a.provider || '—'}</td>
             <td>$${Number(a.monthly_bill || 0).toLocaleString()}</td>
             <td>
