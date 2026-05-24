@@ -1733,6 +1733,9 @@ useEffect(() => {
           Hire on Upwork
         </a>
         <button onClick={() => setShowContact(true)} className="ghost-btn" style={{ background: "transparent", border: "none", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600 }}>Contact Us</button>
+        {step === "intro" && (
+          <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "8px", padding: "8px 16px", fontSize: "13px", fontWeight: 700 }}>Start Free Audit →</button>
+        )}
       </div>
     </nav>
   );
