@@ -2918,6 +2918,58 @@ aws ec2 describe-reserved-instances \\
           </div>
         </div>
 
+        {/* ── COMPARISON TABLE ── */}
+        <div style={{ marginBottom: "90px" }}>
+          <div style={{ textAlign: "center", marginBottom: "48px" }}>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>No sales calls required</p>
+            <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>Why engineers choose KloudAudit</h2>
+            <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px" }}>vs. traditional cloud cost tools</p>
+          </div>
+          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+            <div style={{ minWidth: "640px", background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", overflow: "hidden" }}>
+              {/* Header row */}
+              <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: "1px solid var(--border)" }}>
+                <div style={{ padding: "18px 20px" }} />
+                {[
+                  { label: "KloudAudit",         kloud: true  },
+                  { label: "CloudHealth",         kloud: false },
+                  { label: "AWS Cost Explorer",   kloud: false },
+                  { label: "Consultant",          kloud: false },
+                ].map(({ label, kloud }) => (
+                  <div key={label} style={{ padding: "16px 12px", textAlign: "center", background: kloud ? "rgba(0,255,180,0.08)" : "transparent", borderLeft: `1px solid ${kloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
+                    <p style={{ fontSize: "13px", fontWeight: 800, color: kloud ? "var(--green)" : "var(--text-dim)", marginBottom: kloud ? "5px" : "0" }}>{label}</p>
+                    {kloud && <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--green)", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.3)", borderRadius: "10px", padding: "1px 7px" }}>← this</span>}
+                  </div>
+                ))}
+              </div>
+              {/* Data rows */}
+              {[
+                { label: "Setup time",           vals: ["15 minutes",  "4–6 months",        "Immediate",             "2–4 weeks"] },
+                { label: "Credentials required", vals: ["None",        "Full IAM access",   "AWS login",             "Full access"] },
+                { label: "First finding",        vals: ["Immediate",   "30+ days",          "Hours of exploration",  "1–2 weeks"] },
+                { label: "Cost",                 vals: ["Free / $79",  "$$$$ enterprise",   "Free",                  "$$$"] },
+                { label: "Prioritised fix list",  vals: ["✓",           "Partial",           "✗",                     "✓"] },
+                { label: "AI fix commands",       vals: ["✓",           "✗",                 "✗",                     "✗"] },
+              ].map((row, ri, arr) => (
+                <div key={row.label} style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: ri < arr.length - 1 ? "1px solid var(--border)" : "none", background: ri % 2 === 1 ? "rgba(255,255,255,0.015)" : "transparent" }}>
+                  <div style={{ padding: "14px 20px", display: "flex", alignItems: "center" }}>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)" }}>{row.label}</span>
+                  </div>
+                  {row.vals.map((val, ci) => {
+                    const isKloud = ci === 0;
+                    const color = val === "✓" ? "#4ade80" : val === "✗" ? "#f87171" : val === "Partial" ? "#fbbf24" : isKloud ? "#fff" : "var(--text-muted)";
+                    return (
+                      <div key={ci} style={{ padding: "14px 10px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: isKloud ? "rgba(0,255,180,0.05)" : "transparent", borderLeft: `1px solid ${isKloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
+                        <span style={{ fontSize: val === "✓" || val === "✗" ? "16px" : "12px", fontWeight: isKloud ? 700 : 400, color }}>{val}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* ── LIVE SAVINGS CALCULATOR ── */}
         <div style={{ marginBottom: "90px", background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "24px", padding: "48px 40px", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: "-60px", right: "-60px", width: "280px", height: "280px", background: "radial-gradient(circle, rgba(0,255,180,0.07) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
