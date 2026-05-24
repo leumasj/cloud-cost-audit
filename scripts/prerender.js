@@ -96,20 +96,28 @@ const SEO_PAGES = [
   { slug: "azure-security-posture-review",    provider: "Azure",       title: "Azure Security Posture Review No Access Required Checklist",            saving: null, keyword: "Azure security posture assessment",    type: "security" },
   { slug: "cloud-security-audit-checklist",   provider: "Multi-Cloud", title: "Cloud Security Audit Checklist 2026 16 Checks for AWS GCP and Azure",  saving: null, keyword: "Cloud security audit checklist 2026",  type: "security" },
   { slug: "devsecops-cloud-checklist",        provider: "Multi-Cloud", title: "DevSecOps Cloud Security Checklist 16 Controls Every Team Needs",       saving: null, keyword: "DevSecOps cloud security checklist",   type: "security" },
+  // Comparison pages (4)
+  { slug: "kloudaudit-vs-aws-cost-explorer",  provider: "AWS",         title: "KloudAudit vs AWS Cost Explorer: Which Finds More Waste in Less Time",    saving: "20-45%", keyword: "KloudAudit vs AWS Cost Explorer",             type: "comparison" },
+  { slug: "kloudaudit-vs-cloudhealth",        provider: "Multi-Cloud", title: "KloudAudit vs CloudHealth: Zero-Access Audit vs Full Integration",         saving: "20-45%", keyword: "KloudAudit vs CloudHealth alternative",       type: "comparison" },
+  { slug: "kloudaudit-vs-infracost",          provider: "Multi-Cloud", title: "KloudAudit vs Infracost: Runtime Waste Detection vs Pre-Deploy Estimates", saving: "20-45%", keyword: "KloudAudit vs Infracost cloud cost",          type: "comparison" },
+  { slug: "best-aws-cost-audit-tool-2026",    provider: "AWS",         title: "Best AWS Cost Audit Tool 2026: Compared Without the Sales Demo",           saving: "20-45%", keyword: "best AWS cost audit tool 2026",               type: "comparison" },
 ];
 
 let generated = 0;
 for (const page of SEO_PAGES) {
   const url      = `${BASE}/${page.slug}/`;
-  const isSecure = page.type === 'security';
-  const isBlog    = page.type === 'blog';
-  const isProblem = page.type === 'problem';
+  const isSecure     = page.type === 'security';
+  const isBlog       = page.type === 'blog';
+  const isProblem    = page.type === 'problem';
+  const isComparison = page.type === 'comparison';
   const description = isSecure
     ? `${page.title}. Free interactive checklist complete in 15 minutes, no cloud credentials required. Used by engineers across AWS, GCP and Azure. KloudAudit.eu`
     : isProblem
     ? `${page.title}. Free CLI command to fix this — plus the full 18-check audit at kloudaudit.eu. No credentials required.`
     : isBlog
     ? `${page.title}. Practical cloud cost advice from KloudAudit — the zero-access cloud audit tool. kloudaudit.eu`
+    : isComparison
+    ? `${page.title}. Honest comparison — features, pricing, setup time, and who each tool is for. kloudaudit.eu`
     : `${page.title}. Typical savings: ${page.saving} of affected ${page.provider} spend. Free 15-minute audit at KloudAudit.eu, no cloud access required.`;
 
   const jsonLd = JSON.stringify({

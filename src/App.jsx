@@ -2719,8 +2719,8 @@ aws ec2 describe-reserved-instances \\
       )}
       {showContact && <ContactModal />}
           {/* ── SUBHEADING ── */}
-          <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "480px", margin: "0 auto 28px" }}>
-            Pick your cloud provider and start your free audit in 60 seconds.
+          <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "520px", margin: "0 auto 28px" }}>
+            Find unused cloud spend in minutes. Covers AWS, GCP and Azure — <strong style={{ color: "#fff" }}>no credentials required, ever</strong>. Teams typically uncover <strong style={{ color: "var(--green)" }}>20–45% in savings</strong>.
           </p>
 
           {/* ── PRIMARY ACTION — Provider buttons front and centre ── */}
@@ -2817,6 +2817,14 @@ aws ec2 describe-reserved-instances \\
         </div>
 
         {/* ── HOW IT WORKS ── */}
+        {/* ── ZERO CREDENTIALS TRUST CALLOUT ── */}
+        <div style={{ marginBottom: "48px", background: "var(--bg2)", border: "1px solid var(--border)", borderLeft: "4px solid var(--green)", borderRadius: "14px", padding: "28px 32px" }}>
+          <p style={{ fontSize: "13px", fontWeight: 800, color: "var(--green)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "10px" }}>🔒 Zero cloud credentials — here&apos;s why this works</p>
+          <p style={{ fontSize: "15px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "760px", margin: 0 }}>
+            Most cloud cost tools require IAM roles, OAuth connections, or agent installation. KloudAudit uses a structured self-assessment instead — you answer 18 questions based on your own knowledge of your infrastructure. <strong style={{ color: "#fff" }}>No credentials leave your browser. No AWS account connection. No security review required.</strong> This means you can complete the audit in 15 minutes without an IT ticket, a procurement process, or a security approval.
+          </p>
+        </div>
+
         <div style={{ marginBottom: "90px" }}>
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
             <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Zero guesswork</p>
