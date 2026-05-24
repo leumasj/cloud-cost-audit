@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PAGE_TITLE | KloudAudit</title>
+  <meta name="description" content="PAGE_DESCRIPTION"/>
+  <link rel="canonical" href="PAGE_URL"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#080810;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;line-height:1.6}
+    .wrap{max-width:860px;margin:0 auto;padding:40px 24px 80px}
+    nav{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:40px}
+    .logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+    .logo-dot{width:26px;height:26px;background:#00ffb4;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000}
+    .logo-text{font-weight:800;font-size:15px;color:#fff}
+    .tag{font-size:11px;background:rgba(0,255,180,0.1);border:1px solid rgba(0,255,180,0.25);color:#00ffb4;padding:3px 10px;border-radius:20px;font-weight:700;letter-spacing:1px}
+    h1{font-size:clamp(22px,3.5vw,34px);font-weight:800;letter-spacing:-0.8px;margin-bottom:16px;line-height:1.2}
+    .meta{font-size:13px;color:#64748b;margin-bottom:32px}
+    .answer-box{background:rgba(0,255,180,0.04);border:1px solid rgba(0,255,180,0.2);border-radius:14px;padding:24px;margin-bottom:32px}
+    .answer-box h2{font-size:15px;font-weight:700;color:#00ffb4;margin-bottom:14px;text-transform:uppercase;letter-spacing:1px}
+    pre{background:#0d0d1a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:18px;overflow-x:auto;font-size:13px;font-family:'Fira Code','Courier New',monospace;color:#a5f3c4;margin-bottom:16px;line-height:1.6}
+    .step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+    .step-num{width:24px;height:24px;border-radius:50%;background:rgba(0,255,180,0.15);color:#00ffb4;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+    .step p{font-size:14px;color:#94a3b8}
+    /* ── KLOUDAUDIT BANNER ── */
+    .ka-banner{background:linear-gradient(135deg,rgba(0,255,180,0.08),rgba(0,212,255,0.04));border:2px solid rgba(0,255,180,0.25);border-radius:16px;padding:28px 32px;margin:40px 0;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+    .ka-banner-icon{font-size:36px;flex-shrink:0}
+    .ka-banner-text{flex:1;min-width:200px}
+    .ka-banner-text h3{font-size:18px;font-weight:800;color:#fff;margin-bottom:6px}
+    .ka-banner-text p{font-size:14px;color:#64748b;line-height:1.6}
+    .ka-banner-btn{display:inline-block;background:#00ffb4;color:#000;font-weight:800;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,255,180,0.3)}
+    .ka-banner-btn:hover{background:#00e6a3}
+    .checks{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+    .check{display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8}
+    .check span:first-child{color:#00ffb4;font-weight:700}
+    h2.section{font-size:18px;font-weight:700;margin:32px 0 14px}
+    .warn{background:rgba(248,113,113,0.07);border:1px solid rgba(248,113,113,0.2);border-radius:10px;padding:14px 18px;font-size:13px;color:#fca5a5;margin-bottom:24px}
+    .footer-note{font-size:11px;color:#334155;text-align:center;margin-top:48px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.05)}
+    a{color:#00ffb4}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="https://www.kloudaudit.eu" class="logo">
+    <div class="logo-dot">⚡</div>
+    <span class="logo-text">KloudAudit</span>
+  </a>
+  <span class="tag">FREE CLOUD AUDIT</span>
+</nav>
+
+<div class="wrap">
+
+  <p class="meta">PAGE_PROVIDER · Free CLI guide · kloudaudit.eu</p>
+  <h1>PAGE_TITLE</h1>
+
+  <!-- ── QUICK ANSWER ── -->
+  <div class="answer-box">
+    <h2>⚡ Quick answer — copy and run</h2>
+    <pre>PAGE_CMD</pre>
+    <div class="step">
+      <div class="step-num">1</div>
+      <p>Make sure you have the AWS CLI configured: <code>aws configure</code></p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <p>Run the command above. Review the output for resources to clean up.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <p>Delete or stop resources that are confirmed idle or unused.</p>
+    </div>
+  </div>
+
+  <!-- ── KLOUDAUDIT BANNER ── -->
+  <div class="ka-banner">
+    <div class="ka-banner-icon">🔍</div>
+    <div class="ka-banner-text">
+      <h3>Don't want to script this manually?</h3>
+      <p>KloudAudit finds this — and 17 other cost leaks — in 15 minutes. No credentials. No agents. Just your answers.</p>
+      <div class="checks">
+        <div class="check"><span>✓</span><span>18 structured checks across compute, storage, network, database, governance</span></div>
+        <div class="check"><span>✓</span><span>Waste Score + savings estimate for your exact bill size</span></div>
+        <div class="check"><span>✓</span><span>AI Blueprint with exact CLI commands — $79, delivered in 2 minutes</span></div>
+      </div>
+    </div>
+    <a href="https://www.kloudaudit.eu" class="ka-banner-btn">Run Free Audit →</a>
+  </div>
+
+  <!-- ── CONTEXT ── -->
+  <h2 class="section">Why this matters</h2>
+  <p style="color:#94a3b8;margin-bottom:16px">PAGE_WHY</p>
+
+  <div class="warn">
+    ⚠ Always verify resources are genuinely unused before deleting. Check with your team — a "stopped" instance may be intentional.
+  </div>
+
+  <!-- ── SECOND BANNER ── -->
+  <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:40px">
+    <div>
+      <p style="font-size:14px;font-weight:700;color:#fff;margin-bottom:4px">Find all 18 cost leaks at once</p>
+      <p style="font-size:12px;color:#64748b">Teams typically find $500–$4,000+/month. Free. No credentials.</p>
+    </div>
+    <a href="https://www.kloudaudit.eu" style="background:#00ffb4;color:#000;font-weight:800;font-size:13px;padding:10px 20px;border-radius:8px;text-decoration:none;white-space:nowrap">kloudaudit.eu →</a>
+  </div>
+
+  <div class="footer-note">
+    KloudAudit · kloudaudit.eu · Built by Samuel Ayodele Adomeh · Senior DevOps Engineer · Wrocław, Poland<br/>
+    Savings estimates are based on typical findings across cloud environments and not a guarantee.
+  </div>
+
+</div>
+</body>
+</html>
