@@ -130,19 +130,17 @@ function ParticleBackground() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    const activate = () => { if (!cancelled) setReady(true); };
-    const timer = setTimeout(activate, 2000);
-    window.addEventListener("mousemove", activate, { once: true, passive: true });
-    window.addEventListener("touchstart", activate, { once: true, passive: true });
-    window.addEventListener("scroll", activate, { once: true, passive: true, capture: true });
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-      window.removeEventListener("mousemove", activate);
-      window.removeEventListener("touchstart", activate);
-      window.removeEventListener("scroll", activate, { capture: true });
+    const init = () => {
+      setReady(true);
     };
+
+    if ('requestIdleCallback' in window) {
+      const id = requestIdleCallback(init, { timeout: 2000 });
+      return () => cancelIdleCallback(id);
+    } else {
+      const timer = setTimeout(init, 2000);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   if (!ready) return null;
