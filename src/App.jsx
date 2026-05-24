@@ -109,6 +109,23 @@ function ProgressRing({ percent, size = 44, stroke = 3, color = "#00ffb4" }) {
   );
 }
 
+function CodeBlock({ code }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); });
+  };
+  return (
+    <div style={{ position: "relative", marginBottom: "8px" }}>
+      <pre style={{ background: "#0a0a16", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "10px", padding: "16px 56px 16px 16px", fontFamily: "'Fira Code', 'Courier New', monospace", fontSize: "12px", color: "#a5f3c4", overflowX: "auto", lineHeight: 1.7, margin: 0, whiteSpace: "pre" }}>
+        <code>{code}</code>
+      </pre>
+      <button onClick={copy} style={{ position: "absolute", top: "10px", right: "10px", background: copied ? "rgba(0,255,180,0.2)" : "rgba(255,255,255,0.06)", border: `1px solid ${copied ? "rgba(0,255,180,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius: "6px", color: copied ? "#00ffb4" : "#94a3b8", fontSize: "10px", fontWeight: 700, padding: "4px 8px", cursor: "pointer", transition: "all 0.2s" }}>
+        {copied ? "✓ Copied" : "Copy"}
+      </button>
+    </div>
+  );
+}
+
 function ParticleBackground() {
   const [ready, setReady] = useState(false);
 
@@ -1338,6 +1355,7 @@ export default function App() {
   const [activeSection, setActiveSection] = useState(0);
   const [showToast, setShowToast] = useState(null);
   const [showSample, setShowSample] = useState(false);
+  const [sampleTab, setSampleTab] = useState("report");
   const [showContact, setShowContact] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const [showBlueprint, setShowBlueprint] = useState(false);
@@ -1902,11 +1920,28 @@ useEffect(() => {
   const SampleModal = () => {
     const getSev = c => { const p = (c.savingsRange[0] + c.savingsRange[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
     const sHigh = sampleFlagged.filter(c => getSev(c) === "high");
-    const sMed = sampleFlagged.filter(c => getSev(c) === "med");
-    const sLow = sampleFlagged.filter(c => getSev(c) === "low");
+    const sMed  = sampleFlagged.filter(c => getSev(c) === "med");
+    const sLow  = sampleFlagged.filter(c => getSev(c) === "low");
+    const closeModal = () => { setShowSample(false); setSampleTab("report"); };
+    const timePill = (label) => (
+      <div style={{ marginBottom: "16px" }}>
+        <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "20px", padding: "3px 10px" }}>⏱ Time to implement: {label}</span>
+      </div>
+    );
+    const issueMeta = (title, savings, fixTime) => (
+      <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginBottom: "16px" }}>
+        <h3 style={{ fontSize: "17px", fontWeight: 800, color: "#fff", margin: 0 }}>{title}</h3>
+        <span style={{ fontSize: "11px", fontWeight: 700, color: "#00ffb4", background: "rgba(0,255,180,0.1)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "8px", padding: "2px 8px" }}>{savings}</span>
+        <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "8px", padding: "2px 8px" }}>Fix time: {fixTime}</span>
+      </div>
+    );
+    const stepLabel = (text) => <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-dim)", marginBottom: "8px" }}>{text}</p>;
+
     return (
-      <div onClick={() => setShowSample(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
+      <div onClick={closeModal} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
         <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="sample-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "780px", width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.7)" }}>
+
+          {/* ── Sticky header + tab switcher ── */}
           <div style={{ padding: "28px 32px 20px", borderBottom: "1px solid var(--border)", position: "sticky", top: 0, background: "var(--bg2)", zIndex: 10, borderRadius: "20px 20px 0 0" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
@@ -1916,44 +1951,154 @@ useEffect(() => {
                 <h2 id="sample-dialog-title" className="display" style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>{SAMPLE_REPORT.companyName} · Cost Report</h2>
                 <p style={{ color: "var(--text-muted)", fontSize: "14px", marginTop: "4px" }}>Monthly bill: ${SAMPLE_REPORT.monthlyBill.toLocaleString()} · {sampleFlagged.length} issues found</p>
               </div>
-              <button onClick={() => setShowSample(false)} aria-label="Close" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "18px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
+              <button onClick={closeModal} aria-label="Close" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "18px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
+            </div>
+            <div style={{ display: "flex", gap: "8px", marginTop: "16px", alignItems: "center", flexWrap: "wrap" }}>
+              <button onClick={() => setSampleTab("report")} style={{ padding: "7px 18px", borderRadius: "20px", border: `1px solid ${sampleTab === "report" ? "var(--green-border)" : "var(--border)"}`, background: sampleTab === "report" ? "var(--green-dim)" : "transparent", color: sampleTab === "report" ? "var(--green)" : "var(--text-muted)", fontSize: "13px", fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}>Free Report</button>
+              <button onClick={() => setSampleTab("blueprint")} style={{ padding: "7px 18px", borderRadius: "20px", border: `1px solid ${sampleTab === "blueprint" ? "rgba(129,140,248,0.4)" : "var(--border)"}`, background: sampleTab === "blueprint" ? "rgba(129,140,248,0.12)" : "transparent", color: sampleTab === "blueprint" ? "#818cf8" : "var(--text-muted)", fontSize: "13px", fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}>Blueprint Preview ⚡</button>
+              {sampleTab === "blueprint" && <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>what you get for {currency.blueprintPrice}</span>}
             </div>
           </div>
+
           <div style={{ padding: "24px 32px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", marginBottom: "28px" }}>
-              {[{ label: "Monthly Savings", val: `$${sampleSavMin.toLocaleString()} – $${sampleSavMax.toLocaleString()}`, sub: "per month", color: "var(--green)", bg: "var(--green-dim)", border: "var(--green-border)" }, { label: "Annual Opportunity", val: `$${(sampleSavMin * 12).toLocaleString()}+`, sub: "per year", color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.25)" }, { label: "Waste Rate", val: `~${samplePct}%`, sub: "of total bill", color: "#fb923c", bg: "rgba(251,146,60,0.1)", border: "rgba(251,146,60,0.25)" }].map(s => (
-                <div key={s.label} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: "12px", padding: "18px" }}>
-                  <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{s.label}</p>
-                  <p className="display" style={{ fontSize: "20px", fontWeight: 800, color: s.color, letterSpacing: "-0.5px" }}>{s.val}</p>
-                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "3px" }}>{s.sub}</p>
-                </div>
-              ))}
-            </div>
-            {[{ label: "🔴 High Impact", items: sHigh, color: "#f87171" }, { label: "🟡 Medium Impact", items: sMed, color: "#fbbf24" }, { label: "🟢 Quick Wins", items: sLow, color: "#4ade80" }].filter(g => g.items.length > 0).map(group => (
-              <div key={group.label} style={{ marginBottom: "20px" }}>
-                <h4 className="display" style={{ fontSize: "13px", fontWeight: 700, color: group.color, marginBottom: "10px" }}>{group.label}</h4>
-                {group.items.map(check => {
-                  const sMin = Math.round(SAMPLE_REPORT.monthlyBill * check.savingsRange[0] / 100);
-                  const sMax = Math.round(SAMPLE_REPORT.monthlyBill * check.savingsRange[1] / 100);
-                  return (
-                    <div key={check.id} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid var(--border)`, borderLeft: `3px solid ${group.color}`, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
-                      <div>
-                        <p style={{ fontWeight: 600, fontSize: "14px", color: "#fff", marginBottom: "3px" }}>{check.label}</p>
-                        <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>{check.detail}</p>
-                      </div>
-                      <div style={{ background: "rgba(0,255,180,0.08)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "6px 12px", textAlign: "right", flexShrink: 0 }}>
-                        <p style={{ fontSize: "13px", fontWeight: 700, color: "var(--green)" }}>${sMin.toLocaleString()} – ${sMax.toLocaleString()}</p>
-                        <p style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ month</p>
-                      </div>
+            {sampleTab === "report" ? (
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", marginBottom: "28px" }}>
+                  {[{ label: "Monthly Savings", val: `$${sampleSavMin.toLocaleString()} – $${sampleSavMax.toLocaleString()}`, sub: "per month", color: "var(--green)", bg: "var(--green-dim)", border: "var(--green-border)" }, { label: "Annual Opportunity", val: `$${(sampleSavMin * 12).toLocaleString()}+`, sub: "per year", color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.25)" }, { label: "Waste Rate", val: `~${samplePct}%`, sub: "of total bill", color: "#fb923c", bg: "rgba(251,146,60,0.1)", border: "rgba(251,146,60,0.25)" }].map(s => (
+                    <div key={s.label} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: "12px", padding: "18px" }}>
+                      <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{s.label}</p>
+                      <p className="display" style={{ fontSize: "20px", fontWeight: 800, color: s.color, letterSpacing: "-0.5px" }}>{s.val}</p>
+                      <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "3px" }}>{s.sub}</p>
                     </div>
-                  );
-                })}
-              </div>
-            ))}
-            <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.08) 0%, rgba(99,102,241,0.08) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "14px", padding: "24px", textAlign: "center", marginTop: "8px" }}>
-              <p style={{ color: "var(--text-dim)", fontSize: "13px", marginBottom: "10px" }}>Ready to find savings like this in your own infrastructure?</p>
-              <button className="glow-btn" onClick={() => { setShowSample(false); goTo("intake"); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "13px 32px", fontSize: "15px", fontWeight: 700, boxShadow: "0 0 20px rgba(0,255,180,0.3)" }}>Run Your Free Audit →</button>
-            </div>
+                  ))}
+                </div>
+                {[{ label: "🔴 High Impact", items: sHigh, color: "#f87171" }, { label: "🟡 Medium Impact", items: sMed, color: "#fbbf24" }, { label: "🟢 Quick Wins", items: sLow, color: "#4ade80" }].filter(g => g.items.length > 0).map(group => (
+                  <div key={group.label} style={{ marginBottom: "20px" }}>
+                    <h4 className="display" style={{ fontSize: "13px", fontWeight: 700, color: group.color, marginBottom: "10px" }}>{group.label}</h4>
+                    {group.items.map(check => {
+                      const sMin = Math.round(SAMPLE_REPORT.monthlyBill * check.savingsRange[0] / 100);
+                      const sMax = Math.round(SAMPLE_REPORT.monthlyBill * check.savingsRange[1] / 100);
+                      return (
+                        <div key={check.id} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid var(--border)`, borderLeft: `3px solid ${group.color}`, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
+                          <div>
+                            <p style={{ fontWeight: 600, fontSize: "14px", color: "#fff", marginBottom: "3px" }}>{check.label}</p>
+                            <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>{check.detail}</p>
+                          </div>
+                          <div style={{ background: "rgba(0,255,180,0.08)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "6px 12px", textAlign: "right", flexShrink: 0 }}>
+                            <p style={{ fontSize: "13px", fontWeight: 700, color: "var(--green)" }}>${sMin.toLocaleString()} – ${sMax.toLocaleString()}</p>
+                            <p style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ month</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+                <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.08) 0%, rgba(99,102,241,0.08) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "14px", padding: "24px", textAlign: "center", marginTop: "8px" }}>
+                  <p style={{ color: "var(--text-dim)", fontSize: "13px", marginBottom: "10px" }}>Ready to find savings like this in your own infrastructure?</p>
+                  <button className="glow-btn" onClick={() => { closeModal(); goTo("intake"); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "13px 32px", fontSize: "15px", fontWeight: 700, boxShadow: "0 0 20px rgba(0,255,180,0.3)" }}>Run Your Free Audit →</button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* ── Issue 1: Dev/staging RDS ── */}
+                <div style={{ marginBottom: "32px" }}>
+                  {issueMeta("Issue 1: Dev/staging RDS running 24/7", "$320–$640/month", "20 minutes")}
+                  {stepLabel("Step 1 — Identify dev RDS instances")}
+                  <CodeBlock code={`aws rds describe-db-instances \\
+  --query 'DBInstances[*].[DBInstanceIdentifier,DBInstanceStatus,DBInstanceClass,MultiAZ]' \\
+  --output table`} />
+                  {timePill("2 min")}
+
+                  {stepLabel("Step 2 — Create auto-shutdown schedule using EventBridge")}
+                  <CodeBlock code={`# Stop RDS every night at 8pm UTC
+aws events put-rule \\
+  --schedule-expression "cron(0 20 * * ? *)" \\
+  --name "StopDevRDS" \\
+  --state ENABLED
+
+aws events put-targets \\
+  --rule StopDevRDS \\
+  --targets "Id=1,Arn=arn:aws:lambda:REGION:ACCOUNT:function:StopRDSFunction"`} />
+                  {timePill("10 min")}
+
+                  {stepLabel("Step 3 — Terraform equivalent (if using IaC)")}
+                  <CodeBlock code={`resource "aws_db_instance" "dev" {
+  identifier          = "myapp-dev"
+  instance_class      = "db.t3.medium"
+  skip_final_snapshot = true
+
+  # Auto-stop via lifecycle — use with EventBridge Lambda
+  tags = {
+    Environment  = "dev"
+    AutoShutdown = "true"
+  }
+}
+
+resource "aws_cloudwatch_event_rule" "stop_dev_rds" {
+  name                = "stop-dev-rds-nightly"
+  schedule_expression = "cron(0 20 * * ? *)"
+}`} />
+                  {timePill("15 min")}
+
+                  {stepLabel("Step 4 — Verify it worked")}
+                  <CodeBlock code={`# Check RDS status next morning
+aws rds describe-db-instances \\
+  --db-instance-identifier myapp-dev \\
+  --query 'DBInstances[0].DBInstanceStatus'
+
+# Expected: "stopped"`} />
+                  {timePill("2 min")}
+                </div>
+
+                {/* ── Issue 2: Unattached EBS Volumes ── */}
+                <div style={{ marginBottom: "32px", borderTop: "1px solid var(--border)", paddingTop: "28px" }}>
+                  {issueMeta("Issue 2: Unattached EBS Volumes", "$80–$200/month", "10 minutes")}
+                  <CodeBlock code={`# Find all unattached volumes
+aws ec2 describe-volumes \\
+  --filters Name=status,Values=available \\
+  --query 'Volumes[*].[VolumeId,Size,VolumeType,CreateTime]' \\
+  --output table
+
+# Delete a specific volume (after confirming it is safe)
+aws ec2 delete-volume --volume-id vol-0123456789abcdef0
+
+# Or tag for review first
+aws ec2 create-tags \\
+  --resources vol-0123456789abcdef0 \\
+  --tags Key=Status,Value=PendingDeletion Key=ReviewedBy,Value=yourname`} />
+                  {timePill("10 min")}
+                </div>
+
+                {/* ── Issue 3: Reserved Instances ── */}
+                <div style={{ marginBottom: "28px", borderTop: "1px solid var(--border)", paddingTop: "28px" }}>
+                  {issueMeta("Issue 3: No Reserved Instances / Savings Plans", "$200–$450/month", "30 minutes")}
+                  <CodeBlock code={`# See current on-demand spend by instance type
+aws ce get-cost-and-usage \\
+  --time-period Start=2026-04-01,End=2026-05-01 \\
+  --granularity MONTHLY \\
+  --metrics BlendedCost \\
+  --group-by Type=DIMENSION,Key=INSTANCE_TYPE \\
+  --output table
+
+# Check existing reservations
+aws ec2 describe-reserved-instances \\
+  --filters Name=state,Values=active \\
+  --query 'ReservedInstances[*].[ReservedInstancesId,InstanceType,InstanceCount,End]' \\
+  --output table`} />
+                  {timePill("30 min")}
+                  <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderLeft: "3px solid #818cf8", borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: "8px" }}>
+                    <p style={{ fontSize: "13px", color: "var(--text-dim)", lineHeight: 1.65 }}>Recommendation: Purchase a 1-year No Upfront Savings Plan for your baseline compute usage. Typical saving: 30–40% vs on-demand. Use the AWS Cost Explorer Savings Plans recommendations page for exact amounts.</p>
+                  </div>
+                </div>
+
+                {/* ── Blueprint CTA ── */}
+                <div style={{ background: "linear-gradient(135deg, rgba(129,140,248,0.08) 0%, rgba(0,255,180,0.06) 100%)", border: "1px solid rgba(129,140,248,0.25)", borderRadius: "14px", padding: "24px", marginTop: "8px" }}>
+                  <p style={{ fontSize: "13px", color: "var(--text-dim)", marginBottom: "6px" }}>✅ Your blueprint covers all <strong style={{ color: "#fff" }}>{sampleFlagged.length} issues</strong> found in your audit — not just these 3</p>
+                  <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "20px" }}>⚡ Delivered to your inbox within 2 minutes of payment</p>
+                  <button className="glow-btn" onClick={() => { closeModal(); setShowBlueprint(true); }} style={{ background: "linear-gradient(135deg, #818cf8, #6366f1)", color: "#fff", border: "none", borderRadius: "10px", padding: "13px 32px", fontSize: "15px", fontWeight: 700, boxShadow: "0 0 20px rgba(129,140,248,0.3)" }}>Get Full Blueprint — {currency.blueprintPrice} →</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
