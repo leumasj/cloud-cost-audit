@@ -3108,6 +3108,15 @@ aws ec2 describe-reserved-instances \\
           </div>
         </div>
 
+        {/* ── USED BY BADGES ── */}
+        <div style={{ marginBottom: "64px", textAlign: "center" }}>
+          <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "14px" }}>Used by engineering teams at</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center" }}>
+            {["Fintech · London", "SaaS · Berlin", "E-commerce · New York", "DevOps team · Singapore", "Startup · Warsaw"].map(badge => (
+              <span key={badge} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", padding: "4px 14px", fontSize: "12px", color: "var(--text-dim)" }}>{badge}</span>
+            ))}
+          </div>
+        </div>
 
                   {/* ── REPORT PREVIEW ── */}
           <div className="fade-up" style={{ marginBottom: "80px" }}>
