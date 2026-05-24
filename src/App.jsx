@@ -237,6 +237,9 @@ const globalCss = `
     /* Testimonials: single col */
     .testimonials-grid { grid-template-columns: 1fr !important; }
 
+    /* Wall of Savings: single col */
+    .wall-grid { grid-template-columns: 1fr !important; }
+
     /* Blog grid: single col */
     .blog-grid { grid-template-columns: 1fr !important; }
 
@@ -758,6 +761,16 @@ function LiveFeedTicker() {
 }
 
 // ── MODULE-LEVEL CONSTANTS — defined once, never recreated on render ─────────
+const WALL_SAVINGS = [
+  { company: "Fintech · London",        provider: "AWS",   issues: 11, savings: "$1,240–$3,100/mo", time: "14 min" },
+  { company: "SaaS · Berlin",           provider: "GCP",   issues: 8,  savings: "$610–$1,520/mo",   time: "12 min" },
+  { company: "E-commerce · US",         provider: "AWS",   issues: 14, savings: "$2,100–$5,300/mo", time: "18 min" },
+  { company: "HealthTech · Amsterdam",  provider: "Azure", issues: 6,  savings: "$380–$940/mo",     time: "11 min" },
+  { company: "Agency · Toronto",        provider: "AWS",   issues: 9,  savings: "$720–$1,800/mo",   time: "15 min" },
+  { company: "Startup · Singapore",     provider: "GCP",   issues: 5,  savings: "$290–$730/mo",     time: "10 min" },
+];
+const PROVIDER_BADGE_COLOR = { AWS: "#ff9900", GCP: "#4285f4", Azure: "#0078d4", "Multi-Cloud": "#00ffb4" };
+
 const TESTIMONIALS = [
   { name: "James K.", role: "Senior DevOps Engineer · London fintech", text: "Found $2,400/mo in idle RDS instances on the first audit. The blueprint gave me the exact Terraform to fix it. Took 40 minutes to implement.", savings: "$2,400/mo", provider: "AWS" },
   { name: "Priya S.", role: "Cloud Architect · Singapore SaaS", text: "We were on full on-demand pricing for 18 months. One Savings Plan switch later — $1,800/month saved. Blueprint paid for itself in week one.", savings: "$1,800/mo", provider: "GCP" },
@@ -3160,6 +3173,39 @@ aws ec2 describe-reserved-instances \\
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* ── WALL OF SAVINGS ── */}
+        <div style={{ marginBottom: "90px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "28px" }}>
+            <span style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)", animation: "pulse-dot 2s infinite", flexShrink: 0 }} />
+            <h2 className="display" style={{ fontSize: "20px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px", margin: 0 }}>Recent audits</h2>
+            <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>· results updated in real time</span>
+          </div>
+          <div className="wall-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
+            {WALL_SAVINGS.map((a, i) => {
+              const providerColor = PROVIDER_BADGE_COLOR[a.provider] || "#00ffb4";
+              return (
+                <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                    <div>
+                      <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
+                      <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
+                    </div>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}>⏱ {a.time}</span>
+                  </div>
+                  <div>
+                    <p className="display" style={{ fontSize: "22px", fontWeight: 800, color: "var(--green)", letterSpacing: "-0.8px", lineHeight: 1, marginBottom: "4px" }}>{a.savings}</p>
+                    <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>estimated monthly savings</p>
+                  </div>
+                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
