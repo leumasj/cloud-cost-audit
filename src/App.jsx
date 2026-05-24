@@ -609,7 +609,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
                 <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", margin: "0 0 2px" }}>Security Blueprint</p>
                 <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>One-time · Delivered within 2 minutes</p>
               </div>
-              <span style={{ fontSize: "22px", fontWeight: 800, color: "#f87171" }}>{currency.securityPrice || "119 PLN"}</span>
+              <span style={{ fontSize: "22px", fontWeight: 800, color: "#f87171" }}>{currency.securityPrice || "$29"}</span>
             </div>
 
             {/* Product selector — Security or Bundle */}
@@ -621,7 +621,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
                   <div style={{ width: "14px", height: "14px", borderRadius: "50%", border: `2px solid ${selectedProduct === "security" ? "#f87171" : "rgba(255,255,255,0.2)"}`, background: selectedProduct === "security" ? "#f87171" : "transparent", flexShrink: 0, transition: "all 0.2s" }} />
                   <p style={{ fontSize: "12px", fontWeight: 700, color: selectedProduct === "security" ? "#fff" : "#94a3b8" }}>Security Blueprint</p>
                 </div>
-                <p style={{ fontSize: "18px", fontWeight: 800, color: selectedProduct === "security" ? "#f87171" : "#64748b" }}>{currency.securityPrice || "119 PLN"}</p>
+                <p style={{ fontSize: "18px", fontWeight: 800, color: selectedProduct === "security" ? "#f87171" : "#64748b" }}>{currency.securityPrice || "$29"}</p>
                 <p style={{ fontSize: "10px", color: "#475569" }}>Security fixes only</p>
               </div>
               {/* Bundle */}
@@ -632,7 +632,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
                   <div style={{ width: "14px", height: "14px", borderRadius: "50%", border: `2px solid ${selectedProduct === "bundle" ? "#818cf8" : "rgba(255,255,255,0.2)"}`, background: selectedProduct === "bundle" ? "#818cf8" : "transparent", flexShrink: 0, transition: "all 0.2s" }} />
                   <p style={{ fontSize: "12px", fontWeight: 700, color: selectedProduct === "bundle" ? "#fff" : "#94a3b8" }}>Cost + Security</p>
                 </div>
-                <p style={{ fontSize: "18px", fontWeight: 800, color: selectedProduct === "bundle" ? "#a5b4fc" : "#64748b" }}>{currency.bundlePrice || "349 PLN"}</p>
+                <p style={{ fontSize: "18px", fontWeight: 800, color: selectedProduct === "bundle" ? "#a5b4fc" : "#64748b" }}>{currency.bundlePrice || "$89"}</p>
                 <p style={{ fontSize: "10px", color: "#475569" }}>Both blueprints</p>
               </div>
             </div>
@@ -648,8 +648,8 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
               {status === "loading"
                 ? <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Processing…</>
                 : selectedProduct === "bundle"
-                  ? `Pay ${currency.bundlePrice || "349 PLN"} → Get Both Blueprints`
-                  : `Pay ${currency.securityPrice || "119 PLN"} → Get Security Blueprint`}
+                  ? `Pay ${currency.bundlePrice || "$89"} → Get Both Blueprints`
+                  : `Pay ${currency.securityPrice || "$29"} → Get Security Blueprint`}
             </button>
             {status === "error" && <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>⚠ {errorMsg}</p>}
             <p style={{ fontSize: "11px", color: "#475569", textAlign: "center" }}>🔒 Secure checkout via Stripe · Prices inclusive of applicable taxes · No cloud access required</p>
@@ -1408,10 +1408,10 @@ export default function App() {
   const [gateSending, setGateSending] = useState(false);
   // ── MULTI-CURRENCY ────────────────────────────────────────────────────────
   const [currency, setCurrency] = useState({
-    code: "PLN", symbol: "zł", blueprintPrice: "299 PLN", blueprintAmount: 29900,
-    sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln",
-    securityPrice: "119 PLN", securityAmount: 11900,
-    bundlePrice: "349 PLN", bundleAmount: 34900,
+    code: "USD", symbol: "$", blueprintPrice: "$79", blueprintAmount: 7900,
+    sessionPrice: "$249", sessionAmount: 24900, stripeCurrency: "usd",
+    securityPrice: "$29", securityAmount: 2900,
+    bundlePrice: "$89", bundleAmount: 8900,
   });
 
   const toggle = (id) => {
@@ -1496,24 +1496,26 @@ export default function App() {
 
   // ── CURRENCY DETECTION ───────────────────────────────────────────
   useEffect(() => {
+    const USD = { code: "USD", symbol: "$",   blueprintPrice: "$79",     blueprintAmount: 7900,  sessionPrice: "$249",    sessionAmount: 24900, stripeCurrency: "usd", securityPrice: "$29",      securityAmount: 2900,  bundlePrice: "$89",      bundleAmount: 8900  };
+    const GBP = { code: "GBP", symbol: "\u00a3",   blueprintPrice: "\u00a362",     blueprintAmount: 6200,  sessionPrice: "\u00a3199",    sessionAmount: 19900, stripeCurrency: "gbp", securityPrice: "\u00a323",      securityAmount: 2300,  bundlePrice: "\u00a369",      bundleAmount: 6900  };
+    const EUR = { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",     blueprintAmount: 7300,  sessionPrice: "\u20ac229",    sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27",      securityAmount: 2700,  bundlePrice: "\u20ac83",      bundleAmount: 8300  };
+    const CAD = { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107",  blueprintAmount: 10700, sessionPrice: "CA$339",  sessionAmount: 33900, stripeCurrency: "cad", securityPrice: "CA$39",    securityAmount: 3900,  bundlePrice: "CA$119",   bundleAmount: 11900 };
+    const AUD = { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",   blueprintAmount: 11900, sessionPrice: "A$379",   sessionAmount: 37900, stripeCurrency: "aud", securityPrice: "A$45",     securityAmount: 4500,  bundlePrice: "A$134",    bundleAmount: 13400 };
+    const PLN = { code: "PLN", symbol: "z\u0142",  blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln", securityPrice: "119 PLN",  securityAmount: 11900, bundlePrice: "349 PLN",  bundleAmount: 34900 };
     const CURRENCY_MAP = {
-      US: { code: "USD", symbol: "$",   blueprintPrice: "$79",    blueprintAmount: 7900,  sessionPrice: "$249",   sessionAmount: 24900, stripeCurrency: "usd", securityPrice: "$29", securityAmount: 2900, bundlePrice: "$89", bundleAmount: 8900 },
-      GB: { code: "GBP", symbol: "\u00a3",   blueprintPrice: "\u00a362",    blueprintAmount: 6200,  sessionPrice: "\u00a3199",  sessionAmount: 19900, stripeCurrency: "gbp", securityPrice: "\u00a323", securityAmount: 2300, bundlePrice: "\u00a369", bundleAmount: 6900 },
-      DE: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
-      FR: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
-      NL: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
-      AT: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
-      BE: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
-      ES: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
-      IT: { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",    blueprintAmount: 7300,  sessionPrice: "\u20ac229",  sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300 },
-      CA: { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107", blueprintAmount: 10700, sessionPrice: "CA$339", sessionAmount: 33900, stripeCurrency: "cad", securityPrice: "CA$39", securityAmount: 3900, bundlePrice: "CA$119", bundleAmount: 11900 },
-      AU: { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",  blueprintAmount: 11900, sessionPrice: "A$379",  sessionAmount: 37900, stripeCurrency: "aud", securityPrice: "A$45", securityAmount: 4500, bundlePrice: "A$134", bundleAmount: 13400 },
-      PL: { code: "PLN", symbol: "z\u0142",  blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln", securityPrice: "119 PLN", securityAmount: 11900, bundlePrice: "349 PLN", bundleAmount: 34900 },
+      US: USD, PR: USD, GU: USD, VI: USD,
+      GB: GBP, JE: GBP, GG: GBP, IM: GBP,
+      DE: EUR, FR: EUR, NL: EUR, AT: EUR, BE: EUR, ES: EUR, IT: EUR,
+      IE: EUR, PT: EUR, FI: EUR, GR: EUR, SK: EUR, SI: EUR, EE: EUR,
+      LV: EUR, LT: EUR, LU: EUR, MT: EUR, CY: EUR,
+      CA: CAD, AU: AUD, NZ: AUD, PL: PLN,
+      SE: USD, NO: USD, DK: USD, CH: USD, IS: USD,
+      SG: USD, IN: USD, JP: USD, KR: USD, HK: USD, TW: USD,
     };
     fetch("https://ipapi.co/json/")
       .then(r => r.json())
       .then(data => { const match = CURRENCY_MAP[data.country_code]; if (match) setCurrency(match); })
-      .catch(() => {}); // silently keep PLN default on failure
+      .catch(() => {}); // silently keep USD default on failure
   }, []);
 
 
@@ -2358,7 +2360,7 @@ aws ec2 describe-reserved-instances \\
               {secStep === SEC_SECTIONS.length - 1 && flaggedSec.length > 0 && (
                 <button onClick={() => setShowSecBlueprint(true)}
                   style={{ width: "100%", padding: "12px 14px", borderRadius: "12px", border: "none", background: "#f87171", color: "#000", fontWeight: 800, fontSize: "12px", cursor: "pointer", boxShadow: "0 4px 16px rgba(248,113,113,0.3)" }}>
-                  {`Get Blueprint — ${currency.securityPrice || "119 PLN"}`}
+                  {`Get Blueprint — ${currency.securityPrice || "$29"}`}
                 </button>
               )}
             </div>
@@ -2509,7 +2511,7 @@ aws ec2 describe-reserved-instances \\
                 </div>
                 <button onClick={() => setShowSecBlueprint(true)}
                   style={{ background: "#f87171", color: "#000", border: "none", borderRadius: "10px", padding: "10px 22px", fontSize: "13px", fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 4px 16px rgba(248,113,113,0.3)" }}>
-                  {`Unlock Blueprint — ${currency.securityPrice || "119 PLN"} →`}
+                  {`Unlock Blueprint — ${currency.securityPrice || "$29"} →`}
                 </button>
               </div>
             )}
@@ -2527,7 +2529,7 @@ aws ec2 describe-reserved-instances \\
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
             <button onClick={() => setShowSecBlueprint(true)}
               style={{ background: "#f87171", color: "#000", border: "none", borderRadius: "12px", padding: "13px 32px", fontSize: "15px", fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 20px rgba(248,113,113,0.3)" }}>
-              {`🛡 Get Security Blueprint — ${currency.securityPrice || "119 PLN"} →`}
+              {`🛡 Get Security Blueprint — ${currency.securityPrice || "$29"} →`}
             </button>
             <button onClick={() => window.print()} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "12px", padding: "13px 24px", color: "var(--text-dim)", fontSize: "14px", cursor: "pointer", fontWeight: 600 }}>
               🖨 Print Score
@@ -2562,14 +2564,14 @@ aws ec2 describe-reserved-instances \\
       { q: "What does the Security Blueprint include that the free score doesn't?", a: "The free audit shows your risk score and the first 2 flagged issues. The Security Blueprint unlocks all findings with exact CLI remediation commands, IAM policy fixes, compliance gap mapping (SOC 2, ISO 27001, GDPR, CIS Benchmark), and a 30-day remediation roadmap.", tag: "security" },
       { q: "I already use AWS Security Hub / GCP Security Command Center. Why do I need this?", a: "Those tools need account access and take weeks to configure. KloudAudit gives you a prioritised action list in 15 minutes with zero access required — ideal for a quick self-assessment before a pentest, compliance audit, or investor review.", tag: "security" },
       { q: "What if my cloud bill is lower than $1,000/month?", a: "The cost audit is still useful for identifying waste patterns early. The Blueprint is most cost-effective for bills over $1,500/mo. The security audit is valuable at any bill size — a public S3 bucket costs the same to exploit whether you pay $200/mo or $20,000/mo.", tag: "cost" },
-      { q: "Is this a subscription?", a: `No. One-time payment — ${currency.blueprintPrice} for the Cost Blueprint, ${currency.securityPrice || "119 PLN"} for the Security Blueprint. You get a permanent document you implement at your own pace.`, tag: "both" },
+      { q: "Is this a subscription?", a: `No. One-time payment — ${currency.blueprintPrice} for the Cost Blueprint, ${currency.securityPrice || "$29"} for the Security Blueprint. You get a permanent document you implement at your own pace.`, tag: "both" },
     ];
 
     const HOW_IT_WORKS = [
       { n: "01", title: "Run the free cost audit", desc: "Answer 18 structured questions about your AWS, GCP, or Azure setup. 10–15 minutes. No account access, no signup.", color: "#00ffb4" },
       { n: "02", title: "See your savings report", desc: "Instantly see your estimated waste, prioritised findings, and projected monthly savings across compute, storage, database, and network.", color: "#818cf8" },
       { n: "03", title: "Run the security audit", desc: "16 security checkpoints across IAM, network exposure, encryption, and logging. Get your security risk score instantly — free.", color: "#f87171" },
-      { n: "04", title: "Get the AI Blueprint", desc: `Pay ${currency.blueprintPrice} (cost) or ${currency.securityPrice || "119 PLN"} (security). Claude AI writes your exact CLI commands, policy fixes, and step-by-step guide.`, color: "#00d4ff" },
+      { n: "04", title: "Get the AI Blueprint", desc: `Pay ${currency.blueprintPrice} (cost) or ${currency.securityPrice || "$29"} (security). Claude AI writes your exact CLI commands, policy fixes, and step-by-step guide.`, color: "#00d4ff" },
       { n: "05", title: "Implement & verify", desc: "Follow the blueprint. Most clients recoup the cost within 24 hours. Re-audit in 90 days to measure improvement.", color: "#fb923c" },
     ];
 
@@ -3245,7 +3247,7 @@ aws ec2 describe-reserved-instances \\
             <div style={{ background: "rgba(248,113,113,0.04)", border: "2px solid rgba(248,113,113,0.3)", borderRadius: "20px", padding: "28px", position: "relative", display: "flex", flexDirection: "column" }}>
               <div style={{ position: "absolute", top: "-1px", right: "20px", background: "#f87171", color: "#000", fontSize: "10px", fontWeight: 800, padding: "4px 10px", borderRadius: "0 0 7px 7px", letterSpacing: "0.5px" }}>HIGH ROI</div>
               <div style={{ fontSize: "11px", fontWeight: 700, color: "#f87171", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>🛡 Security Blueprint</div>
-              <p className="display" style={{ fontSize: "26px", fontWeight: 800, color: "#f87171", marginBottom: "2px" }}>{currency.securityPrice || "119 PLN"}</p>
+              <p className="display" style={{ fontSize: "26px", fontWeight: 800, color: "#f87171", marginBottom: "2px" }}>{currency.securityPrice || "$29"}</p>
               <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "20px" }}>One-time · Instant delivery</p>
               {[
                 "Full 16-issue remediation",
