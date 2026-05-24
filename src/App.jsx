@@ -183,6 +183,8 @@ const globalCss = `
   @keyframes scaleIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 1; } 30% { transform: translateY(-6px); opacity: 0.6; } }
+  @keyframes toastIn { from { opacity:0; transform:translateX(20px) scale(0.9); } to { opacity:1; transform:translateX(0) scale(1); } }
+  @keyframes pulse-green { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,255,180,0.35); } 50% { box-shadow: 0 0 0 6px rgba(0,255,180,0); } }
   .trust-link { display:flex; align-items:center; gap:10px; text-decoration:none; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; transition:all 0.2s; }
   .trust-link:hover { background:rgba(255,255,255,0.06) !important; transform:translateX(3px); }
 
@@ -1334,6 +1336,7 @@ export default function App() {
   const [companyName, setCompanyName] = useState("");
   const [checked, setChecked] = useState({});
   const [activeSection, setActiveSection] = useState(0);
+  const [showToast, setShowToast] = useState(null);
   const [showSample, setShowSample] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
@@ -1393,7 +1396,14 @@ export default function App() {
     bundlePrice: "349 PLN", bundleAmount: 34900,
   });
 
-  const toggle = (id) => setChecked(p => ({ ...p, [id]: !p[id] }));
+  const toggle = (id) => {
+    const nowOn = !checked[id];
+    setChecked(p => ({ ...p, [id]: !p[id] }));
+    if (nowOn) {
+      const check = AUDIT_SECTIONS.flatMap(s => s.checks).find(c => c.id === id);
+      if (check) setShowToast({ check, bill });
+    }
+  };
   const goTo = (s) => {
     setStep(s);
     setPageKey(k => k + 1);
@@ -1605,6 +1615,13 @@ useEffect(() => {
   };
 }, [step]);
 
+
+  // ── TOAST AUTO-DISMISS ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!showToast) return;
+    const t = setTimeout(() => setShowToast(null), 2000);
+    return () => clearTimeout(t);
+  }, [showToast]);
 
   // ── Formspree contact ──────────────────────────────────────────────────────
   const handleContactSubmit = async (e) => {
@@ -3325,6 +3342,11 @@ useEffect(() => {
           </div>
           <div className="audit-grid" style={{ display: "grid", gridTemplateColumns: "1fr 290px", gap: "24px", alignItems: "start" }}>
             <div key={activeSection} className="fade-up">
+              {activeSection === AUDIT_SECTIONS.length - 1 && (
+                <div style={{ background: "rgba(0,255,180,0.08)", border: "1.5px solid rgba(0,255,180,0.35)", borderRadius: "12px", padding: "13px 20px", marginBottom: "20px", textAlign: "center", animation: "pulse-green 2s ease-in-out infinite" }}>
+                  <span style={{ color: "var(--green)", fontWeight: 700, fontSize: "14px" }}>✅ Almost done — see your full report →</span>
+                </div>
+              )}
               <div style={{ marginBottom: "24px" }}>
                 <h2 className="display" style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-0.5px", color: "#fff" }}>{section.icon} {section.label}</h2>
                 <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>{section.description}</p>
@@ -3375,7 +3397,7 @@ useEffect(() => {
                   <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "1.5px", color: "var(--text-muted)", textTransform: "uppercase" }}>Live Estimate</p>
                   <ProgressRing percent={progress} />
                 </div>
-                {flagged.length > 0 && bill > 0 ? (
+                {flagged.length > 0 && bill > 0 && (
                   <>
                     <div className="display" style={{ fontSize: "28px", fontWeight: 800, color: "var(--green)", letterSpacing: "-1px", lineHeight: 1, marginBottom: "4px" }}>
                       <AnimatedNumber value={savMin} prefix="$" />–<AnimatedNumber value={savMax} prefix="$" />
@@ -3386,9 +3408,20 @@ useEffect(() => {
                     </div>
                     <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Annual: <span style={{ color: "var(--green)", fontWeight: 700 }}>${(savMin * 12).toLocaleString()} – ${(savMax * 12).toLocaleString()}</span></p>
                   </>
-                ) : (
-                  <div style={{ textAlign: "center", padding: "16px 0", color: "var(--text-muted)", fontSize: "13px" }}>Flag issues above to see your estimate</div>
                 )}
+                {(() => {
+                  const n = flagged.length;
+                  const [text, color, pulse] = n === 0
+                    ? ["Start flagging issues to see your estimate", "var(--text-muted)", false]
+                    : n <= 3
+                    ? ["⚠ Waste detected — keep going", "#fbbf24", false]
+                    : n <= 7
+                    ? ["🔴 Significant waste found", "#f97316", false]
+                    : ["🚨 Critical — this bill has major leaks", "#f87171", true];
+                  return (
+                    <p style={{ fontSize: "12px", color, marginTop: n > 0 && bill > 0 ? "12px" : "16px", textAlign: n === 0 ? "center" : "left", animation: pulse ? "pulse-dot 1.5s ease-in-out infinite" : "none" }}>{text}</p>
+                  );
+                })()}
                 <div style={{ borderTop: "1px solid var(--border)", paddingTop: "14px", marginTop: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
                   {[["Issues flagged", flagged.length, flagged.length > 0 ? "#f87171" : "var(--text-muted)"], ["Checks reviewed", `${Object.keys(checked).length}/${allChecks.length}`, "var(--text-dim)"], ["Progress", `${progress}%`, "var(--green)"]].map(([l, v, c]) => (
                     <div key={l} style={{ display: "flex", justifyContent: "space-between" }}>
@@ -3408,7 +3441,12 @@ useEffect(() => {
                       <span style={{ fontSize: "14px", width: "18px" }}>{s.icon}</span>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                          <span style={{ fontSize: "11px", fontWeight: 600, color: i === activeSection ? "var(--green)" : "var(--text-dim)" }}>{s.label}</span>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                            <span style={{ fontSize: "11px", fontWeight: 600, color: i === activeSection ? "var(--green)" : "var(--text-dim)" }}>{s.label}</span>
+                            {(s.id === "compute" || s.id === "database") && (
+                              <span style={{ fontSize: "9px", fontWeight: 700, color: "#00ffb4", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "8px", padding: "1px 6px", width: "fit-content" }}>Most teams find issues here</span>
+                            )}
+                          </div>
                           <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{done}/{s.checks.length}</span>
                         </div>
                         <div style={{ height: "3px", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden" }}>
@@ -3422,6 +3460,17 @@ useEffect(() => {
             </div>
           </div>
         </div>
+        {showToast && (
+          <div style={{ position: "fixed", bottom: "90px", right: "24px", zIndex: 1000, background: "rgba(0,255,180,0.12)", border: "1.5px solid rgba(0,255,180,0.4)", borderRadius: "12px", padding: "12px 18px", display: "flex", alignItems: "center", gap: "8px", animation: "toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both", boxShadow: "0 8px 30px rgba(0,255,180,0.2)" }}>
+            <span style={{ fontSize: "16px" }}>💰</span>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--green)" }}>
+              {showToast.bill > 0
+                ? `+$${Math.round(showToast.bill * showToast.check.savingsRange[0] / 100).toLocaleString()}–$${Math.round(showToast.bill * showToast.check.savingsRange[1] / 100).toLocaleString()}/mo`
+                : `+${showToast.check.savingsRange[0]}–${showToast.check.savingsRange[1]}%`
+              }
+            </span>
+          </div>
+        )}
       </div>
     );
   }
