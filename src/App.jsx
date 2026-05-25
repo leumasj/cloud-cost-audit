@@ -199,7 +199,9 @@ const globalCss = `
   @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 1; } 30% { transform: translateY(-6px); opacity: 0.6; } }
   @keyframes toastIn { from { opacity:0; transform:translateX(20px) scale(0.9); } to { opacity:1; transform:translateX(0) scale(1); } }
-  @keyframes pulse-green { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,255,180,0.35); } 50% { box-shadow: 0 0 0 6px rgba(0,255,180,0); } }
+  @keyframes pulse-green-ring { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.04); opacity: 0; } }
+  .pulse-green-ring { position: relative; }
+  .pulse-green-ring::after { content: ''; position: absolute; inset: -2px; border-radius: 14px; border: 1.5px solid rgba(0,255,180,0.5); animation: pulse-green-ring 2s ease-in-out infinite; pointer-events: none; }
   .trust-link { display:flex; align-items:center; gap:10px; text-decoration:none; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; transition:all 0.2s; }
   .trust-link:hover { background:rgba(255,255,255,0.06) !important; transform:translateX(3px); }
 
@@ -709,8 +711,8 @@ function LiveFeedTicker() {
       <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
       <style>{`
         @keyframes pulse-dot {
-          0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(74,222,128,0.6); }
-          50% { opacity: 0.85; transform: scale(1.2); box-shadow: 0 0 0 5px rgba(74,222,128,0); }
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.85; transform: scale(1.2); }
         }
         @keyframes feed-in {
           from { opacity: 0; transform: translateY(6px) scale(0.96); }
@@ -3606,7 +3608,7 @@ aws ec2 describe-reserved-instances \\
           <div className="audit-grid" style={{ display: "grid", gridTemplateColumns: "1fr 290px", gap: "24px", alignItems: "start" }}>
             <div key={activeSection} className="fade-up">
               {activeSection === AUDIT_SECTIONS.length - 1 && (
-                <div style={{ background: "rgba(0,255,180,0.08)", border: "1.5px solid rgba(0,255,180,0.35)", borderRadius: "12px", padding: "13px 20px", marginBottom: "20px", textAlign: "center", animation: "pulse-green 2s ease-in-out infinite" }}>
+                <div className="pulse-green-ring" style={{ background: "rgba(0,255,180,0.08)", border: "1.5px solid rgba(0,255,180,0.35)", borderRadius: "12px", padding: "13px 20px", marginBottom: "20px", textAlign: "center" }}>
                   <span style={{ color: "var(--green)", fontWeight: 700, fontSize: "14px" }}>✅ Almost done — see your full report →</span>
                 </div>
               )}
