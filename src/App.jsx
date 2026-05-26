@@ -3067,6 +3067,96 @@ aws ec2 describe-reserved-instances \\
           </div>
         </div>
 
+        {/* ── REPORT PREVIEW ── */}
+          <div className="fade-up" style={{ marginBottom: "80px" }}>
+            <div style={{ textAlign: "center", marginBottom: "40px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "12px" }}>What you get</p>
+              <h2 className="display" style={{ fontSize: "clamp(24px,3vw,36px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "12px" }}>Your report looks like this</h2>
+              <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "480px", margin: "0 auto" }}>Free, instant, no credentials. Sorted by ease of implementation — quick wins first.</p>
+            </div>
+
+            {/* Browser frame */}
+            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", overflow: "hidden", maxWidth: "780px", margin: "0 auto" }}>
+              {/* Browser chrome */}
+              <div style={{ background: "rgba(255,255,255,0.05)", padding: "10px 16px", display: "flex", alignItems: "center", gap: "8px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                <div style={{ display: "flex", gap: "5px" }}>
+                  {["#f87171","#fbbf24","#4ade80"].map(c => <div key={c} style={{ width: "10px", height: "10px", borderRadius: "50%", background: c, opacity: 0.6 }} />)}
+                </div>
+                <div style={{ flex: 1, background: "rgba(255,255,255,0.06)", borderRadius: "6px", padding: "4px 12px", fontSize: "11px", color: "#475569", textAlign: "center" }}>
+                  www.kloudaudit.eu
+                </div>
+              </div>
+
+              {/* Report content */}
+              <div style={{ padding: "24px", background: "#080810" }}>
+                {/* Score + summary */}
+                <div style={{ display: "grid", gridTemplateColumns: "110px 1fr", gap: "20px", alignItems: "center", marginBottom: "20px" }}>
+                  <div style={{ position: "relative", width: "110px", height: "110px" }}>
+                    <svg width="110" height="110" viewBox="0 0 110 110" style={{ transform: "rotate(-90deg)" }}>
+                      <circle cx="55" cy="55" r="44" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="9"/>
+                      <circle cx="55" cy="55" r="44" fill="none" stroke="#f87171" strokeWidth="9"
+                        strokeDasharray="69 276" strokeLinecap="round"/>
+                    </svg>
+                    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: "26px", fontWeight: 800, color: "#f87171", lineHeight: 1 }}>34</span>
+                      <span style={{ fontSize: "9px", color: "#64748b", letterSpacing: "1px" }}>WASTE</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "11px", color: "#475569", margin: "0 0 6px", letterSpacing: "1px", textTransform: "uppercase" }}>AWS · $8,000/month</p>
+                    <p style={{ fontSize: "18px", fontWeight: 800, color: "#fff", margin: "0 0 8px", lineHeight: 1.2 }}>13 issues · <span style={{ color: "#00ffb4" }}>$794–$2,003/mo</span> to recover</p>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      {[["8", "Quick wins", "#22c55e"], ["$794+", "Monthly saving", "#00ffb4"], ["$9,528", "Annual", "#818cf8"]].map(([v, l, c]) => (
+                        <div key={l} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", padding: "8px 12px", flex: 1 }}>
+                          <p style={{ fontSize: "16px", fontWeight: 800, color: c, margin: 0 }}>{v}</p>
+                          <p style={{ fontSize: "10px", color: "#475569", margin: 0 }}>{l}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sort pills */}
+                <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
+                  {["Quick wins first", "Highest impact", "Largest savings"].map((label, i) => (
+                    <span key={label} style={{ fontSize: "11px", padding: "4px 12px", borderRadius: "20px", border: `1px solid ${i === 0 ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.1)"}`, background: i === 0 ? "rgba(0,255,180,0.08)" : "rgba(255,255,255,0.03)", color: i === 0 ? "#00ffb4" : "#64748b" }}>
+                      {label}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Findings */}
+                {[
+                  { n: "01", effort: "Quick win", ec: "#22c55e", label: "Dev/staging RDS running 24/7", sub: "Database · 20 min to fix", sav: "$320–$640/mo" },
+                  { n: "02", effort: "Quick win", ec: "#22c55e", label: "Unattached EBS volumes", sub: "Storage · 10 min to fix", sav: "$80–$200/mo" },
+                  { n: "03", effort: "Quick win", ec: "#22c55e", label: "No Reserved Instances", sub: "Compute · 30 min to fix", sav: "$200–$450/mo" },
+                  { n: "04", effort: "Some effort", ec: "#f59e0b", label: "Idle or oversized instances", sub: "Compute · 2–4 hrs to fix", sav: "$150–$400/mo", dim: true },
+                ].map(f => (
+                  <div key={f.n} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", background: "rgba(255,255,255,0.02)", marginBottom: "5px", opacity: f.dim ? 0.45 : 1 }}>
+                    <span style={{ fontSize: "10px", color: "#334155", fontWeight: 600, minWidth: "16px" }}>{f.n}</span>
+                    <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "12px", fontWeight: 600, background: `${f.ec}18`, border: `1px solid ${f.ec}40`, color: f.ec, whiteSpace: "nowrap" }}>{f.effort}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: "12px", color: "#e2e8f0", margin: 0, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.label}</p>
+                      <p style={{ fontSize: "10px", color: "#475569", margin: 0 }}>{f.sub}</p>
+                    </div>
+                    <span style={{ fontSize: "11px", color: "#00ffb4", fontWeight: 700, whiteSpace: "nowrap" }}>{f.sav}</span>
+                  </div>
+                ))}
+
+                <p style={{ textAlign: "center", fontSize: "11px", color: "#334155", padding: "8px", marginBottom: "12px" }}>+ 9 more findings unlocked in the Blueprint</p>
+
+                {/* CTA */}
+                <div style={{ background: "rgba(0,255,180,0.05)", border: "1px solid rgba(0,255,180,0.18)", borderRadius: "12px", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+                  <div>
+                    <p style={{ fontSize: "14px", fontWeight: 700, color: "#fff", margin: "0 0 2px" }}>Get the full fix guide</p>
+                    <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>CLI commands · Terraform · 30-day roadmap</p>
+                  </div>
+                  <div style={{ background: "#00ffb4", color: "#000", borderRadius: "8px", padding: "8px 18px", fontSize: "13px", fontWeight: 800 }}>Get Blueprint → $79</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         {/* ── LIVE SAVINGS CALCULATOR ── */}
         <div style={{ marginBottom: "90px", background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "24px", padding: "48px 40px", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: "-60px", right: "-60px", width: "280px", height: "280px", background: "radial-gradient(circle, rgba(0,255,180,0.07) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
@@ -3214,98 +3304,6 @@ aws ec2 describe-reserved-instances \\
             ))}
           </div>
         </div>
-
-                  {/* ── REPORT PREVIEW ── */}
-          <div className="fade-up" style={{ marginBottom: "80px" }}>
-            <div style={{ textAlign: "center", marginBottom: "40px" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "12px" }}>What you get</p>
-              <h2 className="display" style={{ fontSize: "clamp(24px,3vw,36px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "12px" }}>Your report looks like this</h2>
-              <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "480px", margin: "0 auto" }}>Free, instant, no credentials. Sorted by ease of implementation — quick wins first.</p>
-            </div>
-
-            {/* Browser frame */}
-            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", overflow: "hidden", maxWidth: "780px", margin: "0 auto" }}>
-              {/* Browser chrome */}
-              <div style={{ background: "rgba(255,255,255,0.05)", padding: "10px 16px", display: "flex", alignItems: "center", gap: "8px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                <div style={{ display: "flex", gap: "5px" }}>
-                  {["#f87171","#fbbf24","#4ade80"].map(c => <div key={c} style={{ width: "10px", height: "10px", borderRadius: "50%", background: c, opacity: 0.6 }} />)}
-                </div>
-                <div style={{ flex: 1, background: "rgba(255,255,255,0.06)", borderRadius: "6px", padding: "4px 12px", fontSize: "11px", color: "#475569", textAlign: "center" }}>
-                  www.kloudaudit.eu
-                </div>
-              </div>
-
-              {/* Report content */}
-              <div style={{ padding: "24px", background: "#080810" }}>
-                {/* Score + summary */}
-                <div style={{ display: "grid", gridTemplateColumns: "110px 1fr", gap: "20px", alignItems: "center", marginBottom: "20px" }}>
-                  <div style={{ position: "relative", width: "110px", height: "110px" }}>
-                    <svg width="110" height="110" viewBox="0 0 110 110" style={{ transform: "rotate(-90deg)" }}>
-                      <circle cx="55" cy="55" r="44" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="9"/>
-                      <circle cx="55" cy="55" r="44" fill="none" stroke="#f87171" strokeWidth="9"
-                        strokeDasharray="69 276" strokeLinecap="round"/>
-                    </svg>
-                    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                      <span style={{ fontSize: "26px", fontWeight: 800, color: "#f87171", lineHeight: 1 }}>34</span>
-                      <span style={{ fontSize: "9px", color: "#64748b", letterSpacing: "1px" }}>WASTE</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "11px", color: "#475569", margin: "0 0 6px", letterSpacing: "1px", textTransform: "uppercase" }}>AWS · $8,000/month</p>
-                    <p style={{ fontSize: "18px", fontWeight: 800, color: "#fff", margin: "0 0 8px", lineHeight: 1.2 }}>13 issues · <span style={{ color: "#00ffb4" }}>$794–$2,003/mo</span> to recover</p>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      {[["8", "Quick wins", "#22c55e"], ["$794+", "Monthly saving", "#00ffb4"], ["$9,528", "Annual", "#818cf8"]].map(([v, l, c]) => (
-                        <div key={l} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", padding: "8px 12px", flex: 1 }}>
-                          <p style={{ fontSize: "16px", fontWeight: 800, color: c, margin: 0 }}>{v}</p>
-                          <p style={{ fontSize: "10px", color: "#475569", margin: 0 }}>{l}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sort pills */}
-                <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
-                  {["Quick wins first", "Highest impact", "Largest savings"].map((label, i) => (
-                    <span key={label} style={{ fontSize: "11px", padding: "4px 12px", borderRadius: "20px", border: `1px solid ${i === 0 ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.1)"}`, background: i === 0 ? "rgba(0,255,180,0.08)" : "rgba(255,255,255,0.03)", color: i === 0 ? "#00ffb4" : "#64748b" }}>
-                      {label}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Findings */}
-                {[
-                  { n: "01", effort: "Quick win", ec: "#22c55e", label: "Dev/staging RDS running 24/7", sub: "Database · 20 min to fix", sav: "$320–$640/mo" },
-                  { n: "02", effort: "Quick win", ec: "#22c55e", label: "Unattached EBS volumes", sub: "Storage · 10 min to fix", sav: "$80–$200/mo" },
-                  { n: "03", effort: "Quick win", ec: "#22c55e", label: "No Reserved Instances", sub: "Compute · 30 min to fix", sav: "$200–$450/mo" },
-                  { n: "04", effort: "Some effort", ec: "#f59e0b", label: "Idle or oversized instances", sub: "Compute · 2–4 hrs to fix", sav: "$150–$400/mo", dim: true },
-                ].map(f => (
-                  <div key={f.n} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", background: "rgba(255,255,255,0.02)", marginBottom: "5px", opacity: f.dim ? 0.45 : 1 }}>
-                    <span style={{ fontSize: "10px", color: "#334155", fontWeight: 600, minWidth: "16px" }}>{f.n}</span>
-                    <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "12px", fontWeight: 600, background: `${f.ec}18`, border: `1px solid ${f.ec}40`, color: f.ec, whiteSpace: "nowrap" }}>{f.effort}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: "12px", color: "#e2e8f0", margin: 0, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.label}</p>
-                      <p style={{ fontSize: "10px", color: "#475569", margin: 0 }}>{f.sub}</p>
-                    </div>
-                    <span style={{ fontSize: "11px", color: "#00ffb4", fontWeight: 700, whiteSpace: "nowrap" }}>{f.sav}</span>
-                  </div>
-                ))}
-
-                <p style={{ textAlign: "center", fontSize: "11px", color: "#334155", padding: "8px", marginBottom: "12px" }}>+ 9 more findings unlocked in the Blueprint</p>
-
-                {/* CTA */}
-                <div style={{ background: "rgba(0,255,180,0.05)", border: "1px solid rgba(0,255,180,0.18)", borderRadius: "12px", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-                  <div>
-                    <p style={{ fontSize: "14px", fontWeight: 700, color: "#fff", margin: "0 0 2px" }}>Get the full fix guide</p>
-                    <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>CLI commands · Terraform · 30-day roadmap</p>
-                  </div>
-                  <div style={{ background: "#00ffb4", color: "#000", borderRadius: "8px", padding: "8px 18px", fontSize: "13px", fontWeight: 800 }}>Get Blueprint → $79</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        
 
         {/* ── TESTIMONIALS ── */}
         <div style={{ marginBottom: "90px" }}>
