@@ -1931,7 +1931,8 @@ useEffect(() => {
           ) : `Pay ${currency.blueprintPrice} → Get Blueprint`}
         </button>
         {blueprintStatus === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Something went wrong. Please try again or email admin@kloudaudit.eu</p>}
-        <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "12px" }}>🔒 Secure payment via Stripe · Prices inclusive of applicable taxes · admin@kloudaudit.eu</p>
+        <p style={{ fontSize: "12px", color: "var(--text-dim)", textAlign: "center", marginTop: "14px", lineHeight: 1.6 }}>💚 If the Blueprint doesn&apos;t identify at least one actionable fix, email <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a> for a full refund. No questions asked.</p>
+        <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "10px" }}>🔒 Secure payment via Stripe · Prices inclusive of applicable taxes · admin@kloudaudit.eu</p>
         <button onClick={() => { setShowBlueprint(false); setBlueprintStatus("idle"); }} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
       </div>
     </div>
