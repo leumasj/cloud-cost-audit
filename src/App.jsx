@@ -1383,6 +1383,9 @@ function WasteScoreCard({ flagged, allChecks, savPct, savMin, savMax, onShare })
 }
 
 
+const SESSION_VERSION = 1;
+const RESTORABLE_STEPS = ['intake', 'audit', 'email_gate', 'report'];
+
 export default function App() {
   // ── DETECT PUBLIC AUDIT VIEW ────────────────────────────────────────────────
   const pathMatch = window.location.pathname.match(/^\/audit\/([a-z0-9]+)$/i);
@@ -1391,12 +1394,25 @@ export default function App() {
     return <PublicAuditViewer slug={auditSlug} />;
   }
   
-  const [step, setStep] = useState("intro");
-  const [provider, setProvider] = useState("");
-  const [monthlyBill, setMonthlyBill] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [checked, setChecked] = useState({});
-  const [activeSection, setActiveSection] = useState(0);
+  // ── SESSION RESTORE — read localStorage once at mount ─────────────────────
+  const [initialSession] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ka_session');
+      if (!saved) return null;
+      const session = JSON.parse(saved);
+      if (session.version !== SESSION_VERSION) return null;
+      return session;
+    } catch { return null; }
+  });
+  const [step, setStep] = useState(() => {
+    if (initialSession && RESTORABLE_STEPS.includes(initialSession.step)) return initialSession.step;
+    return 'intro';
+  });
+  const [provider, setProvider] = useState(() => initialSession?.provider || '');
+  const [monthlyBill, setMonthlyBill] = useState(() => initialSession?.monthlyBill || '');
+  const [companyName, setCompanyName] = useState(() => initialSession?.companyName || '');
+  const [checked, setChecked] = useState(() => initialSession?.checked || {});
+  const [activeSection, setActiveSection] = useState(() => typeof initialSession?.activeSection === 'number' ? initialSession.activeSection : 0);
   const [showToast, setShowToast] = useState(null);
   const [showSample, setShowSample] = useState(false);
   const [sampleTab, setSampleTab] = useState("report");
@@ -1429,7 +1445,7 @@ export default function App() {
   const [secScore, setSecScore] = useState(null); // computed after audit
   const [secEmail, setSecEmail] = useState("");
   const [secPaymentLoading, setSecPaymentLoading] = useState(false);
-  const [gateEmail, setGateEmail] = useState("");
+  const [gateEmail, setGateEmail] = useState(() => initialSession?.gateEmail || '');
   const [scores, setScores] = useState(null);
   const [shareUrl, setShareUrl] = useState(null);
   const [leaderboardRank, setLeaderboardRank] = useState(null);
@@ -1510,6 +1526,7 @@ export default function App() {
     // Handle Stripe payment success redirect
     const params = new URLSearchParams(window.location.search);
     if (params.get("payment") === "success") {
+      localStorage.removeItem('ka_session');
       setStep("payment_success");
       window.history.replaceState({}, "", "/");
       return;
@@ -1699,6 +1716,14 @@ useEffect(() => {
     const section = AUDIT_SECTIONS[activeSection];
     if (section) window.gtag?.('event', 'audit_section_viewed', { section: section.label, section_index: activeSection });
   }, [activeSection, step]);
+
+  // ── SESSION PERSISTENCE — save on every relevant state change ─────────────
+  useEffect(() => {
+    localStorage.setItem('ka_session', JSON.stringify({
+      version: SESSION_VERSION,
+      step, provider, monthlyBill, companyName, checked, activeSection, gateEmail,
+    }));
+  }, [step, provider, monthlyBill, companyName, checked, activeSection, gateEmail]);
 
   // ── Formspree contact ──────────────────────────────────────────────────────
   const handleContactSubmit = async (e) => {
@@ -2191,7 +2216,7 @@ aws ec2 describe-reserved-instances \\
           <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>Subject: "⚡ Your [Provider] Cost Blueprint is ready"</p>
           <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>Check spam if you don't see it within 5 minutes.</p>
         </div>
-        <button className="glow-btn" onClick={() => { setStep("intro"); setChecked({}); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Run Another Audit →</button>
+        <button className="glow-btn" onClick={() => { localStorage.removeItem('ka_session'); setChecked({}); setProvider(''); setMonthlyBill(''); setCompanyName(''); setActiveSection(0); setGateEmail(''); goTo('intro'); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Run Another Audit →</button>
       </div>
     </div>
   );
@@ -2720,6 +2745,15 @@ aws ec2 describe-reserved-instances \\
       {showBooking && <BookingModal />}
       {showBlueprint && <BlueprintModal />}
       <Nav />
+
+      {/* ── RESUME AUDIT BANNER ── */}
+      {initialSession && RESTORABLE_STEPS.includes(initialSession.step) && (
+        <div style={{ background: "rgba(0,255,180,0.07)", borderBottom: "1px solid rgba(0,255,180,0.2)", padding: "10px 24px", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", flexWrap: "wrap", fontSize: "13px", color: "var(--text-dim)" }}>
+          <span>↩ You have an audit in progress</span>
+          <button className="glow-btn" onClick={() => goTo(initialSession.step)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "8px", padding: "6px 14px", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>Resume Audit →</button>
+          <button onClick={() => { localStorage.removeItem('ka_session'); setChecked({}); setProvider(''); setMonthlyBill(''); setCompanyName(''); setActiveSection(0); setGateEmail(''); }} className="ghost-btn" style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "12px", fontWeight: 600, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>Start Over</button>
+        </div>
+      )}
 
             {/* ── STICKY BOTTOM CTA BAR ── */}
       {showStickyBar && (
