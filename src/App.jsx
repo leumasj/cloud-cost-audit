@@ -1477,7 +1477,7 @@ export default function App() {
     setPageKey(k => k + 1);
     window.scrollTo(0, 0);
     // Push to browser history so back button returns to previous step
-    const stepsWithHistory = ["intake", "questions", "email_gate", "report", "security_intro", "security_report"];
+    const stepsWithHistory = ["intake", "questions", "audit", "email_gate", "report", "security_intro", "security_report"];
     const currentStep = step; // capture before update
     if (stepsWithHistory.includes(s)) {
       window.history.pushState({ step: s, from: currentStep }, "", `#${s}`);
@@ -1517,7 +1517,7 @@ export default function App() {
 
     // Restore step from URL hash on initial load (e.g. user refreshes mid-audit)
     const hash = window.location.hash.replace("#", "");
-    const validSteps = ["intake", "questions", "email_gate", "report", "security_intro", "security_report"];
+    const validSteps = ["intake", "questions", "audit", "email_gate", "report", "security_intro", "security_report"];
     if (hash && validSteps.includes(hash)) {
       setStep(hash);
     }
