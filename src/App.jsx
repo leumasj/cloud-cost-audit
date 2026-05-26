@@ -1427,6 +1427,7 @@ export default function App() {
   const [pageKey, setPageKey] = useState(0);
   // ── INTRO-SCREEN STATE (must live at top level — Rules of Hooks) ──────────
   const [calcBill, setCalcBill] = useState(5000);
+  const [savingsFilter, setSavingsFilter] = useState("All");
   const [openFaq, setOpenFaq] = useState(null);
   const [activeHowStep, setActiveHowStep] = useState(null); // null = all equal, click to expand
   const [showExitIntent, setShowExitIntent] = useState(false);
@@ -1816,6 +1817,9 @@ useEffect(() => {
         </a>
         <button onClick={() => setShowContact(true)} className="ghost-btn" style={{ background: "transparent", border: "none", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600 }}>Contact Us</button>
         {step === "intro" && (
+          <a href="/blog/how-we-found-2400-month-cloud-waste/" target="_blank" rel="noopener noreferrer" style={{ background: "transparent", border: "none", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Blog</a>
+        )}
+        {step === "intro" && (
           <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "8px", padding: "8px 16px", fontSize: "13px", fontWeight: 700 }}>Start Free Audit →</button>
         )}
       </div>
@@ -2013,6 +2017,7 @@ useEffect(() => {
             <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Redirecting to payment...</>
           ) : `Pay ${currency.blueprintPrice} → Get Blueprint`}
         </button>
+        <p style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center", marginTop: "8px", marginBottom: "0" }}>🕐 Delivered to your inbox in ~2 minutes</p>
         {blueprintStatus === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Something went wrong. Please try again or email admin@kloudaudit.eu</p>}
         <p style={{ fontSize: "12px", color: "var(--text-dim)", textAlign: "center", marginTop: "14px", lineHeight: 1.6 }}>💚 If the Blueprint doesn&apos;t identify at least one actionable fix, email <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a> for a full refund. No questions asked.</p>
         <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "10px" }}>🔒 Secure payment via Stripe · Prices inclusive of applicable taxes · admin@kloudaudit.eu</p>
@@ -2772,7 +2777,7 @@ aws ec2 describe-reserved-instances \\
         <div className="sticky-bottom-cta" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", boxShadow: "0 0 8px var(--green)", flexShrink: 0 }} />
-            <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>Teams typically find <strong style={{ color: "var(--green)" }}>$500–$4,000+/month</strong> in cloud waste — based on industry FinOps benchmarks</span>
+            <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>⚡ Engineers ran 3 audits today — find out what they found</span>
           </div>
           <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap" }}>
             See What My Bill Is Hiding →
@@ -2867,6 +2872,8 @@ aws ec2 describe-reserved-instances \\
               <span>📄</span> See a Real Report First
             </button>
           </div>
+
+          <p style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "-28px", marginBottom: "32px" }}>⚡ Free · No signup · Results in 15 minutes</p>
 
           {/* ── SOCIAL PROOF ── */}
           <div className="fade-up stagger-4" style={{ display: "flex", gap: "24px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
@@ -3342,8 +3349,18 @@ aws ec2 describe-reserved-instances \\
             <h2 className="display" style={{ fontSize: "20px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px", margin: 0 }}>Recent audits</h2>
             <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>· results updated in real time</span>
           </div>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "16px" }}>
+            {["All", "AWS", "GCP", "Azure", "Multi-Cloud"].map(f => {
+              const active = savingsFilter === f;
+              return (
+                <button key={f} onClick={() => setSavingsFilter(f)} style={{ fontSize: "11px", padding: "4px 12px", borderRadius: "20px", border: `1px solid ${active ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.1)"}`, background: active ? "rgba(0,255,180,0.08)" : "rgba(255,255,255,0.03)", color: active ? "#00ffb4" : "#64748b", cursor: "pointer", fontFamily: "inherit", fontWeight: active ? 600 : 400, transition: "all 0.15s" }}>
+                  {f}
+                </button>
+              );
+            })}
+          </div>
           <div className="wall-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
-            {WALL_SAVINGS.map((a, i) => {
+            {WALL_SAVINGS.filter(a => savingsFilter === "All" || a.provider === savingsFilter).map((a, i) => {
               const providerColor = PROVIDER_BADGE_COLOR[a.provider] || "#00ffb4";
               return (
                 <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -3454,6 +3471,7 @@ aws ec2 describe-reserved-instances \\
               <button onClick={() => { window.gtag?.('event', 'blueprint_clicked', { provider: provider, savings_min: savMin, currency: currency.code }); goTo("intake"); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "13px", fontSize: "13px", fontWeight: 800, width: "100%", marginTop: "20px", boxShadow: "0 0 20px rgba(0,255,180,0.25)", cursor: "pointer" }}>
                 Get Cost Blueprint →
               </button>
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "8px", marginBottom: "0" }}>Most teams recover the $79 cost within 24 hours</p>
             </div>
 
             {/* ── SECURITY BLUEPRINT card ── */}
@@ -3590,6 +3608,7 @@ aws ec2 describe-reserved-instances \\
 
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
               {[
+                { label: "Blog", href: "/blog/how-we-found-2400-month-cloud-waste/" },
                 { label: "Terms", href: "https://www.kloudaudit.eu/terms/" },
                 { label: "Privacy", href: "https://www.kloudaudit.eu/privacy/" },
                 { label: "LinkedIn", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh" },
