@@ -109,6 +109,34 @@ function ProgressRing({ percent, size = 44, stroke = 3, color = "#00ffb4" }) {
   );
 }
 
+function MethodologyNote() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ marginTop: "-16px", marginBottom: "28px", textAlign: "center" }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ background: "none", border: "none", cursor: "pointer", fontSize: "12px", color: "var(--text-muted)", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: "4px", padding: "4px 8px", borderRadius: "6px", transition: "color 0.15s" }}
+        onMouseEnter={e => e.currentTarget.style.color = "var(--text-dim)"}
+        onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
+        aria-expanded={open}
+      >
+        How is this calculated?
+        <span style={{ display: "inline-block", transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)", fontSize: "10px" }}>▾</span>
+      </button>
+      <div style={{
+        overflow: "hidden",
+        maxHeight: open ? "200px" : "0",
+        transition: "max-height 0.3s ease",
+        textAlign: "left",
+      }}>
+        <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.7, maxWidth: "560px", margin: "8px auto 0", padding: "12px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: "10px" }}>
+          Based on 18 checks across compute, storage, network, database and governance. The 20% figure represents conservative savings from quick wins only (orphaned resources, dev database schedules, reserved instance coverage). The 45% figure includes structural optimisations like NAT gateway elimination, storage tiering, and spot instance adoption. Actual savings depend on your current configuration and bill size.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function CodeBlock({ code }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
@@ -2756,6 +2784,7 @@ aws ec2 describe-reserved-instances \\
           <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "520px", margin: "0 auto 28px" }}>
             Find unused cloud spend in minutes. Covers AWS, GCP and Azure — <strong style={{ color: "#fff" }}>no credentials required, ever</strong>. Teams typically uncover <strong style={{ color: "var(--green)" }}>20–45% in savings</strong>.
           </p>
+          <MethodologyNote />
 
           {/* ── PRIMARY ACTION — Provider buttons front and centre ── */}
           <div className="fade-up stagger-2" style={{ marginBottom: "16px" }}>
