@@ -1817,7 +1817,7 @@ useEffect(() => {
         </a>
         <button onClick={() => setShowContact(true)} className="ghost-btn" style={{ background: "transparent", border: "none", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600 }}>Contact Us</button>
         {step === "intro" && (
-          <a href="/blog/how-we-found-2400-month-cloud-waste/" target="_blank" rel="noopener noreferrer" style={{ background: "transparent", border: "none", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Blog</a>
+          <a href="https://dev.to/kloudaudit" target="_blank" rel="noopener noreferrer" style={{ background: "transparent", border: "none", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Blog</a>
         )}
         {step === "intro" && (
           <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "8px", padding: "8px 16px", fontSize: "13px", fontWeight: 700 }}>Start Free Audit →</button>
@@ -3608,7 +3608,7 @@ aws ec2 describe-reserved-instances \\
 
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
               {[
-                { label: "Blog", href: "/blog/how-we-found-2400-month-cloud-waste/" },
+                { label: "Blog", href: "https://dev.to/kloudaudit" },
                 { label: "Terms", href: "https://www.kloudaudit.eu/terms/" },
                 { label: "Privacy", href: "https://www.kloudaudit.eu/privacy/" },
                 { label: "LinkedIn", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh" },
