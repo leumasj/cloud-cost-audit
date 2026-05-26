@@ -68,10 +68,34 @@
       #root { min-height: 100vh; }
       .seo-h1 { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
       body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+      /* ── LCP overlay: painted from HTML before JS loads ── */
+      #lcp-overlay {
+        position: fixed; inset: 0; background: #080810; z-index: 99999;
+        display: flex; align-items: center; justify-content: center;
+        text-align: center; padding: 24px;
+        transition: opacity 0.2s ease;
+      }
+      #lcp-overlay.fade { opacity: 0; pointer-events: none; }
+      #lcp-overlay h1 {
+        font-family: 'Bricolage Grotesque', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: clamp(42px, 6.5vw, 82px);
+        font-weight: 800; line-height: 1.0; letter-spacing: -3px;
+        color: #fff; margin: 0;
+      }
+      #lcp-overlay .lcp-grad {
+        background: linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
     </style>
   </head>
   <body>
     <h1 class="seo-h1">KloudAudit — Free Cloud Cost Audit for AWS, GCP and Azure. Find 20–45% Savings in 15 Minutes. No Account Access Required.</h1>
+    <!-- LCP hero: browser paints this from HTML before JS loads. React removes it after mount. -->
+    <div id="lcp-overlay" aria-hidden="true">
+      <h1>The audit your<br><span class="lcp-grad">cloud provider</span><br>won't give you.</h1>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -1521,6 +1521,18 @@ export default function App() {
   const sampleSavMax = Math.round(sampleFlagged.reduce((s, c) => s + SAMPLE_REPORT.monthlyBill * c.savingsRange[1] / 100, 0));
   const samplePct = Math.round(((sampleSavMin + sampleSavMax) / 2 / SAMPLE_REPORT.monthlyBill) * 100);
 
+  // ── LCP OVERLAY DISMISSAL — fade out static HTML placeholder once React has painted ──
+  useEffect(() => {
+    const el = document.getElementById('lcp-overlay');
+    if (!el) return;
+    // rAF ensures the browser has painted the React tree before we fade the overlay
+    requestAnimationFrame(() => {
+      el.classList.add('fade');
+      const t = setTimeout(() => el.remove(), 220);
+      return () => clearTimeout(t);
+    });
+  }, []);
+
   // FIX #2: Payment success detection on mount
   useEffect(() => {
     // Handle Stripe payment success redirect
