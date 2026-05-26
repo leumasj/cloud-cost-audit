@@ -1439,6 +1439,12 @@ export default function App() {
     }
   };
   const goTo = (s) => {
+    if (s === 'email_gate') {
+      window.gtag?.('event', 'email_gate_reached', { flagged_count: flagged.length, savings_min: savMin });
+    }
+    if (s === 'report') {
+      window.gtag?.('event', 'report_viewed', { flagged_count: flagged.length, savings_min: savMin, savings_max: savMax, provider: provider });
+    }
     setStep(s);
     setPageKey(k => k + 1);
     window.scrollTo(0, 0);
@@ -1659,6 +1665,13 @@ useEffect(() => {
     return () => clearTimeout(t);
   }, [showToast]);
 
+  // ── GA4: audit section viewed ─────────────────────────────────────────────
+  useEffect(() => {
+    if (step !== 'audit') return;
+    const section = AUDIT_SECTIONS[activeSection];
+    if (section) window.gtag?.('event', 'audit_section_viewed', { section: section.label, section_index: activeSection });
+  }, [activeSection, step]);
+
   // ── Formspree contact ──────────────────────────────────────────────────────
   const handleContactSubmit = async (e) => {
     e.preventDefault();
@@ -1686,6 +1699,7 @@ useEffect(() => {
   // FIX #2: Buy Blueprint → Vercel Function → Stripe Checkout
   const handleBuyBlueprint = async () => {
     if (!blueprintEmail) return;
+    window.gtag?.('event', 'checkout_initiated', { provider: provider, amount: currency.blueprintAmount, currency: currency.stripeCurrency });
     setBlueprintStatus("loading");
     try {
       const res = await fetch("/api/create-checkout", {
@@ -2117,7 +2131,7 @@ aws ec2 describe-reserved-instances \\
                 <div style={{ background: "linear-gradient(135deg, rgba(129,140,248,0.08) 0%, rgba(0,255,180,0.06) 100%)", border: "1px solid rgba(129,140,248,0.25)", borderRadius: "14px", padding: "24px", marginTop: "8px" }}>
                   <p style={{ fontSize: "13px", color: "var(--text-dim)", marginBottom: "6px" }}>✅ Your blueprint covers all <strong style={{ color: "#fff" }}>{sampleFlagged.length} issues</strong> found in your audit — not just these 3</p>
                   <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "20px" }}>⚡ Delivered to your inbox within 2 minutes of payment</p>
-                  <button className="glow-btn" onClick={() => { closeModal(); setShowBlueprint(true); }} style={{ background: "linear-gradient(135deg, #818cf8, #6366f1)", color: "#fff", border: "none", borderRadius: "10px", padding: "13px 32px", fontSize: "15px", fontWeight: 700, boxShadow: "0 0 20px rgba(129,140,248,0.3)" }}>Get Full Blueprint — {currency.blueprintPrice} →</button>
+                  <button className="glow-btn" onClick={() => { closeModal(); window.gtag?.('event', 'blueprint_clicked', { provider: provider, savings_min: savMin, currency: currency.code }); window.gtag?.('event', 'blueprint_modal_opened', { provider: provider }); setShowBlueprint(true); }} style={{ background: "linear-gradient(135deg, #818cf8, #6366f1)", color: "#fff", border: "none", borderRadius: "10px", padding: "13px 32px", fontSize: "15px", fontWeight: 700, boxShadow: "0 0 20px rgba(129,140,248,0.3)" }}>Get Full Blueprint — {currency.blueprintPrice} →</button>
                 </div>
               </>
             )}
@@ -2727,7 +2741,7 @@ aws ec2 describe-reserved-instances \\
               ))}
             </div>
             <a href="/KloudAudit-2026-Cloud-Cost-Checklist.pdf" download
-              onClick={() => { localStorage.setItem('ka_lead_shown','1'); setShowLeadMagnet(false); }}
+              onClick={() => { window.gtag?.('event', 'lead_magnet_downloaded', {}); localStorage.setItem('ka_lead_shown','1'); setShowLeadMagnet(false); }}
               style={{ display:"block",width:"100%",padding:"14px",borderRadius:"12px",textDecoration:"none",textAlign:"center",background:"linear-gradient(135deg,var(--green),#00c896)",color:"#000",fontWeight:800,fontSize:"15px",boxShadow:"0 4px 20px rgba(0,255,180,0.3)" }}>
               Download Free PDF →
             </a>
@@ -2752,7 +2766,7 @@ aws ec2 describe-reserved-instances \\
                 { label: "Azure", color: "#0078d4" },
                 { label: "Multi-Cloud", color: "#00ffb4" },
               ].map(p => (
-                <button key={p.label} onClick={() => { setProvider(p.label); goTo("intake"); }}
+                <button key={p.label} onClick={() => { window.gtag?.('event', 'audit_started', { provider: p.label }); setProvider(p.label); goTo("intake"); }}
                   style={{ padding: "14px 24px", borderRadius: "12px", border: `2px solid ${p.color}40`, background: `${p.color}12`, color: p.label === "Multi-Cloud" ? "var(--green)" : p.color, fontSize: "15px", fontWeight: 700, cursor: "pointer", transition: "all 0.18s", fontFamily: "inherit", minWidth: "100px" }}
                   onMouseEnter={e => { e.currentTarget.style.background = `${p.color}22`; e.currentTarget.style.borderColor = `${p.color}80`; e.currentTarget.style.transform = "translateY(-2px)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = `${p.color}12`; e.currentTarget.style.borderColor = `${p.color}40`; e.currentTarget.style.transform = "translateY(0)"; }}>
@@ -3360,7 +3374,7 @@ aws ec2 describe-reserved-instances \\
                 </div>
               ))}
               <div style={{ flex: 1 }} />
-              <button onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "13px", fontSize: "13px", fontWeight: 800, width: "100%", marginTop: "20px", boxShadow: "0 0 20px rgba(0,255,180,0.25)", cursor: "pointer" }}>
+              <button onClick={() => { window.gtag?.('event', 'blueprint_clicked', { provider: provider, savings_min: savMin, currency: currency.code }); goTo("intake"); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "13px", fontSize: "13px", fontWeight: 800, width: "100%", marginTop: "20px", boxShadow: "0 0 20px rgba(0,255,180,0.25)", cursor: "pointer" }}>
                 Get Cost Blueprint →
               </button>
             </div>
@@ -3551,7 +3565,7 @@ aws ec2 describe-reserved-instances \\
             <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Cloud provider</label>
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
               {PROVIDERS.map(p => (
-                <button key={p} className="provider-chip" onClick={() => setProvider(p)} style={{ padding: "10px 20px", borderRadius: "10px", fontSize: "14px", fontWeight: 600, border: `1.5px solid ${provider === p ? "var(--green)" : "var(--border)"}`, background: provider === p ? "var(--green-dim)" : "rgba(255,255,255,0.03)", color: provider === p ? "var(--green)" : "var(--text-muted)" }}>{p}</button>
+                <button key={p} className="provider-chip" onClick={() => { window.gtag?.('event', 'audit_started', { provider: p }); setProvider(p); }} style={{ padding: "10px 20px", borderRadius: "10px", fontSize: "14px", fontWeight: 600, border: `1.5px solid ${provider === p ? "var(--green)" : "var(--border)"}`, background: provider === p ? "var(--green-dim)" : "rgba(255,255,255,0.03)", color: provider === p ? "var(--green)" : "var(--text-muted)" }}>{p}</button>
               ))}
             </div>
           </div>
@@ -3772,6 +3786,7 @@ aws ec2 describe-reserved-instances \\
       } catch (_) {}
       // Save audit to Supabase (non-blocking — happens in background)
       saveAudit(gateEmail);
+      window.gtag?.('event', 'email_submitted', { provider: provider });
       setGateSubmitted(true);
       setGateSending(false);
       setTimeout(() => goTo("report"), 800);
@@ -3851,7 +3866,7 @@ aws ec2 describe-reserved-instances \\
                   }}>
                     {gateSending ? "Saving…" : "Send Me the Report →"}
                   </button>
-                  <button type="button" onClick={() => { try { saveAudit(null); } catch(_) {} goTo("report"); }} style={{
+                  <button type="button" onClick={() => { window.gtag?.('event', 'email_gate_skipped', {}); try { saveAudit(null); } catch(_) {} goTo("report"); }} style={{
                     width: "100%", padding: "12px", borderRadius: "10px",
                     border: "1px solid rgba(255,255,255,0.08)",
                     background: "transparent", color: "#64748b",
@@ -4118,7 +4133,7 @@ aws ec2 describe-reserved-instances \\
                     <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>
                       <strong style={{ color: "#fff" }}>{flagged.length - 1} more fixes</strong> with exact CLI commands, Terraform snippets, and verification steps
                     </p>
-                    <button onClick={() => setShowBlueprint(true)}
+                    <button onClick={() => { window.gtag?.('event', 'blueprint_clicked', { provider: provider, savings_min: savMin, currency: currency.code }); window.gtag?.('event', 'blueprint_modal_opened', { provider: provider }); setShowBlueprint(true); }}
                       style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "10px 22px", fontSize: "13px", fontWeight: 800, cursor: "pointer", boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap" }}>
                       {`Unlock all fixes — ${currency.blueprintPrice} →`}
                     </button>
@@ -4251,7 +4266,7 @@ aws ec2 describe-reserved-instances \\
             </div>
 
             <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-              <button className="glow-btn" onClick={() => flagged.length > 0 ? setShowBlueprint(true) : null}
+              <button className="glow-btn" onClick={() => { if (flagged.length > 0) { window.gtag?.('event', 'blueprint_clicked', { provider: provider, savings_min: savMin, currency: currency.code }); window.gtag?.('event', 'blueprint_modal_opened', { provider: provider }); setShowBlueprint(true); } }}
                 disabled={flagged.length === 0}
                 style={{ background: flagged.length > 0 ? "var(--green)" : "rgba(255,255,255,0.06)", color: flagged.length > 0 ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: flagged.length > 0 ? "0 0 28px rgba(0,255,180,0.35)" : "none", cursor: flagged.length > 0 ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: "8px" }}>
                 {`⚡ Get AI Blueprint — ${currency.blueprintPrice} →`}
