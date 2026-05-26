@@ -1814,7 +1814,11 @@ useEffect(() => {
             <div style={{ textAlign: "center", padding: "28px 0" }}>
               <div style={{ fontSize: "48px", marginBottom: "14px" }}>✅</div>
               <p className="display" style={{ color: "var(--green)", fontWeight: 800, fontSize: "22px", letterSpacing: "-0.5px", marginBottom: "8px" }}>Message Sent!</p>
-              <p style={{ color: "var(--text-dim)", fontSize: "14px", lineHeight: 1.6 }}>We'll get back to you within 24hrs.<br />Check your inbox and spam folder.</p>
+              <p style={{ color: "var(--text-dim)", fontSize: "14px", lineHeight: 1.6, marginBottom: "24px" }}>We'll get back to you within 24hrs.<br />Check your inbox and spam folder.</p>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                <button className="ghost-btn" onClick={() => { setShowContact(false); setFormStatus("idle"); }} style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: "10px", color: "var(--text-muted)", fontSize: "13px", fontWeight: 600, padding: "9px 20px", cursor: "pointer", fontFamily: "inherit" }}>Close</button>
+                <button className="ghost-btn" onClick={() => { setShowContact(false); setFormStatus("idle"); }} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600, padding: "9px 20px", cursor: "pointer", fontFamily: "inherit" }}>Back to Homepage</button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleContactSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
