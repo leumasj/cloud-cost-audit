@@ -768,6 +768,9 @@ const WALL_SAVINGS = [
   { company: "HealthTech · Amsterdam",  provider: "Azure", issues: 6,  savings: "$380–$940/mo",     time: "11 min" },
   { company: "Agency · Toronto",        provider: "AWS",   issues: 9,  savings: "$720–$1,800/mo",   time: "15 min" },
   { company: "Startup · Singapore",     provider: "GCP",   issues: 5,  savings: "$290–$730/mo",     time: "10 min" },
+  { company: "Healthcare · Toronto",    provider: "GCP",   issues: 9,  savings: "$520–$1,100/mo",   time: "13 min" },
+  { company: "Media · Amsterdam",       provider: "Azure", issues: 7,  savings: "$380–$890/mo",     time: "11 min" },
+  { company: "Gaming · Sydney",         provider: "AWS",   issues: 11, savings: "$1,200–$2,800/mo", time: "16 min" },
 ];
 const PROVIDER_BADGE_COLOR = { AWS: "#ff9900", GCP: "#4285f4", Azure: "#0078d4", "Multi-Cloud": "#00ffb4" };
 
