@@ -1430,7 +1430,6 @@ export default function App() {
   const [savingsFilter, setSavingsFilter] = useState("All");
   const [openFaq, setOpenFaq] = useState(null);
   const [activeHowStep, setActiveHowStep] = useState(null); // null = all equal, click to expand
-  const [showExitIntent, setShowExitIntent] = useState(false);
   const [showLeadMagnet, setShowLeadMagnet] = useState(false);   // ← ADD THIS LINE
   const [showStickyBar, setShowStickyBar] = useState(false);  // ← ADD THIS
   const [showShareCard, setShowShareCard] = useState(false);
@@ -1677,26 +1676,6 @@ export default function App() {
   }
 };
 
-  // ── EXIT INTENT DETECTOR ─────────────────────────────────────────────────
-  useEffect(() => {
-    if (sessionStorage.getItem('exitShown')) return; // only once per session
-    const handleMouseLeave = (e) => {
-      if (e.clientY <= 10) { // cursor leaving from top of viewport
-        setShowExitIntent(true);
-        sessionStorage.setItem('exitShown', '1');
-        document.removeEventListener('mouseleave', handleMouseLeave);
-      }
-    };
-    // Small delay so it doesn't fire immediately on page load
-    const timer = setTimeout(() => {
-      document.addEventListener('mouseleave', handleMouseLeave);
-    }, 5000);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, []);
-
   // ── 30-SECOND LEAD MAGNET TRIGGER ───────────────────────────────────────────
 useEffect(() => {
   if (step !== 'intro') return;
@@ -1818,9 +1797,6 @@ useEffect(() => {
         <button onClick={() => setShowContact(true)} className="ghost-btn" style={{ background: "transparent", border: "none", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600 }}>Contact Us</button>
         {step === "intro" && (
           <a href="https://dev.to/kloudaudit" target="_blank" rel="noopener noreferrer" style={{ background: "transparent", border: "none", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Blog</a>
-        )}
-        {step === "intro" && (
-          <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "8px", padding: "8px 16px", fontSize: "13px", fontWeight: 700 }}>Start Free Audit →</button>
         )}
       </div>
     </nav>
@@ -2690,74 +2666,6 @@ aws ec2 describe-reserved-instances \\
       {showSample && <SampleModal />}
 
       {/* ── EXIT INTENT MODAL ── */}
-      {showExitIntent && (
-        <div onClick={() => setShowExitIntent(false)} style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)",
-          zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px",
-          animation: "fadeIn 0.25s ease"
-        }}>
-          <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="exit-intent-dialog-title" style={{
-            background: "linear-gradient(145deg, #0f0f1a, #13131f)",
-            border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px",
-            padding: "40px 36px", maxWidth: "420px", width: "100%", position: "relative",
-            boxShadow: "0 25px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,255,180,0.08)",
-            animation: "slideUp 0.35s cubic-bezier(0.4,0,0.2,1)"
-          }}>
-            <style>{`
-              @keyframes slideUp {
-                from { opacity: 0; transform: translateY(24px) scale(0.97); }
-                to   { opacity: 1; transform: translateY(0) scale(1); }
-              }
-            `}</style>
-            {/* Close */}
-            <button onClick={() => setShowExitIntent(false)} aria-label="Close" style={{
-              position: "absolute", top: "16px", right: "16px", background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "var(--text-muted)",
-              width: "30px", height: "30px", cursor: "pointer", fontSize: "16px", lineHeight: 1,
-              display: "flex", alignItems: "center", justifyContent: "center"
-            }}>×</button>
-
-            {/* Badge */}
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(0,255,180,0.1)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "4px 12px", marginBottom: "20px" }}>
-              <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", animation: "pulse-dot 2s infinite" }} />
-              <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px" }}>WAIT — FREE AUDIT TAKES 15 MIN</span>
-            </div>
-
-            <h2 id="exit-intent-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "10px", lineHeight: 1.2 }}>
-              Your cloud bill is hiding savings right now.
-            </h2>
-            <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "24px" }}>
-              Most teams find <strong style={{ color: "#fff" }}>$1,000–$3,000/month</strong> in waste on their first audit. It's free, takes 15 minutes, and requires zero account access.
-            </p>
-
-            {/* Social proof */}
-            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "14px 16px", marginBottom: "24px" }}>
-              <p style={{ fontSize: "13px", color: "var(--text-dim)", fontStyle: "italic", marginBottom: "8px" }}>
-                "Found $2,400/mo in idle RDS instances on the first audit. Took 40 minutes to fix."
-              </p>
-              <p style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>— James K., Senior DevOps · London fintech</p>
-            </div>
-
-            {/* CTA */}
-            <button
-              onClick={() => { setShowExitIntent(false); setStep("questions"); window.scrollTo(0,0); }}
-              style={{
-                width: "100%", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer",
-                background: "linear-gradient(135deg, var(--green), #00c896)",
-                color: "#000", fontWeight: 800, fontSize: "15px", letterSpacing: "-0.3px",
-                boxShadow: "0 4px 20px rgba(0,255,180,0.3)", transition: "transform 0.2s, box-shadow 0.2s"
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,255,180,0.4)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,255,180,0.3)"; }}
-            >
-              Run My Free Audit →
-            </button>
-            <button onClick={() => setShowExitIntent(false)} style={{ display: "block", width: "100%", background: "none", border: "none", textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "12px", cursor: "pointer", fontFamily: "inherit", padding: 0 }}>
-              No thanks, I'll keep overpaying
-            </button>
-          </div>
-        </div>
-      )}
       {showContact && <ContactModal />}
       {showBooking && <BookingModal />}
       {showBlueprint && <BlueprintModal />}
@@ -2790,12 +2698,6 @@ aws ec2 describe-reserved-instances \\
 
         {/* ── HERO ── */}
         <div className="hero-pad" style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center", minHeight: "85vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          {/* ── CATEGORY BADGE ── */}
-          <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "7px 18px", marginBottom: "24px" }}>
-            <span style={{ width: "6px", height: "6px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)", animation: "pulse-dot 2s infinite" }} />
-            <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 700, letterSpacing: "1.5px" }}>FREE · NO AWS CREDENTIALS · 15 MINUTES</span>
-          </div>
-
           {/* ── HEADLINE ── */}
           <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "20px" }}>
             The audit your<br />
@@ -2917,23 +2819,6 @@ aws ec2 describe-reserved-instances \\
             ))}
           </div>
 
-          {/* ── LIVE SOCIAL PROOF TICKER ── */}
-          <LiveFeedTicker />
-        </div>
-
-        {/* ── STATS BAR ── */}
-        <div className="fade-up stagger-3 stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1px", background: "var(--border)", borderRadius: "16px", overflow: "hidden", border: "1px solid var(--border)", marginBottom: "80px" }}>
-          {[
-            { n: "20–45%", label: "Average savings found" },
-            { n: "18", label: "Audit checkpoints" },
-            { n: "< 15 min", label: "Average completion" },
-            { n: "Free", label: "Cost to audit" },
-          ].map((s, i) => (
-            <div key={i} style={{ background: "var(--bg2)", padding: "28px 24px", textAlign: "center" }}>
-              <div className="display" style={{ fontSize: "28px", fontWeight: 800, color: "var(--green)", letterSpacing: "-1px", marginBottom: "6px" }}>{s.n}</div>
-              <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>{s.label}</div>
-            </div>
-          ))}
         </div>
 
         {/* ── HOW IT WORKS ── */}
@@ -3228,54 +3113,31 @@ aws ec2 describe-reserved-instances \\
               </div>
             ))}
 
-            {/* ── SECURITY CARD 1 — Identity & Access ── */}
+            {/* ── SECURITY CARD — Identity, Access, Exposure & Data ── */}
             <div className="audit-cat-card fade-up" role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && goTo("security_intro")} onClick={() => goTo("security_intro")}
               style={{ animationDelay: "0.25s", background: "linear-gradient(135deg, rgba(248,113,113,0.07), rgba(251,146,60,0.04))", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden", cursor: "pointer", transition: "all 0.25s" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.45)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.2)"; e.currentTarget.style.transform = "translateY(0)"; }}>
               <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "100px", height: "100px", background: "radial-gradient(circle, rgba(248,113,113,0.08) 0%, transparent 70%)", borderRadius: "50%" }} />
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                <span style={{ fontSize: "32px" }}>🔐</span>
-                <span style={{ fontSize: "10px", fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "20px", padding: "2px 10px", letterSpacing: "0.8px" }}>SECURITY</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-                <h3 className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px" }}>Identity & Access</h3>
-                <span style={{ background: "rgba(248,113,113,0.1)", color: "#f87171", fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px", border: "1px solid rgba(248,113,113,0.2)" }}>8 checks</span>
-              </div>
-              <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>IAM wildcard permissions, MFA enforcement, root account usage, stale access keys, and privilege escalation paths that leave your account exposed.</p>
-              <div style={{ borderTop: "1px solid rgba(248,113,113,0.12)", paddingTop: "14px" }}>
-                <p style={{ fontSize: "11px", color: "rgba(148,163,184,0.5)", fontWeight: 600, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.8px" }}>Covers</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                  {["MFA enforcement", "IAM wildcards", "Root account usage"].map(label => (
-                    <span key={label} style={{ fontSize: "11px", color: "rgba(248,113,113,0.7)", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "6px", padding: "3px 8px" }}>{label}</span>
-                  ))}
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "3px 6px" }}>+5 more</span>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <span style={{ fontSize: "28px" }}>🔐</span>
+                  <span style={{ fontSize: "28px" }}>🛡</span>
                 </div>
-              </div>
-            </div>
-
-            {/* ── SECURITY CARD 2 — Exposure & Data ── */}
-            <div className="audit-cat-card fade-up" role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && goTo("security_intro")} onClick={() => goTo("security_intro")}
-              style={{ animationDelay: "0.30s", background: "linear-gradient(135deg, rgba(248,113,113,0.07), rgba(251,146,60,0.04))", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden", cursor: "pointer", transition: "all 0.25s" }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.45)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(248,113,113,0.2)"; e.currentTarget.style.transform = "translateY(0)"; }}>
-              <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "100px", height: "100px", background: "radial-gradient(circle, rgba(248,113,113,0.08) 0%, transparent 70%)", borderRadius: "50%" }} />
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                <span style={{ fontSize: "32px" }}>🛡</span>
                 <span style={{ fontSize: "10px", fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "20px", padding: "2px 10px", letterSpacing: "0.8px" }}>SECURITY</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-                <h3 className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px" }}>Exposure & Data</h3>
-                <span style={{ background: "rgba(248,113,113,0.1)", color: "#f87171", fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px", border: "1px solid rgba(248,113,113,0.2)" }}>8 checks</span>
+                <h3 className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px" }}>Security Audit</h3>
+                <span style={{ background: "rgba(248,113,113,0.1)", color: "#f87171", fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px", border: "1px solid rgba(248,113,113,0.2)" }}>16 checks</span>
               </div>
-              <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>Public S3 buckets, open security groups (0.0.0.0/0), hardcoded secrets, unencrypted storage, missing audit logging — the vulnerabilities attackers scan for first.</p>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>IAM wildcards, MFA gaps, root account usage, public S3 buckets, open security groups, hardcoded secrets — 16 checks across identity, access, exposure and data.</p>
               <div style={{ borderTop: "1px solid rgba(248,113,113,0.12)", paddingTop: "14px" }}>
                 <p style={{ fontSize: "11px", color: "rgba(148,163,184,0.5)", fontWeight: 600, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.8px" }}>Covers</p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                  {["Public S3 buckets", "Open security groups", "Hardcoded secrets"].map(label => (
+                  {["MFA enforcement", "IAM wildcards", "Public S3 buckets", "Open security groups", "Hardcoded secrets"].map(label => (
                     <span key={label} style={{ fontSize: "11px", color: "rgba(248,113,113,0.7)", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "6px", padding: "3px 8px" }}>{label}</span>
                   ))}
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "3px 6px" }}>+5 more</span>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "3px 6px" }}>+11 more</span>
                 </div>
               </div>
             </div>
@@ -3858,12 +3720,15 @@ aws ec2 describe-reserved-instances \\
 
   // ── EMAIL GATE STEP ──────────────────────────────────────────────────────────
   if (step === "email_gate") {
+    // ── severity helper (mirrors report step) ─────────────────────────────
+    const getSev = c => { const p = (c.savingsRange[0] + c.savingsRange[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
+    const SEV_COLOR = { high: "#f87171", med: "#fbbf24", low: "#4ade80" };
+
     const handleGateSubmit = async (e) => {
       e.preventDefault();
       if (!gateEmail) { goTo("report"); return; }
       setGateSending(true);
       try {
-        // Send actual report to user's email via SendGrid
         await fetch("/api/send-report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -3880,7 +3745,6 @@ aws ec2 describe-reserved-instances \\
           }),
         });
       } catch (_) {}
-      // Save audit to Supabase (non-blocking — happens in background)
       saveAudit(gateEmail);
       window.gtag?.('event', 'email_submitted', { provider: provider });
       setGateSubmitted(true);
@@ -3888,96 +3752,180 @@ aws ec2 describe-reserved-instances \\
       setTimeout(() => goTo("report"), 800);
     };
 
-    return (
-      <div className="app" style={{ minHeight: "100vh", background: "#07070f", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-        <style>{globalCss}</style>
-        <div style={{ maxWidth: "460px", width: "100%", animation: "scaleIn 0.4s cubic-bezier(0.34,1.56,0.64,1)" }}>
+    const previewFindings = flagged.slice(0, 3);
+    const lockedFindings  = flagged.slice(3);
 
-          {/* Savings teaser */}
-          <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.12), rgba(99,102,241,0.10))", border: "1.5px solid #00ffb4", borderRadius: "20px", padding: "28px", marginBottom: "20px", textAlign: "center" }}>
-            <p style={{ fontSize: "11px", fontWeight: 700, color: "#00ffb4", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "12px" }}>✅ Your audit is ready</p>
-            <div style={{ fontSize: "48px", fontWeight: 800, color: "#00ffb4", letterSpacing: "-2px", lineHeight: 1, marginBottom: "8px", fontFamily: "system-ui, sans-serif" }}>
-              ${savMin.toLocaleString()}–${savMax.toLocaleString()}
+    // ── inline email form (reused in two places below) ────────────────────
+    const EmailForm = () => gateSubmitted ? (
+      <div style={{ textAlign: "center", padding: "24px 0" }}>
+        <div style={{ fontSize: "40px", marginBottom: "10px" }}>✅</div>
+        <p style={{ color: "#00ffb4", fontWeight: 800, fontSize: "18px", marginBottom: "4px" }}>Report sent — loading now…</p>
+        <p style={{ color: "#94a3b8", fontSize: "13px" }}>Check your inbox in ~30 seconds.</p>
+      </div>
+    ) : (
+      <form onSubmit={handleGateSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <input
+          type="email" aria-label="Your work email address"
+          value={gateEmail} onChange={e => setGateEmail(e.target.value)}
+          placeholder="you@company.com" autoFocus
+          style={{ width: "100%", padding: "13px 15px", background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(255,255,255,0.2)", borderRadius: "10px", color: "#f8fafc", fontSize: "15px", outline: "none", boxSizing: "border-box", caretColor: "#00ffb4", fontFamily: "inherit" }}
+          onFocus={e => e.target.style.borderColor = "#00ffb4"}
+          onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.2)"}
+        />
+        <button type="submit" disabled={gateSending} style={{ width: "100%", padding: "14px", borderRadius: "10px", border: "none", background: "#00ffb4", color: "#000", fontWeight: 800, fontSize: "15px", cursor: gateSending ? "not-allowed" : "pointer", boxShadow: "0 4px 24px rgba(0,255,180,0.35)", fontFamily: "inherit", opacity: gateSending ? 0.7 : 1 }}>
+          {gateSending ? "Sending…" : `Unlock all ${flagged.length} findings →`}
+        </button>
+        <button type="button" onClick={() => { window.gtag?.('event', 'email_gate_skipped', {}); try { saveAudit(null); } catch(_) {} goTo("report"); }}
+          style={{ width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "#64748b", fontSize: "13px", cursor: "pointer", fontFamily: "inherit" }}
+          onMouseEnter={e => { e.target.style.color = "#f8fafc"; e.target.style.borderColor = "rgba(255,255,255,0.22)"; }}
+          onMouseLeave={e => { e.target.style.color = "#64748b"; e.target.style.borderColor = "rgba(255,255,255,0.1)"; }}>
+          Skip — just show me the full report
+        </button>
+        <p style={{ fontSize: "11px", color: "#475569", textAlign: "center", margin: 0 }}>🔒 One email — your report only. No marketing, no spam.</p>
+      </form>
+    );
+
+    return (
+      <div className="app">
+        <style>{globalCss}</style>
+        <ParticleBackground />
+        {showContact && <ContactModal />}
+        <Nav showBack onBack={() => goTo("audit")} />
+
+        <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 120px", position: "relative", zIndex: 1 }}>
+
+          {/* ── REPORT HEADER ── */}
+          <div className="fade-up" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "40px", flexWrap: "wrap", gap: "16px" }}>
+            <div>
+              <div style={{ display: "flex", gap: "8px", marginBottom: "14px", flexWrap: "wrap" }}>
+                {[companyName || "Cloud Audit", provider, new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })].map(t => (
+                  <span key={t} style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-dim)", fontSize: "12px", fontWeight: 600, padding: "4px 12px", borderRadius: "20px", border: "1px solid var(--border)" }}>{t}</span>
+                ))}
+              </div>
+              <h1 className="display" style={{ fontSize: "clamp(28px,4vw,46px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>Cost Optimisation Report</h1>
+              <p style={{ color: "var(--text-muted)", fontSize: "15px", marginTop: "8px" }}>
+                {flagged.length > 0 ? `${flagged.length} issues found · Estimated ${savPct}% waste rate` : "No issues found — well optimised infrastructure."}
+              </p>
             </div>
-            <p style={{ fontSize: "15px", color: "#94a3b8", marginBottom: "16px" }}>
-              estimated monthly savings · <strong style={{ color: "#f8fafc" }}>{flagged.length} issues found</strong>
-            </p>
-            <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
-              {flagged.slice(0, 3).map((f, i) => (
-                <span key={i} style={{ fontSize: "11px", color: "#cbd5e1", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "4px 10px" }}>{f.label}</span>
-              ))}
-              {flagged.length > 3 && <span style={{ fontSize: "11px", color: "#94a3b8", padding: "4px 10px" }}>+{flagged.length - 3} more</span>}
+            {/* Export/re-run locked in preview */}
+            <div style={{ display: "flex", gap: "10px", opacity: 0.35, pointerEvents: "none" }}>
+              <button style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "10px 18px", fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>🖨 Export</button>
+              <button style={{ background: "rgba(0,255,180,0.08)", color: "var(--green)", border: "none", borderRadius: "10px", padding: "10px 20px", fontSize: "13px" }}>Re-run</button>
             </div>
           </div>
 
-          {/* Email capture card */}
-          <div style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "32px", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
-            {gateSubmitted ? (
-              <div style={{ textAlign: "center", padding: "20px 0" }}>
-                <div style={{ fontSize: "48px", marginBottom: "14px" }}>✅</div>
-                <p style={{ color: "#00ffb4", fontWeight: 800, fontSize: "20px", marginBottom: "6px" }}>Report sent — check your inbox!</p>
-                <p style={{ color: "#94a3b8", fontSize: "14px" }}>Loading your report now…</p>
+          {/* ── KPI CARDS ── */}
+          {bill > 0 && (
+            <div className="fade-up stagger-1 kpi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "14px", marginBottom: "32px" }}>
+              {[
+                { l: "Monthly Savings", v: `$${savMin.toLocaleString()} – $${savMax.toLocaleString()}`, s: "/month", c: "var(--green)", bg: "var(--green-dim)", b: "var(--green-border)" },
+                { l: "Annual Opportunity", v: `$${(savMin * 12).toLocaleString()}+`, s: "per year", c: "#818cf8", bg: "rgba(99,102,241,0.08)", b: "rgba(99,102,241,0.2)" },
+                { l: "Waste Rate", v: `~${savPct}%`, s: savPct >= 30 ? "Critical" : savPct >= 15 ? "Significant" : "Moderate", c: savPct >= 30 ? "#f87171" : savPct >= 15 ? "#fb923c" : "#fbbf24", bg: "rgba(248,113,113,0.06)", b: "rgba(248,113,113,0.15)" },
+                { l: "Issues Found", v: flagged.length, s: `of ${allChecks.length} checked`, c: "#fb923c", bg: "rgba(251,146,60,0.06)", b: "rgba(251,146,60,0.15)" },
+              ].map(s => (
+                <div key={s.l} style={{ background: s.bg, border: `1px solid ${s.b}`, borderRadius: "14px", padding: "22px" }}>
+                  <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: "10px" }}>{s.l}</p>
+                  <p className="display" style={{ fontSize: "22px", fontWeight: 800, color: s.c, letterSpacing: "-0.5px", lineHeight: 1 }}>{s.v}</p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "5px" }}>{s.s}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── WASTE SCORE RING ── */}
+          {bill > 0 && flagged.length > 0 && (
+            <WasteScoreCard
+              flagged={flagged}
+              allChecks={allChecks}
+              savPct={savPct}
+              savMin={savMin}
+              savMax={savMax}
+              onShare={() => {}}
+            />
+          )}
+
+          {/* ── FINDINGS ── */}
+          <div className="fade-up stagger-2" style={{ marginTop: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18px" }}>
+              <h2 className="display" style={{ fontSize: "20px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px" }}>Your findings</h2>
+              <span style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "20px", padding: "3px 10px" }}>{flagged.length} total</span>
+              {lockedFindings.length > 0 && (
+                <span style={{ fontSize: "11px", color: "#f87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "20px", padding: "3px 10px" }}>
+                  🔒 {lockedFindings.length} locked
+                </span>
+              )}
+            </div>
+
+            {/* First 3 findings — fully visible */}
+            {previewFindings.map(check => {
+              const sMin2 = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
+              const sMax2 = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
+              const sev = getSev(check);
+              return (
+                <div key={check.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderLeft: `3px solid ${SEV_COLOR[sev]}`, borderRadius: "0 12px 12px 0", padding: "16px 20px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+                  <div>
+                    <p style={{ fontWeight: 600, fontSize: "15px", color: "#fff", marginBottom: "4px" }}>{check.label}</p>
+                    <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>{check.detail}</p>
+                  </div>
+                  {bill > 0 && (
+                    <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "8px 14px", textAlign: "right", flexShrink: 0 }}>
+                      <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--green)" }}>${sMin2?.toLocaleString()} – ${sMax2?.toLocaleString()}</p>
+                      <p style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ month</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Findings 4+ — blurred + email gate overlay */}
+            {lockedFindings.length > 0 && (
+              <div style={{ position: "relative", borderRadius: "12px", overflow: "hidden" }}>
+                {/* Blurred rows */}
+                <div style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none" }}>
+                  {lockedFindings.map(check => (
+                    <div key={check.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderLeft: `3px solid ${SEV_COLOR[getSev(check)]}`, borderRadius: "0 12px 12px 0", padding: "16px 20px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+                      <div>
+                        <p style={{ fontWeight: 600, fontSize: "15px", color: "#fff", marginBottom: "4px" }}>{check.label}</p>
+                        <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>{check.detail}</p>
+                      </div>
+                      {bill > 0 && (
+                        <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "8px 14px", textAlign: "right", flexShrink: 0 }}>
+                          <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--green)" }}>$•••• – $••••</p>
+                          <p style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ month</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Gate overlay */}
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(to bottom, transparent 0%, rgba(7,7,15,0.82) 28%, rgba(7,7,15,0.97) 56%)" }}>
+                  <div style={{ background: "var(--bg2)", border: "1.5px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "32px", maxWidth: "440px", width: "100%", boxShadow: "0 24px 64px rgba(0,0,0,0.7)", margin: "0 16px" }}>
+                    <div style={{ textAlign: "center", marginBottom: "20px" }}>
+                      <span style={{ fontSize: "28px" }}>🔒</span>
+                      <h3 className="display" style={{ fontSize: "20px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", margin: "10px 0 6px" }}>
+                        {lockedFindings.length} more {lockedFindings.length === 1 ? "finding" : "findings"} hidden
+                      </h3>
+                      <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65 }}>
+                        Enter your email to unlock all <strong style={{ color: "#fff" }}>{flagged.length} findings</strong> — we'll send a copy to your inbox too, useful for your team or CFO.
+                      </p>
+                    </div>
+                    <EmailForm />
+                  </div>
+                </div>
               </div>
-            ) : (
-              <>
-                <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#f8fafc", letterSpacing: "-0.5px", marginBottom: "8px", fontFamily: "system-ui, sans-serif" }}>
-                  Where should we send your report?
-                </h3>
-                <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.65, marginBottom: "24px" }}>
-                  We'll send your full findings report to this email — savings estimate, flagged issues, and priority ranking. Useful for sharing with your team or CFO.
-                </p>
-                <form onSubmit={handleGateSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  <input
-                    type="email"
-                    aria-label="Your work email address"
-                    value={gateEmail}
-                    onChange={e => setGateEmail(e.target.value)}
-                    placeholder="you@company.com"
-                    autoFocus
-                    style={{
-                      width: "100%", padding: "14px 16px",
-                      background: "#1e293b",
-                      border: "1.5px solid rgba(255,255,255,0.2)",
-                      borderRadius: "10px",
-                      color: "#f8fafc",
-                      fontSize: "16px",
-                      fontFamily: "system-ui, sans-serif",
-                      outline: "none",
-                      boxSizing: "border-box",
-                      WebkitTextFillColor: "#f8fafc",
-                      caretColor: "#00ffb4",
-                    }}
-                    onFocus={e => e.target.style.borderColor = "#00ffb4"}
-                    onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.2)"}
-                  />
-                  <button type="submit" disabled={gateSending} style={{
-                    width: "100%", padding: "15px",
-                    borderRadius: "10px", border: "none",
-                    background: "#00ffb4", color: "#000",
-                    fontWeight: 800, fontSize: "16px",
-                    cursor: gateSending ? "not-allowed" : "pointer",
-                    boxShadow: "0 4px 24px rgba(0,255,180,0.35)",
-                    fontFamily: "system-ui, sans-serif",
-                    opacity: gateSending ? 0.7 : 1,
-                  }}>
-                    {gateSending ? "Saving…" : "Send Me the Report →"}
-                  </button>
-                  <button type="button" onClick={() => { window.gtag?.('event', 'email_gate_skipped', {}); try { saveAudit(null); } catch(_) {} goTo("report"); }} style={{
-                    width: "100%", padding: "12px", borderRadius: "10px",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "transparent", color: "#64748b",
-                    fontSize: "14px", cursor: "pointer",
-                    fontFamily: "system-ui, sans-serif",
-                  }}
-                    onMouseEnter={e => { e.target.style.color = "#f8fafc"; e.target.style.borderColor = "rgba(255,255,255,0.2)"; }}
-                    onMouseLeave={e => { e.target.style.color = "#64748b"; e.target.style.borderColor = "rgba(255,255,255,0.08)"; }}>
-                    Skip — just show me the report
-                  </button>
-                </form>
-                <p style={{ fontSize: "12px", color: "#475569", textAlign: "center", marginTop: "16px" }}>
-                  🔒 One email only — your report. No follow-ups, no marketing, no spam.
-                </p>
-              </>
+            )}
+
+            {/* Edge case: ≤3 findings — show email gate below instead of overlay */}
+            {lockedFindings.length === 0 && flagged.length > 0 && (
+              <div style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "16px", padding: "28px", marginTop: "24px" }}>
+                <div style={{ marginBottom: "18px" }}>
+                  <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px" }}>✅ Your audit is complete</p>
+                  <h3 className="display" style={{ fontSize: "18px", fontWeight: 800, color: "#fff", letterSpacing: "-0.3px", marginBottom: "6px" }}>Get a copy in your inbox</h3>
+                  <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65 }}>We'll email your full report — handy for sharing with your team or revisiting later.</p>
+                </div>
+                <EmailForm />
+              </div>
             )}
           </div>
         </div>
@@ -4214,27 +4162,11 @@ aws ec2 describe-reserved-instances \\
 
                 {/* Remaining fixes — locked */}
                 {flagged.slice(1).map((f, i) => (
-                  <div key={f.id} style={{ padding: "16px 28px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center", filter: "blur(0px)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <span style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 10px", fontSize: "11px", fontWeight: 700, color: "var(--text-muted)" }}>Fix {i + 2} of {flagged.length}</span>
-                      <span style={{ fontSize: "13px", color: "var(--text-muted)", filter: "blur(3px)", userSelect: "none" }}>{f.label}</span>
-                    </div>
-                    <span style={{ fontSize: "11px", color: "#f87171", fontWeight: 600 }}>🔒 Blueprint only</span>
+                  <div key={f.id} style={{ padding: "16px 28px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 10px", fontSize: "11px", fontWeight: 700, color: "var(--text-muted)" }}>Fix {i + 2} of {flagged.length}</span>
+                    <span style={{ fontSize: "13px", color: "var(--text-muted)", filter: "blur(3px)", userSelect: "none" }}>{f.label}</span>
                   </div>
                 ))}
-
-                {/* Unlock CTA inside preview */}
-                {flagged.length > 1 && (
-                  <div style={{ padding: "20px 28px", background: "rgba(0,255,180,0.04)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
-                    <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                      <strong style={{ color: "#fff" }}>{flagged.length - 1} more fixes</strong> with exact CLI commands, Terraform snippets, and verification steps
-                    </p>
-                    <button onClick={() => { window.gtag?.('event', 'blueprint_clicked', { provider: provider, savings_min: savMin, currency: currency.code }); window.gtag?.('event', 'blueprint_modal_opened', { provider: provider }); setShowBlueprint(true); }}
-                      style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "10px 22px", fontSize: "13px", fontWeight: 800, cursor: "pointer", boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap" }}>
-                      {`Unlock all fixes — ${currency.blueprintPrice} →`}
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -4310,34 +4242,8 @@ aws ec2 describe-reserved-instances \\
             </div>
           </div>
 
-          {/* FIX #2: Tiered CTA with working Blueprint button */}
+          {/* ── ACTION PLAN CTA ── */}
           <div className="fade-up stagger-4" style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.05) 0%, rgba(99,102,241,0.05) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "20px", padding: "40px" }}>
-            <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "16px", textAlign: "center" }}>What happens next?</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "28px" }}>
-              {/* Free tier */}
-              <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: "14px", padding: "24px" }}>
-                <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>✅ Free — You already have this</div>
-                <p className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "12px", letterSpacing: "-0.3px" }}>Checklist + Savings Report</p>
-                {["Identified issues & savings range", "Priority order (Critical → Low)", "Action plan overview", "PDF export"].map(f => (
-                  <div key={f} style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
-                    <span style={{ color: "#4ade80", fontSize: "12px" }}>✓</span>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-              {/* Paid tier */}
-              <div style={{ background: "rgba(0,255,180,0.05)", border: "2px solid rgba(0,255,180,0.3)", borderRadius: "14px", padding: "24px", position: "relative", overflow: "hidden" }}>
-                <div style={{ position: "absolute", top: "12px", right: "12px", background: "var(--green)", color: "#000", fontSize: "10px", fontWeight: 800, padding: "3px 8px", borderRadius: "6px" }}>RECOMMENDED</div>
-                <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>{`⚡ ${currency.blueprintPrice} — AI Blueprint`}</div>
-                <p className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "12px", letterSpacing: "-0.3px" }}>AI Implementation Guide</p>
-                {[`Exact ${provider || "cloud"} CLI commands`, "Terraform snippets per issue", "Step-by-step fix instructions", "Verification commands", "PDF in your inbox in ~2 min"].map(f => (
-                  <div key={f} style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
-                    <span style={{ color: "var(--green)", fontSize: "12px" }}>✓</span>
-                    <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
             <p style={{ fontSize: "13px", color: "var(--text-muted)", textAlign: "center", marginBottom: "20px" }}>
               {savMin > 0
                 ? (() => {
@@ -4398,6 +4304,22 @@ aws ec2 describe-reserved-instances \\
             )}
           </div>
         </div>
+
+        {/* ── STICKY BOTTOM BAR — report step ── */}
+        {showStickyBar && flagged.length > 0 && (
+          <div className="sticky-bottom-cta" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", boxShadow: "0 0 8px var(--green)", flexShrink: 0, animation: "pulse-dot 2s infinite" }} />
+              <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>
+                ⚡ {flagged.length} {flagged.length === 1 ? "issue" : "issues"} found — get the exact CLI commands to fix {flagged.length === 1 ? "it" : "all of them"}
+              </span>
+            </div>
+            <button className="glow-btn" onClick={() => { window.gtag?.('event', 'blueprint_clicked', { provider, savings_min: savMin, currency: currency.code, source: 'sticky_bar' }); setShowBlueprint(true); }}
+              style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", fontWeight: 700, boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap", cursor: "pointer" }}>
+              Get Blueprint — {currency.blueprintPrice} →
+            </button>
+          </div>
+        )}
       </div>
     );
   }
