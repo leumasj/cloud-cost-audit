@@ -792,13 +792,13 @@ function LiveFeedTicker() {
 const WALL_SAVINGS = [
   { company: "Fintech · London",        provider: "AWS",   issues: 11, savings: "$1,240–$3,100/mo", time: "14 min" },
   { company: "SaaS · Berlin",           provider: "GCP",   issues: 8,  savings: "$610–$1,520/mo",   time: "12 min" },
-  { company: "E-commerce · US",         provider: "AWS",   issues: 14, savings: "$2,100–$5,300/mo", time: "18 min" },
+  { company: "E-commerce · US",         provider: "AWS",   issues: 14, savings: "$2,100–$5,300/mo", time: "18 min", variant: "before_after", billBefore: "$8,000", billAfter: "$5,600" },
   { company: "HealthTech · Amsterdam",  provider: "Azure", issues: 6,  savings: "$380–$940/mo",     time: "11 min" },
   { company: "Agency · Toronto",        provider: "AWS",   issues: 9,  savings: "$720–$1,800/mo",   time: "15 min" },
-  { company: "Startup · Singapore",     provider: "GCP",   issues: 5,  savings: "$290–$730/mo",     time: "10 min" },
+  { company: "Startup · Singapore",     provider: "GCP",   issues: 5,  savings: "$290–$730/mo",     time: "10 min", variant: "waste_score", score: 28 },
   { company: "Healthcare · Toronto",    provider: "GCP",   issues: 9,  savings: "$520–$1,100/mo",   time: "13 min" },
   { company: "Media · Amsterdam",       provider: "Azure", issues: 7,  savings: "$380–$890/mo",     time: "11 min" },
-  { company: "Gaming · Sydney",         provider: "AWS",   issues: 11, savings: "$1,200–$2,800/mo", time: "16 min" },
+  { company: "Gaming · Sydney",         provider: "AWS",   issues: 11, savings: "$1,200–$2,800/mo", time: "16 min", variant: "time_saved" },
 ];
 const PROVIDER_BADGE_COLOR = { AWS: "#ff9900", GCP: "#4285f4", Azure: "#0078d4", "Multi-Cloud": "#00ffb4" };
 
@@ -1433,6 +1433,7 @@ export default function App() {
   const [showLeadMagnet, setShowLeadMagnet] = useState(false);   // ← ADD THIS LINE
   const [showStickyBar, setShowStickyBar] = useState(false);  // ← ADD THIS
   const [showShareCard, setShowShareCard] = useState(false);
+  const [sectionToast, setSectionToast] = useState(null); // audit section-complete toast
   // ── SECURITY AUDIT STATE ──────────────────────────────────────────────────
   const [secChecked, setSecChecked] = useState({});
   const [secStep, setSecStep] = useState(0);
@@ -2752,7 +2753,10 @@ aws ec2 describe-reserved-instances \\
                 { label: "Azure", color: "#0078d4" },
                 { label: "Multi-Cloud", color: "#00ffb4" },
               ].map(p => (
-                <button key={p.label} onClick={() => { window.gtag?.('event', 'audit_started', { provider: p.label }); setProvider(p.label); goTo("intake"); }}
+                <button key={p.label}
+                  role="radio" aria-checked={provider === p.label} tabIndex={0}
+                  onClick={() => { window.gtag?.('event', 'audit_started', { provider: p.label }); setProvider(p.label); goTo("intake"); }}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.gtag?.('event', 'audit_started', { provider: p.label }); setProvider(p.label); goTo("intake"); } }}
                   style={{ padding: "14px 24px", borderRadius: "12px", border: `2px solid ${p.color}40`, background: `${p.color}12`, color: p.label === "Multi-Cloud" ? "var(--green)" : p.color, fontSize: "15px", fontWeight: 700, cursor: "pointer", transition: "all 0.18s", fontFamily: "inherit", minWidth: "100px" }}
                   onMouseEnter={e => { e.currentTarget.style.background = `${p.color}22`; e.currentTarget.style.borderColor = `${p.color}80`; e.currentTarget.style.transform = "translateY(-2px)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = `${p.color}12`; e.currentTarget.style.borderColor = `${p.color}40`; e.currentTarget.style.transform = "translateY(0)"; }}>
@@ -2760,7 +2764,13 @@ aws ec2 describe-reserved-instances \\
                 </button>
               ))}
             </div>
-            <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>No signup · No credit card · No cloud access required</p>
+            <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: "0 0 8px" }}>No signup · No credit card · No cloud access required</p>
+            <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: 0 }}>
+              Not sure what you&apos;ll get?{" "}
+              <button onClick={() => setShowSample(true)} style={{ background: "none", border: "none", color: "var(--green)", fontSize: "13px", cursor: "pointer", textDecoration: "underline", padding: 0, fontFamily: "inherit" }}>
+                See a sample report first →
+              </button>
+            </p>
           </div>
 
           {/* ── SECONDARY CTA ── */}
@@ -3224,6 +3234,92 @@ aws ec2 describe-reserved-instances \\
           <div className="wall-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
             {WALL_SAVINGS.filter(a => savingsFilter === "All" || a.provider === savingsFilter).map((a, i) => {
               const providerColor = PROVIDER_BADGE_COLOR[a.provider] || "#00ffb4";
+
+              /* ── BEFORE/AFTER variant (card 3) ── */
+              if (a.variant === "before_after") return (
+                <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                    <div>
+                      <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
+                      <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
+                    </div>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}>⏱ {a.time}</span>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Before / After</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontSize: "16px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.billBefore}</span>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>→</span>
+                      <span style={{ fontSize: "16px", fontWeight: 800, color: "var(--green)", fontFamily: "var(--display)" }}>{a.billAfter}</span>
+                    </div>
+                    <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>monthly bill potential</p>
+                  </div>
+                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged</span>
+                  </div>
+                </div>
+              );
+
+              /* ── WASTE SCORE variant (card 6) ── */
+              if (a.variant === "waste_score") {
+                const circ = 2 * Math.PI * 22;
+                const offset = circ * (1 - a.score / 100);
+                return (
+                  <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                      <div>
+                        <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
+                        <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
+                      </div>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}>⏱ {a.time}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                      <div style={{ position: "relative", flexShrink: 0 }}>
+                        <svg width="52" height="52" style={{ transform: "rotate(-90deg)" }}>
+                          <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4" />
+                          <circle cx="26" cy="26" r="22" fill="none" stroke="#f87171" strokeWidth="4"
+                            strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
+                        </svg>
+                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <span style={{ fontSize: "11px", fontWeight: 800, color: "#f87171" }}>{a.score}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="display" style={{ fontSize: "20px", fontWeight: 800, color: "#f87171", letterSpacing: "-0.5px", lineHeight: 1, marginBottom: "2px" }}>Score: {a.score}/100</p>
+                        <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>critical waste level</p>
+                      </div>
+                    </div>
+                    <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged</span>
+                    </div>
+                  </div>
+                );
+              }
+
+              /* ── TIME SAVED variant (card 9) ── */
+              if (a.variant === "time_saved") return (
+                <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                    <div>
+                      <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
+                      <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: "4px", padding: "8px 0" }}>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px" }}>Found in</span>
+                    <p className="display" style={{ fontSize: "36px", fontWeight: 800, color: "var(--green)", letterSpacing: "-1.5px", lineHeight: 1 }}>{a.time}</p>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>start to full savings report</span>
+                  </div>
+                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged · {a.savings}</span>
+                  </div>
+                </div>
+              );
+
+              /* ── DEFAULT card ── */
               return (
                 <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
@@ -3311,7 +3407,7 @@ aws ec2 describe-reserved-instances \\
             </div>
 
             {/* ── COST BLUEPRINT card ── */}
-            <div style={{ background: "rgba(0,255,180,0.04)", border: "2px solid rgba(0,255,180,0.3)", borderRadius: "20px", padding: "28px", position: "relative", display: "flex", flexDirection: "column" }}>
+            <div style={{ background: "rgba(0,255,180,0.04)", border: "2px solid rgba(0,255,180,0.3)", borderRadius: "20px", padding: "32px", position: "relative", display: "flex", flexDirection: "column", transform: "scale(1.03)", transformOrigin: "center", zIndex: 1 }}>
               <div style={{ position: "absolute", top: "-1px", right: "20px", background: "var(--green)", color: "#000", fontSize: "10px", fontWeight: 800, padding: "4px 10px", borderRadius: "0 0 7px 7px", letterSpacing: "0.5px" }}>MOST POPULAR</div>
               <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>⚡ Cost Blueprint</div>
               <p className="display" style={{ fontSize: "26px", fontWeight: 800, color: "var(--green)", marginBottom: "2px" }}>{currency.blueprintPrice}</p>
@@ -3361,6 +3457,20 @@ aws ec2 describe-reserved-instances \\
               </button>
             </div>
 
+          </div>
+
+          {/* ── INLINE OBJECTION HANDLERS ── */}
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center", marginTop: "32px" }}>
+            {[
+              { q: "Need AWS access?",       a: "Never. Zero credentials required." },
+              { q: "How fast is delivery?",  a: "Within 2 minutes of payment." },
+              { q: "Subscription?",          a: "No. One-time payment only." },
+            ].map(({ q, a }) => (
+              <div key={q} style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(0,255,180,0.04)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "10px", padding: "10px 16px" }}>
+                <span style={{ color: "var(--green)", fontSize: "13px", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                <span style={{ fontSize: "13px", color: "var(--text-muted)" }}><strong style={{ color: "var(--text-dim)" }}>{q}</strong>{" "}{a}</span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -3515,15 +3625,22 @@ aws ec2 describe-reserved-instances \\
           <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "40px" }}>30 seconds. We'll tailor savings estimates to your actual spend.</p>
         </div>
         <div className="fade-up stagger-1" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", background: "rgba(0,255,180,0.04)", border: "1px solid rgba(0,255,180,0.1)", borderRadius: "8px", padding: "10px 14px", marginBottom: "0" }}>
+            🔒 This stays in your browser. We use it to calculate your savings estimate — nothing is sent to our servers until you choose to share it.
+          </p>
           <div>
-            <label htmlFor="intake-company" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Company or project</label>
+            <label htmlFor="intake-company" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Company (optional — used for your report header only)</label>
             <input id="intake-company" value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="e.g. Acme Corp" style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "12px", color: "#fff", fontSize: "15px", transition: "all 0.2s" }} />
           </div>
           <div>
             <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Cloud provider</label>
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
               {PROVIDERS.map(p => (
-                <button key={p} className="provider-chip" onClick={() => { window.gtag?.('event', 'audit_started', { provider: p }); setProvider(p); }} style={{ padding: "10px 20px", borderRadius: "10px", fontSize: "14px", fontWeight: 600, border: `1.5px solid ${provider === p ? "var(--green)" : "var(--border)"}`, background: provider === p ? "var(--green-dim)" : "rgba(255,255,255,0.03)", color: provider === p ? "var(--green)" : "var(--text-muted)" }}>{p}</button>
+                <button key={p} className="provider-chip"
+                  role="radio" aria-checked={provider === p} tabIndex={0}
+                  onClick={() => { window.gtag?.('event', 'audit_started', { provider: p }); setProvider(p); }}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.gtag?.('event', 'audit_started', { provider: p }); setProvider(p); } }}
+                  style={{ padding: "10px 20px", borderRadius: "10px", fontSize: "14px", fontWeight: 600, border: `1.5px solid ${provider === p ? "var(--green)" : "var(--border)"}`, background: provider === p ? "var(--green-dim)" : "rgba(255,255,255,0.03)", color: provider === p ? "var(--green)" : "var(--text-muted)" }}>{p}</button>
               ))}
             </div>
           </div>
@@ -3564,6 +3681,12 @@ aws ec2 describe-reserved-instances \\
         {showBooking && <BookingModal />}
         {showBlueprint && <BlueprintModal />}
         <Nav showBack onBack={() => goTo("intake")} />
+        {/* ── SECTION COMPLETE TOAST ── */}
+        {sectionToast && (
+          <div style={{ position: "fixed", top: "80px", right: "24px", zIndex: 999, background: "rgba(0,255,180,0.1)", border: "1px solid rgba(0,255,180,0.3)", borderRadius: "10px", padding: "10px 16px", fontSize: "13px", color: "#00ffb4", animation: "fadeIn 0.2s ease", pointerEvents: "none", maxWidth: "320px", boxShadow: "0 4px 20px rgba(0,255,180,0.15)" }}>
+            {sectionToast}
+          </div>
+        )}
         <div style={{ height: "2px", background: "var(--border)", position: "sticky", top: "58px", zIndex: 99 }}>
           <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, var(--green), #00d4ff, #818cf8)", transition: "width 0.5s ease", boxShadow: "0 0 8px rgba(0,255,180,0.6)" }} />
         </div>
@@ -3625,7 +3748,14 @@ aws ec2 describe-reserved-instances \\
               <div style={{ display: "flex", gap: "10px", marginTop: "28px" }}>
                 {activeSection > 0 && <button className="ghost-btn" onClick={() => setActiveSection(a => a - 1)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px 22px", fontSize: "14px", fontWeight: 600, color: "var(--text-muted)" }}>← Previous</button>}
                 {activeSection < AUDIT_SECTIONS.length - 1 ? (
-                  <button className="glow-btn" onClick={() => setActiveSection(a => a + 1)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)" }}>Next: {AUDIT_SECTIONS[activeSection + 1].label} →</button>
+                  <button className="glow-btn" onClick={() => {
+                    const prevSec = AUDIT_SECTIONS[activeSection];
+                    const flaggedInSec = prevSec.checks.filter(c => checked[c.id]).length;
+                    const msg = `✓ ${prevSec.label} complete — ${flaggedInSec} issue${flaggedInSec !== 1 ? 's' : ''} found`;
+                    setSectionToast(msg);
+                    setTimeout(() => setSectionToast(null), 1500);
+                    setActiveSection(a => a + 1);
+                  }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)" }}>Next: {AUDIT_SECTIONS[activeSection + 1].label} →</button>
                 ) : (
                   <button className="glow-btn" onClick={() => goTo("email_gate")} style={{ background: "linear-gradient(135deg, var(--green), #00d4ff)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 32px", fontSize: "14px", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Generate Report →</button>
                 )}
