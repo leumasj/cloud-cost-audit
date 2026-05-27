@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, memo } from "react";
 
 const AUDIT_SECTIONS = [
   {
@@ -1386,6 +1386,78 @@ function WasteScoreCard({ flagged, allChecks, savPct, savMin, savMax, onShare })
 const SESSION_VERSION = 1;
 const RESTORABLE_STEPS = ['intake', 'audit', 'email_gate', 'report'];
 
+// ── BLUEPRINT MODAL ───────────────────────────────────────────────────────────
+// Defined OUTSIDE App so React never sees a new component type on re-render.
+// Owns its own email + status state → zero flicker while typing.
+const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, provider, flaggedCount }) {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | loading | error
+
+  const handleSubmit = async () => {
+    if (!email) return;
+    setStatus("loading");
+    try {
+      await onBuy(email);
+      // onBuy redirects to Stripe on success — execution stops here
+    } catch {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 4000);
+    }
+  };
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="blueprint-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "460px", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
+        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+          <div style={{ fontSize: "40px", marginBottom: "12px" }}>📄</div>
+          <h2 id="blueprint-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>Get Your AI Blueprint</h2>
+          <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
+            Enter your email and you&apos;ll be redirected to secure payment. Your personalised {provider || "cloud"} implementation guide lands in your inbox within 2 minutes of payment.
+          </p>
+        </div>
+        <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "10px", padding: "14px 18px", marginBottom: "20px" }}>
+          <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>What you get:</p>
+          {[`Exact ${provider || "cloud"} CLI commands`, "Terraform snippets per issue", "Step-by-step fix instructions", `${flaggedCount} issues with savings estimates`, "PDF in your inbox in ~2 minutes"].map(f => (
+            <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <span style={{ color: "var(--green)", fontSize: "13px" }}>✓</span>
+              <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>{f}</span>
+            </div>
+          ))}
+        </div>
+        <label htmlFor="blueprint-email" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Your Email</label>
+        <input
+          id="blueprint-email"
+          type="email"
+          placeholder="you@company.com"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && email && handleSubmit()}
+          style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.06)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "15px", fontFamily: "var(--body)", marginBottom: "14px" }}
+          autoFocus
+        />
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "14px", padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px" }}>
+          <input type="checkbox" id="withdrawal-cost" style={{ marginTop: "2px", accentColor: "#00ffb4", flexShrink: 0, cursor: "pointer" }} />
+          <label htmlFor="withdrawal-cost" style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.55, cursor: "pointer" }}>
+            I understand this is a digital product delivered immediately and I waive my right of withdrawal upon delivery. See <a href="https://www.kloudaudit.eu/terms/" target="_blank" rel="noopener" style={{ color: "#00ffb4" }}>Terms</a>.
+          </label>
+        </div>
+        <button className="glow-btn" onClick={handleSubmit}
+          disabled={status === "loading"}
+          style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+          {status === "loading" ? (
+            <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Redirecting to payment...</>
+          ) : `Pay ${currency.blueprintPrice} → Get Blueprint`}
+        </button>
+        <p style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center", marginTop: "8px", marginBottom: "0" }}>🕐 Delivered to your inbox in ~2 minutes</p>
+        {status === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Something went wrong. Please try again or email admin@kloudaudit.eu</p>}
+        <p style={{ fontSize: "12px", color: "var(--text-dim)", textAlign: "center", marginTop: "14px", lineHeight: 1.6 }}>💚 If the Blueprint doesn&apos;t identify at least one actionable fix, email <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a> for a full refund. No questions asked.</p>
+        <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "10px" }}>🔒 Secure payment via Stripe · Prices inclusive of applicable taxes · admin@kloudaudit.eu</p>
+        <button onClick={onClose} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+      </div>
+    </div>
+  );
+});
+
 export default function App() {
   // ── DETECT PUBLIC AUDIT VIEW ────────────────────────────────────────────────
   const pathMatch = window.location.pathname.match(/^\/audit\/([a-z0-9]+)$/i);
@@ -1419,9 +1491,6 @@ export default function App() {
   const [showContact, setShowContact] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const [showBlueprint, setShowBlueprint] = useState(false);
-  // FIX #3: blueprintEmail lifted to app level — no re-renders causing flicker
-  const [blueprintEmail, setBlueprintEmail] = useState("");
-  const [blueprintStatus, setBlueprintStatus] = useState("idle");
   const [formStatus, setFormStatus] = useState("idle");
   const [bookingStatus, setBookingStatus] = useState("idle");
   const [pageKey, setPageKey] = useState(0);
@@ -1742,38 +1811,30 @@ useEffect(() => {
     } catch { setBookingStatus("error"); }
   };
 
-  // FIX #2: Buy Blueprint → Vercel Function → Stripe Checkout
-  const handleBuyBlueprint = async () => {
-    if (!blueprintEmail) return;
+  // Buy Blueprint → Vercel Function → Stripe Checkout
+  const handleBuyBlueprint = async (email) => {
     window.gtag?.('event', 'checkout_initiated', { provider: provider, amount: currency.blueprintAmount, currency: currency.stripeCurrency });
-    setBlueprintStatus("loading");
-    try {
-      const res = await fetch("/api/create-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: blueprintEmail,
-          provider: provider || "AWS",
-          monthlyBill: bill,
-          companyName: companyName || "Your Company",
-          savingsMin: savMin,
-          savingsMax: savMax,
-          flaggedIssues: flagged.map(c => ({ id: c.id, label: c.label })),
-          currency: currency.stripeCurrency,
-          currencyAmount: currency.blueprintAmount,
-          sessionId,
-        }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error(data.error || "Checkout failed");
-      }
-    } catch (err) {
-      console.error(err);
-      setBlueprintStatus("error");
-      setTimeout(() => setBlueprintStatus("idle"), 4000);
+    const res = await fetch("/api/create-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        provider: provider || "AWS",
+        monthlyBill: bill,
+        companyName: companyName || "Your Company",
+        savingsMin: savMin,
+        savingsMax: savMax,
+        flaggedIssues: flagged.map(c => ({ id: c.id, label: c.label })),
+        currency: currency.stripeCurrency,
+        currencyAmount: currency.blueprintAmount,
+        sessionId,
+      }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || "Checkout failed");
     }
   };
 
@@ -1945,60 +2006,6 @@ useEffect(() => {
             </form>
           )}
         </div>
-      </div>
-    </div>
-  );
-
-  // ── BLUEPRINT MODAL — FIX #3: stable input, no flicker ───────────────────
-  const BlueprintModal = () => (
-    <div onClick={() => { setShowBlueprint(false); setBlueprintStatus("idle"); }} style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
-      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="blueprint-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "460px", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
-        <div style={{ textAlign: "center", marginBottom: "24px" }}>
-          <div style={{ fontSize: "40px", marginBottom: "12px" }}>📄</div>
-          <h2 id="blueprint-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>Get Your AI Blueprint</h2>
-          <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
-            Enter your email and you'll be redirected to secure payment. Your personalised {provider || "cloud"} implementation guide lands in your inbox within 2 minutes of payment.
-          </p>
-        </div>
-        <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "10px", padding: "14px 18px", marginBottom: "20px" }}>
-          <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>What you get:</p>
-          {[`Exact ${provider || "cloud"} CLI commands`, "Terraform snippets per issue", "Step-by-step fix instructions", `${flagged.length} issues with savings estimates`, "PDF in your inbox in ~2 minutes"].map(f => (
-            <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-              <span style={{ color: "var(--green)", fontSize: "13px" }}>✓</span>
-              <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>{f}</span>
-            </div>
-          ))}
-        </div>
-        <label htmlFor="blueprint-email" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Your Email</label>
-        {/* FIX #3: uncontrolled input with defaultValue — prevents re-render flicker */}
-        <input
-          id="blueprint-email"
-          type="email"
-          placeholder="you@company.com"
-          defaultValue={blueprintEmail}
-          onChange={e => setBlueprintEmail(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && blueprintEmail && handleBuyBlueprint()}
-          style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.06)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "15px", fontFamily: "var(--body)", marginBottom: "14px" }}
-          autoFocus
-        />
-        <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "14px", padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px" }}>
-          <input type="checkbox" id="withdrawal-cost" style={{ marginTop: "2px", accentColor: "#00ffb4", flexShrink: 0, cursor: "pointer" }} />
-          <label htmlFor="withdrawal-cost" style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.55, cursor: "pointer" }}>
-            I understand this is a digital product delivered immediately and I waive my right of withdrawal upon delivery. See <a href="https://www.kloudaudit.eu/terms/" target="_blank" rel="noopener" style={{ color: "#00ffb4" }}>Terms</a>.
-          </label>
-        </div>
-        <button className="glow-btn" onClick={handleBuyBlueprint}
-          disabled={blueprintStatus === "loading"}
-          style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-          {blueprintStatus === "loading" ? (
-            <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Redirecting to payment...</>
-          ) : `Pay ${currency.blueprintPrice} → Get Blueprint`}
-        </button>
-        <p style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center", marginTop: "8px", marginBottom: "0" }}>🕐 Delivered to your inbox in ~2 minutes</p>
-        {blueprintStatus === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Something went wrong. Please try again or email admin@kloudaudit.eu</p>}
-        <p style={{ fontSize: "12px", color: "var(--text-dim)", textAlign: "center", marginTop: "14px", lineHeight: 1.6 }}>💚 If the Blueprint doesn&apos;t identify at least one actionable fix, email <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a> for a full refund. No questions asked.</p>
-        <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "10px" }}>🔒 Secure payment via Stripe · Prices inclusive of applicable taxes · admin@kloudaudit.eu</p>
-        <button onClick={() => { setShowBlueprint(false); setBlueprintStatus("idle"); }} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
       </div>
     </div>
   );
@@ -2669,7 +2676,7 @@ aws ec2 describe-reserved-instances \\
       {/* ── EXIT INTENT MODAL ── */}
       {showContact && <ContactModal />}
       {showBooking && <BookingModal />}
-      {showBlueprint && <BlueprintModal />}
+      {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
       <Nav />
 
       {/* ── RESUME AUDIT BANNER ── */}
@@ -3617,7 +3624,7 @@ aws ec2 describe-reserved-instances \\
       <ParticleBackground />
       {showContact && <ContactModal />}
       {showBooking && <BookingModal />}
-      {showBlueprint && <BlueprintModal />}
+      {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
         <div className="fade-up">
@@ -3679,7 +3686,7 @@ aws ec2 describe-reserved-instances \\
         <ParticleBackground />
         {showContact && <ContactModal />}
         {showBooking && <BookingModal />}
-        {showBlueprint && <BlueprintModal />}
+        {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
         <Nav showBack onBack={() => goTo("intake")} />
         {/* ── SECTION COMPLETE TOAST ── */}
         {sectionToast && (
@@ -4074,7 +4081,7 @@ aws ec2 describe-reserved-instances \\
         <ParticleBackground />
         {showContact && <ContactModal />}
         {showBooking && <BookingModal />}
-        {showBlueprint && <BlueprintModal />}
+        {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
           {/* Header */}
