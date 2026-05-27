@@ -1458,6 +1458,184 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
   );
 });
 
+// ── CONTACT MODAL ─────────────────────────────────────────────────────────────
+// Defined OUTSIDE App — stable component type, owns its own status state.
+const ContactModal = memo(function ContactModal({ onClose }) {
+  const [status, setStatus] = useState("idle"); // idle | sending | success | error
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus("sending");
+    const formData = new FormData(e.target);
+    try {
+      const res = await fetch("https://formspree.io/f/mlgarana", { method: "POST", body: formData, headers: { Accept: "application/json" } });
+      if (res.ok) { setStatus("success"); e.target.reset(); setTimeout(() => { onClose(); }, 3000); }
+      else setStatus("error");
+    } catch { setStatus("error"); }
+  };
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="contact-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", overflow: "hidden" }}>
+        {/* Header */}
+        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.1) 0%, rgba(99,102,241,0.1) 100%)", borderBottom: "1px solid rgba(0,255,180,0.12)", padding: "28px 32px 22px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "4px 12px", marginBottom: "10px" }}>
+                <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px var(--green)" }} />
+                <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>GET IN TOUCH · WE REPLY WITHIN 24HRS</span>
+              </div>
+              <h2 id="contact-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "5px" }}>Contact us</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Questions, partnerships or custom audits — we're here</p>
+            </div>
+            <button onClick={onClose} aria-label="Close" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "20px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>×</button>
+          </div>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "14px" }}>
+            {["✓ Cloud cost questions", "✓ Custom audit requests", "✓ Partnership enquiries", "✓ Technical support"].map(item => (
+              <span key={item} style={{ fontSize: "11px", color: "var(--text-dim)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 9px" }}>{item}</span>
+            ))}
+          </div>
+        </div>
+        {/* Body */}
+        <div style={{ padding: "26px 32px 32px" }}>
+          {status === "success" ? (
+            <div style={{ textAlign: "center", padding: "28px 0" }}>
+              <div style={{ fontSize: "48px", marginBottom: "14px" }}>✅</div>
+              <p className="display" style={{ color: "var(--green)", fontWeight: 800, fontSize: "22px", letterSpacing: "-0.5px", marginBottom: "8px" }}>Message Sent!</p>
+              <p style={{ color: "var(--text-dim)", fontSize: "14px", lineHeight: 1.6, marginBottom: "24px" }}>We'll get back to you within 24hrs.<br />Check your inbox and spam folder.</p>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                <button className="ghost-btn" onClick={onClose} style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: "10px", color: "var(--text-muted)", fontSize: "13px", fontWeight: 600, padding: "9px 20px", cursor: "pointer", fontFamily: "inherit" }}>Close</button>
+                <button className="ghost-btn" onClick={onClose} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600, padding: "9px 20px", cursor: "pointer", fontFamily: "inherit" }}>Back to Homepage</button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <input type="hidden" name="_subject" value="New Contact Enquiry — KloudAudit" />
+              <input type="hidden" name="form_type" value="contact" />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <label htmlFor="contact-first-name" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>First Name</label>
+                  <input id="contact-first-name" required type="text" name="first_name" placeholder="Jan" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                </div>
+                <div>
+                  <label htmlFor="contact-last-name" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Last Name</label>
+                  <input id="contact-last-name" required type="text" name="last_name" placeholder="Kowalski" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="contact-email" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email</label>
+                <input id="contact-email" required type="email" name="email" placeholder="jan@company.com" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+              </div>
+              <div>
+                <label htmlFor="contact-company" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Company</label>
+                <input id="contact-company" type="text" name="company" placeholder="Acme Corp" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>How can we help? <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>(optional)</span></label>
+                <textarea required name="message" rows="3" placeholder="e.g. I have questions about the blueprint, or I'd like a custom audit..." style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", resize: "none", fontFamily: "var(--body)" }} />
+              </div>
+              <button type="submit" className="glow-btn" disabled={status === "sending"}
+                style={{ background: status === "sending" ? "rgba(0,255,180,0.5)" : "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "15px", fontSize: "15px", width: "100%", cursor: status === "sending" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "4px" }}>
+                {status === "sending" ? <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Sending...</> : "Send Message →"}
+              </button>
+              {status === "error" && <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>⚠ Something went wrong. Please try again.</p>}
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>Or email us directly at <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a></p>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// ── BOOKING MODAL ─────────────────────────────────────────────────────────────
+// Defined OUTSIDE App — stable component type, owns its own status state.
+const BookingModal = memo(function BookingModal({ onClose, sessionPrice }) {
+  const [status, setStatus] = useState("idle"); // idle | sending | success | error
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus("sending");
+    const formData = new FormData(e.target);
+    try {
+      const res = await fetch("https://formspree.io/f/mlgarana", { method: "POST", body: formData, headers: { Accept: "application/json" } });
+      if (res.ok) { setStatus("success"); e.target.reset(); setTimeout(() => { onClose(); }, 4000); }
+      else setStatus("error");
+    } catch { setStatus("error"); }
+  };
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="booking-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", overflow: "hidden" }}>
+        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.1) 0%, rgba(99,102,241,0.1) 100%)", borderBottom: "1px solid rgba(0,255,180,0.12)", padding: "28px 32px 22px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "4px 12px", marginBottom: "10px" }}>
+                <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px var(--green)" }} />
+                <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>{`IMPLEMENTATION SESSION · ${sessionPrice}`}</span>
+              </div>
+              <h2 id="booking-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "5px" }}>Book your session</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Senior DevOps engineer · Remote · Delivered within 48hrs</p>
+            </div>
+            <button onClick={onClose} aria-label="Close" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "20px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>×</button>
+          </div>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "14px" }}>
+            {["✓ Full audit review", "✓ Implementation roadmap", "✓ 1hr live session", "✓ 30-day follow-up"].map(item => (
+              <span key={item} style={{ fontSize: "11px", color: "var(--text-dim)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 9px" }}>{item}</span>
+            ))}
+          </div>
+        </div>
+        <div style={{ padding: "26px 32px 32px" }}>
+          {status === "success" ? (
+            <div style={{ textAlign: "center", padding: "28px 0" }}>
+              <div style={{ fontSize: "48px", marginBottom: "14px" }}>🎉</div>
+              <p className="display" style={{ color: "var(--green)", fontWeight: 800, fontSize: "22px", letterSpacing: "-0.5px", marginBottom: "8px" }}>Booking Received!</p>
+              <p style={{ color: "var(--text-dim)", fontSize: "14px", lineHeight: 1.6 }}>We'll email you within 24hrs to confirm your session.<br />Check your inbox and spam folder.</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <input type="hidden" name="_subject" value={`New Booking – KloudAudit Implementation Session ${sessionPrice}`} />
+              <input type="hidden" name="form_type" value="booking_999pln" />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <label htmlFor="booking-first-name" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>First Name</label>
+                  <input id="booking-first-name" required type="text" name="first_name" placeholder="Jan" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                </div>
+                <div>
+                  <label htmlFor="booking-last-name" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Last Name</label>
+                  <input id="booking-last-name" required type="text" name="last_name" placeholder="Kowalski" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="booking-email" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email</label>
+                <input id="booking-email" required type="email" name="email" placeholder="jan@company.com" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+              </div>
+              <div>
+                <label htmlFor="booking-company" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Company</label>
+                <input id="booking-company" required type="text" name="company" placeholder="Acme Corp" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+              </div>
+              <div>
+                <label htmlFor="booking-cloud-details" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Cloud Provider & Monthly Bill</label>
+                <input id="booking-cloud-details" type="text" name="cloud_details" placeholder="e.g. AWS · ~$4,500/month" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Biggest challenge <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>(optional)</span></label>
+                <textarea name="message" rows="3" placeholder="e.g. Our AWS bill jumped 40% last month..." style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", resize: "none", fontFamily: "var(--body)" }} />
+              </div>
+              <button type="submit" className="glow-btn" disabled={status === "sending"}
+                style={{ background: status === "sending" ? "rgba(0,255,180,0.5)" : "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "15px", fontSize: "15px", width: "100%", cursor: status === "sending" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "4px" }}>
+                {status === "sending" ? <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Sending...</> : `Book Session for ${sessionPrice} →`}
+              </button>
+              {status === "error" && <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>⚠ Something went wrong. Please try again.</p>}
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>We'll confirm by email within 24 hours. No payment required upfront.</p>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export default function App() {
   // ── DETECT PUBLIC AUDIT VIEW ────────────────────────────────────────────────
   const pathMatch = window.location.pathname.match(/^\/audit\/([a-z0-9]+)$/i);
@@ -1491,8 +1669,6 @@ export default function App() {
   const [showContact, setShowContact] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const [showBlueprint, setShowBlueprint] = useState(false);
-  const [formStatus, setFormStatus] = useState("idle");
-  const [bookingStatus, setBookingStatus] = useState("idle");
   const [pageKey, setPageKey] = useState(0);
   // ── INTRO-SCREEN STATE (must live at top level — Rules of Hooks) ──────────
   const [calcBill, setCalcBill] = useState(5000);
@@ -1787,30 +1963,6 @@ useEffect(() => {
     }));
   }, [step, provider, monthlyBill, companyName, checked, activeSection, gateEmail]);
 
-  // ── Formspree contact ──────────────────────────────────────────────────────
-  const handleContactSubmit = async (e) => {
-    e.preventDefault();
-    setFormStatus("sending");
-    const formData = new FormData(e.target);
-    try {
-      const res = await fetch("https://formspree.io/f/mlgarana", { method: "POST", body: formData, headers: { Accept: "application/json" } });
-      if (res.ok) { setFormStatus("success"); e.target.reset(); setTimeout(() => { setShowContact(false); setFormStatus("idle"); }, 3000); }
-      else setFormStatus("error");
-    } catch { setFormStatus("error"); }
-  };
-
-  // ── Formspree booking ──────────────────────────────────────────────────────
-  const handleBookingSubmit = async (e) => {
-    e.preventDefault();
-    setBookingStatus("sending");
-    const formData = new FormData(e.target);
-    try {
-      const res = await fetch("https://formspree.io/f/mlgarana", { method: "POST", body: formData, headers: { Accept: "application/json" } });
-      if (res.ok) { setBookingStatus("success"); e.target.reset(); setTimeout(() => { setShowBooking(false); setBookingStatus("idle"); }, 4000); }
-      else setBookingStatus("error");
-    } catch { setBookingStatus("error"); }
-  };
-
   // Buy Blueprint → Vercel Function → Stripe Checkout
   const handleBuyBlueprint = async (email) => {
     window.gtag?.('event', 'checkout_initiated', { provider: provider, amount: currency.blueprintAmount, currency: currency.stripeCurrency });
@@ -1862,152 +2014,6 @@ useEffect(() => {
         )}
       </div>
     </nav>
-  );
-
-  // ── CONTACT MODAL ──────────────────────────────────────────────────────────
-  const ContactModal = () => (
-    <div onClick={() => { setShowContact(false); setFormStatus("idle"); }} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
-      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="contact-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", overflow: "hidden" }}>
-        {/* Header — same gradient banner as BookingModal */}
-        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.1) 0%, rgba(99,102,241,0.1) 100%)", borderBottom: "1px solid rgba(0,255,180,0.12)", padding: "28px 32px 22px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "4px 12px", marginBottom: "10px" }}>
-                <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px var(--green)" }} />
-                <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>GET IN TOUCH · WE REPLY WITHIN 24HRS</span>
-              </div>
-              <h2 id="contact-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "5px" }}>Contact us</h2>
-              <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Questions, partnerships or custom audits — we're here</p>
-            </div>
-            <button onClick={() => { setShowContact(false); setFormStatus("idle"); }} aria-label="Close" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "20px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>×</button>
-          </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "14px" }}>
-            {["✓ Cloud cost questions", "✓ Custom audit requests", "✓ Partnership enquiries", "✓ Technical support"].map(item => (
-              <span key={item} style={{ fontSize: "11px", color: "var(--text-dim)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 9px" }}>{item}</span>
-            ))}
-          </div>
-        </div>
-        {/* Body */}
-        <div style={{ padding: "26px 32px 32px" }}>
-          {formStatus === "success" ? (
-            <div style={{ textAlign: "center", padding: "28px 0" }}>
-              <div style={{ fontSize: "48px", marginBottom: "14px" }}>✅</div>
-              <p className="display" style={{ color: "var(--green)", fontWeight: 800, fontSize: "22px", letterSpacing: "-0.5px", marginBottom: "8px" }}>Message Sent!</p>
-              <p style={{ color: "var(--text-dim)", fontSize: "14px", lineHeight: 1.6, marginBottom: "24px" }}>We'll get back to you within 24hrs.<br />Check your inbox and spam folder.</p>
-              <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-                <button className="ghost-btn" onClick={() => { setShowContact(false); setFormStatus("idle"); }} style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: "10px", color: "var(--text-muted)", fontSize: "13px", fontWeight: 600, padding: "9px 20px", cursor: "pointer", fontFamily: "inherit" }}>Close</button>
-                <button className="ghost-btn" onClick={() => { setShowContact(false); setFormStatus("idle"); }} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", color: "var(--text-dim)", fontSize: "13px", fontWeight: 600, padding: "9px 20px", cursor: "pointer", fontFamily: "inherit" }}>Back to Homepage</button>
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={handleContactSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <input type="hidden" name="_subject" value="New Contact Enquiry — KloudAudit" />
-              <input type="hidden" name="form_type" value="contact" />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <div>
-                  <label htmlFor="contact-first-name" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>First Name</label>
-                  <input id="contact-first-name" required type="text" name="first_name" placeholder="Jan" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-                </div>
-                <div>
-                  <label htmlFor="contact-last-name" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Last Name</label>
-                  <input id="contact-last-name" required type="text" name="last_name" placeholder="Kowalski" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="contact-email" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email</label>
-                <input id="contact-email" required type="email" name="email" placeholder="jan@company.com" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-              </div>
-              <div>
-                <label htmlFor="contact-company" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Company</label>
-                <input id="contact-company" type="text" name="company" placeholder="Acme Corp" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>How can we help? <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>(optional)</span></label>
-                <textarea required name="message" rows="3" placeholder="e.g. I have questions about the blueprint, or I'd like a custom audit..." style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", resize: "none", fontFamily: "var(--body)" }} />
-              </div>
-              <button type="submit" className="glow-btn" disabled={formStatus === "sending"}
-                style={{ background: formStatus === "sending" ? "rgba(0,255,180,0.5)" : "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "15px", fontSize: "15px", width: "100%", cursor: formStatus === "sending" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "4px" }}>
-                {formStatus === "sending" ? <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Sending...</> : "Send Message →"}
-              </button>
-              {formStatus === "error" && <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>⚠ Something went wrong. Please try again.</p>}
-              <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>Or email us directly at <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a></p>
-            </form>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  // ── BOOKING MODAL ──────────────────────────────────────────────────────────
-  const BookingModal = () => (
-    <div onClick={() => { setShowBooking(false); setBookingStatus("idle"); }} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
-      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="booking-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", overflow: "hidden" }}>
-        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.1) 0%, rgba(99,102,241,0.1) 100%)", borderBottom: "1px solid rgba(0,255,180,0.12)", padding: "28px 32px 22px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "4px 12px", marginBottom: "10px" }}>
-                <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px var(--green)" }} />
-                <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>{`IMPLEMENTATION SESSION · ${currency.sessionPrice}`}</span>
-              </div>
-              <h2 id="booking-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", marginBottom: "5px" }}>Book your session</h2>
-              <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Senior DevOps engineer · Remote · Delivered within 48hrs</p>
-            </div>
-            <button onClick={() => { setShowBooking(false); setBookingStatus("idle"); }} aria-label="Close" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "20px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>×</button>
-          </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "14px" }}>
-            {["✓ Full audit review", "✓ Implementation roadmap", "✓ 1hr live session", "✓ 30-day follow-up"].map(item => (
-              <span key={item} style={{ fontSize: "11px", color: "var(--text-dim)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 9px" }}>{item}</span>
-            ))}
-          </div>
-        </div>
-        <div style={{ padding: "26px 32px 32px" }}>
-          {bookingStatus === "success" ? (
-            <div style={{ textAlign: "center", padding: "28px 0" }}>
-              <div style={{ fontSize: "48px", marginBottom: "14px" }}>🎉</div>
-              <p className="display" style={{ color: "var(--green)", fontWeight: 800, fontSize: "22px", letterSpacing: "-0.5px", marginBottom: "8px" }}>Booking Received!</p>
-              <p style={{ color: "var(--text-dim)", fontSize: "14px", lineHeight: 1.6 }}>We'll email you within 24hrs to confirm your session.<br />Check your inbox and spam folder.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleBookingSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <input type="hidden" name="_subject" value={`New Booking – KloudAudit Implementation Session ${currency.sessionPrice}`} />
-              <input type="hidden" name="form_type" value="booking_999pln" />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <div>
-                  <label htmlFor="booking-first-name" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>First Name</label>
-                  <input id="booking-first-name" required type="text" name="first_name" placeholder="Jan" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-                </div>
-                <div>
-                  <label htmlFor="booking-last-name" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Last Name</label>
-                  <input id="booking-last-name" required type="text" name="last_name" placeholder="Kowalski" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="booking-email" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Work Email</label>
-                <input id="booking-email" required type="email" name="email" placeholder="jan@company.com" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-              </div>
-              <div>
-                <label htmlFor="booking-company" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Company</label>
-                <input id="booking-company" required type="text" name="company" placeholder="Acme Corp" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-              </div>
-              <div>
-                <label htmlFor="booking-cloud-details" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Cloud Provider & Monthly Bill</label>
-                <input id="booking-cloud-details" type="text" name="cloud_details" placeholder="e.g. AWS · ~$4,500/month" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", fontFamily: "var(--body)" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "1px" }}>Biggest challenge <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>(optional)</span></label>
-                <textarea name="message" rows="3" placeholder="e.g. Our AWS bill jumped 40% last month..." style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px", resize: "none", fontFamily: "var(--body)" }} />
-              </div>
-              <button type="submit" className="glow-btn" disabled={bookingStatus === "sending"}
-                style={{ background: bookingStatus === "sending" ? "rgba(0,255,180,0.5)" : "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "15px", fontSize: "15px", width: "100%", cursor: bookingStatus === "sending" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "4px" }}>
-                {bookingStatus === "sending" ? <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Sending...</> : `Book Session for ${currency.sessionPrice} →`}
-              </button>
-              {bookingStatus === "error" && <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>⚠ Something went wrong. Please try again.</p>}
-              <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>We'll confirm by email within 24 hours. No payment required upfront.</p>
-            </form>
-          )}
-        </div>
-      </div>
-    </div>
   );
 
   // ── SAMPLE MODAL ───────────────────────────────────────────────────────────
@@ -2275,9 +2281,8 @@ aws ec2 describe-reserved-instances \\
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
-       {showContact && <ContactModal />}
-        {showContact && <ContactModal />}
-        {showBooking && <BookingModal />}
+        {showContact && <ContactModal onClose={() => setShowContact(false)} />}
+        {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         <Nav showBack onBack={() => goTo("intro")} />
 
         {showSecBlueprint && <SecurityBlueprintModal onClose={() => setShowSecBlueprint(false)} secChecked={secChecked} currency={currency} provider={provider} companyName={companyName} />}
@@ -2468,8 +2473,8 @@ aws ec2 describe-reserved-instances \\
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
-        {showContact && <ContactModal />}
-        {showBooking && <BookingModal />}
+        {showContact && <ContactModal onClose={() => setShowContact(false)} />}
+        {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showSecBlueprint && <SecurityBlueprintModal onClose={() => setShowSecBlueprint(false)} secChecked={secChecked} currency={currency} provider={provider} companyName={companyName} />}
         <Nav showBack onBack={() => goTo("security_intro")} />
 
@@ -2674,8 +2679,8 @@ aws ec2 describe-reserved-instances \\
       {showSample && <SampleModal />}
 
       {/* ── EXIT INTENT MODAL ── */}
-      {showContact && <ContactModal />}
-      {showBooking && <BookingModal />}
+      {showContact && <ContactModal onClose={() => setShowContact(false)} />}
+      {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
       <Nav />
 
@@ -2744,7 +2749,7 @@ aws ec2 describe-reserved-instances \\
           </div>
         </div>
       )}
-      {showContact && <ContactModal />}
+      {showContact && <ContactModal onClose={() => setShowContact(false)} />}
           {/* ── SUBHEADING ── */}
           <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "520px", margin: "0 auto 28px" }}>
             Find unused cloud spend in minutes. Covers AWS, GCP and Azure — <strong style={{ color: "#fff" }}>no credentials required, ever</strong>. Teams typically uncover <strong style={{ color: "var(--green)" }}>20–45% in savings</strong>.
@@ -3622,8 +3627,8 @@ aws ec2 describe-reserved-instances \\
     <div className="app">
       <style>{globalCss}</style>
       <ParticleBackground />
-      {showContact && <ContactModal />}
-      {showBooking && <BookingModal />}
+      {showContact && <ContactModal onClose={() => setShowContact(false)} />}
+      {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
@@ -3684,8 +3689,8 @@ aws ec2 describe-reserved-instances \\
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
-        {showContact && <ContactModal />}
-        {showBooking && <BookingModal />}
+        {showContact && <ContactModal onClose={() => setShowContact(false)} />}
+        {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
         <Nav showBack onBack={() => goTo("intake")} />
         {/* ── SECTION COMPLETE TOAST ── */}
@@ -3926,7 +3931,7 @@ aws ec2 describe-reserved-instances \\
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
-        {showContact && <ContactModal />}
+        {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         <Nav showBack onBack={() => goTo("audit")} />
 
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 120px", position: "relative", zIndex: 1 }}>
@@ -4079,8 +4084,8 @@ aws ec2 describe-reserved-instances \\
       <div className="app">
         <style>{globalCss}</style>
         <ParticleBackground />
-        {showContact && <ContactModal />}
-        {showBooking && <BookingModal />}
+        {showContact && <ContactModal onClose={() => setShowContact(false)} />}
+        {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
