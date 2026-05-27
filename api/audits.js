@@ -54,9 +54,9 @@ module.exports = async function handler(req, res) {
 async function handleSaveAudit(req, res, supabase) {
   // Rate limiting
   const rateLimit = checkRateLimit(req, 'save-audit', 10, 60 * 60 * 1000);
-  res.setHeader('X-RateLimit-Limit', rateLimit.limit);
-  res.setHeader('X-RateLimit-Remaining', rateLimit.remaining);
-  res.setHeader('X-RateLimit-Reset', new Date(rateLimit.resetAt).toISOString());
+  if (rateLimit.limit !== undefined) res.setHeader('X-RateLimit-Limit', String(rateLimit.limit));
+  if (rateLimit.remaining !== undefined) res.setHeader('X-RateLimit-Remaining', String(rateLimit.remaining));
+  if (rateLimit.resetAt !== undefined) res.setHeader('X-RateLimit-Reset', new Date(rateLimit.resetAt).toISOString());
   
   if (rateLimit.limited) {
     const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
