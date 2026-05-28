@@ -1981,7 +1981,7 @@ export default function App() {
         if (Date.now() - ts < 24 * 60 * 60 * 1000) { setCurrency(saved); return; }
       }
     } catch {}
-    fetch("https://ipapi.co/json/")
+    fetch("/api/geo")
       .then(r => r.json())
       .then(data => {
         const match = CURRENCY_MAP[data.country_code];
