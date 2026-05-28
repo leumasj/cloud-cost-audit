@@ -72,41 +72,44 @@ const IMPACT_COLOR = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24", 
 const EFFORT_COLOR = { Low: "#4ade80", Medium: "#fbbf24", High: "#f87171" };
 const PROVIDERS = ["AWS", "GCP", "Azure", "Multi-cloud"];
 
+const COMPLIANCE_COLOR = { "GDPR": "#60a5fa", "SOC 2": "#4ade80", "ISO 27001": "#a78bfa", "PCI-DSS": "#fb923c" };
+const EFFORT_COLOR = { Easy: "#4ade80", Medium: "#fbbf24", Hard: "#f87171" };
+
 const SEC_SECTIONS = [
   { id: "iam", icon: "🔐", title: "Identity & Access", color: "#f87171",
     desc: "IAM policies, MFA enforcement, privilege escalation paths",
     checks: [
-      { id: "mfa_all", label: "MFA not enforced for all users", detail: "Users can authenticate with password only — no second factor", risk: "Critical" },
-      { id: "iam_wildcards", label: "IAM wildcard permissions (Action: *)", detail: "Overly permissive policies granting full service access", risk: "Critical" },
-      { id: "root_usage", label: "Root account used for daily operations", detail: "Root credentials should never be used after initial setup", risk: "High" },
-      { id: "unused_keys", label: "Access keys older than 90 days", detail: "Long-lived credentials increase breach exposure window", risk: "High" },
+      { id: "mfa_all",      label: "MFA not enforced for all users",          detail: "Users can authenticate with password only — no second factor",    risk: "Critical", effort: "Easy",   compliance: ["SOC 2","ISO 27001","GDPR"],       tte: "< 24h" },
+      { id: "iam_wildcards",label: "IAM wildcard permissions (Action: *)",     detail: "Overly permissive policies granting full service access",          risk: "Critical", effort: "Medium", compliance: ["SOC 2","ISO 27001","PCI-DSS"],    tte: "< 1h"  },
+      { id: "root_usage",   label: "Root account used for daily operations",   detail: "Root credentials should never be used after initial setup",        risk: "High",     effort: "Easy",   compliance: ["SOC 2","ISO 27001"]                           },
+      { id: "unused_keys",  label: "Access keys older than 90 days",           detail: "Long-lived credentials increase breach exposure window",           risk: "High",     effort: "Easy",   compliance: ["SOC 2","PCI-DSS"]                             },
     ]
   },
   { id: "network", icon: "🌐", title: "Network & Exposure", color: "#fb923c",
     desc: "Public exposure, VPC isolation, security groups",
     checks: [
-      { id: "public_buckets", label: "Public S3/storage buckets detected", detail: "Storage accessible without authentication from the internet", risk: "Critical" },
-      { id: "open_security_groups", label: "Security groups open to 0.0.0.0/0", detail: "Ports open to entire internet — including management ports", risk: "High" },
-      { id: "no_vpc", label: "Resources not isolated in VPC", detail: "Services running without network boundary controls", risk: "High" },
-      { id: "no_waf", label: "No WAF on public endpoints", detail: "Web application firewall absent on internet-facing services", risk: "Medium" },
+      { id: "public_buckets",       label: "Public S3/storage buckets detected",      detail: "Storage accessible without authentication from the internet", risk: "Critical", effort: "Easy",   compliance: ["GDPR","SOC 2","PCI-DSS"],         tte: "< 24h" },
+      { id: "open_security_groups", label: "Security groups open to 0.0.0.0/0",       detail: "Ports open to entire internet — including management ports",  risk: "High",     effort: "Easy",   compliance: ["SOC 2","PCI-DSS"]                             },
+      { id: "no_vpc",               label: "Resources not isolated in VPC",            detail: "Services running without network boundary controls",          risk: "High",     effort: "Hard",   compliance: ["SOC 2","ISO 27001"]                           },
+      { id: "no_waf",               label: "No WAF on public endpoints",               detail: "Web application firewall absent on internet-facing services", risk: "Medium",   effort: "Medium", compliance: ["PCI-DSS","SOC 2"]                             },
     ]
   },
   { id: "data", icon: "🗄", title: "Data Protection", color: "#fbbf24",
     desc: "Encryption at rest, in transit, secrets management",
     checks: [
-      { id: "no_encryption_rest", label: "Data at rest not encrypted", detail: "Databases or storage volumes without encryption enabled", risk: "High" },
-      { id: "no_encryption_transit", label: "Data in transit not encrypted (HTTP)", detail: "Internal or external traffic using unencrypted channels", risk: "High" },
-      { id: "hardcoded_secrets", label: "Secrets hardcoded in code/config", detail: "API keys, passwords, or tokens in source code or env vars", risk: "Critical" },
-      { id: "no_kms", label: "No key management system", detail: "Encryption keys not centrally managed or rotated", risk: "Medium" },
+      { id: "no_encryption_rest",    label: "Data at rest not encrypted",               detail: "Databases or storage volumes without encryption enabled",      risk: "High",     effort: "Medium", compliance: ["GDPR","PCI-DSS","ISO 27001"]                   },
+      { id: "no_encryption_transit", label: "Data in transit not encrypted (HTTP)",     detail: "Internal or external traffic using unencrypted channels",      risk: "High",     effort: "Medium", compliance: ["GDPR","PCI-DSS","ISO 27001"]                   },
+      { id: "hardcoded_secrets",     label: "Secrets hardcoded in code/config",         detail: "API keys, passwords, or tokens in source code or env vars",    risk: "Critical", effort: "Hard",   compliance: ["SOC 2","PCI-DSS","ISO 27001"],    tte: "< 1h"  },
+      { id: "no_kms",                label: "No key management system",                 detail: "Encryption keys not centrally managed or rotated",             risk: "Medium",   effort: "Medium", compliance: ["PCI-DSS","ISO 27001"]                          },
     ]
   },
   { id: "logging", icon: "📋", title: "Logging & Detection", color: "#818cf8",
     desc: "Audit trails, alerting, incident response",
     checks: [
-      { id: "no_cloudtrail", label: "Audit logging not enabled", detail: "No CloudTrail/Audit Log — no record of who did what", risk: "High" },
-      { id: "no_alerts", label: "No security alerts configured", detail: "No notifications for suspicious activity or policy violations", risk: "High" },
-      { id: "no_ir_plan", label: "No incident response plan", detail: "No documented process for security incidents", risk: "Medium" },
-      { id: "no_vuln_scanning", label: "No vulnerability scanning", detail: "Infrastructure not scanned for known CVEs or misconfigs", risk: "Medium" },
+      { id: "no_cloudtrail",    label: "Audit logging not enabled",          detail: "No CloudTrail/Audit Log — no record of who did what",          risk: "High",   effort: "Easy",   compliance: ["SOC 2","ISO 27001","PCI-DSS"]                 },
+      { id: "no_alerts",        label: "No security alerts configured",      detail: "No notifications for suspicious activity or policy violations", risk: "High",   effort: "Easy",   compliance: ["SOC 2","ISO 27001"]                           },
+      { id: "no_ir_plan",       label: "No incident response plan",          detail: "No documented process for security incidents",                 risk: "Medium", effort: "Medium", compliance: ["SOC 2","ISO 27001","GDPR"]                     },
+      { id: "no_vuln_scanning", label: "No vulnerability scanning",          detail: "Infrastructure not scanned for known CVEs or misconfigs",      risk: "Medium", effort: "Easy",   compliance: ["SOC 2","PCI-DSS"]                             },
     ]
   },
 ];
@@ -2508,15 +2511,24 @@ aws ec2 describe-reserved-instances \\
                 {currentSection.checks.map((check, i) => (
                   <div key={check.id} role="checkbox" aria-checked={!!secChecked[check.id]} tabIndex={0} onKeyDown={e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setSecChecked(p => ({ ...p, [check.id]: !p[check.id] })))} onClick={() => setSecChecked(p => ({ ...p, [check.id]: !p[check.id] }))}
                     style={{ background: secChecked[check.id] ? RISK_COLOR[check.risk] + "0e" : "rgba(255,255,255,0.02)", border: `1.5px solid ${secChecked[check.id] ? RISK_COLOR[check.risk] + "55" : "rgba(255,255,255,0.07)"}`, borderRadius: "12px", padding: "15px 18px", cursor: "pointer", transition: "all 0.2s", boxShadow: secChecked[check.id] ? `0 0 0 1px ${RISK_COLOR[check.risk]}18` : "none", animation: "card-in 0.35s ease both", animationDelay: `${i * 55}ms` }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "3px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "5px", flexWrap: "wrap" }}>
                           <span style={{ fontSize: "10px", fontWeight: 800, color: RISK_COLOR[check.risk], background: RISK_COLOR[check.risk] + "18", border: `1px solid ${RISK_COLOR[check.risk]}30`, borderRadius: "4px", padding: "1px 7px", textTransform: "uppercase", letterSpacing: "0.3px" }}>{check.risk}</span>
-                          <span style={{ fontSize: "14px", fontWeight: 700, color: secChecked[check.id] ? "#fff" : "#cbd5e1" }}>{check.label}</span>
+                          {check.tte && <span style={{ fontSize: "10px", fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: "4px", padding: "1px 6px" }}>⚡ exploitable {check.tte}</span>}
+                          {check.effort && <span style={{ fontSize: "10px", fontWeight: 700, color: EFFORT_COLOR[check.effort], background: EFFORT_COLOR[check.effort] + "18", border: `1px solid ${EFFORT_COLOR[check.effort]}30`, borderRadius: "4px", padding: "1px 6px" }}>{check.effort} fix</span>}
                         </div>
-                        <p style={{ fontSize: "12px", color: secChecked[check.id] ? "#94a3b8" : "rgba(148,163,184,0.55)", lineHeight: 1.5, margin: 0 }}>{check.detail}</p>
+                        <p style={{ fontSize: "14px", fontWeight: 700, color: secChecked[check.id] ? "#fff" : "#cbd5e1", margin: "0 0 3px" }}>{check.label}</p>
+                        <p style={{ fontSize: "12px", color: secChecked[check.id] ? "#94a3b8" : "rgba(148,163,184,0.55)", lineHeight: 1.5, margin: "0 0 7px" }}>{check.detail}</p>
+                        {check.compliance && (
+                          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                            {check.compliance.map(c => (
+                              <span key={c} style={{ fontSize: "9px", fontWeight: 700, color: COMPLIANCE_COLOR[c], background: COMPLIANCE_COLOR[c] + "15", border: `1px solid ${COMPLIANCE_COLOR[c]}30`, borderRadius: "3px", padding: "1px 5px", letterSpacing: "0.3px" }}>{c}</span>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <div style={{ width: "24px", height: "24px", borderRadius: "6px", border: `2px solid ${secChecked[check.id] ? RISK_COLOR[check.risk] : "rgba(255,255,255,0.18)"}`, background: secChecked[check.id] ? RISK_COLOR[check.risk] : "transparent", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: secChecked[check.id] ? `0 0 8px ${RISK_COLOR[check.risk]}50` : "none" }}>
+                      <div style={{ width: "24px", height: "24px", borderRadius: "6px", border: `2px solid ${secChecked[check.id] ? RISK_COLOR[check.risk] : "rgba(255,255,255,0.18)"}`, background: secChecked[check.id] ? RISK_COLOR[check.risk] : "transparent", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: secChecked[check.id] ? `0 0 8px ${RISK_COLOR[check.risk]}50` : "none", marginTop: "2px" }}>
                         {secChecked[check.id] && <span style={{ color: "#000", fontSize: "13px", fontWeight: 900, lineHeight: 1 }}>✓</span>}
                       </div>
                     </div>
@@ -2714,39 +2726,31 @@ aws ec2 describe-reserved-instances \\
                 {Object.keys(secChecked).filter(k => secChecked[k]).length} issues
               </span>
             </div>
-            {/* First 2 issues — fully visible */}
-            {[
-              {id:"mfa_all",label:"MFA not enforced for all users",risk:"Critical",detail:"Users can authenticate with password only"},
-              {id:"iam_wildcards",label:"IAM wildcard permissions (Action: *)",risk:"Critical",detail:"Overly permissive policies granting full service access"},
-              {id:"root_usage",label:"Root account used for daily operations",risk:"High",detail:"Root credentials should never be used after initial setup"},
-              {id:"unused_keys",label:"Access keys older than 90 days",risk:"High",detail:"Long-lived credentials increase breach exposure window"},
-              {id:"public_buckets",label:"Public S3/storage buckets detected",risk:"Critical",detail:"Storage accessible without authentication"},
-              {id:"open_security_groups",label:"Security groups open to 0.0.0.0/0",risk:"High",detail:"Ports open to entire internet"},
-              {id:"no_vpc",label:"Resources not isolated in VPC",risk:"High",detail:"Services running without network boundary controls"},
-              {id:"no_waf",label:"No WAF on public endpoints",risk:"Medium",detail:"Web application firewall absent"},
-              {id:"no_encryption_rest",label:"Data at rest not encrypted",risk:"High",detail:"Databases or storage without encryption"},
-              {id:"no_encryption_transit",label:"Data in transit not encrypted",risk:"High",detail:"Internal traffic using unencrypted channels"},
-              {id:"hardcoded_secrets",label:"Secrets hardcoded in code/config",risk:"Critical",detail:"API keys or tokens in source code"},
-              {id:"no_kms",label:"No key management system",risk:"Medium",detail:"Encryption keys not centrally managed"},
-              {id:"no_cloudtrail",label:"Audit logging not enabled",risk:"High",detail:"No CloudTrail — no record of who did what"},
-              {id:"no_alerts",label:"No security alerts configured",risk:"High",detail:"No notifications for suspicious activity"},
-              {id:"no_ir_plan",label:"No incident response plan",risk:"Medium",detail:"No documented process for security incidents"},
-              {id:"no_vuln_scanning",label:"No vulnerability scanning",risk:"Medium",detail:"Infrastructure not scanned for known CVEs"},
-            ].filter(c => secChecked[c.id]).map((c, i) => {
+            {/* First 2 issues — fully visible; rest blurred */}
+            {SEC_SECTIONS.flatMap(s => s.checks).filter(c => secChecked[c.id]).map((c, i) => {
               const RISK_COLOR = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24" };
               const isLocked = i >= 2;
               return (
-                <div key={c.id} style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", position: "relative", filter: isLocked ? "blur(3px)" : "none", userSelect: isLocked ? "none" : "auto" }}>
+                <div key={c.id} style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", position: "relative", filter: isLocked ? "blur(3px)" : "none", userSelect: isLocked ? "none" : "auto" }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "5px", flexWrap: "wrap" }}>
                       <span style={{ fontSize: "10px", fontWeight: 700, color: RISK_COLOR[c.risk], background: RISK_COLOR[c.risk] + "15", border: `1px solid ${RISK_COLOR[c.risk]}30`, borderRadius: "4px", padding: "1px 6px" }}>{c.risk}</span>
-                      <span style={{ fontSize: "13px", fontWeight: 600, color: isLocked ? "rgba(255,255,255,0.3)" : "#fff" }}>{c.label}</span>
+                      {c.tte && <span style={{ fontSize: "10px", fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "4px", padding: "1px 6px" }}>⚡ {c.tte}</span>}
+                      {c.effort && <span style={{ fontSize: "10px", fontWeight: 700, color: EFFORT_COLOR[c.effort], background: EFFORT_COLOR[c.effort] + "15", border: `1px solid ${EFFORT_COLOR[c.effort]}30`, borderRadius: "4px", padding: "1px 6px" }}>{c.effort} fix</span>}
                     </div>
-                    <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.5)", margin: 0 }}>{c.detail}</p>
+                    <p style={{ fontSize: "13px", fontWeight: 600, color: isLocked ? "rgba(255,255,255,0.3)" : "#fff", margin: "0 0 3px" }}>{c.label}</p>
+                    <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.5)", margin: "0 0 6px" }}>{c.detail}</p>
+                    {!isLocked && c.compliance && (
+                      <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                        {c.compliance.map(tag => (
+                          <span key={tag} style={{ fontSize: "9px", fontWeight: 700, color: COMPLIANCE_COLOR[tag], background: COMPLIANCE_COLOR[tag] + "12", border: `1px solid ${COMPLIANCE_COLOR[tag]}28`, borderRadius: "3px", padding: "1px 5px", letterSpacing: "0.3px" }}>{tag}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   {isLocked
-                    ? <span style={{ fontSize: "11px", color: "#f87171", fontWeight: 700, whiteSpace: "nowrap" }}>🔒 Locked</span>
-                    : <span style={{ fontSize: "11px", color: "#94a3b8" }}>Visible</span>
+                    ? <span style={{ fontSize: "11px", color: "#f87171", fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0 }}>🔒 Locked</span>
+                    : <span style={{ fontSize: "11px", color: "#94a3b8", flexShrink: 0 }}>Visible</span>
                   }
                 </div>
               );
@@ -2766,6 +2770,44 @@ aws ec2 describe-reserved-instances \\
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Sample fix teaser */}
+          <div style={{ background: "var(--bg2)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "20px", overflow: "hidden", marginBottom: "24px", position: "relative" }}>
+            <div style={{ padding: "18px 24px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <p style={{ fontSize: "12px", fontWeight: 700, color: "#f87171", textTransform: "uppercase", letterSpacing: "1px", margin: "0 0 2px" }}>Sample Blueprint Fix</p>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: "#fff", margin: 0 }}>MFA enforcement — IAM policy template</p>
+              </div>
+              <span style={{ fontSize: "10px", color: "#475569", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "4px", padding: "2px 8px", fontWeight: 700 }}>AWS CLI</span>
+            </div>
+            <div style={{ position: "relative" }}>
+              <pre style={{ margin: 0, padding: "20px 24px", fontSize: "12px", lineHeight: 1.7, color: "#94a3b8", background: "rgba(0,0,0,0.3)", fontFamily: "monospace", overflow: "hidden", filter: "blur(3.5px)", userSelect: "none", WebkitUserSelect: "none" }}>{`# Step 1 — Create MFA enforcement policy
+aws iam create-policy \\
+  --policy-name EnforceMFA \\
+  --policy-document file://enforce-mfa.json
+
+# Step 2 — Attach to all IAM users
+aws iam list-users --query 'Users[*].UserName' \\
+  --output text | xargs -I{} \\
+  aws iam attach-user-policy \\
+    --user-name {} \\
+    --policy-arn arn:aws:iam::ACCOUNT_ID:policy/EnforceMFA
+
+# Step 3 — Verify enforcement
+aws iam simulate-principal-policy \\
+  --policy-source-arn arn:aws:iam::ACCOUNT_ID:user/testuser \\
+  --action-names "s3:GetObject"`}</pre>
+              <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, rgba(15,15,26,0.6), rgba(19,19,31,0.5))", backdropFilter: "blur(1px)" }}>
+                <span style={{ fontSize: "24px", marginBottom: "8px" }}>🔒</span>
+                <p style={{ fontSize: "14px", fontWeight: 800, color: "#fff", marginBottom: "4px" }}>Full fix guide locked</p>
+                <p style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "16px", textAlign: "center", maxWidth: "260px", lineHeight: 1.5 }}>Blueprint includes exact CLI commands, Terraform snippets, and verification steps for every flagged issue</p>
+                <button onClick={() => { window.gtag?.('event', 'security_blueprint_modal_opened', { source: "sample_teaser" }); setShowSecBlueprint(true); }}
+                  style={{ background: "#f87171", color: "#000", border: "none", borderRadius: "10px", padding: "10px 24px", fontSize: "13px", fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 20px rgba(248,113,113,0.4)" }}>
+                  {`Unlock All Fixes — ${currency.securityPrice || "$29"} →`}
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Trust + CTA */}
