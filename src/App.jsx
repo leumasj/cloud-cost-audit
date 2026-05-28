@@ -537,6 +537,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
   const handlePurchase = async (e) => {
     e.preventDefault();
     if (!email || flaggedIds.length === 0) return;
+    window.gtag?.('event', 'security_checkout_initiated', { amount: currency.securityAmount, currency: currency.stripeCurrency });
     setStatus("loading");
     try {
       const isBundle = selectedProduct === "bundle";
@@ -685,6 +686,83 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
             {status === "error" && <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>⚠ {errorMsg}</p>}
             <p style={{ fontSize: "11px", color: "#475569", textAlign: "center" }}>🔒 Secure checkout via Stripe · Prices inclusive of applicable taxes · No cloud access required</p>
           </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── SECURITY SAMPLE MODAL ────────────────────────────────────────────────────
+function SecSampleModal({ onClose }) {
+  const SAMPLE_ISSUES = [
+    { id: "mfa_all", label: "MFA not enforced for all users", risk: "Critical", detail: "Users authenticate with password only — no second factor" },
+    { id: "iam_wildcards", label: "IAM wildcard permissions (Action: *)", risk: "Critical", detail: "Overly permissive policies granting full service access" },
+    { id: "public_buckets", label: "Public S3/storage buckets detected", risk: "Critical", detail: "Storage accessible without authentication from the internet" },
+    { id: "open_security_groups", label: "Security groups open to 0.0.0.0/0", risk: "High", detail: "Ports open to entire internet including management ports" },
+    { id: "hardcoded_secrets", label: "Secrets hardcoded in code/config", risk: "Critical", detail: "API keys, passwords, or tokens found in source code" },
+  ];
+  const RISK_COLOR = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24" };
+  const score = 31;
+  const circ = 2 * Math.PI * 54;
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="sec-sample-title" style={{ background: "linear-gradient(145deg, #0f0f1a, #13131f)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "20px", maxWidth: "640px", width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.7)" }}>
+        <div style={{ padding: "28px 32px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, background: "linear-gradient(145deg, #0f0f1a, #13131f)", zIndex: 10, borderRadius: "20px 20px 0 0" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+                {["Sample Report", "AWS", "Acme Corp"].map(t => <span key={t} style={{ background: "rgba(255,255,255,0.06)", color: "rgba(148,163,184,0.7)", fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)" }}>{t}</span>)}
+              </div>
+              <h2 id="sec-sample-title" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px" }}>Security Risk Report — Preview</h2>
+              <p style={{ color: "rgba(148,163,184,0.7)", fontSize: "13px", marginTop: "4px" }}>5 issues flagged · Score: 31/100</p>
+            </div>
+            <button onClick={onClose} aria-label="Close" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "rgba(255,255,255,0.5)", fontSize: "18px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
+          </div>
+        </div>
+        <div style={{ padding: "24px 32px 32px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "28px", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "16px", padding: "24px", marginBottom: "20px", flexWrap: "wrap" }}>
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <svg width="100" height="100" style={{ transform: "rotate(-90deg)" }}>
+                <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+                <circle cx="50" cy="50" r="44" fill="none" stroke="#f87171" strokeWidth="8"
+                  strokeDasharray={2 * Math.PI * 44} strokeDashoffset={2 * Math.PI * 44 * (1 - score / 100)} strokeLinecap="round"
+                  style={{ filter: "drop-shadow(0 0 6px rgba(248,113,113,0.5))" }} />
+              </svg>
+              <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ fontSize: "26px", fontWeight: 800, color: "#f87171", lineHeight: 1 }}>{score}</span>
+                <span style={{ fontSize: "10px", color: "rgba(148,163,184,0.6)" }}>/ 100</span>
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "rgba(148,163,184,0.6)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>Security Risk Score</p>
+              <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#f87171", marginBottom: "8px" }}>Critical Risk</h3>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "11px", color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "6px", padding: "2px 8px", fontWeight: 700 }}>🔴 4 Critical</span>
+                <span style={{ fontSize: "11px", color: "#fb923c", background: "rgba(251,146,60,0.1)", border: "1px solid rgba(251,146,60,0.25)", borderRadius: "6px", padding: "2px 8px", fontWeight: 700 }}>🟠 1 High</span>
+              </div>
+            </div>
+          </div>
+          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", overflow: "hidden", marginBottom: "20px" }}>
+            <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              <h3 style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>Issues Found — 5 flagged</h3>
+            </div>
+            {SAMPLE_ISSUES.map((c, i) => (
+              <div key={c.id} style={{ padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", filter: i >= 2 ? "blur(3px)" : "none", userSelect: i >= 2 ? "none" : "auto" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
+                    <span style={{ fontSize: "10px", fontWeight: 700, color: RISK_COLOR[c.risk], background: RISK_COLOR[c.risk] + "18", border: `1px solid ${RISK_COLOR[c.risk]}30`, borderRadius: "4px", padding: "1px 6px" }}>{c.risk}</span>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: i >= 2 ? "rgba(255,255,255,0.3)" : "#fff" }}>{c.label}</span>
+                  </div>
+                  <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.5)", margin: 0 }}>{c.detail}</p>
+                </div>
+                {i >= 2 ? <span style={{ fontSize: "11px", color: "#f87171", fontWeight: 700 }}>🔒 Locked</span> : <span style={{ fontSize: "11px", color: "rgba(148,163,184,0.5)" }}>Visible</span>}
+              </div>
+            ))}
+            <div style={{ padding: "14px 20px", background: "rgba(248,113,113,0.04)", fontSize: "12px", color: "rgba(148,163,184,0.6)" }}>
+              🔒 3 more issues + full remediation unlocked in the blueprint
+            </div>
+          </div>
+          <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.5)", textAlign: "center" }}>This is a preview with sample data. Your actual score will reflect your real infrastructure answers.</p>
         </div>
       </div>
     </div>
@@ -1679,6 +1757,7 @@ export default function App() {
   const [showStickyBar, setShowStickyBar] = useState(false);  // ← ADD THIS
   const [showShareCard, setShowShareCard] = useState(false);
   const [sectionToast, setSectionToast] = useState(null); // audit section-complete toast
+  const [secSectionToast, setSecSectionToast] = useState(null); // security section-complete toast
   // ── SECURITY AUDIT STATE ──────────────────────────────────────────────────
   const [secChecked, setSecChecked] = useState({});
   const [secStep, setSecStep] = useState(0);
@@ -1686,6 +1765,7 @@ export default function App() {
   const [secLoading, setSecLoading] = useState(false);
   const [secError, setSecError] = useState(null);
   const [showSecBlueprint, setShowSecBlueprint] = useState(false);
+  const [showSecSample, setShowSecSample] = useState(false);
   const [secBlueprintEmail, setSecBlueprintEmail] = useState("");
   const [secBlueprintStatus, setSecBlueprintStatus] = useState("idle"); // idle | loading | success | error
   const [secScore, setSecScore] = useState(null); // computed after audit
@@ -1734,6 +1814,13 @@ export default function App() {
     }
     if (s === 'report') {
       window.gtag?.('event', 'report_viewed', { flagged_count: flagged.length, savings_min: savMin, savings_max: savMax, provider: provider });
+    }
+    if (s === 'security_intro') {
+      window.gtag?.('event', 'security_audit_started', {});
+    }
+    if (s === 'security_report') {
+      const flaggedSecCount = Object.keys(secChecked).filter(k => secChecked[k]).length;
+      window.gtag?.('event', 'security_report_viewed', { flagged_count: flaggedSecCount, sec_score: secScore });
     }
     setStep(s);
     setPageKey(k => k + 1);
@@ -2286,6 +2373,12 @@ aws ec2 describe-reserved-instances \\
         <Nav showBack onBack={() => goTo("intro")} />
 
         {showSecBlueprint && <SecurityBlueprintModal onClose={() => setShowSecBlueprint(false)} secChecked={secChecked} currency={currency} provider={provider} companyName={companyName} />}
+        {showSecSample && <SecSampleModal onClose={() => setShowSecSample(false)} />}
+        {secSectionToast && (
+          <div style={{ position: "fixed", top: "80px", right: "24px", zIndex: 999, background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: "10px", padding: "10px 16px", fontSize: "13px", color: "#f87171", animation: "fadeIn 0.2s ease", pointerEvents: "none", maxWidth: "320px", boxShadow: "0 4px 20px rgba(248,113,113,0.15)" }}>
+            {secSectionToast}
+          </div>
+        )}
 
         <div style={{ maxWidth: "960px", margin: "0 auto", padding: "40px 24px 100px" }}>
           {/* Header */}
@@ -2314,6 +2407,15 @@ aws ec2 describe-reserved-instances \\
                 </div>
               ))}
             </div>
+            <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.6)", background: "rgba(248,113,113,0.04)", border: "1px solid rgba(248,113,113,0.1)", borderRadius: "8px", padding: "9px 14px", display: "inline-block", marginTop: "12px" }}>
+              🔒 Your answers stay in your browser — nothing sent to our servers until you choose to share it.
+            </p>
+            <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "10px" }}>
+              Not sure what you&apos;ll get?{" "}
+              <button onClick={() => setShowSecSample(true)} style={{ background: "none", border: "none", color: "#f87171", fontSize: "13px", cursor: "pointer", textDecoration: "underline", padding: 0, fontFamily: "inherit" }}>
+                See a sample security report →
+              </button>
+            </p>
           </div>
 
           {/* How to use this */}
@@ -2332,7 +2434,7 @@ aws ec2 describe-reserved-instances \\
             <div style={{ display: "flex", alignItems: "center", marginBottom: "16px" }}>
               {SEC_SECTIONS.map((s, i) => (
                 <div key={s.id} style={{ display: "flex", alignItems: "center", flex: 1 }}>
-                  <button onClick={() => setSecStep(i)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", flex: 1, padding: "0" }}>
+                  <button onClick={() => { setSecStep(i); window.gtag?.('event', 'security_section_viewed', { section: SEC_SECTIONS[i]?.title, section_index: i }); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", flex: 1, padding: "0" }}>
                     <div style={{ width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", transition: "all 0.25s", background: i < secStep ? "#00ffb4" : secStep === i ? s.color + "25" : "rgba(255,255,255,0.05)", border: `2px solid ${i < secStep ? "#00ffb4" : secStep === i ? s.color : "rgba(255,255,255,0.1)"}`, boxShadow: secStep === i ? `0 0 14px ${s.color}50` : "none" }}>
                       {i < secStep ? <span style={{ fontSize: "13px", fontWeight: 800, color: "#000" }}>✓</span> : <span>{s.icon}</span>}
                     </div>
@@ -2390,7 +2492,7 @@ aws ec2 describe-reserved-instances \\
                   <button onClick={() => setSecStep(s => s - 1)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "12px 20px", color: "var(--text-muted)", fontSize: "14px", cursor: "pointer" }}>← Back</button>
                 )}
                 {secStep < SEC_SECTIONS.length - 1 ? (
-                  <button onClick={() => setSecStep(s => s + 1)} style={{ flex: 1, padding: "13px 24px", borderRadius: "10px", border: "none", background: currentSection.color, color: "#000", fontWeight: 800, fontSize: "14px", cursor: "pointer", boxShadow: `0 4px 16px ${currentSection.color}35` }}>
+                  <button onClick={() => { const next = secStep + 1; setSecStep(next); window.gtag?.('event', 'security_section_viewed', { section: SEC_SECTIONS[next]?.title, section_index: next }); const flaggedInSec = currentSection.checks.filter(c => secChecked[c.id]).length; const msg = `✓ ${currentSection.title} complete — ${flaggedInSec} issue${flaggedInSec !== 1 ? 's' : ''} found`; setSecSectionToast(msg); setTimeout(() => setSecSectionToast(null), 1500); }} style={{ flex: 1, padding: "13px 24px", borderRadius: "10px", border: "none", background: currentSection.color, color: "#000", fontWeight: 800, fontSize: "14px", cursor: "pointer", boxShadow: `0 4px 16px ${currentSection.color}35` }}>
                     Next: {SEC_SECTIONS[secStep + 1].title} →
                   </button>
                 ) : (
@@ -2400,6 +2502,7 @@ aws ec2 describe-reserved-instances \\
                       const highW  = Math.min(highCount * 5, 20);
                       const score  = Math.max(0, Math.min(100, Math.round(100 - issueW - critW - highW)));
                       setSecScore(score);
+                      window.gtag?.('event', 'security_report_reached', { flagged_count: flaggedSec.length });
                       goTo("security_report");
                     }}
                     disabled={flaggedSec.length === 0}
@@ -2413,27 +2516,41 @@ aws ec2 describe-reserved-instances \\
             {/* Right — sticky sidebar */}
             <div style={{ position: "sticky", top: "80px", display: "flex", flexDirection: "column", gap: "12px" }}>
               {/* Live risk counts */}
-              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "18px" }}>
-                <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "12px" }}>Live Risk Tracker</p>
-                {flaggedSec.length === 0 ? (
-                  <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", lineHeight: 1.65 }}>Issues you flag will appear here as you work through each section.</p>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    {criticalCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.18)", borderRadius: "8px", padding: "9px 12px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 700, color: "#f87171" }}>🔴 Critical</span>
-                      <span style={{ fontSize: "18px", fontWeight: 800, color: "#f87171", lineHeight: 1 }}>{criticalCount}</span>
-                    </div>}
-                    {highCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.18)", borderRadius: "8px", padding: "9px 12px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 700, color: "#fb923c" }}>🟠 High</span>
-                      <span style={{ fontSize: "18px", fontWeight: 800, color: "#fb923c", lineHeight: 1 }}>{highCount}</span>
-                    </div>}
-                    {flaggedSec.filter(c => c.risk === "Medium").length > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.18)", borderRadius: "8px", padding: "9px 12px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 700, color: "#fbbf24" }}>🟡 Medium</span>
-                      <span style={{ fontSize: "18px", fontWeight: 800, color: "#fbbf24", lineHeight: 1 }}>{flaggedSec.filter(c => c.risk === "Medium").length}</span>
-                    </div>}
+              {(() => {
+                const urgency = flaggedSec.length === 0
+                  ? { bg: "rgba(255,255,255,0.02)", border: "rgba(255,255,255,0.07)", msg: null }
+                  : flaggedSec.length <= 3
+                  ? { bg: "rgba(251,191,36,0.06)", border: "rgba(251,191,36,0.2)", msg: "⚠ Security gaps detected", msgColor: "#fbbf24" }
+                  : flaggedSec.length <= 7
+                  ? { bg: "rgba(251,146,60,0.07)", border: "rgba(251,146,60,0.25)", msg: "🔴 Elevated risk level", msgColor: "#fb923c" }
+                  : { bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.3)", msg: "🚨 Critical exposure — act now", msgColor: "#f87171", pulse: true };
+                return (
+                  <div style={{ background: urgency.bg, border: `1px solid ${urgency.border}`, borderRadius: "14px", padding: "18px", transition: "all 0.3s" }}>
+                    <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: urgency.msg ? "6px" : "12px" }}>Live Risk Tracker</p>
+                    {urgency.msg && (
+                      <p style={{ fontSize: "12px", fontWeight: 800, color: urgency.msgColor, marginBottom: "12px", animation: urgency.pulse ? "pulse-dot 1.5s infinite" : "none" }}>{urgency.msg}</p>
+                    )}
+                    {flaggedSec.length === 0 ? (
+                      <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", lineHeight: 1.65 }}>Flag issues to see your risk level.</p>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        {criticalCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.18)", borderRadius: "8px", padding: "9px 12px" }}>
+                          <span style={{ fontSize: "12px", fontWeight: 700, color: "#f87171" }}>🔴 Critical</span>
+                          <span style={{ fontSize: "18px", fontWeight: 800, color: "#f87171", lineHeight: 1 }}>{criticalCount}</span>
+                        </div>}
+                        {highCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.18)", borderRadius: "8px", padding: "9px 12px" }}>
+                          <span style={{ fontSize: "12px", fontWeight: 700, color: "#fb923c" }}>🟠 High</span>
+                          <span style={{ fontSize: "18px", fontWeight: 800, color: "#fb923c", lineHeight: 1 }}>{highCount}</span>
+                        </div>}
+                        {flaggedSec.filter(c => c.risk === "Medium").length > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.18)", borderRadius: "8px", padding: "9px 12px" }}>
+                          <span style={{ fontSize: "12px", fontWeight: 700, color: "#fbbf24" }}>🟡 Medium</span>
+                          <span style={{ fontSize: "18px", fontWeight: 800, color: "#fbbf24", lineHeight: 1 }}>{flaggedSec.filter(c => c.risk === "Medium").length}</span>
+                        </div>}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                );
+              })()}
 
               {/* Live score estimate */}
               {flaggedSec.length > 0 && (() => {
@@ -2455,7 +2572,7 @@ aws ec2 describe-reserved-instances \\
 
               {/* CTA in sidebar on last step */}
               {secStep === SEC_SECTIONS.length - 1 && flaggedSec.length > 0 && (
-                <button onClick={() => setShowSecBlueprint(true)}
+                <button onClick={() => { window.gtag?.('event', 'security_blueprint_modal_opened', {}); setShowSecBlueprint(true); }}
                   style={{ width: "100%", padding: "12px 14px", borderRadius: "12px", border: "none", background: "#f87171", color: "#000", fontWeight: 800, fontSize: "12px", cursor: "pointer", boxShadow: "0 4px 16px rgba(248,113,113,0.3)" }}>
                   {`Get Blueprint — ${currency.securityPrice || "$29"}`}
                 </button>
@@ -2606,7 +2723,7 @@ aws ec2 describe-reserved-instances \\
                   </p>
                   <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>CLI commands · Compliance mapping · 30-day fix roadmap</p>
                 </div>
-                <button onClick={() => setShowSecBlueprint(true)}
+                <button onClick={() => { window.gtag?.('event', 'security_blueprint_modal_opened', {}); setShowSecBlueprint(true); }}
                   style={{ background: "#f87171", color: "#000", border: "none", borderRadius: "10px", padding: "10px 22px", fontSize: "13px", fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 4px 16px rgba(248,113,113,0.3)" }}>
                   {`Unlock Blueprint — ${currency.securityPrice || "$29"} →`}
                 </button>
@@ -2622,9 +2739,21 @@ aws ec2 describe-reserved-instances \\
             </p>
           </div>
 
+          {/* Personalised upsell */}
+          {(() => {
+            const flaggedSecCount = Object.keys(secChecked).filter(k => secChecked[k]).length;
+            return (
+              <p style={{ textAlign: "center", fontSize: "13px", color: "rgba(148,163,184,0.75)", marginBottom: "16px", lineHeight: 1.6, maxWidth: "480px", margin: "0 auto 16px" }}>
+                {flaggedSecCount > 0
+                  ? `${flaggedSecCount} security gap${flaggedSecCount !== 1 ? 's' : ''} found. The ${currency.securityPrice || "$29"} blueprint gives you exact IAM policies, CLI commands and a 30-day fix roadmap.`
+                  : `The Security Blueprint covers all 16 checks with exact remediation steps.`}
+              </p>
+            );
+          })()}
+
           {/* Actions */}
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-            <button onClick={() => setShowSecBlueprint(true)}
+            <button onClick={() => { window.gtag?.('event', 'security_blueprint_clicked', { flagged_count: Object.keys(secChecked).filter(k => secChecked[k]).length }); window.gtag?.('event', 'security_blueprint_modal_opened', {}); setShowSecBlueprint(true); }}
               style={{ background: "#f87171", color: "#000", border: "none", borderRadius: "12px", padding: "13px 32px", fontSize: "15px", fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 20px rgba(248,113,113,0.3)" }}>
               {`🛡 Get Security Blueprint — ${currency.securityPrice || "$29"} →`}
             </button>
