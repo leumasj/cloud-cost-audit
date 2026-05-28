@@ -268,6 +268,7 @@ const globalCss = `
   @keyframes toastIn { from { opacity:0; transform:translateX(20px) scale(0.9); } to { opacity:1; transform:translateX(0) scale(1); } }
   @keyframes pulse-green-ring { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.04); opacity: 0; } }
   @keyframes urgency-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+  @keyframes card-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
   .pulse-green-ring { position: relative; }
   .pulse-green-ring::after { content: ''; position: absolute; inset: -2px; border-radius: 14px; border: 1.5px solid rgba(0,255,180,0.5); animation: pulse-green-ring 2s ease-in-out infinite; pointer-events: none; }
   .trust-link { display:flex; align-items:center; gap:10px; text-decoration:none; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; transition:all 0.2s; }
@@ -2484,9 +2485,9 @@ aws ec2 describe-reserved-instances \\
                 <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Check every issue that applies to your infrastructure — be honest, this is for your benefit</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {currentSection.checks.map(check => (
+                {currentSection.checks.map((check, i) => (
                   <div key={check.id} role="checkbox" aria-checked={!!secChecked[check.id]} tabIndex={0} onKeyDown={e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setSecChecked(p => ({ ...p, [check.id]: !p[check.id] })))} onClick={() => setSecChecked(p => ({ ...p, [check.id]: !p[check.id] }))}
-                    style={{ background: secChecked[check.id] ? RISK_COLOR[check.risk] + "0e" : "rgba(255,255,255,0.02)", border: `1.5px solid ${secChecked[check.id] ? RISK_COLOR[check.risk] + "55" : "rgba(255,255,255,0.07)"}`, borderRadius: "12px", padding: "15px 18px", cursor: "pointer", transition: "all 0.2s", boxShadow: secChecked[check.id] ? `0 0 0 1px ${RISK_COLOR[check.risk]}18` : "none" }}>
+                    style={{ background: secChecked[check.id] ? RISK_COLOR[check.risk] + "0e" : "rgba(255,255,255,0.02)", border: `1.5px solid ${secChecked[check.id] ? RISK_COLOR[check.risk] + "55" : "rgba(255,255,255,0.07)"}`, borderRadius: "12px", padding: "15px 18px", cursor: "pointer", transition: "all 0.2s", boxShadow: secChecked[check.id] ? `0 0 0 1px ${RISK_COLOR[check.risk]}18` : "none", animation: "card-in 0.35s ease both", animationDelay: `${i * 55}ms` }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "3px" }}>
@@ -3873,13 +3874,13 @@ aws ec2 describe-reserved-instances \\
                 <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>{section.description}</p>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {section.checks.map(check => {
+                {section.checks.map((check, i) => {
                   const on = !!checked[check.id];
                   const sMin = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
                   const sMax = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
                   return (
                     <div key={check.id} className="check-card" role="checkbox" aria-checked={on} tabIndex={0} onKeyDown={e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), toggle(check.id))} onClick={() => toggle(check.id)}
-                      style={{ background: on ? "rgba(0,255,180,0.05)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${on ? "rgba(0,255,180,0.25)" : "var(--border)"}`, borderRadius: "14px", padding: "18px 20px", display: "flex", gap: "14px", alignItems: "flex-start", boxShadow: on ? "0 4px 20px rgba(0,255,180,0.08)" : "0 1px 4px rgba(0,0,0,0.2)" }}>
+                      style={{ background: on ? "rgba(0,255,180,0.05)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${on ? "rgba(0,255,180,0.25)" : "var(--border)"}`, borderRadius: "14px", padding: "18px 20px", display: "flex", gap: "14px", alignItems: "flex-start", boxShadow: on ? "0 4px 20px rgba(0,255,180,0.08)" : "0 1px 4px rgba(0,0,0,0.2)", animation: "card-in 0.35s ease both", animationDelay: `${i * 55}ms` }}>
                       <div style={{ width: "24px", height: "24px", borderRadius: "7px", flexShrink: 0, marginTop: "1px", background: on ? "var(--green)" : "transparent", border: `2px solid ${on ? "var(--green)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: on ? "0 0 12px rgba(0,255,180,0.5)" : "none" }}>
                         {on && <svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4L4.5 7.5L11 1" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                       </div>
