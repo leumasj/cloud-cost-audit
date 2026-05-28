@@ -69,11 +69,9 @@ const SAMPLE_REPORT = {
 };
 
 const IMPACT_COLOR = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24", Low: "#4ade80" };
-const EFFORT_COLOR = { Low: "#4ade80", Medium: "#fbbf24", High: "#f87171" };
-const PROVIDERS = ["AWS", "GCP", "Azure", "Multi-cloud"];
-
+const EFFORT_COLOR = { Low: "#4ade80", Easy: "#4ade80", Medium: "#fbbf24", High: "#f87171", Hard: "#f87171" };
 const COMPLIANCE_COLOR = { "GDPR": "#60a5fa", "SOC 2": "#4ade80", "ISO 27001": "#a78bfa", "PCI-DSS": "#fb923c" };
-const EFFORT_COLOR = { Easy: "#4ade80", Medium: "#fbbf24", Hard: "#f87171" };
+const PROVIDERS = ["AWS", "GCP", "Azure", "Multi-cloud"];
 
 const SEC_SECTIONS = [
   { id: "iam", icon: "🔐", title: "Identity & Access", color: "#f87171",
