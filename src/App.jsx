@@ -569,15 +569,18 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [errorMsg, setErrorMsg] = useState("");
   const [selectedProduct, setSelectedProduct] = useState("security"); // "security" | "bundle"
+  const [withdrawalChecked, setWithdrawalChecked] = useState(false);
 
   const flaggedIds = Object.keys(secChecked).filter(k => secChecked[k]);
   const critCount  = [
     "mfa_all","iam_wildcards","public_buckets","hardcoded_secrets"
   ].filter(id => secChecked[id]).length;
 
+  const canSubmit = email.length > 0 && withdrawalChecked && status !== "loading";
+
   const handlePurchase = async (e) => {
     e.preventDefault();
-    if (!email || flaggedIds.length === 0) return;
+    if (!canSubmit || flaggedIds.length === 0) return;
     window.gtag?.('event', 'security_checkout_initiated', { amount: selectedProduct === "bundle" ? (currency.bundleAmount || 34900) : (currency.securityAmount || 11900), currency: currency.stripeCurrency });
     setStatus("loading");
     try {
@@ -615,6 +618,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
     } catch (err) {
       setErrorMsg(err.message);
       setStatus("error");
+      setTimeout(() => setStatus("idle"), 6000);
     }
   };
 
@@ -719,13 +723,13 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
             </div>
 
             <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px" }}>
-              <input type="checkbox" id="withdrawal-sec" required style={{ marginTop: "2px", accentColor: "#f87171", flexShrink: 0, cursor: "pointer" }} />
+              <input type="checkbox" id="withdrawal-sec" required checked={withdrawalChecked} onChange={e => setWithdrawalChecked(e.target.checked)} style={{ marginTop: "2px", accentColor: "#f87171", flexShrink: 0, cursor: "pointer" }} />
               <label htmlFor="withdrawal-sec" style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.55, cursor: "pointer" }}>
                 I understand this is a digital product delivered immediately and I waive my right of withdrawal upon delivery. See <a href="https://www.kloudaudit.eu/terms/" target="_blank" rel="noopener" style={{ color: "#f87171" }}>Terms</a>.
               </label>
             </div>
-            <button type="submit" disabled={status === "loading"}
-              style={{ width: "100%", padding: "15px", borderRadius: "12px", border: "none", background: status === "loading" ? "rgba(99,102,241,0.5)" : selectedProduct === "bundle" ? "#818cf8" : "#f87171", color: "#000", fontWeight: 800, fontSize: "15px", cursor: status === "loading" ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: `0 4px 20px ${selectedProduct === "bundle" ? "rgba(99,102,241,0.35)" : "rgba(248,113,113,0.35)"}`, fontFamily: "system-ui, sans-serif", transition: "all 0.2s" }}>
+            <button type="submit" disabled={!canSubmit}
+              style={{ width: "100%", padding: "15px", borderRadius: "12px", border: "none", background: !canSubmit ? (selectedProduct === "bundle" ? "rgba(99,102,241,0.35)" : "rgba(248,113,113,0.35)") : selectedProduct === "bundle" ? "#818cf8" : "#f87171", color: "#000", fontWeight: 800, fontSize: "15px", cursor: canSubmit ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: canSubmit ? `0 4px 20px ${selectedProduct === "bundle" ? "rgba(99,102,241,0.35)" : "rgba(248,113,113,0.35)"}` : "none", fontFamily: "system-ui, sans-serif", transition: "all 0.2s", opacity: canSubmit ? 1 : 0.55 }}>
               {status === "loading"
                 ? <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Processing…</>
                 : selectedProduct === "bundle"
