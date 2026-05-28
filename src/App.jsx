@@ -1893,8 +1893,10 @@ export default function App() {
   const allChecks = useMemo(() => AUDIT_SECTIONS.flatMap(s => s.checks), []);
   const flagged = useMemo(() => allChecks.filter(c => checked[c.id]), [checked, allChecks]);
   const { savMin, savMax, savPct } = useMemo(() => {
-    const min = Math.round(flagged.reduce((s, c) => s + bill * c.savingsRange[0] / 100, 0));
-    const max = Math.round(flagged.reduce((s, c) => s + bill * c.savingsRange[1] / 100, 0));
+    const rawMin = Math.round(flagged.reduce((s, c) => s + bill * c.savingsRange[0] / 100, 0));
+    const rawMax = Math.round(flagged.reduce((s, c) => s + bill * c.savingsRange[1] / 100, 0));
+    const min = Math.min(rawMin, Math.round(bill * 0.70));
+    const max = Math.min(rawMax, Math.round(bill * 0.85));
     return {
       savMin: min,
       savMax: max,
