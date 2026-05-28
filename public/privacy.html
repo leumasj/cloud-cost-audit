@@ -10,11 +10,23 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #07070f; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; line-height: 1.7; }
-    .container { max-width: 760px; margin: 0 auto; padding: 60px 24px 100px; }
-    .header { margin-bottom: 48px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; text-decoration: none; }
-    .logo-icon { width: 32px; height: 32px; background: #00ffb4; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-    .logo-text { font-size: 18px; font-weight: 800; color: #fff; }
+
+    /* ── NAV ── */
+    .site-nav { position: sticky; top: 0; z-index: 100; background: rgba(8,8,16,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 0 24px; height: 58px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo-icon { width: 30px; height: 30px; background: #00ffb4; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; box-shadow: 0 0 16px rgba(0,255,180,0.4); flex-shrink: 0; }
+    .nav-logo-text { font-size: 16px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+    .nav-upwork { display: inline-flex; align-items: center; gap: 6px; background: rgba(20,163,74,0.12); border: 1px solid rgba(20,163,74,0.3); border-radius: 8px; padding: 6px 12px; text-decoration: none; font-size: 12px; font-weight: 700; color: #14a34a; transition: all 0.2s; }
+    .nav-upwork:hover { background: rgba(20,163,74,0.22); border-color: rgba(20,163,74,0.55); text-decoration: none; }
+    .nav-btn { background: transparent; border: none; color: rgba(203,213,225,0.7); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; padding: 0; transition: color 0.2s; }
+    .nav-btn:hover { color: #fff; }
+    .nav-link { color: rgba(203,213,225,0.7); font-size: 13px; font-weight: 600; text-decoration: none; transition: color 0.2s; }
+    .nav-link:hover { color: #fff; text-decoration: none; }
+
+    /* ── CONTENT ── */
+    .container { max-width: 760px; margin: 0 auto; padding: 52px 24px 100px; }
+    .page-header { margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
     h1 { font-size: 32px; font-weight: 800; letter-spacing: -1px; color: #fff; margin-bottom: 8px; }
     .meta { font-size: 13px; color: #64748b; }
     h2 { font-size: 18px; font-weight: 700; color: #fff; margin: 36px 0 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(0,255,180,0.15); }
@@ -26,25 +38,131 @@
     .highlight p { margin: 0; color: #cbd5e1; }
     a { color: #00ffb4; text-decoration: none; }
     a:hover { text-decoration: underline; }
-    .back { display: inline-flex; align-items: center; gap: 8px; color: #475569; font-size: 13px; text-decoration: none; margin-bottom: 40px; transition: color 0.2s; }
-    .back:hover { color: #00ffb4; }
     table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 14px; }
     th { text-align: left; padding: 10px 14px; background: rgba(255,255,255,0.05); color: #fff; font-weight: 600; border: 1px solid rgba(255,255,255,0.08); }
     td { padding: 10px 14px; color: #94a3b8; border: 1px solid rgba(255,255,255,0.06); vertical-align: top; }
     .footer-nav { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; gap: 20px; flex-wrap: wrap; }
-    .footer-nav a { font-size: 13px; color: #475569; text-decoration: none; }
-    .footer-nav a:hover { color: #00ffb4; }
+    .footer-nav a, .footer-nav button { font-size: 13px; color: #475569; text-decoration: none; background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; transition: color 0.2s; }
+    .footer-nav a:hover, .footer-nav button:hover { color: #00ffb4; text-decoration: none; }
+
+    /* ── CONTACT MODAL ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); align-items: center; justify-content: center; padding: 24px; }
+    .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+    .modal-box { background: #13131f; border: 1px solid rgba(0,255,180,0.2); border-radius: 24px; max-width: 520px; width: 100%; box-shadow: 0 40px 80px rgba(0,0,0,0.8); overflow: hidden; animation: scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+    .modal-header { background: linear-gradient(135deg, rgba(0,255,180,0.1) 0%, rgba(99,102,241,0.1) 100%); border-bottom: 1px solid rgba(0,255,180,0.12); padding: 28px 32px 22px; }
+    .modal-header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .modal-badge { display: inline-flex; align-items: center; gap: 7px; background: rgba(0,255,180,0.12); border: 1px solid rgba(0,255,180,0.25); border-radius: 20px; padding: 4px 12px; margin-bottom: 10px; }
+    .modal-badge-dot { width: 5px; height: 5px; background: #00ffb4; border-radius: 50%; box-shadow: 0 0 6px #00ffb4; display: inline-block; }
+    .modal-badge-text { font-size: 11px; color: #00ffb4; font-weight: 700; letter-spacing: 1px; }
+    .modal-close { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(148,163,184,0.6); font-size: 20px; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; font-family: inherit; }
+    .modal-title { font-size: 24px; font-weight: 800; letter-spacing: -0.8px; color: #fff; margin-bottom: 5px; }
+    .modal-subtitle { color: rgba(148,163,184,0.7); font-size: 13px; }
+    .modal-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .modal-tag { font-size: 11px; color: rgba(203,213,225,0.6); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 3px 9px; }
+    .modal-body { padding: 26px 32px 32px; }
+    .modal-form { display: flex; flex-direction: column; gap: 16px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-label { display: block; font-size: 11px; font-weight: 700; color: #00ffb4; margin-bottom: 7px; text-transform: uppercase; letter-spacing: 1px; }
+    .form-input, .form-textarea { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px; font-family: inherit; transition: border-color 0.2s; box-sizing: border-box; }
+    .form-input:focus, .form-textarea:focus { outline: none; border-color: #00ffb4; }
+    .form-textarea { resize: none; }
+    .form-submit { background: #00ffb4; color: #000; border: none; border-radius: 12px; padding: 15px; font-size: 15px; font-weight: 800; width: 100%; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+    .form-submit:hover:not(:disabled) { background: #00e5a0; }
+    .form-submit:disabled { background: rgba(0,255,180,0.5); cursor: not-allowed; }
+    .form-note { font-size: 11px; color: rgba(148,163,184,0.5); text-align: center; }
+    .form-error { color: #f87171; font-size: 13px; text-align: center; background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); border-radius: 8px; padding: 10px; display: none; }
+    .form-error.show { display: block; }
+    .form-success { text-align: center; padding: 28px 0; display: none; }
+    .form-success.show { display: block; }
+    .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid #000; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <div class="container">
-    <a class="back" href="https://www.kloudaudit.eu">← Back to KloudAudit</a>
 
-    <div class="header">
-      <a class="logo" href="https://www.kloudaudit.eu">
-        <div class="logo-icon">⚡</div>
-        <span class="logo-text">KloudAudit</span>
+  <!-- ── NAV ── -->
+  <nav class="site-nav">
+    <a class="nav-logo" href="https://www.kloudaudit.eu">
+      <div class="nav-logo-icon">⚡</div>
+      <span class="nav-logo-text">KloudAudit</span>
+    </a>
+    <div class="nav-right">
+      <a class="nav-upwork" href="https://www.upwork.com/freelancers/~015c346a56b09a2a89" target="_blank" rel="noopener noreferrer">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.561 13.158c-1.102 0-2.135-.467-3.074-1.227l.228-1.076.008-.042c.207-1.143.849-3.06 2.839-3.06 1.492 0 2.703 1.212 2.703 2.703-.001 1.489-1.212 2.702-2.704 2.702zm0-8.14c-2.539 0-4.51 1.649-5.31 4.366-1.22-1.834-2.148-4.036-2.687-5.892H7.828v7.112c-.002 1.406-1.141 2.546-2.547 2.546-1.405 0-2.543-1.14-2.543-2.546V3.492H0v7.112c0 2.914 2.37 5.303 5.281 5.303 2.913 0 5.283-2.389 5.283-5.303v-1.19c.529 1.107 1.182 2.229 1.974 3.221l-1.673 7.873h2.797l1.213-5.71c1.063.679 2.285 1.109 3.686 1.109 3 0 5.439-2.452 5.439-5.45 0-3-2.439-5.439-5.439-5.439z"/></svg>
+        Hire on Upwork
       </a>
+      <button class="nav-btn" onclick="openContact()">Contact Us</button>
+      <a class="nav-link" href="https://dev.to/kloudaudit" target="_blank" rel="noopener noreferrer">Blog</a>
+    </div>
+  </nav>
+
+  <!-- ── CONTACT MODAL ── -->
+  <div class="modal-overlay" id="contactModal" onclick="if(event.target===this)closeContact()">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-header-top">
+          <div>
+            <div class="modal-badge">
+              <span class="modal-badge-dot"></span>
+              <span class="modal-badge-text">GET IN TOUCH · WE REPLY WITHIN 24HRS</span>
+            </div>
+            <h2 class="modal-title">Contact us</h2>
+            <p class="modal-subtitle">Questions, partnerships or custom audits — we're here</p>
+          </div>
+          <button class="modal-close" onclick="closeContact()" aria-label="Close">×</button>
+        </div>
+        <div class="modal-tags">
+          <span class="modal-tag">✓ Cloud cost questions</span>
+          <span class="modal-tag">✓ Custom audit requests</span>
+          <span class="modal-tag">✓ Partnership enquiries</span>
+          <span class="modal-tag">✓ Technical support</span>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="form-success" id="contactSuccess">
+          <div style="font-size:48px;margin-bottom:14px">✅</div>
+          <p style="color:#00ffb4;font-weight:800;font-size:22px;letter-spacing:-0.5px;margin-bottom:8px">Message Sent!</p>
+          <p style="color:rgba(203,213,225,0.7);font-size:14px;line-height:1.6;margin-bottom:24px">We'll get back to you within 24hrs.<br>Check your inbox and spam folder.</p>
+          <button onclick="closeContact()" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(203,213,225,0.7);font-size:13px;font-weight:600;padding:9px 20px;cursor:pointer;font-family:inherit">Close</button>
+        </div>
+        <form class="modal-form" id="contactForm" onsubmit="submitContact(event)">
+          <input type="hidden" name="_subject" value="New Contact Enquiry — KloudAudit">
+          <input type="hidden" name="form_type" value="contact">
+          <div class="form-row">
+            <div>
+              <label class="form-label" for="c-fname">First Name</label>
+              <input class="form-input" id="c-fname" type="text" name="first_name" placeholder="Jan" required>
+            </div>
+            <div>
+              <label class="form-label" for="c-lname">Last Name</label>
+              <input class="form-input" id="c-lname" type="text" name="last_name" placeholder="Kowalski" required>
+            </div>
+          </div>
+          <div>
+            <label class="form-label" for="c-email">Work Email</label>
+            <input class="form-input" id="c-email" type="email" name="email" placeholder="jan@company.com" required>
+          </div>
+          <div>
+            <label class="form-label" for="c-company">Company</label>
+            <input class="form-input" id="c-company" type="text" name="company" placeholder="Acme Corp">
+          </div>
+          <div>
+            <label class="form-label" for="c-msg">How can we help? <span style="color:rgba(148,163,184,0.5);font-weight:400;text-transform:none">(optional)</span></label>
+            <textarea class="form-textarea" id="c-msg" name="message" rows="3" placeholder="e.g. I have questions about the blueprint, or I'd like a custom audit..." required></textarea>
+          </div>
+          <button class="form-submit" type="submit" id="contactSubmit">Send Message →</button>
+          <p class="form-error" id="contactError">⚠ Something went wrong. Please try again.</p>
+          <p class="form-note">Or email us directly at <a href="mailto:admin@kloudaudit.eu" style="color:#00ffb4;text-decoration:none">admin@kloudaudit.eu</a></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE CONTENT ── -->
+  <div class="container">
+    <div class="page-header">
       <h1>Privacy Policy</h1>
       <p class="meta">Last updated: 3 May 2026 · Version 1.0 · Applicable law: GDPR (EU) 2016/679</p>
     </div>
@@ -237,12 +355,60 @@
       <li><strong>Email:</strong> <a href="mailto:admin@kloudaudit.eu">admin@kloudaudit.eu</a></li>
       <li><strong>Response time:</strong> Within 30 days (usually faster)</li>
     </ul>
+    <p>Or use our <button onclick="openContact()" style="background:none;border:none;color:#00ffb4;font-size:15px;cursor:pointer;font-family:inherit;padding:0;text-decoration:underline">contact form</button>.</p>
 
     <div class="footer-nav">
       <a href="https://www.kloudaudit.eu">Home</a>
       <a href="https://www.kloudaudit.eu/terms/">Terms of Service</a>
-      <a href="mailto:admin@kloudaudit.eu">Contact</a>
+      <button onclick="openContact()">Contact</button>
     </div>
   </div>
+
+  <script>
+    function openContact() {
+      document.getElementById('contactModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeContact() {
+      const modal = document.getElementById('contactModal');
+      modal.classList.remove('open');
+      document.body.style.overflow = '';
+      setTimeout(() => {
+        document.getElementById('contactForm').style.display = '';
+        document.getElementById('contactSuccess').classList.remove('show');
+        document.getElementById('contactError').classList.remove('show');
+        document.getElementById('contactSubmit').disabled = false;
+        document.getElementById('contactSubmit').innerHTML = 'Send Message →';
+        document.getElementById('contactForm').reset();
+      }, 300);
+    }
+    async function submitContact(e) {
+      e.preventDefault();
+      const btn = document.getElementById('contactSubmit');
+      const err = document.getElementById('contactError');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Sending...';
+      err.classList.remove('show');
+      try {
+        const res = await fetch('https://formspree.io/f/mlgarana', {
+          method: 'POST',
+          body: new FormData(e.target),
+          headers: { Accept: 'application/json' }
+        });
+        if (res.ok) {
+          document.getElementById('contactForm').style.display = 'none';
+          document.getElementById('contactSuccess').classList.add('show');
+          setTimeout(closeContact, 3000);
+        } else {
+          throw new Error();
+        }
+      } catch {
+        btn.disabled = false;
+        btn.innerHTML = 'Send Message →';
+        err.classList.add('show');
+      }
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeContact(); });
+  </script>
 </body>
 </html>
