@@ -72,6 +72,45 @@ const IMPACT_COLOR = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24", 
 const EFFORT_COLOR = { Low: "#4ade80", Medium: "#fbbf24", High: "#f87171" };
 const PROVIDERS = ["AWS", "GCP", "Azure", "Multi-cloud"];
 
+const SEC_SECTIONS = [
+  { id: "iam", icon: "🔐", title: "Identity & Access", color: "#f87171",
+    desc: "IAM policies, MFA enforcement, privilege escalation paths",
+    checks: [
+      { id: "mfa_all", label: "MFA not enforced for all users", detail: "Users can authenticate with password only — no second factor", risk: "Critical" },
+      { id: "iam_wildcards", label: "IAM wildcard permissions (Action: *)", detail: "Overly permissive policies granting full service access", risk: "Critical" },
+      { id: "root_usage", label: "Root account used for daily operations", detail: "Root credentials should never be used after initial setup", risk: "High" },
+      { id: "unused_keys", label: "Access keys older than 90 days", detail: "Long-lived credentials increase breach exposure window", risk: "High" },
+    ]
+  },
+  { id: "network", icon: "🌐", title: "Network & Exposure", color: "#fb923c",
+    desc: "Public exposure, VPC isolation, security groups",
+    checks: [
+      { id: "public_buckets", label: "Public S3/storage buckets detected", detail: "Storage accessible without authentication from the internet", risk: "Critical" },
+      { id: "open_security_groups", label: "Security groups open to 0.0.0.0/0", detail: "Ports open to entire internet — including management ports", risk: "High" },
+      { id: "no_vpc", label: "Resources not isolated in VPC", detail: "Services running without network boundary controls", risk: "High" },
+      { id: "no_waf", label: "No WAF on public endpoints", detail: "Web application firewall absent on internet-facing services", risk: "Medium" },
+    ]
+  },
+  { id: "data", icon: "🗄", title: "Data Protection", color: "#fbbf24",
+    desc: "Encryption at rest, in transit, secrets management",
+    checks: [
+      { id: "no_encryption_rest", label: "Data at rest not encrypted", detail: "Databases or storage volumes without encryption enabled", risk: "High" },
+      { id: "no_encryption_transit", label: "Data in transit not encrypted (HTTP)", detail: "Internal or external traffic using unencrypted channels", risk: "High" },
+      { id: "hardcoded_secrets", label: "Secrets hardcoded in code/config", detail: "API keys, passwords, or tokens in source code or env vars", risk: "Critical" },
+      { id: "no_kms", label: "No key management system", detail: "Encryption keys not centrally managed or rotated", risk: "Medium" },
+    ]
+  },
+  { id: "logging", icon: "📋", title: "Logging & Detection", color: "#818cf8",
+    desc: "Audit trails, alerting, incident response",
+    checks: [
+      { id: "no_cloudtrail", label: "Audit logging not enabled", detail: "No CloudTrail/Audit Log — no record of who did what", risk: "High" },
+      { id: "no_alerts", label: "No security alerts configured", detail: "No notifications for suspicious activity or policy violations", risk: "High" },
+      { id: "no_ir_plan", label: "No incident response plan", detail: "No documented process for security incidents", risk: "Medium" },
+      { id: "no_vuln_scanning", label: "No vulnerability scanning", detail: "Infrastructure not scanned for known CVEs or misconfigs", risk: "Medium" },
+    ]
+  },
+];
+
 function AnimatedNumber({ value, prefix = "", suffix = "", duration = 900 }) {
   const [display, setDisplay] = useState(0);
   const startRef = useRef(0);
@@ -228,6 +267,7 @@ const globalCss = `
     @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 1; } 30% { transform: translateY(-6px); opacity: 0.6; } }
   @keyframes toastIn { from { opacity:0; transform:translateX(20px) scale(0.9); } to { opacity:1; transform:translateX(0) scale(1); } }
   @keyframes pulse-green-ring { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.04); opacity: 0; } }
+  @keyframes urgency-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
   .pulse-green-ring { position: relative; }
   .pulse-green-ring::after { content: ''; position: absolute; inset: -2px; border-radius: 14px; border: 1.5px solid rgba(0,255,180,0.5); animation: pulse-green-ring 2s ease-in-out infinite; pointer-events: none; }
   .trust-link { display:flex; align-items:center; gap:10px; text-decoration:none; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; transition:all 0.2s; }
@@ -537,7 +577,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
   const handlePurchase = async (e) => {
     e.preventDefault();
     if (!email || flaggedIds.length === 0) return;
-    window.gtag?.('event', 'security_checkout_initiated', { amount: currency.securityAmount, currency: currency.stripeCurrency });
+    window.gtag?.('event', 'security_checkout_initiated', { amount: selectedProduct === "bundle" ? (currency.bundleAmount || 34900) : (currency.securityAmount || 11900), currency: currency.stripeCurrency });
     setStatus("loading");
     try {
       const isBundle = selectedProduct === "bundle";
@@ -557,6 +597,14 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
           productType: isBundle ? "bundle" : "security_blueprint",
         }),
       });
+      if (!res.ok) {
+        const ct = res.headers.get("content-type") || "";
+        if (ct.includes("application/json")) {
+          const errData = await res.json();
+          throw new Error(errData.error || `Checkout failed (${res.status})`);
+        }
+        throw new Error(`Checkout failed (${res.status})`);
+      }
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
@@ -703,7 +751,6 @@ function SecSampleModal({ onClose }) {
   ];
   const RISK_COLOR = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24" };
   const score = 31;
-  const circ = 2 * Math.PI * 54;
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
       <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="sec-sample-title" style={{ background: "linear-gradient(145deg, #0f0f1a, #13131f)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "20px", maxWidth: "640px", width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.7)" }}>
@@ -1470,9 +1517,10 @@ const RESTORABLE_STEPS = ['intake', 'audit', 'email_gate', 'report'];
 const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, provider, flaggedCount }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | error
+  const [withdrawalChecked, setWithdrawalChecked] = useState(false);
 
   const handleSubmit = async () => {
-    if (!email) return;
+    if (!email || !withdrawalChecked) return;
     setStatus("loading");
     try {
       await onBuy(email);
@@ -1514,14 +1562,14 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
           autoFocus
         />
         <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "14px", padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px" }}>
-          <input type="checkbox" id="withdrawal-cost" style={{ marginTop: "2px", accentColor: "#00ffb4", flexShrink: 0, cursor: "pointer" }} />
+          <input type="checkbox" id="withdrawal-cost" required checked={withdrawalChecked} onChange={e => setWithdrawalChecked(e.target.checked)} style={{ marginTop: "2px", accentColor: "#00ffb4", flexShrink: 0, cursor: "pointer" }} />
           <label htmlFor="withdrawal-cost" style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.55, cursor: "pointer" }}>
             I understand this is a digital product delivered immediately and I waive my right of withdrawal upon delivery. See <a href="https://www.kloudaudit.eu/terms/" target="_blank" rel="noopener" style={{ color: "#00ffb4" }}>Terms</a>.
           </label>
         </div>
         <button className="glow-btn" onClick={handleSubmit}
-          disabled={status === "loading"}
-          style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+          disabled={status === "loading" || !withdrawalChecked}
+          style={{ background: withdrawalChecked ? "var(--green)" : "rgba(0,255,180,0.4)", color: "#000", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: withdrawalChecked ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
           {status === "loading" ? (
             <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Redirecting to payment...</>
           ) : `Pay ${currency.blueprintPrice} → Get Blueprint`}
@@ -1758,6 +1806,8 @@ export default function App() {
   const [showShareCard, setShowShareCard] = useState(false);
   const [sectionToast, setSectionToast] = useState(null); // audit section-complete toast
   const [secSectionToast, setSecSectionToast] = useState(null); // security section-complete toast
+  const sectionToastTimerRef = useRef(null);
+  const secToastTimerRef = useRef(null);
   // ── SECURITY AUDIT STATE ──────────────────────────────────────────────────
   const [secChecked, setSecChecked] = useState({});
   const [secStep, setSecStep] = useState(0);
@@ -1817,10 +1867,6 @@ export default function App() {
     }
     if (s === 'security_intro') {
       window.gtag?.('event', 'security_audit_started', {});
-    }
-    if (s === 'security_report') {
-      const flaggedSecCount = Object.keys(secChecked).filter(k => secChecked[k]).length;
-      window.gtag?.('event', 'security_report_viewed', { flagged_count: flaggedSecCount, sec_score: secScore });
     }
     setStep(s);
     setPageKey(k => k + 1);
@@ -2069,6 +2115,14 @@ useEffect(() => {
         sessionId,
       }),
     });
+    if (!res.ok) {
+      const ct = res.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const errData = await res.json();
+        throw new Error(errData.error || `Checkout failed (${res.status})`);
+      }
+      throw new Error(`Checkout failed (${res.status})`);
+    }
     const data = await res.json();
     if (data.url) {
       window.location.href = data.url;
@@ -2318,44 +2372,6 @@ aws ec2 describe-reserved-instances \\
 
   // ── SECURITY AUDIT INTRO ──────────────────────────────────────────────────
   if (step === "security_intro") {
-    const SEC_SECTIONS = [
-      { id: "iam", icon: "🔐", title: "Identity & Access", color: "#f87171",
-        desc: "IAM policies, MFA enforcement, privilege escalation paths",
-        checks: [
-          { id: "mfa_all", label: "MFA not enforced for all users", detail: "Users can authenticate with password only — no second factor", risk: "Critical" },
-          { id: "iam_wildcards", label: "IAM wildcard permissions (Action: *)", detail: "Overly permissive policies granting full service access", risk: "Critical" },
-          { id: "root_usage", label: "Root account used for daily operations", detail: "Root credentials should never be used after initial setup", risk: "High" },
-          { id: "unused_keys", label: "Access keys older than 90 days", detail: "Long-lived credentials increase breach exposure window", risk: "High" },
-        ]
-      },
-      { id: "network", icon: "🌐", title: "Network & Exposure", color: "#fb923c",
-        desc: "Public exposure, VPC isolation, security groups",
-        checks: [
-          { id: "public_buckets", label: "Public S3/storage buckets detected", detail: "Storage accessible without authentication from the internet", risk: "Critical" },
-          { id: "open_security_groups", label: "Security groups open to 0.0.0.0/0", detail: "Ports open to entire internet — including management ports", risk: "High" },
-          { id: "no_vpc", label: "Resources not isolated in VPC", detail: "Services running without network boundary controls", risk: "High" },
-          { id: "no_waf", label: "No WAF on public endpoints", detail: "Web application firewall absent on internet-facing services", risk: "Medium" },
-        ]
-      },
-      { id: "data", icon: "🗄", title: "Data Protection", color: "#fbbf24",
-        desc: "Encryption at rest, in transit, secrets management",
-        checks: [
-          { id: "no_encryption_rest", label: "Data at rest not encrypted", detail: "Databases or storage volumes without encryption enabled", risk: "High" },
-          { id: "no_encryption_transit", label: "Data in transit not encrypted (HTTP)", detail: "Internal or external traffic using unencrypted channels", risk: "High" },
-          { id: "hardcoded_secrets", label: "Secrets hardcoded in code/config", detail: "API keys, passwords, or tokens in source code or env vars", risk: "Critical" },
-          { id: "no_kms", label: "No key management system", detail: "Encryption keys not centrally managed or rotated", risk: "Medium" },
-        ]
-      },
-      { id: "logging", icon: "📋", title: "Logging & Detection", color: "#818cf8",
-        desc: "Audit trails, alerting, incident response",
-        checks: [
-          { id: "no_cloudtrail", label: "Audit logging not enabled", detail: "No CloudTrail/Audit Log — no record of who did what", risk: "High" },
-          { id: "no_alerts", label: "No security alerts configured", detail: "No notifications for suspicious activity or policy violations", risk: "High" },
-          { id: "no_ir_plan", label: "No incident response plan", detail: "No documented process for security incidents", risk: "Medium" },
-          { id: "no_vuln_scanning", label: "No vulnerability scanning", detail: "Infrastructure not scanned for known CVEs or misconfigs", risk: "Medium" },
-        ]
-      },
-    ];
 
     const allSecChecks = SEC_SECTIONS.flatMap(s => s.checks);
     const flaggedSec = allSecChecks.filter(c => secChecked[c.id]);
@@ -2492,7 +2508,7 @@ aws ec2 describe-reserved-instances \\
                   <button onClick={() => setSecStep(s => s - 1)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "12px 20px", color: "var(--text-muted)", fontSize: "14px", cursor: "pointer" }}>← Back</button>
                 )}
                 {secStep < SEC_SECTIONS.length - 1 ? (
-                  <button onClick={() => { const next = secStep + 1; setSecStep(next); window.gtag?.('event', 'security_section_viewed', { section: SEC_SECTIONS[next]?.title, section_index: next }); const flaggedInSec = currentSection.checks.filter(c => secChecked[c.id]).length; const msg = `✓ ${currentSection.title} complete — ${flaggedInSec} issue${flaggedInSec !== 1 ? 's' : ''} found`; setSecSectionToast(msg); setTimeout(() => setSecSectionToast(null), 1500); }} style={{ flex: 1, padding: "13px 24px", borderRadius: "10px", border: "none", background: currentSection.color, color: "#000", fontWeight: 800, fontSize: "14px", cursor: "pointer", boxShadow: `0 4px 16px ${currentSection.color}35` }}>
+                  <button onClick={() => { const next = secStep + 1; setSecStep(next); window.gtag?.('event', 'security_section_viewed', { section: SEC_SECTIONS[next]?.title, section_index: next }); const flaggedInSec = currentSection.checks.filter(c => secChecked[c.id]).length; const msg = `✓ ${currentSection.title} complete — ${flaggedInSec} issue${flaggedInSec !== 1 ? 's' : ''} found`; clearTimeout(secToastTimerRef.current); setSecSectionToast(msg); secToastTimerRef.current = setTimeout(() => setSecSectionToast(null), 1500); }} style={{ flex: 1, padding: "13px 24px", borderRadius: "10px", border: "none", background: currentSection.color, color: "#000", fontWeight: 800, fontSize: "14px", cursor: "pointer", boxShadow: `0 4px 16px ${currentSection.color}35` }}>
                     Next: {SEC_SECTIONS[secStep + 1].title} →
                   </button>
                 ) : (
@@ -2502,7 +2518,7 @@ aws ec2 describe-reserved-instances \\
                       const highW  = Math.min(highCount * 5, 20);
                       const score  = Math.max(0, Math.min(100, Math.round(100 - issueW - critW - highW)));
                       setSecScore(score);
-                      window.gtag?.('event', 'security_report_reached', { flagged_count: flaggedSec.length });
+                      window.gtag?.('event', 'security_report_viewed', { flagged_count: flaggedSec.length, sec_score: score });
                       goTo("security_report");
                     }}
                     disabled={flaggedSec.length === 0}
@@ -2528,7 +2544,7 @@ aws ec2 describe-reserved-instances \\
                   <div style={{ background: urgency.bg, border: `1px solid ${urgency.border}`, borderRadius: "14px", padding: "18px", transition: "all 0.3s" }}>
                     <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: urgency.msg ? "6px" : "12px" }}>Live Risk Tracker</p>
                     {urgency.msg && (
-                      <p style={{ fontSize: "12px", fontWeight: 800, color: urgency.msgColor, marginBottom: "12px", animation: urgency.pulse ? "pulse-dot 1.5s infinite" : "none" }}>{urgency.msg}</p>
+                      <p style={{ fontSize: "12px", fontWeight: 800, color: urgency.msgColor, marginBottom: "12px", animation: urgency.pulse ? "urgency-pulse 1.5s ease-in-out infinite" : "none" }}>{urgency.msg}</p>
                     )}
                     {flaggedSec.length === 0 ? (
                       <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", lineHeight: 1.65 }}>Flag issues to see your risk level.</p>
@@ -3893,8 +3909,9 @@ aws ec2 describe-reserved-instances \\
                     const prevSec = AUDIT_SECTIONS[activeSection];
                     const flaggedInSec = prevSec.checks.filter(c => checked[c.id]).length;
                     const msg = `✓ ${prevSec.label} complete — ${flaggedInSec} issue${flaggedInSec !== 1 ? 's' : ''} found`;
+                    clearTimeout(sectionToastTimerRef.current);
                     setSectionToast(msg);
-                    setTimeout(() => setSectionToast(null), 1500);
+                    sectionToastTimerRef.current = setTimeout(() => setSectionToast(null), 1500);
                     setActiveSection(a => a + 1);
                   }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)" }}>Next: {AUDIT_SECTIONS[activeSection + 1].label} →</button>
                 ) : (
