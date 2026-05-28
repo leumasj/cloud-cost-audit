@@ -1518,6 +1518,7 @@ const RESTORABLE_STEPS = ['intake', 'audit', 'email_gate', 'report'];
 const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, provider, flaggedCount }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | error
+  const [errorMsg, setErrorMsg] = useState("");
   const [withdrawalChecked, setWithdrawalChecked] = useState(false);
 
   const handleSubmit = async () => {
@@ -1526,9 +1527,10 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
     try {
       await onBuy(email);
       // onBuy redirects to Stripe on success — execution stops here
-    } catch {
+    } catch (err) {
+      setErrorMsg(err?.message || "Unknown error");
       setStatus("error");
-      setTimeout(() => setStatus("idle"), 4000);
+      setTimeout(() => setStatus("idle"), 6000);
     }
   };
 
@@ -1576,7 +1578,7 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
           ) : `Pay ${currency.blueprintPrice} → Get Blueprint`}
         </button>
         <p style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center", marginTop: "8px", marginBottom: "0" }}>🕐 Delivered to your inbox in ~2 minutes</p>
-        {status === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Something went wrong. Please try again or email admin@kloudaudit.eu</p>}
+        {status === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Error: {errorMsg} — email admin@kloudaudit.eu</p>}
         <p style={{ fontSize: "12px", color: "var(--text-dim)", textAlign: "center", marginTop: "14px", lineHeight: 1.6 }}>💚 If the Blueprint doesn&apos;t identify at least one actionable fix, email <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a> for a full refund. No questions asked.</p>
         <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "10px" }}>🔒 Secure payment via Stripe · Prices inclusive of applicable taxes · admin@kloudaudit.eu</p>
         <button onClick={onClose} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
