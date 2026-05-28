@@ -14,6 +14,14 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Lightweight geo probe — used by frontend for currency detection
+  // Reads Vercel's built-in header; no DB hit, no rate limits
+  if (req.query.geo === '1') {
+    const country = req.headers['x-vercel-ip-country'] || '';
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json({ country_code: country });
+  }
   // HEAD requests only need the status code, not the body
   if (req.method === 'HEAD') {
     return res.status(200).end();
