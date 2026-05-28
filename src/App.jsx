@@ -1973,9 +1973,23 @@ export default function App() {
       SE: USD, NO: USD, DK: USD, CH: USD, IS: USD,
       SG: USD, IN: USD, JP: USD, KR: USD, HK: USD, TW: USD,
     };
+    // Serve from 24h localStorage cache to avoid ipapi.co rate limit (1000 req/day free tier)
+    try {
+      const cached = localStorage.getItem('ka_currency');
+      if (cached) {
+        const { currency: saved, ts } = JSON.parse(cached);
+        if (Date.now() - ts < 24 * 60 * 60 * 1000) { setCurrency(saved); return; }
+      }
+    } catch {}
     fetch("https://ipapi.co/json/")
       .then(r => r.json())
-      .then(data => { const match = CURRENCY_MAP[data.country_code]; if (match) setCurrency(match); })
+      .then(data => {
+        const match = CURRENCY_MAP[data.country_code];
+        if (match) {
+          setCurrency(match);
+          try { localStorage.setItem('ka_currency', JSON.stringify({ currency: match, ts: Date.now() })); } catch {}
+        }
+      })
       .catch(() => {}); // silently keep USD default on failure
   }, []);
 
