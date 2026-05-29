@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, memo } from "react";
+import SEOPage, { SEO_PAGES } from "./SEOPages.jsx";
 
 const AUDIT_SECTIONS = [
   {
@@ -1961,7 +1962,22 @@ export default function App() {
     };
 
     window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
+
+    // navigateSEO — fired by "Related Guides" links inside SEOPage
+    const handleNavigateSEO = (e) => {
+      const relatedPage = e.detail;
+      if (!relatedPage) return;
+      window.history.pushState({ slug: relatedPage.slug }, relatedPage.title, `/${relatedPage.slug}/`);
+      // Force a re-render — the SEO slug detector in the render path will pick up the new URL
+      setPageKey(k => k + 1);
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("navigateSEO", handleNavigateSEO);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("navigateSEO", handleNavigateSEO);
+    };
   }, []);
 
   // ── CURRENCY DETECTION ───────────────────────────────────────────
@@ -2915,6 +2931,47 @@ aws iam simulate-principal-policy \\
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // ── SEO PAGE ROUTING ─────────────────────────────────────────────────────
+  // Maps each issue ID to the audit section index (0–4) so the SEO page CTA
+  // deep-links visitors directly to the most relevant part of the audit.
+  const ISSUE_TO_SECTION = {
+    rightsizing: 0, reserved: 0, spot: 0, old_gen: 0, stopped: 0,   // Compute
+    s3_tier: 1, unattached_volumes: 1, snapshots: 1, data_transfer: 1, // Storage
+    nat_gateway: 2, unused_ips: 2, lb_unused: 2,                      // Network
+    rds_idle: 3, rds_size: 3, cache_missing: 3,                       // Database
+    no_budgets: 4, unused_services: 4, dev_prod_parity: 4,            // Governance
+  };
+
+  const seoSlug = window.location.pathname.replace(/^\/|\/$/g, "");
+  const seoPage = step === "intro" && seoSlug
+    ? SEO_PAGES.find(p => p.slug === seoSlug)
+    : null;
+
+  if (seoPage) {
+    const sectionIndex = seoPage.issue ? (ISSUE_TO_SECTION[seoPage.issue] ?? 0) : 0;
+    const isSecurity = seoPage.type === "security";
+
+    const handleSeoStartAudit = () => {
+      window.gtag?.('event', 'seo_cta_clicked', { slug: seoSlug, section: sectionIndex, type: seoPage.type });
+      if (isSecurity) {
+        goTo("security_intro");
+      } else {
+        setActiveSection(sectionIndex);
+        goTo("intake");
+      }
+    };
+
+    return (
+      <div className="app">
+        <style>{globalCss}</style>
+        <ParticleBackground />
+        {showContact && <ContactModal onClose={() => setShowContact(false)} />}
+        <Nav />
+        <SEOPage page={seoPage} onStartAudit={handleSeoStartAudit} />
       </div>
     );
   }
@@ -3947,7 +4004,7 @@ aws iam simulate-principal-policy \\
               💡 For bills under $500/month, the free audit checklist gives you the most value. The paid Blueprint ROI is strongest at $1,500+/month.
             </div>
           )}
-          <button className="glow-btn" disabled={!provider || !monthlyBill || parseFloat(monthlyBill) <= 0} onClick={() => { setActiveSection(0); goTo("audit"); }}
+          <button className="glow-btn" disabled={!provider || !monthlyBill || parseFloat(monthlyBill) <= 0} onClick={() => goTo("audit")}
             style={{ background: provider && monthlyBill ? "var(--green)" : "rgba(255,255,255,0.06)", color: provider && monthlyBill ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "16px", fontSize: "15px", boxShadow: provider && monthlyBill ? "0 0 24px rgba(0,255,180,0.3)" : "none", cursor: provider && monthlyBill ? "pointer" : "not-allowed", marginTop: "8px" }}>
             Begin Audit →
           </button>

@@ -179,6 +179,15 @@ function useSEOHead(page) {
   }, [page.slug]);
 }
 
+// Maps issue IDs → audit section label for contextual CTA text
+const SECTION_LABEL = {
+  rightsizing: "Compute", reserved: "Compute", spot: "Compute", old_gen: "Compute", stopped: "Compute",
+  s3_tier: "Storage", unattached_volumes: "Storage", snapshots: "Storage", data_transfer: "Storage",
+  nat_gateway: "Network", unused_ips: "Network", lb_unused: "Network",
+  rds_idle: "Database", rds_size: "Database", cache_missing: "Database",
+  no_budgets: "Governance", unused_services: "Governance", dev_prod_parity: "Governance",
+};
+
 // ── SEO Page Component ─────────────────────────────────────────────────────
 export default function SEOPage({ page, onStartAudit }) {
   // Inject all SEO tags and set real URL
@@ -340,17 +349,40 @@ export default function SEOPage({ page, onStartAudit }) {
         </div>
       )}
 
-      {/* Free audit CTA */}
-      <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.08) 0%, rgba(99,102,241,0.08) 100%)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "16px", padding: "24px 28px", marginBottom: "40px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
-        <div>
-          <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--green)", marginBottom: "4px" }}>⚡ Not sure if this applies to you?</p>
-          <p style={{ fontSize: "14px", color: "var(--text-muted)" }}>Run a free 15-minute audit and see exactly which issues your infrastructure has — with savings estimates.</p>
-        </div>
-        <button className="glow-btn" onClick={onStartAudit}
-          style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 24px", fontSize: "14px", fontWeight: 700, whiteSpace: "nowrap", cursor: "pointer" }}>
-          Free Audit →
-        </button>
-      </div>
+      {/* Free audit CTA — contextual label based on issue section */}
+      {(() => {
+        const section = page.issue ? SECTION_LABEL[page.issue] : null;
+        const isSec = page.type === "security";
+        const ctaLabel = isSec
+          ? "Run Free Security Audit →"
+          : section
+          ? `Check Your ${section} Costs →`
+          : "Start Free Audit →";
+        const ctaNote = isSec
+          ? "Free · 16 checks · No credentials"
+          : section
+          ? `Jumps straight to the ${section} section`
+          : "Free · 18 checks · 15 minutes";
+        return (
+          <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.08) 0%, rgba(99,102,241,0.08) 100%)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "16px", padding: "24px 28px", marginBottom: "40px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
+            <div>
+              <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--green)", marginBottom: "4px" }}>⚡ Does this apply to your infrastructure?</p>
+              <p style={{ fontSize: "14px", color: "var(--text-muted)" }}>
+                {section
+                  ? `Run the free audit and land directly on the ${section} section — see your actual savings estimate in under 5 minutes.`
+                  : "Run a free 15-minute audit and see exactly which issues your infrastructure has — with savings estimates."}
+              </p>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+              <button className="glow-btn" onClick={onStartAudit}
+                style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 24px", fontSize: "14px", fontWeight: 700, whiteSpace: "nowrap", cursor: "pointer" }}>
+                {ctaLabel}
+              </button>
+              <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{ctaNote}</span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Tips */}
       <div style={{ marginBottom: "36px" }}>
@@ -408,7 +440,11 @@ export default function SEOPage({ page, onStartAudit }) {
         </div>
         <button className="glow-btn" onClick={onStartAudit}
           style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", fontWeight: 700, cursor: "pointer", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>
-          Start Free Audit → Get Blueprint
+          {page.issue && SECTION_LABEL[page.issue]
+            ? `Check ${SECTION_LABEL[page.issue]} Costs → Get Blueprint`
+            : page.type === "security"
+            ? "Run Security Audit → Get Blueprint"
+            : "Start Free Audit → Get Blueprint"}
         </button>
       </div>
 
