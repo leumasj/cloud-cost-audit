@@ -3994,63 +3994,152 @@ aws iam simulate-principal-policy \\
           ))}
         </div>
 
-        {/* ── PRICING — Free vs Paid ── */}
+        {/* ── PRICING — Two buying journeys ── */}
         <div style={{ marginBottom: "90px" }}>
-          <div style={{ textAlign: "center", marginBottom: "40px" }}>
-            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Simple pricing</p>
-            <h2 className="display" style={{ fontSize: "clamp(26px,3vw,40px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "10px" }}>Free to audit. Pay only for the fix guide.</h2>
-            <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "480px", margin: "0 auto" }}>The audit and risk score are free, forever. The Blueprint is what you buy when you're ready to implement.</p>
+          <div style={{ textAlign: "center", marginBottom: "48px" }}>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Pricing</p>
+            <h2 className="display" style={{ fontSize: "clamp(26px,3vw,40px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "12px" }}>
+              Two different problems. Two different solutions.
+            </h2>
+            <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "520px", margin: "0 auto" }}>
+              Engineers buy the Blueprint to fix what's broken. CTOs buy the Monitor to make sure it stays fixed — and prove it to the board.
+            </p>
           </div>
-          <div className="bento-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", alignItems: "start" }}>
-            {[
-              {
-                label: "Free Audit", price: "$0", priceNote: "forever", color: "#4ade80", bg: "rgba(74,222,128,0.06)", border: "rgba(74,222,128,0.2)",
-                features: ["18 cost checkpoints", "16 security checkpoints", "Savings estimate vs your bill", "Waste score 0–100", "Shareable results card", "Public audit link"],
-                cta: "Start Free Audit", action: () => goTo("intake"),
-              },
-              {
-                label: "Cost Blueprint", price: currency.blueprintPrice, priceNote: "one-time", color: "var(--green)", bg: "rgba(0,255,180,0.06)", border: "rgba(0,255,180,0.25)", badge: "Most popular",
-                features: ["Everything in Free", "Exact CLI commands per issue", "Terraform snippets", "Step-by-step implementation", "Delivered to inbox in 2 min", "Full refund if no actionable fix"],
-                cta: "Get Cost Blueprint", action: () => { setShowBlueprint(true); },
-              },
-              {
-                label: "Security Blueprint", price: currency.securityPrice || "$29", priceNote: "one-time", color: "#f87171", bg: "rgba(248,113,113,0.06)", border: "rgba(248,113,113,0.2)",
-                features: ["Everything in Free", "IAM policy templates", "Compliance gap mapping", "SOC 2 / GDPR / ISO 27001", "30-day remediation roadmap", "Delivered to inbox in 2 min"],
-                cta: "Get Security Blueprint", action: () => setShowSecBlueprint(true),
-              },
-              {
-                label: "Monthly Plan", price: currency.subscriptionPrice || "$19/mo", priceNote: "cancel anytime", color: "#818cf8", bg: "rgba(99,102,241,0.06)", border: "rgba(99,102,241,0.2)",
-                features: ["Unlimited re-audits", "Score history & trend", "One discounted Blueprint/mo", "Track infrastructure improvement", "Monthly progress report"],
-                cta: "Subscribe", action: () => { const email = gateEmail || ''; if (email) handleBuySubscription(email); else goTo("intake"); },
-              },
-            ].map(plan => (
-              <div key={plan.label} style={{ background: plan.bg, border: `1px solid ${plan.border}`, borderRadius: "18px", padding: "28px 24px", position: "relative" }}>
-                {plan.badge && (
-                  <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "var(--green)", color: "#000", fontSize: "11px", fontWeight: 800, padding: "3px 14px", borderRadius: "20px", whiteSpace: "nowrap" }}>{plan.badge}</div>
-                )}
-                <p style={{ fontSize: "12px", fontWeight: 700, color: plan.color, letterSpacing: "1px", textTransform: "uppercase", marginBottom: "8px" }}>{plan.label}</p>
-                <div style={{ marginBottom: "20px" }}>
-                  <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{plan.price}</span>
-                  <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>{plan.priceNote}</span>
-                </div>
-                <div style={{ marginBottom: "24px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {plan.features.map(f => (
-                    <div key={f} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                      <span style={{ color: plan.color, fontSize: "12px", flexShrink: 0, marginTop: "1px" }}>✓</span>
-                      <span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={plan.action} style={{ width: "100%", padding: "11px", borderRadius: "10px", border: `1px solid ${plan.border}`, background: plan.color === "var(--green)" ? "var(--green)" : plan.bg, color: plan.color === "var(--green)" ? "#000" : plan.color, fontWeight: 800, fontSize: "13px", cursor: "pointer", transition: "all 0.2s" }}
-                  onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
-                  onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}>
-                  {plan.cta} →
-                </button>
+
+          {/* ── JOURNEY 1: ENGINEER ── */}
+          <div style={{ marginBottom: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(0,255,180,0.08)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", padding: "5px 14px" }}>
+              <span style={{ fontSize: "13px" }}>⚙️</span>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)" }}>For DevOps Engineers</span>
+            </div>
+            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Find the issue. Get the fix guide. Implement same day.</span>
+          </div>
+          <div className="bento-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "32px" }}>
+            {/* Free */}
+            <div style={{ background: "rgba(74,222,128,0.05)", border: "1px solid rgba(74,222,128,0.18)", borderRadius: "18px", padding: "28px 24px" }}>
+              <p style={{ fontSize: "12px", fontWeight: 700, color: "#4ade80", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Free Audit</p>
+              <div style={{ marginBottom: "6px" }}>
+                <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>$0</span>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>forever</span>
               </div>
-            ))}
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>Run the audit. See every issue. Know exactly what it's costing you.</p>
+              {["18 cost + 16 security checks", "Dollar savings per issue", "Waste score 0–100", "Shareable report link"].map(f => (
+                <div key={f} style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+                  <span style={{ color: "#4ade80", fontSize: "12px", flexShrink: 0 }}>✓</span>
+                  <span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span>
+                </div>
+              ))}
+              <button onClick={() => goTo("intake")} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(74,222,128,0.3)", background: "transparent", color: "#4ade80", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>
+                Start Free →
+              </button>
+            </div>
+            {/* Cost Blueprint */}
+            <div style={{ background: "rgba(0,255,180,0.06)", border: "1.5px solid rgba(0,255,180,0.3)", borderRadius: "18px", padding: "28px 24px", position: "relative" }}>
+              <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "var(--green)", color: "#000", fontSize: "11px", fontWeight: 800, padding: "3px 14px", borderRadius: "20px", whiteSpace: "nowrap" }}>Most popular</div>
+              <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Cost Blueprint</p>
+              <div style={{ marginBottom: "6px" }}>
+                <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{currency.blueprintPrice}</span>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>one-time</span>
+              </div>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>Forward to your DevOps team. They can implement every fix the same afternoon.</p>
+              {[
+                "Exact CLI commands for every issue",
+                "Terraform/IaC snippets included",
+                "Step-by-step — no Googling required",
+                "Delivered to inbox in 2 minutes",
+                "Pays for itself in day 1 of savings",
+                "Full refund if nothing is actionable",
+              ].map(f => (
+                <div key={f} style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+                  <span style={{ color: "var(--green)", fontSize: "12px", flexShrink: 0 }}>✓</span>
+                  <span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span>
+                </div>
+              ))}
+              <button onClick={() => setShowBlueprint(true)} className="glow-btn" style={{ width: "100%", marginTop: "20px", padding: "12px", borderRadius: "10px", border: "none", background: "var(--green)", color: "#000", fontWeight: 800, fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,255,180,0.3)" }}>
+                Get Cost Blueprint →
+              </button>
+            </div>
+            {/* Security Blueprint */}
+            <div style={{ background: "rgba(248,113,113,0.05)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "18px", padding: "28px 24px" }}>
+              <p style={{ fontSize: "12px", fontWeight: 700, color: "#f87171", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Security Blueprint</p>
+              <div style={{ marginBottom: "6px" }}>
+                <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{currency.securityPrice || "$29"}</span>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>one-time</span>
+              </div>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>A security consultant charges $2,000+ for this. Same output, 10 minutes, no credentials shared.</p>
+              {[
+                "IAM policy templates, ready to deploy",
+                "Compliance gap mapping (SOC 2, GDPR, ISO 27001)",
+                "30-day prioritised remediation roadmap",
+                "Share with your legal or compliance team",
+                "Delivered to inbox in 2 minutes",
+              ].map(f => (
+                <div key={f} style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+                  <span style={{ color: "#f87171", fontSize: "12px", flexShrink: 0 }}>✓</span>
+                  <span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span>
+                </div>
+              ))}
+              <button onClick={() => setShowSecBlueprint(true)} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(248,113,113,0.3)", background: "transparent", color: "#f87171", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>
+                Get Security Blueprint →
+              </button>
+            </div>
           </div>
+
+          {/* ── JOURNEY 2: CTO / MANAGER ── */}
+          <div style={{ marginBottom: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "20px", padding: "5px 14px" }}>
+              <span style={{ fontSize: "13px" }}>👔</span>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: "#818cf8" }}>For CTOs & Engineering Managers</span>
+            </div>
+            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Track improvement. Prevent surprises. Show the board.</span>
+          </div>
+          <div style={{ background: "rgba(99,102,241,0.06)", border: "1.5px solid rgba(99,102,241,0.25)", borderRadius: "18px", padding: "32px", display: "flex", alignItems: "flex-start", gap: "32px", flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: "260px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+                <p style={{ fontSize: "12px", fontWeight: 700, color: "#818cf8", letterSpacing: "1px", textTransform: "uppercase", margin: 0 }}>Cloud Health Monitor</p>
+                <span style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "20px", fontSize: "11px", color: "#818cf8", fontWeight: 700, padding: "2px 10px" }}>New</span>
+              </div>
+              <div style={{ marginBottom: "8px" }}>
+                <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{currency.subscriptionPrice || "$19/mo"}</span>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>cancel anytime</span>
+              </div>
+              <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "0", maxWidth: "480px" }}>
+                Your engineers fix issues once. New ones appear every month — new services, new deployments, new waste. The Monitor catches them before the next board meeting, not after.
+              </p>
+            </div>
+            <div style={{ flex: 1, minWidth: "260px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "20px" }}>
+                {[
+                  { icon: "📊", text: "Monthly waste score — track your team's improvement" },
+                  { icon: "🚨", text: "New issues flagged the moment they appear" },
+                  { icon: "📄", text: "Board-ready infrastructure health report each month" },
+                  { icon: "💡", text: "One discounted Blueprint per month included" },
+                  { icon: "🔒", text: "Zero cloud access — nothing to approve with IT" },
+                  { icon: "📈", text: "Show investors your infrastructure is improving" },
+                ].map(f => (
+                  <div key={f.text} style={{ display: "flex", gap: "8px", alignItems: "flex-start", background: "rgba(99,102,241,0.06)", borderRadius: "8px", padding: "10px 12px" }}>
+                    <span style={{ fontSize: "14px", flexShrink: 0 }}>{f.icon}</span>
+                    <span style={{ fontSize: "11px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f.text}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <input type="email" placeholder="your@company.com" value={subEmail || gateEmail}
+                  onChange={e => setSubEmail(e.target.value)}
+                  style={{ width: "100%", padding: "11px 14px", background: "rgba(99,102,241,0.08)", border: "1.5px solid rgba(99,102,241,0.3)", borderRadius: "10px", color: "#fff", fontSize: "14px", boxSizing: "border-box" }} />
+                <button onClick={() => { const email = subEmail || gateEmail; if (email) handleBuySubscription(email); else goTo("intake"); }}
+                  disabled={subStatus === 'loading'}
+                  style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg,#818cf8,#6366f1)", color: "#fff", fontWeight: 800, fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}>
+                  {subStatus === 'loading' ? "Redirecting…" : `Start Cloud Health Monitor — ${currency.subscriptionPrice || "$19/mo"} →`}
+                </button>
+                {subStatus === 'not_configured' && <p style={{ fontSize: "12px", color: "#818cf8", textAlign: "center" }}>Coming soon — <a href="mailto:admin@kloudaudit.eu" style={{ color: "#818cf8" }}>join the waitlist</a></p>}
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>Cancel anytime · Secure via Stripe · No cloud access required</p>
+              </div>
+            </div>
+          </div>
+
           <p style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "20px" }}>
-            All blueprints include a full refund guarantee if no actionable fix is identified. · <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a>
+            All blueprints include a full refund if no actionable fix is identified. Questions? <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a>
           </p>
         </div>
 
@@ -4928,15 +5017,24 @@ aws iam simulate-principal-policy \\
 
           {/* ── ACTION PLAN CTA ── */}
           <div className="fade-up stagger-4" style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.05) 0%, rgba(99,102,241,0.05) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "20px", padding: "40px" }}>
-            <p style={{ fontSize: "13px", color: "var(--text-muted)", textAlign: "center", marginBottom: "20px" }}>
-              {savMin > 0
-                ? (() => {
-                    const bpCost = currency.blueprintAmount / 100;
-                    const daysToROI = Math.ceil(bpCost / (savMin / 30));
-                    return `You're looking at $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/mo in savings. At $${savMin.toLocaleString()}/month, the ${currency.blueprintPrice} blueprint pays for itself in ${daysToROI <= 1 ? "the first day" : daysToROI <= 7 ? `${daysToROI} days` : "the first week"} — then saves you $${(savMin * 12).toLocaleString()}+ per year.`;
-                  })()
-                : "Teams typically find $500–$4,000+/month based on industry FinOps benchmarks. The blueprint pays for itself within days."}
-                          </p>
+            {/* ROI headline */}
+            {savMin > 0 ? (() => {
+              const bpCost = currency.blueprintAmount / 100;
+              const daysToROI = Math.ceil(bpCost / (savMin / 30));
+              return (
+                <div style={{ textAlign: "center", marginBottom: "28px" }}>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "rgba(0,255,180,0.08)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "14px", padding: "14px 24px" }}>
+                    <span style={{ fontSize: "22px" }}>💰</span>
+                    <div style={{ textAlign: "left" }}>
+                      <p style={{ fontSize: "18px", fontWeight: 800, color: "var(--green)", margin: 0, letterSpacing: "-0.5px" }}>${savMin.toLocaleString()}–${savMax.toLocaleString()}/mo in recoverable savings</p>
+                      <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>The {currency.blueprintPrice} Blueprint pays for itself in {daysToROI <= 1 ? "the first day" : daysToROI <= 7 ? `${daysToROI} days` : "the first week"} · saves ${(savMin * 12).toLocaleString()}+ per year</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })() : (
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", textAlign: "center", marginBottom: "20px" }}>Teams typically find $500–$4,000+/month based on industry benchmarks. The blueprint pays for itself within days.</p>
+            )}
 
             {/* Trust card */}
             <div style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" }}>
@@ -4951,23 +5049,35 @@ aws iam simulate-principal-policy \\
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-              <button className="glow-btn" onClick={() => { if (flagged.length > 0) { window.gtag?.('event', 'blueprint_clicked', { provider: provider, savings_min: savMin, currency: currency.code }); window.gtag?.('event', 'blueprint_modal_opened', { provider: provider }); setShowBlueprint(true); } }}
-                disabled={flagged.length === 0}
-                style={{ background: flagged.length > 0 ? "var(--green)" : "rgba(255,255,255,0.06)", color: flagged.length > 0 ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: flagged.length > 0 ? "0 0 28px rgba(0,255,180,0.35)" : "none", cursor: flagged.length > 0 ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: "8px" }}>
-                {`⚡ Get AI Blueprint — ${currency.blueprintPrice} →`}
-              </button>
-              <button className="ghost-btn" onClick={() => setShowBooking(true)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px" }}>
-                {`Book 1:1 Session — ${currency.sessionPrice}`}
-              </button>
-              {flagged.length > 0 && bill > 0 && (
-                <button onClick={() => setShowShareCard(true)} style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.35)", color: "#a5b4fc", borderRadius: "12px", padding: "14px 24px", fontSize: "15px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", transition: "all 0.2s" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,102,241,0.22)"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.6)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(99,102,241,0.12)"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}>
-                  📤 Share My Results
+            {/* Two CTAs side by side: Engineer vs CTO */}
+            <div className="compare-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+              <div style={{ background: "rgba(0,255,180,0.05)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "14px", padding: "22px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "8px" }}>⚙️ You're the engineer</p>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "14px", lineHeight: 1.6 }}>Get the exact CLI commands and Terraform for every issue. Implement this afternoon.</p>
+                <button className="glow-btn" onClick={() => { if (flagged.length > 0) { window.gtag?.('event', 'blueprint_clicked', { provider, savings_min: savMin, currency: currency.code }); setShowBlueprint(true); } }}
+                  disabled={flagged.length === 0}
+                  style={{ width: "100%", background: flagged.length > 0 ? "var(--green)" : "rgba(255,255,255,0.06)", color: flagged.length > 0 ? "#000" : "var(--text-muted)", border: "none", borderRadius: "10px", padding: "13px", fontSize: "14px", cursor: flagged.length > 0 ? "pointer" : "not-allowed", boxShadow: flagged.length > 0 ? "0 0 20px rgba(0,255,180,0.3)" : "none" }}>
+                  Get Blueprint — {currency.blueprintPrice} →
                 </button>
-              )}
-              <button className="ghost-btn" onClick={() => goTo("intro")} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px" }}>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "6px" }}>Inbox in 2 min · Full refund if nothing actionable</p>
+              </div>
+              <div style={{ background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "14px", padding: "22px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "#818cf8", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "8px" }}>👔 You're the CTO / manager</p>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "14px", lineHeight: 1.6 }}>Forward this report to your team. Track improvement monthly. Show the board.</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {flagged.length > 0 && bill > 0 && (
+                    <button onClick={() => setShowShareCard(true)} style={{ width: "100%", background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.35)", color: "#a5b4fc", borderRadius: "10px", padding: "13px", fontSize: "14px", cursor: "pointer", fontWeight: 700 }}>
+                      📤 Share Report With Team →
+                    </button>
+                  )}
+                  <button onClick={() => setShowBooking(true)} style={{ width: "100%", background: "transparent", border: "1px solid rgba(99,102,241,0.25)", color: "#818cf8", borderRadius: "10px", padding: "10px", fontSize: "13px", cursor: "pointer", fontWeight: 600 }}>
+                    Book 1:1 with Samuel — {currency.sessionPrice}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <button className="ghost-btn" onClick={() => goTo("intro")} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "11px 22px", fontSize: "14px" }}>
                 New Audit
               </button>
             </div>
