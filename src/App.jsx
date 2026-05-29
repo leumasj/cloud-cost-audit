@@ -5131,47 +5131,6 @@ aws iam simulate-principal-policy \\
             </div>
           </div>
 
-          {/* ── SUBSCRIPTION CTA ── */}
-          <div className="fade-up" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "20px", padding: "28px 36px", marginTop: "16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "28px", flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: "240px" }}>
-                <p style={{ fontSize: "11px", fontWeight: 700, color: "#818cf8", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px" }}>MONTHLY PLAN · {currency.subscriptionPrice || "$19/mo"}</p>
-                <h3 className="display" style={{ fontSize: "18px", fontWeight: 800, color: "#fff", letterSpacing: "-0.3px", marginBottom: "6px" }}>
-                  Track your cloud health over time.
-                </h3>
-                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "0" }}>
-                  Unlimited re-audits, progress score history, and one discounted Blueprint per month. Show your CTO the improvement trend, not just a one-off report.
-                </p>
-              </div>
-              <div style={{ minWidth: "220px" }}>
-                {subStatus === 'not_configured' ? (
-                  <p style={{ fontSize: "13px", color: "#818cf8", textAlign: "center" }}>Coming soon — <a href="mailto:admin@kloudaudit.eu" style={{ color: "#818cf8" }}>email us to join the waitlist</a></p>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <input
-                      type="email"
-                      placeholder={gateEmail || "you@company.com"}
-                      value={subEmail || gateEmail}
-                      onChange={e => setSubEmail(e.target.value)}
-                      style={{ width: "100%", padding: "11px 14px", background: "rgba(99,102,241,0.08)", border: "1.5px solid rgba(99,102,241,0.3)", borderRadius: "10px", color: "#fff", fontSize: "14px", boxSizing: "border-box" }}
-                    />
-                    <button
-                      disabled={subStatus === 'loading'}
-                      onClick={() => {
-                        const email = subEmail || gateEmail;
-                        if (!email) return;
-                        handleBuySubscription(email);
-                      }}
-                      style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "none", background: subStatus === 'loading' ? "rgba(99,102,241,0.4)" : "linear-gradient(135deg,#818cf8,#6366f1)", color: "#fff", fontWeight: 800, fontSize: "14px", cursor: subStatus === 'loading' ? "not-allowed" : "pointer", boxShadow: "0 4px 16px rgba(99,102,241,0.3)", transition: "all 0.2s" }}>
-                      {subStatus === 'loading' ? "Redirecting…" : `Subscribe — ${currency.subscriptionPrice || "$19/mo"} →`}
-                    </button>
-                    {subStatus === 'error' && <p style={{ fontSize: "12px", color: "#f87171", textAlign: "center", margin: 0 }}>Something went wrong. Try again or email admin@kloudaudit.eu</p>}
-                    <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", margin: 0 }}>Cancel anytime · Secure via Stripe</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* ── STICKY BOTTOM BAR — report step ── */}
