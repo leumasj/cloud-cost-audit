@@ -62,6 +62,16 @@
   ],
   "redirects": [
     {
+      "source": "/infrastructure-cost-reduction",
+      "destination": "/cloud-finops-guide/",
+      "permanent": true
+    },
+    {
+      "source": "/infrastructure-cost-reduction/",
+      "destination": "/cloud-finops-guide/",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "has": [
         {
