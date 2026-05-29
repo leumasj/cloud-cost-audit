@@ -6,8 +6,21 @@
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+// Maps Stripe currency code → recurring Price ID env var for subscription mode.
+function resolveSubscriptionPriceId(stripeCurrency) {
+  const c = (stripeCurrency || 'usd').toLowerCase();
+  const map = {
+    usd: process.env.STRIPE_SUBSCRIPTION_PRICE_ID_USD,
+    eur: process.env.STRIPE_SUBSCRIPTION_PRICE_ID_EUR,
+    gbp: process.env.STRIPE_SUBSCRIPTION_PRICE_ID_GBP,
+    pln: process.env.STRIPE_SUBSCRIPTION_PRICE_ID_PLN,
+    cad: process.env.STRIPE_SUBSCRIPTION_PRICE_ID_CAD,
+    aud: process.env.STRIPE_SUBSCRIPTION_PRICE_ID_AUD,
+  };
+  return map[c] || process.env.STRIPE_SUBSCRIPTION_PRICE_ID || null;
+}
+
 module.exports = async function handler(req, res)  {
-  // CORS
   // CORS — restrict to KloudAudit domains only
   const { ALLOWED_ORIGINS } = require('./lib/_config');
   const origin = req.headers.origin;
@@ -21,7 +34,30 @@ module.exports = async function handler(req, res)  {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax, currency, currencyAmount, productType, sessionId } = req.body;
+    const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax, currency, currencyAmount, productType, sessionId, stripeCurrency } = req.body;
+
+    // ── SUBSCRIPTION (recurring) ──────────────────────────────────────────────
+    if (productType === 'subscription') {
+      if (!email) return res.status(400).json({ error: 'Email required' });
+      const priceId = resolveSubscriptionPriceId(stripeCurrency || currency);
+      if (!priceId) {
+        return res.status(503).json({
+          error: 'Monthly plan not yet configured — contact admin@kloudaudit.eu',
+          code:  'subscription_not_configured',
+        });
+      }
+      const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://kloudaudit.eu';
+      const session = await stripe.checkout.sessions.create({
+        line_items:         [{ price: priceId, quantity: 1 }],
+        mode:               'subscription',
+        customer_email:     email,
+        success_url:        `${baseUrl}?payment=sub_success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url:         `${baseUrl}?payment=cancelled`,
+        subscription_data:  { metadata: { type: 'monthly_plan', provider: provider || 'AWS', sessionId: sessionId || '' } },
+        metadata:           { type: 'monthly_plan', provider: provider || 'AWS', sessionId: sessionId || '' },
+      });
+      return res.status(200).json({ url: session.url, sessionId: session.id });
+    }
 
     // Multi-currency: use values from frontend, fall back to PLN defaults
     const chargeCurrency = currency || "pln";

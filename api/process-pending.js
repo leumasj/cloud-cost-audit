@@ -1,11 +1,12 @@
 // api/process-pending.js
-// KloudAudit — Async Delivery Processor
+// KloudAudit — Async Delivery Processor + Follow-up Email Runner
 //
 // Called by Vercel cron every minute (or external cron-job.org if on Hobby plan).
-// Picks up pending jobs from delivery_queue, calls Claude AI, sends email via SendGrid.
+// Single cron run handles two queues:
+//   1. delivery_queue  — pending blueprint jobs (Claude AI → SendGrid)
+//   2. follow_up_queue — post-purchase follow-up emails (day 7 / 14 / 30)
 //
-// No timeout pressure — this function runs independently of the Stripe webhook.
-// If Claude takes 45 seconds, that's fine. No customer is waiting on this response.
+// Merged from send-followups.js to stay within Vercel Hobby's 12-function limit.
 
 const Anthropic = require('@anthropic-ai/sdk');
 const sgMail    = require('@sendgrid/mail');
@@ -414,6 +415,32 @@ module.exports = async function handler(req, res) {
             .eq('session_id', sessionId),
         ].filter(Boolean));
 
+        // 8. Queue post-purchase follow-up emails (day 7, 14, 30)
+        // Non-blocking — a failure here must never prevent blueprint delivery.
+        const now = new Date();
+        const followUps = [
+          { follow_up_type: 'day7',  days: 7  },
+          { follow_up_type: 'day14', days: 14 },
+          { follow_up_type: 'day30', days: 30 },
+        ].map(({ follow_up_type, days }) => ({
+          email:           job.email,
+          product_type:    job.product_type,
+          provider:        meta.provider || 'AWS',
+          follow_up_type,
+          send_at:         new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString(),
+          status:          'pending',
+          metadata: {
+            savingsMin:  meta.savingsMin,
+            savingsMax:  meta.savingsMax,
+            companyName: meta.companyName,
+          },
+        }));
+        supabaseAdmin
+          .from('follow_up_queue')
+          .insert(followUps)
+          .then(() => {})
+          .catch(err => console.warn('Follow-up queue insert failed (non-critical):', err.message));
+
         console.log(`✅ Delivered: ${job.id} | ${email} | ${job.product_type} | cache:${cacheHit}`);
         results.push({ id: job.id, status: 'delivered', email, cacheHit });
         processed++;
@@ -449,10 +476,73 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    // ── FOLLOW-UP QUEUE ───────────────────────────────────────────────────────
+    // Process due post-purchase follow-up emails (day 7 / 14 / 30).
+    // Runs in the same cron tick after blueprint delivery to stay within the
+    // Vercel Hobby 12-function limit (merged from send-followups.js).
+    let followUpsSent = 0;
+    try {
+      const nowTs = new Date();
+      const { data: followUps, error: fuError } = await supabaseAdmin
+        .from('follow_up_queue')
+        .select('*')
+        .eq('status', 'pending')
+        .lte('send_at', nowTs.toISOString())
+        .order('send_at', { ascending: true })
+        .limit(15);
+
+      if (fuError && fuError.code !== '42P01') throw fuError; // 42P01 = table not yet created
+
+      for (const fu of (followUps || [])) {
+        try {
+          const meta = { ...fu.metadata, email: fu.email, product_type: fu.product_type, provider: fu.provider };
+          const isSec = fu.product_type === 'security_blueprint';
+          const crossSellCost = `<div style="background:rgba(0,255,180,0.05);border:1px solid rgba(0,255,180,0.18);border-radius:14px;padding:20px 24px;margin-bottom:24px;"><p style="font-size:11px;font-weight:700;color:#00ffb4;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">WHILE YOU'RE HARDENING YOUR INFRA</p><p style="font-size:14px;font-weight:700;color:#fff;margin:0 0 6px;">Have you checked what your ${fu.provider || 'cloud'} bill is hiding?</p><p style="font-size:13px;color:#94a3b8;line-height:1.6;margin:0 0 14px;">Free 15-minute cost audit — no credentials, no account access.</p><a href="https://www.kloudaudit.eu" style="display:inline-block;background:#00ffb4;color:#000;font-weight:800;font-size:13px;text-decoration:none;padding:10px 22px;border-radius:8px;">Run Free Cost Audit →</a></div>`;
+          const crossSellSec = `<div style="background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.18);border-radius:14px;padding:20px 24px;margin-bottom:24px;"><p style="font-size:11px;font-weight:700;color:#f87171;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">WHILE YOU'RE CUTTING COSTS</p><p style="font-size:14px;font-weight:700;color:#fff;margin:0 0 6px;">Have you checked your security posture?</p><p style="font-size:13px;color:#94a3b8;line-height:1.6;margin:0 0 14px;">Free 10-minute security audit, no credentials needed.</p><a href="https://www.kloudaudit.eu" style="display:inline-block;background:#f87171;color:#000;font-weight:800;font-size:13px;text-decoration:none;padding:10px 22px;border-radius:8px;">Run Free Security Audit →</a></div>`;
+          const unsubLink = `<p style="font-size:12px;color:#374151;text-align:center;margin:0;"><a href="https://www.kloudaudit.eu/api/unsubscribe?email=${encodeURIComponent(fu.email)}" style="color:#374151;">Unsubscribe</a></p>`;
+          const header = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:32px;"><div style="width:36px;height:36px;background:#00ffb4;border-radius:8px;font-size:18px;display:flex;align-items:center;justify-content:center;">⚡</div><span style="font-size:20px;font-weight:800;color:#fff;">KloudAudit</span></div>`;
+
+          let html, subject;
+
+          if (fu.follow_up_type === 'day7') {
+            subject = `How's your ${isSec ? 'security' : 'cost'} implementation going?`;
+            html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#07070f;font-family:system-ui,sans-serif;"><div style="max-width:600px;margin:0 auto;padding:40px 24px;">${header}<p style="font-size:11px;font-weight:700;color:#00ffb4;letter-spacing:2px;text-transform:uppercase;margin:0 0 10px;">7-DAY CHECK-IN</p><h1 style="font-size:26px;font-weight:800;color:#fff;letter-spacing:-1px;margin:0 0 12px;">How's the implementation going?</h1><p style="font-size:15px;color:#94a3b8;line-height:1.7;margin:0 0 24px;">A week since you got your ${isSec ? 'Security' : 'Cost'} Blueprint. Most teams ship their first fix within 48 hours — the easiest one takes under 10 minutes.</p>${isSec ? crossSellCost : crossSellSec}<div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:20px;">${unsubLink}</div></div></body></html>`;
+
+          } else if (fu.follow_up_type === 'day14') {
+            subject = 'Want a hand implementing the fixes? Book a 1:1 session';
+            const savMin = Number(meta.savingsMin || 0);
+            const savMax = Number(meta.savingsMax || 0);
+            html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#07070f;font-family:system-ui,sans-serif;"><div style="max-width:600px;margin:0 auto;padding:40px 24px;">${header}<p style="font-size:11px;font-weight:700;color:#818cf8;letter-spacing:2px;text-transform:uppercase;margin:0 0 10px;">14-DAY FOLLOW-UP</p><h1 style="font-size:26px;font-weight:800;color:#fff;letter-spacing:-1px;margin:0 0 12px;">Want a second set of eyes on the implementation?</h1><p style="font-size:15px;color:#94a3b8;line-height:1.7;margin:0 0 24px;">${savMin > 0 ? `Your blueprint identified $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/month in potential savings. ` : ''}Some teams find it useful to have an expert walk through their setup to confirm everything is applied correctly.</p><div style="background:linear-gradient(135deg,rgba(129,140,248,0.08),rgba(0,255,180,0.05));border:1.5px solid rgba(129,140,248,0.3);border-radius:16px;padding:28px;margin-bottom:24px;text-align:center;"><p style="font-size:20px;font-weight:800;color:#fff;margin:0 0 16px;">Book a 60-min implementation session</p><a href="https://www.kloudaudit.eu" style="display:inline-block;background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;font-weight:800;font-size:14px;text-decoration:none;padding:13px 32px;border-radius:10px;">Book Implementation Session →</a></div><div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:20px;">${unsubLink}</div></div></body></html>`;
+
+          } else if (fu.follow_up_type === 'day30') {
+            subject = `30 days on — time to re-run your ${fu.provider || 'cloud'} audit`;
+            html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#07070f;font-family:system-ui,sans-serif;"><div style="max-width:600px;margin:0 auto;padding:40px 24px;">${header}<p style="font-size:11px;font-weight:700;color:#00ffb4;letter-spacing:2px;text-transform:uppercase;margin:0 0 10px;">30-DAY MILESTONE</p><h1 style="font-size:26px;font-weight:800;color:#fff;letter-spacing:-1px;margin:0 0 12px;">30 days on — has your score improved?</h1><p style="font-size:15px;color:#94a3b8;line-height:1.7;margin:0 0 24px;">Re-run the free audit to measure improvement and find anything that's drifted in since your last audit.</p><div style="text-align:center;margin-bottom:24px;"><a href="https://www.kloudaudit.eu" style="display:inline-block;background:#00ffb4;color:#000;font-weight:800;font-size:15px;text-decoration:none;padding:14px 36px;border-radius:10px;">Re-run Free Audit →</a></div><div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);border-radius:14px;padding:20px 24px;margin-bottom:24px;"><p style="font-size:14px;font-weight:700;color:#fff;margin:0 0 6px;">Track progress every month with our monthly plan.</p><p style="font-size:13px;color:#94a3b8;margin:0 0 14px;">Unlimited re-audits, score history, one discounted Blueprint/month.</p><a href="https://www.kloudaudit.eu" style="display:inline-block;color:#818cf8;font-weight:700;font-size:13px;text-decoration:none;padding:10px 22px;border-radius:8px;border:1px solid rgba(99,102,241,0.4);">See Monthly Plan →</a></div><div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:20px;">${unsubLink}</div></div></body></html>`;
+
+          } else {
+            await supabaseAdmin.from('follow_up_queue').update({ status: 'failed', error: `unknown type: ${fu.follow_up_type}` }).eq('id', fu.id);
+            continue;
+          }
+
+          await sgMail.send({ to: fu.email, from: { email: 'admin@kloudaudit.eu', name: 'Samuel @ KloudAudit' }, replyTo: 'admin@kloudaudit.eu', subject, html });
+          await supabaseAdmin.from('follow_up_queue').update({ status: 'sent', sent_at: nowTs.toISOString() }).eq('id', fu.id);
+          console.log(`✅ Follow-up sent: ${fu.follow_up_type} → ${fu.email}`);
+          followUpsSent++;
+
+        } catch (fuErr) {
+          console.error(`❌ Follow-up failed for ${fu.email}:`, fuErr.message);
+          await supabaseAdmin.from('follow_up_queue').update({ status: 'failed', error: fuErr.message }).eq('id', fu.id).catch(() => {});
+        }
+      }
+    } catch (fuQueueErr) {
+      // Non-fatal — blueprint delivery already succeeded; log and continue
+      console.warn('Follow-up queue processing error (non-critical):', fuQueueErr.message);
+    }
+
     return res.status(200).json({
       processed,
       failed,
       total: jobs.length,
+      followUpsSent,
       results,
     });
 

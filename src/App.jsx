@@ -1848,6 +1848,8 @@ export default function App() {
   });
   const [aiPreview, setAiPreview] = useState(null);
   const [aiPreviewLoading, setAiPreviewLoading] = useState(false);
+  const [subEmail, setSubEmail] = useState(() => '');
+  const [subStatus, setSubStatus] = useState('idle'); // idle | loading | error
   const [gateSubmitted, setGateSubmitted] = useState(false);
   const [gateSending, setGateSending] = useState(false);
   // ── MULTI-CURRENCY ────────────────────────────────────────────────────────
@@ -1964,12 +1966,12 @@ export default function App() {
 
   // ── CURRENCY DETECTION ───────────────────────────────────────────
   useEffect(() => {
-    const USD = { code: "USD", symbol: "$",   blueprintPrice: "$79",     blueprintAmount: 7900,  sessionPrice: "$249",    sessionAmount: 24900, stripeCurrency: "usd", securityPrice: "$29",      securityAmount: 2900,  bundlePrice: "$89",      bundleAmount: 8900  };
-    const GBP = { code: "GBP", symbol: "\u00a3",   blueprintPrice: "\u00a362",     blueprintAmount: 6200,  sessionPrice: "\u00a3199",    sessionAmount: 19900, stripeCurrency: "gbp", securityPrice: "\u00a323",      securityAmount: 2300,  bundlePrice: "\u00a369",      bundleAmount: 6900  };
-    const EUR = { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",     blueprintAmount: 7300,  sessionPrice: "\u20ac229",    sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27",      securityAmount: 2700,  bundlePrice: "\u20ac83",      bundleAmount: 8300  };
-    const CAD = { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107",  blueprintAmount: 10700, sessionPrice: "CA$339",  sessionAmount: 33900, stripeCurrency: "cad", securityPrice: "CA$39",    securityAmount: 3900,  bundlePrice: "CA$119",   bundleAmount: 11900 };
-    const AUD = { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",   blueprintAmount: 11900, sessionPrice: "A$379",   sessionAmount: 37900, stripeCurrency: "aud", securityPrice: "A$45",     securityAmount: 4500,  bundlePrice: "A$134",    bundleAmount: 13400 };
-    const PLN = { code: "PLN", symbol: "z\u0142",  blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln", securityPrice: "119 PLN",  securityAmount: 11900, bundlePrice: "349 PLN",  bundleAmount: 34900 };
+    const USD = { code: "USD", symbol: "$",   blueprintPrice: "$79",     blueprintAmount: 7900,  sessionPrice: "$249",    sessionAmount: 24900, stripeCurrency: "usd", securityPrice: "$29",      securityAmount: 2900,  bundlePrice: "$89",      bundleAmount: 8900,  subscriptionPrice: "$19/mo",     subscriptionAmount: 1900  };
+    const GBP = { code: "GBP", symbol: "\u00a3",   blueprintPrice: "\u00a362",     blueprintAmount: 6200,  sessionPrice: "\u00a3199",    sessionAmount: 19900, stripeCurrency: "gbp", securityPrice: "\u00a323",      securityAmount: 2300,  bundlePrice: "\u00a369",      bundleAmount: 6900,  subscriptionPrice: "\u00a315/mo",     subscriptionAmount: 1500  };
+    const EUR = { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",     blueprintAmount: 7300,  sessionPrice: "\u20ac229",    sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27",      securityAmount: 2700,  bundlePrice: "\u20ac83",      bundleAmount: 8300,  subscriptionPrice: "\u20ac17/mo",     subscriptionAmount: 1700  };
+    const CAD = { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107",  blueprintAmount: 10700, sessionPrice: "CA$339",  sessionAmount: 33900, stripeCurrency: "cad", securityPrice: "CA$39",    securityAmount: 3900,  bundlePrice: "CA$119",   bundleAmount: 11900, subscriptionPrice: "CA$26/mo",   subscriptionAmount: 2600  };
+    const AUD = { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",   blueprintAmount: 11900, sessionPrice: "A$379",   sessionAmount: 37900, stripeCurrency: "aud", securityPrice: "A$45",     securityAmount: 4500,  bundlePrice: "A$134",    bundleAmount: 13400, subscriptionPrice: "A$29/mo",    subscriptionAmount: 2900  };
+    const PLN = { code: "PLN", symbol: "z\u0142",  blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln", securityPrice: "119 PLN",  securityAmount: 11900, bundlePrice: "349 PLN",  bundleAmount: 34900, subscriptionPrice: "79 PLN/mo",  subscriptionAmount: 7900  };
     const CURRENCY_MAP = {
       US: USD, PR: USD, GU: USD, VI: USD,
       GB: GBP, JE: GBP, GG: GBP, IM: GBP,
@@ -2152,6 +2154,41 @@ useEffect(() => {
       window.location.href = data.url;
     } else {
       throw new Error(data.error || "Checkout failed");
+    }
+  };
+
+  const handleBuySubscription = async (email) => {
+    setSubStatus('loading');
+    try {
+      window.gtag?.('event', 'subscription_checkout_initiated', { currency: currency.stripeCurrency });
+      const res = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          provider:       provider || "AWS",
+          stripeCurrency: currency.stripeCurrency,
+          currency:       currency.stripeCurrency,
+          productType:    "subscription",
+          sessionId,
+        }),
+      });
+      const data = await res.json();
+      if (data.code === 'subscription_not_configured') {
+        // Price ID not set up in Stripe yet — fall back gracefully
+        setSubStatus('not_configured');
+        return;
+      }
+      if (!res.ok) throw new Error(data.error || `Checkout failed (${res.status})`);
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || "Checkout failed");
+      }
+    } catch (err) {
+      console.error('Subscription checkout error:', err.message);
+      setSubStatus('error');
+      setTimeout(() => setSubStatus('idle'), 5000);
     }
   };
 
@@ -2843,10 +2880,39 @@ aws iam simulate-principal-policy \\
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "12px", padding: "13px 24px", color: "var(--text-dim)", fontSize: "14px", cursor: "pointer", fontWeight: 600 }}>
               🔄 Re-run
             </button>
-            <button onClick={() => goTo("intro")}
-              style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "13px 24px", fontSize: "14px", fontWeight: 800, cursor: "pointer" }}>
-              → Cost Audit Too
-            </button>
+          </div>
+
+          {/* ── CROSS-SELL: COST AUDIT ── */}
+          <div className="fade-up" style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.06) 0%, rgba(99,102,241,0.04) 100%)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", padding: "32px 36px", marginTop: "20px" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "28px", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: "240px" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "4px 12px", marginBottom: "12px" }}>
+                  <span style={{ width: "5px", height: "5px", background: "var(--green)", borderRadius: "50%", display: "inline-block" }} />
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px" }}>ALSO FREE · 15 MIN · NO CREDENTIALS</span>
+                </div>
+                <h3 className="display" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>
+                  Security gaps mapped. What about the waste?
+                </h3>
+                <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.7, marginBottom: "16px" }}>
+                  18 checkpoints across compute, storage, network, database, and governance. Most {provider || "cloud"} teams find $500–$4,000+/month they didn't know about. Free savings estimate in 15 minutes.
+                </p>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  {["⚡ Compute savings", "🗄 Storage tiering", "🌐 Network waste", "🗃 Database sizing"].map(t => (
+                    <span key={t} style={{ fontSize: "12px", color: "var(--green)", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "4px 10px", fontWeight: 600 }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: "8px", minWidth: "196px" }}>
+                <button
+                  onClick={() => { window.gtag?.('event', 'cost_audit_crosssell_clicked', { source: 'security_report' }); goTo("intake"); }}
+                  style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 24px", fontSize: "15px", fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 20px rgba(0,255,180,0.3)", transition: "all 0.2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 32px rgba(0,255,180,0.5)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,255,180,0.3)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+                  ⚡ Run Cost Audit →
+                </button>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", margin: 0 }}>Free · 18 checks · No account access</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -4653,6 +4719,81 @@ aws iam simulate-principal-policy \\
                 onClose={() => setShowShareCard(false)}
               />
             )}
+          </div>
+
+          {/* ── CROSS-SELL: SECURITY AUDIT ── */}
+          <div className="fade-up" style={{ background: "linear-gradient(135deg, rgba(248,113,113,0.06) 0%, rgba(251,146,60,0.04) 100%)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "20px", padding: "32px 36px", marginTop: "20px" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "28px", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: "240px" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "20px", padding: "4px 12px", marginBottom: "12px" }}>
+                  <span style={{ width: "5px", height: "5px", background: "#f87171", borderRadius: "50%", display: "inline-block" }} />
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#f87171", letterSpacing: "1px" }}>ALSO FREE · 10 MIN · NO CREDENTIALS</span>
+                </div>
+                <h3 className="display" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>
+                  You've found the waste. Now find the vulnerabilities.
+                </h3>
+                <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.7, marginBottom: "16px" }}>
+                  Cost waste shows up on your bill. A misconfigured IAM role or public S3 bucket shows up in a breach report. 16 security checkpoints — free risk score in 10 minutes.
+                </p>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  {["🔐 IAM & MFA", "🌐 Public exposure", "🗄 Encryption", "📋 Audit logging"].map(t => (
+                    <span key={t} style={{ fontSize: "12px", color: "#f87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "20px", padding: "4px 10px", fontWeight: 600 }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: "8px", minWidth: "196px" }}>
+                <button
+                  onClick={() => { window.gtag?.('event', 'security_audit_crosssell_clicked', { source: 'cost_report' }); goTo("security_intro"); }}
+                  style={{ background: "#f87171", color: "#000", border: "none", borderRadius: "12px", padding: "14px 24px", fontSize: "15px", fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 20px rgba(248,113,113,0.3)", transition: "all 0.2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 32px rgba(248,113,113,0.5)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 20px rgba(248,113,113,0.3)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+                  🛡 Run Security Audit →
+                </button>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", margin: 0 }}>Free · 16 checks · No account access</p>
+              </div>
+            </div>
+          </div>
+
+          {/* ── SUBSCRIPTION CTA ── */}
+          <div className="fade-up" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "20px", padding: "28px 36px", marginTop: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "28px", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: "240px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "#818cf8", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px" }}>MONTHLY PLAN · {currency.subscriptionPrice || "$19/mo"}</p>
+                <h3 className="display" style={{ fontSize: "18px", fontWeight: 800, color: "#fff", letterSpacing: "-0.3px", marginBottom: "6px" }}>
+                  Track your cloud health over time.
+                </h3>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "0" }}>
+                  Unlimited re-audits, progress score history, and one discounted Blueprint per month. Show your CTO the improvement trend, not just a one-off report.
+                </p>
+              </div>
+              <div style={{ minWidth: "220px" }}>
+                {subStatus === 'not_configured' ? (
+                  <p style={{ fontSize: "13px", color: "#818cf8", textAlign: "center" }}>Coming soon — <a href="mailto:admin@kloudaudit.eu" style={{ color: "#818cf8" }}>email us to join the waitlist</a></p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <input
+                      type="email"
+                      placeholder={gateEmail || "you@company.com"}
+                      value={subEmail || gateEmail}
+                      onChange={e => setSubEmail(e.target.value)}
+                      style={{ width: "100%", padding: "11px 14px", background: "rgba(99,102,241,0.08)", border: "1.5px solid rgba(99,102,241,0.3)", borderRadius: "10px", color: "#fff", fontSize: "14px", boxSizing: "border-box" }}
+                    />
+                    <button
+                      disabled={subStatus === 'loading'}
+                      onClick={() => {
+                        const email = subEmail || gateEmail;
+                        if (!email) return;
+                        handleBuySubscription(email);
+                      }}
+                      style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "none", background: subStatus === 'loading' ? "rgba(99,102,241,0.4)" : "linear-gradient(135deg,#818cf8,#6366f1)", color: "#fff", fontWeight: 800, fontSize: "14px", cursor: subStatus === 'loading' ? "not-allowed" : "pointer", boxShadow: "0 4px 16px rgba(99,102,241,0.3)", transition: "all 0.2s" }}>
+                      {subStatus === 'loading' ? "Redirecting…" : `Subscribe — ${currency.subscriptionPrice || "$19/mo"} →`}
+                    </button>
+                    {subStatus === 'error' && <p style={{ fontSize: "12px", color: "#f87171", textAlign: "center", margin: 0 }}>Something went wrong. Try again or email admin@kloudaudit.eu</p>}
+                    <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", margin: 0 }}>Cancel anytime · Secure via Stripe</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
