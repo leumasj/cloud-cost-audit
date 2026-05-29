@@ -317,8 +317,35 @@ module.exports = async function handler(req, res) {
       try {
         const meta    = job.metadata;
         const email   = job.email;
-        const isSecur  = job.product_type === 'security_blueprint';
-        const isBundle = job.product_type === 'bundle';
+        const isSession = job.product_type === 'consulting_session';
+        const isSecur   = job.product_type === 'security_blueprint';
+        const isBundle  = job.product_type === 'bundle';
+
+        // ── CONSULTING SESSION — send confirmation to customer + alert to admin ─
+        if (isSession) {
+          const chargeDisplay = meta.amount_total
+            ? `${(meta.amount_total / 100).toFixed(2)} ${(meta.currency || 'usd').toUpperCase()}`
+            : 'session fee';
+          await Promise.all([
+            sgMail.send({
+              to:      email,
+              from:    { email: 'admin@kloudaudit.eu', name: 'Samuel @ KloudAudit' },
+              replyTo: 'admin@kloudaudit.eu',
+              subject: '✅ Session booked — we\'ll confirm your slot within 24hrs',
+              html: `<!DOCTYPE html><html><body style="background:#07070f;font-family:system-ui;margin:0;padding:0;"><div style="max-width:600px;margin:0 auto;padding:40px 24px;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:32px;"><div style="width:36px;height:36px;background:#00ffb4;border-radius:8px;font-size:18px;display:flex;align-items:center;justify-content:center;">⚡</div><span style="font-size:20px;font-weight:800;color:#fff;">KloudAudit</span></div><div style="background:linear-gradient(135deg,rgba(0,255,180,0.1),rgba(99,102,241,0.08));border:1.5px solid #00ffb4;border-radius:16px;padding:28px;margin-bottom:24px;"><p style="font-size:11px;font-weight:700;color:#00ffb4;letter-spacing:2px;text-transform:uppercase;margin:0 0 10px;">SESSION CONFIRMED</p><h1 style="font-size:26px;font-weight:800;color:#fff;margin:0 0 12px;">Payment received — session booked</h1><p style="font-size:15px;color:#94a3b8;line-height:1.7;margin:0;">Samuel will email you within 24 hours to agree on a time slot. Check <strong style="color:#fff;">admin@kloudaudit.eu</strong> — reply directly to that email to share your availability.</p></div><div style="background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px 24px;margin-bottom:24px;"><p style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">What to prepare</p>${["Your cloud provider console (read-only access helpful)", "Your current monthly bill or Cost Explorer screenshot", "The specific issues you want to fix", "Any Terraform or IaC files relevant to the audit"].map(i => `<div style="display:flex;gap:10px;margin-bottom:8px;"><span style="color:#00ffb4;flex-shrink:0;">→</span><p style="font-size:13px;color:#94a3b8;margin:0;">${i}</p></div>`).join('')}</div><p style="font-size:12px;color:#374151;text-align:center;">Questions? Reply to this email · admin@kloudaudit.eu</p></div></body></html>`,
+            }),
+            sgMail.send({
+              to:      'admin@kloudaudit.eu',
+              from:    { email: 'admin@kloudaudit.eu', name: 'KloudAudit System' },
+              subject: `💼 Session booked — ${email} · ${meta.provider || 'AWS'} · ${chargeDisplay}`,
+              text:    `New consulting session booked.\n\nEmail: ${email}\nProvider: ${meta.provider || 'AWS'}\nCharge: ${chargeDisplay}\nJob ID: ${job.id}\n\nReply to ${email} within 24hrs to schedule the slot.`,
+            }),
+          ]);
+          await supabaseAdmin.from('delivery_queue').update({ status: 'delivered', delivered_at: new Date().toISOString() }).eq('id', job.id);
+          results.push({ id: job.id, status: 'delivered', email, type: 'consulting_session' });
+          processed++;
+          continue;
+        }
 
         // 3. Check cache + call Claude AI
         let report   = null;

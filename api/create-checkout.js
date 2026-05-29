@@ -36,6 +36,48 @@ module.exports = async function handler(req, res)  {
   try {
     const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax, currency, currencyAmount, productType, sessionId, stripeCurrency } = req.body;
 
+    // ── CONSULTING SESSION (one-time, no quantity) ────────────────────────────
+    // SETUP: Create a one-time Price in Stripe Dashboard for the session fee.
+    // Set env var STRIPE_SESSION_PRICE_ID (or per-currency variants).
+    // If not configured the button gracefully shows "contact us" fallback.
+    if (productType === 'session') {
+      if (!email) return res.status(400).json({ error: 'Email required' });
+
+      const sessionCurrency = (stripeCurrency || currency || 'usd').toLowerCase();
+      const currencyMap = {
+        usd: process.env.STRIPE_SESSION_PRICE_ID_USD,
+        eur: process.env.STRIPE_SESSION_PRICE_ID_EUR,
+        gbp: process.env.STRIPE_SESSION_PRICE_ID_GBP,
+        pln: process.env.STRIPE_SESSION_PRICE_ID_PLN,
+        cad: process.env.STRIPE_SESSION_PRICE_ID_CAD,
+        aud: process.env.STRIPE_SESSION_PRICE_ID_AUD,
+      };
+      const priceId = currencyMap[sessionCurrency] || process.env.STRIPE_SESSION_PRICE_ID;
+
+      if (!priceId) {
+        return res.status(503).json({
+          error: 'Session checkout not yet configured — contact admin@kloudaudit.eu',
+          code:  'session_not_configured',
+        });
+      }
+
+      const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://kloudaudit.eu';
+      const session = await stripe.checkout.sessions.create({
+        line_items:    [{ price: priceId, quantity: 1 }],
+        mode:          'payment',
+        customer_email: email,
+        success_url:   `${baseUrl}?payment=session_success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url:    `${baseUrl}?payment=cancelled`,
+        metadata: {
+          type:      'consulting_session',
+          provider:  provider || 'AWS',
+          sessionId: sessionId || '',
+          email,
+        },
+      });
+      return res.status(200).json({ url: session.url, sessionId: session.id });
+    }
+
     // ── SUBSCRIPTION (recurring) ──────────────────────────────────────────────
     if (productType === 'subscription') {
       if (!email) return res.status(400).json({ error: 'Email required' });

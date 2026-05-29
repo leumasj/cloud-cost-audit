@@ -1685,8 +1685,25 @@ const ContactModal = memo(function ContactModal({ onClose }) {
 
 // ── BOOKING MODAL ─────────────────────────────────────────────────────────────
 // Defined OUTSIDE App — stable component type, owns its own status state.
-const BookingModal = memo(function BookingModal({ onClose, sessionPrice }) {
+const BookingModal = memo(function BookingModal({ onClose, sessionPrice, onStripeCheckout }) {
   const [status, setStatus] = useState("idle"); // idle | sending | success | error
+  const [stripeEmail, setStripeEmail] = useState('');
+  const [stripeStatus, setStripeStatus] = useState('idle'); // idle | loading | not_configured | error
+
+  const handleStripeBook = async () => {
+    if (!stripeEmail) return;
+    setStripeStatus('loading');
+    try {
+      const res = await fetch('/api/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: stripeEmail, productType: 'session', provider: 'AWS' }),
+      });
+      const data = await res.json();
+      if (data.code === 'session_not_configured') { setStripeStatus('not_configured'); return; }
+      if (data.url) { window.location.href = data.url; } else throw new Error(data.error);
+    } catch (err) { setStripeStatus('error'); setTimeout(() => setStripeStatus('idle'), 4000); }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1728,6 +1745,28 @@ const BookingModal = memo(function BookingModal({ onClose, sessionPrice }) {
               <p style={{ color: "var(--text-dim)", fontSize: "14px", lineHeight: 1.6 }}>We'll email you within 24hrs to confirm your session.<br />Check your inbox and spam folder.</p>
             </div>
           ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {/* ── STRIPE INSTANT PAYMENT ── */}
+              {stripeStatus !== 'not_configured' && (
+                <div style={{ background: "rgba(0,255,180,0.05)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "14px", padding: "20px" }}>
+                  <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "10px" }}>⚡ Book & Pay Instantly</p>
+                  <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "12px", lineHeight: 1.5 }}>Pay now via Stripe and lock in your session. Samuel confirms your time slot within 24hrs.</p>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <input type="email" placeholder="your@company.com" value={stripeEmail} onChange={e => setStripeEmail(e.target.value)}
+                      style={{ flex: 1, padding: "11px 14px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "14px" }} />
+                    <button onClick={handleStripeBook} disabled={!stripeEmail || stripeStatus === 'loading'}
+                      style={{ padding: "11px 20px", borderRadius: "10px", border: "none", background: stripeEmail ? "var(--green)" : "rgba(0,255,180,0.3)", color: "#000", fontWeight: 800, fontSize: "13px", cursor: stripeEmail ? "pointer" : "not-allowed", whiteSpace: "nowrap", flexShrink: 0 }}>
+                      {stripeStatus === 'loading' ? "…" : `Pay ${sessionPrice} →`}
+                    </button>
+                  </div>
+                  {stripeStatus === 'error' && <p style={{ fontSize: "12px", color: "#f87171", marginTop: "8px" }}>Something went wrong — try the form below or email admin@kloudaudit.eu</p>}
+                </div>
+              )}
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ flex: 1, height: "1px", background: "var(--border)" }} />
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>or request a session (no upfront payment)</span>
+                <div style={{ flex: 1, height: "1px", background: "var(--border)" }} />
+              </div>
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <input type="hidden" name="_subject" value={`New Booking – KloudAudit Implementation Session ${sessionPrice}`} />
               <input type="hidden" name="form_type" value="booking_999pln" />
@@ -1764,6 +1803,7 @@ const BookingModal = memo(function BookingModal({ onClose, sessionPrice }) {
               {status === "error" && <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>⚠ Something went wrong. Please try again.</p>}
               <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>We'll confirm by email within 24 hours. No payment required upfront.</p>
             </form>
+            </div>
           )}
         </div>
       </div>
@@ -1810,8 +1850,11 @@ export default function App() {
   const [savingsFilter, setSavingsFilter] = useState("All");
   const [openFaq, setOpenFaq] = useState(null);
   const [activeHowStep, setActiveHowStep] = useState(null); // null = all equal, click to expand
-  const [showLeadMagnet, setShowLeadMagnet] = useState(false);   // ← ADD THIS LINE
-  const [showStickyBar, setShowStickyBar] = useState(false);  // ← ADD THIS
+  const [showLeadMagnet, setShowLeadMagnet] = useState(false);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [auditStats, setAuditStats] = useState(null);
+  const [leadEmail, setLeadEmail] = useState('');
+  const [leadSubmitted, setLeadSubmitted] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
   const [sectionToast, setSectionToast] = useState(null); // audit section-complete toast
   const [secSectionToast, setSecSectionToast] = useState(null); // security section-complete toast
@@ -2096,6 +2139,14 @@ export default function App() {
     setTimeout(() => attempt().catch(() => {}), 3000);
   }
 };
+
+  // ── AUDIT STATS — fetched once on mount for real social proof ───────────────
+  useEffect(() => {
+    fetch('/api/public?type=stats')
+      .then(r => r.json())
+      .then(data => { if (data.success) setAuditStats(data); })
+      .catch(() => null);
+  }, []);
 
   // ── 30-SECOND LEAD MAGNET TRIGGER ───────────────────────────────────────────
 useEffect(() => {
@@ -3069,11 +3120,34 @@ aws iam simulate-principal-policy \\
                 </div>
               ))}
             </div>
-            <a href="/KloudAudit-2026-Cloud-Cost-Checklist.pdf" download
-              onClick={() => { window.gtag?.('event', 'lead_magnet_downloaded', {}); localStorage.setItem('ka_lead_shown','1'); setShowLeadMagnet(false); }}
-              style={{ display:"block",width:"100%",padding:"14px",borderRadius:"12px",textDecoration:"none",textAlign:"center",background:"linear-gradient(135deg,var(--green),#00c896)",color:"#000",fontWeight:800,fontSize:"15px",boxShadow:"0 4px 20px rgba(0,255,180,0.3)" }}>
-              Download Free PDF →
-            </a>
+            {leadSubmitted ? (
+              <a href="/KloudAudit-2026-Cloud-Cost-Checklist.pdf" download
+                onClick={() => { window.gtag?.('event', 'lead_magnet_downloaded', {}); setShowLeadMagnet(false); }}
+                style={{ display:"block",width:"100%",padding:"14px",borderRadius:"12px",textDecoration:"none",textAlign:"center",background:"linear-gradient(135deg,var(--green),#00c896)",color:"#000",fontWeight:800,fontSize:"15px",boxShadow:"0 4px 20px rgba(0,255,180,0.3)" }}>
+                ⬇ Download PDF Now →
+              </a>
+            ) : (
+              <div style={{ display:"flex",flexDirection:"column",gap:"10px" }}>
+                <input
+                  type="email"
+                  placeholder="your@company.com (optional)"
+                  value={leadEmail}
+                  onChange={e => setLeadEmail(e.target.value)}
+                  style={{ width:"100%",padding:"12px 14px",background:"rgba(255,255,255,0.04)",border:"1.5px solid rgba(255,255,255,0.12)",borderRadius:"10px",color:"#fff",fontSize:"14px",boxSizing:"border-box" }}
+                />
+                <a href="/KloudAudit-2026-Cloud-Cost-Checklist.pdf" download
+                  onClick={() => {
+                    window.gtag?.('event', 'lead_magnet_downloaded', { has_email: !!leadEmail });
+                    if (leadEmail) {
+                      fetch('/api/audits', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'lead_magnet', email: leadEmail }) }).catch(() => null);
+                    }
+                    setLeadSubmitted(true);
+                  }}
+                  style={{ display:"block",width:"100%",padding:"14px",borderRadius:"12px",textDecoration:"none",textAlign:"center",background:"linear-gradient(135deg,var(--green),#00c896)",color:"#000",fontWeight:800,fontSize:"15px",boxShadow:"0 4px 20px rgba(0,255,180,0.3)" }}>
+                  Get Free PDF →
+                </a>
+              </div>
+            )}
             <button onClick={() => { localStorage.setItem('ka_lead_shown','1'); setShowLeadMagnet(false); }} style={{ display:"block",width:"100%",background:"none",border:"none",textAlign:"center",fontSize:"12px",color:"var(--text-muted)",marginTop:"12px",cursor:"pointer",fontFamily:"inherit",padding:0 }}>
               No thanks
             </button>
@@ -3164,7 +3238,7 @@ aws iam simulate-principal-policy \\
               { text: "✓ No signup · No card", highlight: false },
               { text: "⚡ Cost + Security audits", highlight: false },
               { text: "🛡 AWS · GCP · Azure", highlight: false },
-              { text: "👥 Teams audited globally", highlight: false },
+              { text: auditStats ? `👥 ${auditStats.totalAudits.toLocaleString()} audits completed` : "👥 Teams audited globally", highlight: false },
             ].map((item, i) => (
               <span key={i} style={{ fontSize: "12px", color: item.highlight ? "var(--green)" : "var(--text-muted)", background: item.highlight ? "rgba(0,255,180,0.06)" : "rgba(255,255,255,0.04)", border: `1px solid ${item.highlight ? "rgba(0,255,180,0.2)" : "rgba(255,255,255,0.08)"}`, borderRadius: "20px", padding: "4px 12px", whiteSpace: "nowrap", fontWeight: item.highlight ? 700 : 400 }}>
                 {item.text}
@@ -3436,6 +3510,82 @@ aws iam simulate-principal-policy \\
                 Find my savings →
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* ── DIY WITH CLAUDE OBJECTION ── */}
+        <div style={{ marginBottom: "90px" }}>
+          <div style={{ textAlign: "center", marginBottom: "36px" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", padding: "6px 16px", marginBottom: "20px" }}>
+              <span style={{ fontSize: "13px" }}>🤔</span>
+              <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>"Can't I just ask Claude to do this?"</span>
+            </div>
+            <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "12px" }}>
+              You can. Here's what happens.
+            </h2>
+            <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "520px", margin: "0 auto" }}>
+              Claude is a general-purpose AI. KloudAudit is a structured audit framework trained on one problem — finding cloud waste and security gaps. The difference shows immediately.
+            </p>
+          </div>
+          <div className="compare-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px", background: "var(--border)", borderRadius: "20px", overflow: "hidden", border: "1px solid var(--border)", marginBottom: "24px" }}>
+            {/* DIY column */}
+            <div style={{ background: "rgba(248,113,113,0.04)", padding: "32px 28px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "24px" }}>
+                <span style={{ fontSize: "20px" }}>🤖</span>
+                <div>
+                  <p style={{ fontSize: "14px", fontWeight: 800, color: "#f87171", margin: 0 }}>DIY with Claude</p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0 }}>free · general purpose</p>
+                </div>
+              </div>
+              {[
+                "Write 18+ prompts to cover all cost areas",
+                "Need to know the right questions to ask",
+                "No savings estimate — just generic advice",
+                "No bill context — numbers are hypothetical",
+                "2+ hours of back-and-forth iteration",
+                "Stateless — no history between sessions",
+                "No shareable output or branded report",
+                "Won't flag issues you forgot to ask about",
+              ].map(item => (
+                <div key={item} style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "12px" }}>
+                  <span style={{ color: "#f87171", fontSize: "13px", marginTop: "1px", flexShrink: 0 }}>✗</span>
+                  <span style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>{item}</span>
+                </div>
+              ))}
+            </div>
+            {/* KloudAudit column */}
+            <div style={{ background: "rgba(0,255,180,0.04)", padding: "32px 28px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "24px" }}>
+                <div style={{ width: "28px", height: "28px", background: "var(--green)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px" }}>⚡</div>
+                <div>
+                  <p style={{ fontSize: "14px", fontWeight: 800, color: "var(--green)", margin: 0 }}>KloudAudit</p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0 }}>free · purpose-built</p>
+                </div>
+              </div>
+              {[
+                "34 checks across cost + security — already built",
+                "Framework encodes what to ask, automatically",
+                "Dollar savings tied to your actual monthly bill",
+                "Every estimate calculated against your spend",
+                "15 minutes, structured, guided",
+                "Score history tracked — re-audit in 30 days",
+                "PDF report, share card, public link",
+                "Catches what you didn't know to look for",
+              ].map(item => (
+                <div key={item} style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "12px" }}>
+                  <span style={{ color: "var(--green)", fontSize: "13px", marginTop: "1px", flexShrink: 0 }}>✓</span>
+                  <span style={{ fontSize: "13px", color: "var(--text-dim)", lineHeight: 1.5 }}>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "16px" }}>
+              The audit framework is the product. The AI is just how we deliver the fix guide.
+            </p>
+            <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "13px 32px", fontSize: "15px", boxShadow: "0 0 24px rgba(0,255,180,0.25)" }}>
+              Try the 15-minute version →
+            </button>
           </div>
         </div>
 
@@ -3842,6 +3992,66 @@ aws iam simulate-principal-policy \\
               )}
             </div>
           ))}
+        </div>
+
+        {/* ── PRICING — Free vs Paid ── */}
+        <div style={{ marginBottom: "90px" }}>
+          <div style={{ textAlign: "center", marginBottom: "40px" }}>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Simple pricing</p>
+            <h2 className="display" style={{ fontSize: "clamp(26px,3vw,40px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "10px" }}>Free to audit. Pay only for the fix guide.</h2>
+            <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "480px", margin: "0 auto" }}>The audit and risk score are free, forever. The Blueprint is what you buy when you're ready to implement.</p>
+          </div>
+          <div className="bento-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", alignItems: "start" }}>
+            {[
+              {
+                label: "Free Audit", price: "$0", priceNote: "forever", color: "#4ade80", bg: "rgba(74,222,128,0.06)", border: "rgba(74,222,128,0.2)",
+                features: ["18 cost checkpoints", "16 security checkpoints", "Savings estimate vs your bill", "Waste score 0–100", "Shareable results card", "Public audit link"],
+                cta: "Start Free Audit", action: () => goTo("intake"),
+              },
+              {
+                label: "Cost Blueprint", price: currency.blueprintPrice, priceNote: "one-time", color: "var(--green)", bg: "rgba(0,255,180,0.06)", border: "rgba(0,255,180,0.25)", badge: "Most popular",
+                features: ["Everything in Free", "Exact CLI commands per issue", "Terraform snippets", "Step-by-step implementation", "Delivered to inbox in 2 min", "Full refund if no actionable fix"],
+                cta: "Get Cost Blueprint", action: () => { setShowBlueprint(true); },
+              },
+              {
+                label: "Security Blueprint", price: currency.securityPrice || "$29", priceNote: "one-time", color: "#f87171", bg: "rgba(248,113,113,0.06)", border: "rgba(248,113,113,0.2)",
+                features: ["Everything in Free", "IAM policy templates", "Compliance gap mapping", "SOC 2 / GDPR / ISO 27001", "30-day remediation roadmap", "Delivered to inbox in 2 min"],
+                cta: "Get Security Blueprint", action: () => setShowSecBlueprint(true),
+              },
+              {
+                label: "Monthly Plan", price: currency.subscriptionPrice || "$19/mo", priceNote: "cancel anytime", color: "#818cf8", bg: "rgba(99,102,241,0.06)", border: "rgba(99,102,241,0.2)",
+                features: ["Unlimited re-audits", "Score history & trend", "One discounted Blueprint/mo", "Track infrastructure improvement", "Monthly progress report"],
+                cta: "Subscribe", action: () => { const email = gateEmail || ''; if (email) handleBuySubscription(email); else goTo("intake"); },
+              },
+            ].map(plan => (
+              <div key={plan.label} style={{ background: plan.bg, border: `1px solid ${plan.border}`, borderRadius: "18px", padding: "28px 24px", position: "relative" }}>
+                {plan.badge && (
+                  <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "var(--green)", color: "#000", fontSize: "11px", fontWeight: 800, padding: "3px 14px", borderRadius: "20px", whiteSpace: "nowrap" }}>{plan.badge}</div>
+                )}
+                <p style={{ fontSize: "12px", fontWeight: 700, color: plan.color, letterSpacing: "1px", textTransform: "uppercase", marginBottom: "8px" }}>{plan.label}</p>
+                <div style={{ marginBottom: "20px" }}>
+                  <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{plan.price}</span>
+                  <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>{plan.priceNote}</span>
+                </div>
+                <div style={{ marginBottom: "24px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {plan.features.map(f => (
+                    <div key={f} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                      <span style={{ color: plan.color, fontSize: "12px", flexShrink: 0, marginTop: "1px" }}>✓</span>
+                      <span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={plan.action} style={{ width: "100%", padding: "11px", borderRadius: "10px", border: `1px solid ${plan.border}`, background: plan.color === "var(--green)" ? "var(--green)" : plan.bg, color: plan.color === "var(--green)" ? "#000" : plan.color, fontWeight: 800, fontSize: "13px", cursor: "pointer", transition: "all 0.2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}>
+                  {plan.cta} →
+                </button>
+              </div>
+            ))}
+          </div>
+          <p style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "20px" }}>
+            All blueprints include a full refund guarantee if no actionable fix is identified. · <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a>
+          </p>
         </div>
 
         {/* ── BOTTOM CTA ── */}

@@ -30,8 +30,10 @@ module.exports = async function handler(req, res) {
         return await handleViewAudit(req, res, supabase, id);
       case 'leaderboard':
         return await handleLeaderboard(req, res, supabase, provider, limit);
+      case 'stats':
+        return await handleStats(req, res, supabase);
       default:
-        return res.status(400).json({ error: 'Invalid type. Use ?type=audit&id=... or ?type=leaderboard' });
+        return res.status(400).json({ error: 'Invalid type. Use ?type=audit&id=... or ?type=leaderboard or ?type=stats' });
     }
   } catch (err) {
     console.error('Public endpoint error:', err.message);
@@ -101,6 +103,25 @@ async function handleViewAudit(req, res, supabase, auditId) {
   return res.status(200).json({
     success: true,
     audit: publicAudit,
+  });
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+// Returns aggregate counts for the homepage social proof bar.
+// Cached 5 minutes via s-maxage on the parent handler.
+async function handleStats(req, res, supabase) {
+  const [auditsRes, blueprintsRes] = await Promise.all([
+    supabase.from('audits').select('*', { count: 'exact', head: true }),
+    supabase.from('audits').select('*', { count: 'exact', head: true }).eq('blueprint_paid', true),
+  ]);
+
+  const totalAudits     = auditsRes.count     || 0;
+  const totalBlueprints = blueprintsRes.count || 0;
+
+  return res.status(200).json({
+    success:         true,
+    totalAudits,
+    totalBlueprints,
   });
 }
 

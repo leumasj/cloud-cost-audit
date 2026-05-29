@@ -40,6 +40,8 @@ module.exports = async function handler(req, res) {
         return await handleShareAudit(req, res, supabase);
       case 'leaderboard-opt-in':
         return await handleLeaderboardOptIn(req, res, supabase);
+      case 'lead_magnet':
+        return await handleLeadMagnet(req, res, supabase);
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
@@ -286,6 +288,39 @@ async function handleLeaderboardOptIn(req, res, supabase) {
     success: true,
     publicDisplay: publicDisplay === true,
     displayName: displayName || null,
-    rank: null, // rank calculation requires SELECT — available after RLS SELECT policy added
+    rank: null,
   });
 }
+
+// ── LEAD MAGNET ───────────────────────────────────────────────────────────────
+// Captures email from the 30-second PDF checklist popup.
+// Stores in subscribers table for re-audit reminders.
+// The PDF itself is served as a public static file — no email needed to download.
+async function handleLeadMagnet(req, res, supabase) {
+  const rateLimit = checkRateLimit(req, 'lead-magnet', 5, 60 * 60 * 1000);
+  if (rateLimit.limited) return res.status(429).json({ error: 'Too many requests' });
+
+  const { email } = req.body;
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'Valid email required' });
+  }
+
+  const reAuditDue = new Date();
+  reAuditDue.setDate(reAuditDue.getDate() + 90);
+
+  // Upsert into subscribers — graceful if table doesn't exist yet
+  try {
+    await supabase.from('subscribers').upsert({
+      email,
+      provider:     'Multi-cloud',
+      source:       'lead_magnet',
+      re_audit_due: reAuditDue.toISOString(),
+      unsubscribed: false,
+    }, { onConflict: 'email', ignoreDuplicates: false });
+  } catch (err) {
+    console.warn('Lead magnet subscriber upsert failed (non-critical):', err.message);
+  }
+
+  return res.status(200).json({ success: true });
+}
+
