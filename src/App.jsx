@@ -258,8 +258,9 @@ const globalCss = `
   .section-tab:hover { color: var(--green) !important; }
   input, select, textarea { font-family: var(--body); }
   input:focus, textarea:focus { outline: none; border-color: var(--green) !important; box-shadow: 0 0 0 3px rgba(0,255,180,0.1) !important; }
-  .provider-chip { transition: all 0.15s; cursor: pointer; font-family: var(--body); }
+  .provider-chip { transition: all 0.15s ease; cursor: pointer; font-family: var(--body); position: relative; }
   .provider-chip:hover { border-color: var(--green) !important; color: var(--green) !important; }
+  .provider-chip.selected { transform: scale(1.03); background: rgba(0,255,180,0.08) !important; border-color: var(--green) !important; color: var(--green) !important; }
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
@@ -359,6 +360,41 @@ const globalCss = `
   input, textarea {
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff;
+  }
+
+  /* ── 1. HERO UNDERLINE DRAW ─────────────────────────────────────── */
+  @keyframes underline-draw { from { width: 0; } to { width: 100%; } }
+
+  /* ── 3. SECTION PROGRESS PULSE ──────────────────────────────────── */
+  @keyframes section-pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,180,0.4); } 60% { opacity: 0.7; box-shadow: 0 0 0 5px rgba(0,255,180,0); } }
+  .section-active-indicator { animation: section-pulse 2s ease-in-out infinite; }
+
+  /* ── 6. FINDING ROW HOVER ────────────────────────────────────────── */
+  .finding-row { transition: background 0.15s ease, transform 0.15s ease; }
+  .finding-row:hover { background: rgba(0,255,180,0.04) !important; }
+  .finding-row:hover .finding-chevron { opacity: 1; transform: translateX(0); }
+  .finding-chevron { opacity: 0; transform: translateX(-6px); transition: opacity 0.15s ease, transform 0.15s ease; color: var(--green); font-size: 12px; flex-shrink: 0; }
+
+  /* ── 7. SCROLL REVEAL ────────────────────────────────────────────── */
+  .scroll-reveal { opacity: 0; transform: translateY(20px); }
+  .scroll-reveal.in-view { opacity: 1; transform: translateY(0); transition: opacity 0.5s ease, transform 0.5s ease; }
+
+  /* ── 8. STICKY BAR SLIDE-UP ─────────────────────────────────────── */
+  @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .sticky-slide-up { animation: slide-up 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+
+  /* ── 9. PRICING CARD HOVER ELEVATION ────────────────────────────── */
+  .pricing-card { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+  .pricing-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important; }
+  .pricing-card-featured { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+  .pricing-card-featured:hover { transform: translateY(-6px); box-shadow: 0 12px 40px rgba(0,255,180,0.18), 0 4px 16px rgba(0,0,0,0.3) !important; border-color: rgba(0,255,180,0.55) !important; }
+
+  /* ── 10. MOBILE TOUCH FEEDBACK ───────────────────────────────────── */
+  @media (hover: none) {
+    button:active, [role="button"]:active, [role="radio"]:active { transform: scale(0.97); transition: transform 0.1s ease; }
+  }
+  button, [role="button"], [role="radio"], [role="checkbox"] {
+    -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
   }
 `;
 
@@ -1756,7 +1792,9 @@ function WasteScoreCard({ flagged, allChecks, savPct, savMin, savMax, onShare })
           />
         </svg>
         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <span className="display" style={{ fontSize: "32px", fontWeight: 800, color: grade.color, letterSpacing: "-1px", lineHeight: 1 }}>{score}</span>
+          <span className="display" style={{ fontSize: "32px", fontWeight: 800, color: grade.color, letterSpacing: "-1px", lineHeight: 1 }}>
+            <AnimatedNumber value={score} duration={1500} />
+          </span>
           <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600, letterSpacing: "1px" }}>/ 100</span>
         </div>
       </div>
@@ -2854,6 +2892,24 @@ useEffect(() => {
     }
   }, [step, provider, monthlyBill, companyName, checked, activeSection, gateEmail]);
 
+  // ── SCROLL REVEAL — IntersectionObserver for homepage sections ────────────
+  useEffect(() => {
+    if (step !== 'intro') return;
+    const els = document.querySelectorAll('.scroll-reveal');
+    if (!els.length) return;
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          entry.target.style.transitionDelay = `${(entry.target.dataset.revealIndex || 0) * 80}ms`;
+          entry.target.classList.add('in-view');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    els.forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, [step]);
+
   // ── URL SESSION RESTORE — fetch remote session when ?session= is in URL ────
   useEffect(() => {
     if (!urlSessionId) return;
@@ -3168,7 +3224,7 @@ useEffect(() => {
                       const sMin = Math.round(SAMPLE_REPORT.monthlyBill * check.savingsRange[0] / 100);
                       const sMax = Math.round(SAMPLE_REPORT.monthlyBill * check.savingsRange[1] / 100);
                       return (
-                        <div key={check.id} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid var(--border)`, borderLeft: `3px solid ${group.color}`, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
+                        <div key={check.id} className="finding-row" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid var(--border)`, borderLeft: `3px solid ${group.color}`, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
                           <div>
                             <p style={{ fontWeight: 600, fontSize: "14px", color: "#fff", marginBottom: "3px" }}>{check.label}</p>
                             <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>{check.detail}</p>
@@ -3930,7 +3986,7 @@ aws iam simulate-principal-policy \\
 
             {/* ── STICKY BOTTOM CTA BAR ── */}
       {showStickyBar && (
-        <div className="sticky-bottom-cta" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+        <div className="sticky-bottom-cta sticky-slide-up" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", boxShadow: "0 0 8px var(--green)", flexShrink: 0 }} />
             <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>⚡ Engineers ran 3 audits today — find out what they found</span>
@@ -3949,7 +4005,10 @@ aws iam simulate-principal-policy \\
           {/* ── HEADLINE ── */}
           <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "20px" }}>
             The audit your<br />
-            <span style={{ background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>cloud provider</span><br />
+            <span style={{ position: "relative", display: "inline-block", background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              cloud provider
+              <span style={{ position: "absolute", bottom: "-2px", left: 0, height: "2px", width: 0, background: "var(--green)", animation: "underline-draw 0.8s 0.5s ease-out forwards", borderRadius: "1px" }} />
+            </span><br />
             won&apos;t give you.
           </h1>
                 {showLeadMagnet && (
@@ -4451,7 +4510,7 @@ aws iam simulate-principal-policy \\
           </div>
           <div className="audit-cats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
             {AUDIT_SECTIONS.map((s, i) => (
-              <div key={s.id} className="audit-cat-card fade-up" style={{ animationDelay: `${0.05 * i}s`, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden" }}>
+              <div key={s.id} className="audit-cat-card scroll-reveal" data-reveal-index={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "100px", height: "100px", background: "radial-gradient(circle, rgba(0,255,180,0.06) 0%, transparent 70%)", borderRadius: "50%" }} />
                 <div style={{ fontSize: "32px", marginBottom: "16px" }}>{s.icon}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
@@ -4768,7 +4827,7 @@ aws iam simulate-principal-policy \\
           </div>
           <div className="bento-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "32px" }}>
             {/* Free */}
-            <div style={{ background: "rgba(74,222,128,0.05)", border: "1px solid rgba(74,222,128,0.18)", borderRadius: "18px", padding: "28px 24px" }}>
+            <div className="pricing-card" style={{ background: "rgba(74,222,128,0.05)", border: "1px solid rgba(74,222,128,0.18)", borderRadius: "18px", padding: "28px 24px" }}>
               <p style={{ fontSize: "12px", fontWeight: 700, color: "#4ade80", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Free Audit</p>
               <div style={{ marginBottom: "6px" }}>
                 <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>$0</span>
@@ -4786,7 +4845,7 @@ aws iam simulate-principal-policy \\
               </button>
             </div>
             {/* Cost Blueprint */}
-            <div style={{ background: "rgba(0,255,180,0.06)", border: "1.5px solid rgba(0,255,180,0.3)", borderRadius: "18px", padding: "28px 24px", position: "relative" }}>
+            <div className="pricing-card-featured" style={{ background: "rgba(0,255,180,0.06)", border: "1.5px solid rgba(0,255,180,0.3)", borderRadius: "18px", padding: "28px 24px", position: "relative" }}>
               <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "var(--green)", color: "#000", fontSize: "11px", fontWeight: 800, padding: "3px 14px", borderRadius: "20px", whiteSpace: "nowrap" }}>Most popular</div>
               <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Cost Blueprint</p>
               <div style={{ marginBottom: "6px" }}>
@@ -4812,7 +4871,7 @@ aws iam simulate-principal-policy \\
               </button>
             </div>
             {/* Security Blueprint */}
-            <div style={{ background: "rgba(248,113,113,0.05)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "18px", padding: "28px 24px" }}>
+            <div className="pricing-card" style={{ background: "rgba(248,113,113,0.05)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "18px", padding: "28px 24px" }}>
               <p style={{ fontSize: "12px", fontWeight: 700, color: "#f87171", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Security Blueprint</p>
               <div style={{ marginBottom: "6px" }}>
                 <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{currency.securityPrice || "$29"}</span>
@@ -5111,11 +5170,13 @@ aws iam simulate-principal-policy \\
             <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Cloud provider</label>
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
               {PROVIDERS.map(p => (
-                <button key={p} className="provider-chip"
+                <button key={p} className={`provider-chip${provider === p ? " selected" : ""}`}
                   role="radio" aria-checked={provider === p} tabIndex={0}
                   onClick={() => { window.gtag?.('event', 'audit_started', { provider: p }); setProvider(p); }}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.gtag?.('event', 'audit_started', { provider: p }); setProvider(p); } }}
-                  style={{ padding: "10px 20px", borderRadius: "10px", fontSize: "14px", fontWeight: 600, border: `1.5px solid ${provider === p ? "var(--green)" : "var(--border)"}`, background: provider === p ? "var(--green-dim)" : "rgba(255,255,255,0.03)", color: provider === p ? "var(--green)" : "var(--text-muted)" }}>{p}</button>
+                  style={{ padding: "10px 20px", borderRadius: "10px", fontSize: "14px", fontWeight: 600, border: `1.5px solid ${provider === p ? "var(--green)" : "var(--border)"}`, background: provider === p ? "rgba(0,255,180,0.08)" : "rgba(255,255,255,0.03)", color: provider === p ? "var(--green)" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>
+                  {provider === p && <span style={{ fontSize: "11px", fontWeight: 800 }}>✓</span>}{p}
+                </button>
               ))}
             </div>
           </div>
@@ -5164,8 +5225,23 @@ aws iam simulate-principal-policy \\
             {sectionToast}
           </div>
         )}
-        <div style={{ height: "2px", background: "var(--border)", position: "sticky", top: "58px", zIndex: 99 }}>
-          <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, var(--green), #00d4ff, #818cf8)", transition: "width 0.5s ease", boxShadow: "0 0 8px rgba(0,255,180,0.6)" }} />
+        <div style={{ position: "sticky", top: "58px", zIndex: 99 }}>
+          <div style={{ height: "2px", background: "var(--border)" }}>
+            <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, var(--green), #00d4ff, #818cf8)", transition: "width 0.5s ease", boxShadow: "0 0 8px rgba(0,255,180,0.6)" }} />
+          </div>
+          <div style={{ background: "rgba(8,8,16,0.92)", backdropFilter: "blur(12px)", padding: "6px 24px", display: "flex", gap: "4px", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
+            {AUDIT_SECTIONS.map((s, i) => {
+              const done = s.checks.filter(c => checked[c.id] !== undefined).length === s.checks.length;
+              const active = i === activeSection;
+              return (
+                <span key={s.id} onClick={() => setActiveSection(i)} style={{ fontSize: "11px", fontWeight: active ? 700 : 500, color: done ? "var(--green)" : active ? "var(--green)" : "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", gap: "3px", padding: "1px 4px", borderRadius: "4px", background: active ? "rgba(0,255,180,0.08)" : "transparent" }}>
+                  <span className={active ? "section-active-indicator" : ""} style={{ width: "5px", height: "5px", borderRadius: "50%", background: done ? "var(--green)" : active ? "var(--green)" : "rgba(255,255,255,0.15)", display: "inline-block", flexShrink: 0 }} />
+                  {done ? `✓ ${s.label}` : s.label}
+                  {i < AUDIT_SECTIONS.length - 1 && <span style={{ color: "rgba(255,255,255,0.15)", marginLeft: "4px" }}>·</span>}
+                </span>
+              );
+            })}
+          </div>
         </div>
         <div style={{ maxWidth: "960px", margin: "0 auto", padding: "32px 24px 120px", position: "relative", zIndex: 1 }}>
           <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "32px", paddingBottom: "4px" }}>
@@ -5656,8 +5732,8 @@ aws iam simulate-principal-policy \\
                   const sMin2 = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
                   const sMax2 = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
                   return (
-                    <div key={check.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderLeft: "3px solid " + group.color, borderRadius: "0 12px 12px 0", padding: "16px 20px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
-                      <div>
+                    <div key={check.id} className="finding-row" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderLeft: "3px solid " + group.color, borderRadius: "0 12px 12px 0", padding: "16px 20px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+                      <div style={{ flex: 1 }}>
                         <p style={{ fontWeight: 600, fontSize: "15px", color: "#fff", marginBottom: "4px" }}>{check.label}</p>
                         <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>{check.detail}</p>
                       </div>
@@ -5665,6 +5741,7 @@ aws iam simulate-principal-policy \\
                         <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--green)" }}>${sMin2?.toLocaleString()} – ${sMax2?.toLocaleString()}</p>
                         <p style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ month</p>
                       </div>}
+                      <span className="finding-chevron">›</span>
                     </div>
                   );
                 })}
@@ -5994,7 +6071,7 @@ aws iam simulate-principal-policy \\
 
         {/* ── STICKY BOTTOM BAR — report step ── */}
         {showStickyBar && flagged.length > 0 && (
-          <div className="sticky-bottom-cta" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+          <div className="sticky-bottom-cta sticky-slide-up" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <div style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", boxShadow: "0 0 8px var(--green)", flexShrink: 0, animation: "pulse-dot 2s infinite" }} />
               <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>
