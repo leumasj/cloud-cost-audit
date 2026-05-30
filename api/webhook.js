@@ -32,6 +32,7 @@ const PRODUCT_TYPE_MAP = {
   'blueprint':           'blueprint',
   'security_certificate':'security_blueprint',
   'bundle':              'bundle',
+  'cfo_report':          'cfo_report',
 };
 
 // ── STRUCTURED LOGGER ─────────────────────────────────────────────────────────

@@ -828,8 +828,7 @@ function SecSampleModal({ onClose }) {
 
 // ── LIVE FEED TICKER COMPONENT ────────────────────────────────────────────────
 function LiveFeedTicker() {
-  // International names — rotating so repeat visitors see variety
-  const FEEDS = [
+  const STATIC_FEEDS = [
     { text: "James saved $2,400/mo",    provider: "AWS",   time: "2h ago" },
     { text: "Priya saved $1,800/mo",    provider: "GCP",   time: "5h ago" },
     { text: "Lukas saved $3,100/mo",    provider: "AWS",   time: "1h ago" },
@@ -844,20 +843,47 @@ function LiveFeedTicker() {
     { text: "Emma blocked public S3",   provider: "Azure", time: "3h ago" },
   ];
 
+  function relativeTime(iso) {
+    const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3600000);
+    if (h < 1) return "< 1h ago";
+    if (h < 24) return `${h}h ago`;
+    const d = Math.floor(h / 24);
+    return d === 1 ? "yesterday" : `${d}d ago`;
+  }
+
   const PROVIDER_COLORS = { AWS: "#ff9900", GCP: "#4285f4", Azure: "#0078d4" };
 
+  const [feeds, setFeeds] = useState(STATIC_FEEDS);
   const [visibleIdx, setVisibleIdx] = useState([0, 1, 2]);
   const [fadingOut, setFadingOut] = useState([]);
 
   useEffect(() => {
+    fetch('/api/public?type=leaderboard&limit=20')
+      .then(r => r.json())
+      .then(data => {
+        const entries = (data.leaderboard || []).filter(
+          e => e.company && e.company !== 'Anonymous' && e.monthlySavings
+        );
+        if (entries.length >= 5) {
+          setFeeds(entries.slice(0, 12).map(e => ({
+            text: `${e.company} found ${e.monthlySavings}/mo`,
+            provider: e.provider || 'AWS',
+            time: relativeTime(e.auditedAt),
+          })));
+        }
+      })
+      .catch(() => {}); // keep static on error or empty DB
+  }, []);
+
+  useEffect(() => {
     const interval = setInterval(() => {
-      const outIdx = Math.floor(Math.random() * 3); // which pill to swap
+      const outIdx = Math.floor(Math.random() * 3);
       setFadingOut([outIdx]);
       setTimeout(() => {
         setVisibleIdx(prev => {
           const next = [...prev];
           let newItem;
-          do { newItem = Math.floor(Math.random() * FEEDS.length); }
+          do { newItem = Math.floor(Math.random() * feeds.length); }
           while (prev.includes(newItem));
           next[outIdx] = newItem;
           return next;
@@ -866,7 +892,7 @@ function LiveFeedTicker() {
       }, 400);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [feeds]);
 
   return (
     <div className="fade-up stagger-5" style={{ marginTop: "40px" }}>
@@ -1035,6 +1061,142 @@ function NATGatewayCalculator({ onRunAudit }) {
         </h3>
         <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "24px", maxWidth: "480px", margin: "0 auto 24px" }}>
           Compute, storage, database, governance — all 18 checks with savings estimates tied to your actual monthly bill. Free, no credentials required.
+        </p>
+        <button className="glow-btn" onClick={onRunAudit}
+          style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 36px", fontSize: "16px", boxShadow: "0 0 28px rgba(0,255,180,0.3)", cursor: "pointer" }}>
+          Run Full Cost Audit — Free →
+        </button>
+        <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "10px" }}>No signup · No cloud access · Results in 15 minutes</p>
+      </div>
+    </div>
+  );
+}
+
+// ── SPOT INSTANCE CALCULATOR ─────────────────────────────────────────────────
+function SpotInstanceCalculator({ onRunAudit }) {
+  const [hourlyRate, setHourlyRate] = useState('');
+  const [hours, setHours] = useState(720);
+  const [discount, setDiscount] = useState(70);
+
+  const rate = parseFloat(hourlyRate) || 0;
+  const hrs  = Math.max(1, Math.min(744, parseInt(hours) || 720));
+  const discountPct = discount / 100;
+
+  const onDemandMonthly = rate * hrs;
+  const spotMonthly     = onDemandMonthly * (1 - discountPct);
+  const monthlySavings  = Math.round(onDemandMonthly - spotMonthly);
+  const annualSavings   = monthlySavings * 12;
+  const hasResult       = rate > 0;
+
+  return (
+    <div style={{ maxWidth: "780px", margin: "0 auto", padding: "80px 24px 80px", position: "relative", zIndex: 1 }}>
+      <div style={{ textAlign: "center", marginBottom: "48px" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "20px", padding: "5px 14px", marginBottom: "20px" }}>
+          <span style={{ fontSize: "11px", fontWeight: 700, color: "#818cf8", letterSpacing: "1px" }}>FREE CALCULATOR · NO SIGNUP</span>
+        </div>
+        <h1 className="display" style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 800, letterSpacing: "-2px", color: "#fff", marginBottom: "14px", lineHeight: 1.05 }}>
+          How Much Would Spot<br /><span style={{ color: "#818cf8" }}>Actually Save Me?</span>
+        </h1>
+        <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "520px", margin: "0 auto", lineHeight: 1.7 }}>
+          Spot instances are <strong style={{ color: "#fff" }}>60–90% cheaper</strong> than on-demand for interruptible workloads. Enter your numbers to see the monthly saving on CI/CD runners, ML training, or batch jobs.
+        </p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "24px" }} className="calc-cards">
+        <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "20px", padding: "32px" }}>
+          <p style={{ fontSize: "13px", fontWeight: 700, color: "#818cf8", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "24px" }}>Your Numbers</p>
+
+          <div style={{ marginBottom: "24px" }}>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-dim)", marginBottom: "8px" }}>On-demand hourly rate (USD)</label>
+            <input type="number" step="0.001" value={hourlyRate} onChange={e => setHourlyRate(e.target.value)} placeholder="e.g. 0.192"
+              style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "16px", boxSizing: "border-box" }} />
+            <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "5px" }}>Find this at aws.amazon.com/ec2/pricing — e.g. m5.xlarge us-east-1 = $0.192/hr</p>
+          </div>
+
+          <div style={{ marginBottom: "24px" }}>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-dim)", marginBottom: "8px" }}>
+              Monthly hours running — <span style={{ color: "#818cf8" }}>{hrs}h</span>
+              {hrs === 720 && <span style={{ fontSize: "11px", color: "var(--text-muted)", marginLeft: "6px" }}>(24/7)</span>}
+            </label>
+            <input type="range" min="1" max="744" value={hrs} onChange={e => setHours(Number(e.target.value))}
+              style={{ width: "100%", accentColor: "#818cf8" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+              <span>1h</span><span>720h = always on</span><span>744h</span>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-dim)", marginBottom: "8px" }}>
+              Spot discount vs on-demand — <span style={{ color: "#818cf8" }}>{discount}% off</span>
+            </label>
+            <input type="range" min="40" max="90" value={discount} onChange={e => setDiscount(Number(e.target.value))}
+              style={{ width: "100%", accentColor: "#818cf8" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+              <span>40% (conservative)</span><span>Typical: 60–80%</span><span>90%</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ background: hasResult ? "linear-gradient(135deg, rgba(99,102,241,0.08), rgba(0,255,180,0.05))" : "var(--bg2)", border: `1px solid ${hasResult ? "rgba(99,102,241,0.3)" : "var(--border)"}`, borderRadius: "20px", padding: "32px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          {hasResult ? (
+            <>
+              <div>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "#818cf8", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "20px" }}>Your Savings Estimate</p>
+                <div style={{ marginBottom: "20px" }}>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "4px" }}>Current on-demand monthly cost</p>
+                  <p className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#f87171", letterSpacing: "-1px" }}>${Math.round(onDemandMonthly).toLocaleString()}/mo</p>
+                </div>
+                <div style={{ height: "1px", background: "var(--border)", margin: "16px 0" }} />
+                <div style={{ marginBottom: "20px" }}>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "4px" }}>Potential monthly saving with Spot</p>
+                  <p className="display" style={{ fontSize: "36px", fontWeight: 800, color: "var(--green)", letterSpacing: "-1.5px" }}>−${monthlySavings.toLocaleString()}/mo</p>
+                  <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>= ${annualSavings.toLocaleString()}/year · {discount}% cheaper on Spot</p>
+                </div>
+                <div style={{ background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.2)", borderRadius: "10px", padding: "12px 16px" }}>
+                  <p style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.6 }}>
+                    <strong style={{ color: "#818cf8" }}>Spot effective rate</strong> — ${(rate * (1 - discountPct)).toFixed(4)}/hr<br />
+                    <strong style={{ color: "#818cf8" }}>Avg interruption rate</strong> — ~5% (varies by instance &amp; AZ)
+                  </p>
+                </div>
+              </div>
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "16px" }}>Spot discounts vary by region, instance family, and demand. Check EC2 Spot price history for live rates.</p>
+            </>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center" }}>
+              <span style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.3 }}>⚡</span>
+              <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: 1.6 }}>Enter your on-demand hourly rate above to see your Spot savings estimate.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px 28px", marginBottom: "24px" }}>
+        <p style={{ fontSize: "12px", fontWeight: 700, color: "#818cf8", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "16px" }}>Best workloads for Spot instances</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px" }}>
+          {[
+            { icon: "🔄", label: "CI/CD runners", detail: "GitHub Actions, GitLab CI — auto-retry handles interruptions" },
+            { icon: "🧠", label: "ML training jobs", detail: "Checkpointing to S3 means interruptions cost minutes, not hours" },
+            { icon: "📦", label: "Batch processing", detail: "ETL, data transforms, media encoding, nightly reports" },
+            { icon: "🧪", label: "Dev & test envs", detail: "Non-critical, restartable workloads that don't serve live users" },
+          ].map(u => (
+            <div key={u.label} style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+              <span style={{ fontSize: "18px", flexShrink: 0 }}>{u.icon}</span>
+              <div>
+                <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", margin: "0 0 2px" }}>{u.label}</p>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0, lineHeight: 1.5 }}>{u.detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(0,255,180,0.06) 100%)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "20px", padding: "32px", textAlign: "center" }}>
+        <p style={{ fontSize: "13px", fontWeight: 700, color: "#818cf8", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "10px" }}>Spot is just 1 of 18 compute savings</p>
+        <h3 className="display" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "10px" }}>
+          Run the full audit to find the other 17.
+        </h3>
+        <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "24px", maxWidth: "480px", margin: "0 auto 24px" }}>
+          Storage, databases, network, governance — all 18 checks with savings estimates tied to your actual monthly bill. Free, no credentials required.
         </p>
         <button className="glow-btn" onClick={onRunAudit}
           style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 36px", fontSize: "16px", boxShadow: "0 0 28px rgba(0,255,180,0.3)", cursor: "pointer" }}>
@@ -1719,6 +1881,92 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
   );
 });
 
+// ── CFO REPORT MODAL ─────────────────────────────────────────────────────────
+const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, provider, savMin, savMax, flaggedCount }) {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [withdrawalChecked, setWithdrawalChecked] = useState(false);
+
+  const annualMin = (savMin * 12).toLocaleString();
+  const annualMax = (savMax * 12).toLocaleString();
+
+  const handleSubmit = async () => {
+    if (!email || !withdrawalChecked) return;
+    setStatus("loading");
+    try {
+      await onBuy(email);
+    } catch (err) {
+      setErrorMsg(err?.message || "Unknown error");
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 6000);
+    }
+  };
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" style={{ background: "var(--bg2)", border: "1px solid rgba(129,140,248,0.3)", borderRadius: "20px", maxWidth: "480px", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
+        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+          <div style={{ fontSize: "40px", marginBottom: "12px" }}>📊</div>
+          <h2 className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>CFO & Board Report</h2>
+          <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
+            Executive-grade cloud cost analysis — no CLI commands, no Terraform. Written for leadership and ready to share with your board or investors.
+          </p>
+        </div>
+        {savMin > 0 && (
+          <div style={{ background: "rgba(129,140,248,0.08)", border: "1px solid rgba(129,140,248,0.25)", borderRadius: "10px", padding: "14px 18px", marginBottom: "20px", textAlign: "center" }}>
+            <p style={{ fontSize: "11px", color: "#818cf8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>Annual savings in this report</p>
+            <p className="display" style={{ fontSize: "22px", fontWeight: 800, color: "#818cf8", letterSpacing: "-0.5px", margin: 0 }}>${annualMin}–${annualMax}/year</p>
+          </div>
+        )}
+        <div style={{ background: "rgba(129,140,248,0.05)", border: "1px solid rgba(129,140,248,0.15)", borderRadius: "10px", padding: "14px 18px", marginBottom: "20px" }}>
+          <p style={{ fontSize: "11px", fontWeight: 700, color: "#818cf8", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>What's included:</p>
+          {[
+            "Executive summary — board-ready language",
+            "Financial impact table with annual ROI",
+            `${flaggedCount} prioritised findings, ranked by dollar impact`,
+            "3-phase action plan for leadership sign-off",
+            "Delivered to your inbox in ~2 minutes",
+          ].map(f => (
+            <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <span style={{ color: "#818cf8", fontSize: "13px" }}>✓</span>
+              <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>{f}</span>
+            </div>
+          ))}
+        </div>
+        <label htmlFor="cfo-email" style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#818cf8", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Your Email</label>
+        <input
+          id="cfo-email"
+          type="email"
+          placeholder="cto@company.com"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && email && handleSubmit()}
+          style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(129,140,248,0.3)", borderRadius: "10px", color: "#fff", fontSize: "15px", fontFamily: "var(--body)", marginBottom: "14px" }}
+          autoFocus
+        />
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "14px", padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px" }}>
+          <input type="checkbox" id="withdrawal-cfo" required checked={withdrawalChecked} onChange={e => setWithdrawalChecked(e.target.checked)} style={{ marginTop: "2px", accentColor: "#818cf8", flexShrink: 0, cursor: "pointer" }} />
+          <label htmlFor="withdrawal-cfo" style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.55, cursor: "pointer" }}>
+            I understand this is a digital product delivered immediately and I waive my right of withdrawal upon delivery. See <a href="https://www.kloudaudit.eu/terms/" target="_blank" rel="noopener" style={{ color: "#818cf8" }}>Terms</a>.
+          </label>
+        </div>
+        <button onClick={handleSubmit}
+          disabled={status === "loading" || !withdrawalChecked}
+          style={{ background: withdrawalChecked ? "linear-gradient(135deg,#818cf8,#6366f1)" : "rgba(99,102,241,0.3)", color: "#fff", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", fontWeight: 800, width: "100%", cursor: withdrawalChecked ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: withdrawalChecked ? "0 4px 20px rgba(99,102,241,0.4)" : "none" }}>
+          {status === "loading" ? (
+            <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #fff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Redirecting to payment...</>
+          ) : `Pay ${currency.cfoReportPrice || "$199"} → Get Board Report`}
+        </button>
+        <p style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center", marginTop: "8px" }}>🕐 Delivered to your inbox in ~2 minutes</p>
+        {status === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Error: {errorMsg} — email admin@kloudaudit.eu</p>}
+        <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "14px" }}>🔒 Secure payment via Stripe · admin@kloudaudit.eu</p>
+        <button onClick={onClose} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+      </div>
+    </div>
+  );
+});
+
 // ── CONTACT MODAL ─────────────────────────────────────────────────────────────
 // Defined OUTSIDE App — stable component type, owns its own status state.
 // ── NEWSLETTER WIDGET ─────────────────────────────────────────────────────────
@@ -2087,6 +2335,7 @@ export default function App() {
   const [secLoading, setSecLoading] = useState(false);
   const [secError, setSecError] = useState(null);
   const [showSecBlueprint, setShowSecBlueprint] = useState(false);
+  const [showCfoReport, setShowCfoReport] = useState(false);
   const [showSecSample, setShowSecSample] = useState(false);
   const [secBlueprintEmail, setSecBlueprintEmail] = useState("");
   const [secBlueprintStatus, setSecBlueprintStatus] = useState("idle"); // idle | loading | success | error
@@ -2122,6 +2371,7 @@ export default function App() {
     sessionPrice: "$249", sessionAmount: 24900, stripeCurrency: "usd",
     securityPrice: "$29", securityAmount: 2900,
     bundlePrice: "$89", bundleAmount: 8900,
+    cfoReportPrice: "$199", cfoReportAmount: 19900,
   });
 
   const toggle = (id) => {
@@ -2245,12 +2495,12 @@ export default function App() {
 
   // ── CURRENCY DETECTION ───────────────────────────────────────────
   useEffect(() => {
-    const USD = { code: "USD", symbol: "$",   blueprintPrice: "$79",     blueprintAmount: 7900,  sessionPrice: "$249",    sessionAmount: 24900, stripeCurrency: "usd", securityPrice: "$29",      securityAmount: 2900,  bundlePrice: "$89",      bundleAmount: 8900,  subscriptionPrice: "$19/mo",     subscriptionAmount: 1900  };
-    const GBP = { code: "GBP", symbol: "\u00a3",   blueprintPrice: "\u00a362",     blueprintAmount: 6200,  sessionPrice: "\u00a3199",    sessionAmount: 19900, stripeCurrency: "gbp", securityPrice: "\u00a323",      securityAmount: 2300,  bundlePrice: "\u00a369",      bundleAmount: 6900,  subscriptionPrice: "\u00a315/mo",     subscriptionAmount: 1500  };
-    const EUR = { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",     blueprintAmount: 7300,  sessionPrice: "\u20ac229",    sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27",      securityAmount: 2700,  bundlePrice: "\u20ac83",      bundleAmount: 8300,  subscriptionPrice: "\u20ac17/mo",     subscriptionAmount: 1700  };
-    const CAD = { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107",  blueprintAmount: 10700, sessionPrice: "CA$339",  sessionAmount: 33900, stripeCurrency: "cad", securityPrice: "CA$39",    securityAmount: 3900,  bundlePrice: "CA$119",   bundleAmount: 11900, subscriptionPrice: "CA$26/mo",   subscriptionAmount: 2600  };
-    const AUD = { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",   blueprintAmount: 11900, sessionPrice: "A$379",   sessionAmount: 37900, stripeCurrency: "aud", securityPrice: "A$45",     securityAmount: 4500,  bundlePrice: "A$134",    bundleAmount: 13400, subscriptionPrice: "A$29/mo",    subscriptionAmount: 2900  };
-    const PLN = { code: "PLN", symbol: "z\u0142",  blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln", securityPrice: "119 PLN",  securityAmount: 11900, bundlePrice: "349 PLN",  bundleAmount: 34900, subscriptionPrice: "79 PLN/mo",  subscriptionAmount: 7900  };
+    const USD = { code: "USD", symbol: "$",   blueprintPrice: "$79",     blueprintAmount: 7900,  sessionPrice: "$249",    sessionAmount: 24900, stripeCurrency: "usd", securityPrice: "$29",      securityAmount: 2900,  bundlePrice: "$89",      bundleAmount: 8900,  subscriptionPrice: "$19/mo",     subscriptionAmount: 1900,  cfoReportPrice: "$199",     cfoReportAmount: 19900  };
+    const GBP = { code: "GBP", symbol: "\u00a3",   blueprintPrice: "\u00a362",     blueprintAmount: 6200,  sessionPrice: "\u00a3199",    sessionAmount: 19900, stripeCurrency: "gbp", securityPrice: "\u00a323",      securityAmount: 2300,  bundlePrice: "\u00a369",      bundleAmount: 6900,  subscriptionPrice: "\u00a315/mo",     subscriptionAmount: 1500,  cfoReportPrice: "\u00a3159",    cfoReportAmount: 15900  };
+    const EUR = { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",     blueprintAmount: 7300,  sessionPrice: "\u20ac229",    sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27",      securityAmount: 2700,  bundlePrice: "\u20ac83",      bundleAmount: 8300,  subscriptionPrice: "\u20ac17/mo",     subscriptionAmount: 1700,  cfoReportPrice: "\u20ac183",    cfoReportAmount: 18300  };
+    const CAD = { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107",  blueprintAmount: 10700, sessionPrice: "CA$339",  sessionAmount: 33900, stripeCurrency: "cad", securityPrice: "CA$39",    securityAmount: 3900,  bundlePrice: "CA$119",   bundleAmount: 11900, subscriptionPrice: "CA$26/mo",   subscriptionAmount: 2600,  cfoReportPrice: "CA$269",   cfoReportAmount: 26900  };
+    const AUD = { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",   blueprintAmount: 11900, sessionPrice: "A$379",   sessionAmount: 37900, stripeCurrency: "aud", securityPrice: "A$45",     securityAmount: 4500,  bundlePrice: "A$134",    bundleAmount: 13400, subscriptionPrice: "A$29/mo",    subscriptionAmount: 2900,  cfoReportPrice: "A$299",    cfoReportAmount: 29900  };
+    const PLN = { code: "PLN", symbol: "z\u0142",  blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln", securityPrice: "119 PLN",  securityAmount: 11900, bundlePrice: "349 PLN",  bundleAmount: 34900, subscriptionPrice: "79 PLN/mo",  subscriptionAmount: 7900,  cfoReportPrice: "799 PLN",  cfoReportAmount: 79900  };
     const CURRENCY_MAP = {
       US: USD, PR: USD, GU: USD, VI: USD,
       GB: GBP, JE: GBP, GG: GBP, IM: GBP,
@@ -2425,6 +2675,41 @@ useEffect(() => {
         flaggedIssues: flagged.map(c => ({ id: c.id, label: c.label })),
         currency: currency.stripeCurrency,
         currencyAmount: currency.blueprintAmount,
+        sessionId,
+      }),
+    });
+    if (!res.ok) {
+      const ct = res.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const errData = await res.json();
+        throw new Error(errData.error || `Checkout failed (${res.status})`);
+      }
+      throw new Error(`Checkout failed (${res.status})`);
+    }
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || "Checkout failed");
+    }
+  };
+
+  const handleBuyCfoReport = async (email) => {
+    window.gtag?.('event', 'cfo_report_checkout_initiated', { currency: currency.stripeCurrency, amount: currency.cfoReportAmount });
+    const res = await fetch("/api/create-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        provider: provider || "AWS",
+        monthlyBill: bill,
+        companyName: companyName || "Your Company",
+        savingsMin: savMin,
+        savingsMax: savMax,
+        flaggedIssues: flagged.map(c => ({ id: c.id, label: c.label })),
+        currency: currency.stripeCurrency,
+        currencyAmount: currency.cfoReportAmount,
+        productType: "cfo_report",
         sessionId,
       }),
     });
@@ -3334,6 +3619,19 @@ aws iam simulate-principal-policy \\
     );
   }
 
+  // ── SPOT INSTANCE CALCULATOR ──────────────────────────────────────────────
+  if (step === "intro" && seoSlug === "spot-instance-calculator") {
+    return (
+      <div className="app">
+        <style>{globalCss}</style>
+        <ParticleBackground />
+        {showContact && <ContactModal onClose={() => setShowContact(false)} />}
+        <Nav />
+        <SpotInstanceCalculator onRunAudit={() => goTo("intake")} />
+      </div>
+    );
+  }
+
   const seoPage = step === "intro" && seoSlug
     ? SEO_PAGES.find(p => p.slug === seoSlug)
     : null;
@@ -3401,6 +3699,7 @@ aws iam simulate-principal-policy \\
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
+        {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
       <Nav />
 
       {/* ── RESUME AUDIT BANNER ── */}
@@ -4430,6 +4729,42 @@ aws iam simulate-principal-policy \\
             </div>
             <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Track improvement. Prevent surprises. Show the board.</span>
           </div>
+
+          {/* CFO Report — one-time executive summary */}
+          <div style={{ background: "rgba(99,102,241,0.06)", border: "1.5px solid rgba(99,102,241,0.3)", borderRadius: "18px", padding: "28px 32px", marginBottom: "12px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "32px", flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: "280px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                <span style={{ fontSize: "20px" }}>📊</span>
+                <p style={{ fontSize: "12px", fontWeight: 700, color: "#818cf8", letterSpacing: "1px", textTransform: "uppercase", margin: 0 }}>CFO & Board Report</p>
+                <span style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "20px", fontSize: "11px", color: "#818cf8", fontWeight: 700, padding: "2px 10px" }}>One-time</span>
+              </div>
+              <div style={{ marginBottom: "10px" }}>
+                <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{currency.cfoReportPrice || "$199"}</span>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>one-time · no subscription</span>
+              </div>
+              <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, margin: 0, maxWidth: "500px" }}>
+                The same audit findings, rewritten for your board. Executive summary, annual ROI table, 3-phase action plan — no CLI commands, no Terraform. Share it with your CFO or investors this afternoon.
+              </p>
+            </div>
+            <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: "8px", minWidth: "220px" }}>
+              {[
+                "Annual savings projection in dollars",
+                "Board-ready executive summary",
+                "3-phase action plan for leadership sign-off",
+                "Compliance framing (SOC 2, GDPR, ISO 27001)",
+                "In your inbox in ~2 minutes",
+              ].map(f => (
+                <div key={f} style={{ display: "flex", gap: "7px", alignItems: "flex-start" }}>
+                  <span style={{ color: "#818cf8", fontSize: "12px", flexShrink: 0, marginTop: "2px" }}>✓</span>
+                  <span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span>
+                </div>
+              ))}
+              <button onClick={() => setShowCfoReport(true)} style={{ marginTop: "8px", width: "100%", padding: "12px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg,#818cf8,#6366f1)", color: "#fff", fontWeight: 800, fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}>
+                Get Board Report — {currency.cfoReportPrice || "$199"} →
+              </button>
+            </div>
+          </div>
+
           <div style={{ background: "rgba(99,102,241,0.06)", border: "1.5px solid rgba(99,102,241,0.25)", borderRadius: "18px", padding: "32px", display: "flex", alignItems: "flex-start", gap: "32px", flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: "260px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
@@ -4640,6 +4975,7 @@ aws iam simulate-principal-policy \\
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
+        {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
         <div className="fade-up">
@@ -4702,6 +5038,7 @@ aws iam simulate-principal-policy \\
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
+        {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
         <Nav showBack onBack={() => goTo("intake")} />
         {/* ── SECTION COMPLETE TOAST ── */}
         {sectionToast && (
@@ -5103,6 +5440,7 @@ aws iam simulate-principal-policy \\
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
+        {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
           {/* Header */}

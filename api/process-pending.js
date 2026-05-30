@@ -208,6 +208,67 @@ Commands to confirm each fix was applied correctly.
 Real ${provider} CLI only. This customer paid for professional quality.`;
 }
 
+// ── CFO REPORT PROMPT ─────────────────────────────────────────────────────────
+function buildCfoPrompt(meta) {
+  const provider    = meta.provider || 'AWS';
+  const companyName = meta.companyName || 'Your Company';
+  const monthlyBill = Number(meta.monthlyBill || 0);
+  const savingsMin  = Number(meta.savingsMin || 0);
+  const savingsMax  = Number(meta.savingsMax || 0);
+  const annualMin   = savingsMin * 12;
+  const annualMax   = savingsMax * 12;
+  const issueLabels = (meta.flaggedIssueLabels || '').split('||').filter(Boolean);
+
+  return `You are a cloud cost consultant writing an executive-level CFO & Board Report for ${companyName}.
+
+Provider: ${provider}
+Current monthly cloud spend: $${monthlyBill.toLocaleString()}
+Monthly savings opportunity: $${savingsMin.toLocaleString()}–$${savingsMax.toLocaleString()}
+Annual savings opportunity: $${annualMin.toLocaleString()}–$${annualMax.toLocaleString()}
+Issues identified (${issueLabels.length}): ${issueLabels.join(', ')}
+
+Write a professional board-ready report with the following structure. Use plain language — no CLI commands or Terraform. This is for CFOs, CTOs, and investors, not engineers.
+
+## Executive Summary
+3-4 sentences. State the current monthly spend, the identified savings opportunity, the annual impact, and the overall assessment. Quantify everything in dollars.
+
+## Financial Impact Overview
+A clear breakdown in table or structured format:
+| Metric | Value |
+|---|---|
+| Current Monthly Cloud Spend | $X,XXX |
+| Identified Monthly Waste | $X,XXX – $X,XXX |
+| Annual Savings Opportunity | $XX,XXX – $XX,XXX |
+| Waste as % of Total Spend | XX% |
+| Payback Period | Immediate |
+
+## Prioritised Findings (Business Impact)
+For each issue, write 2-3 sentences max. Focus on BUSINESS IMPACT (dollars, risk, compliance) not technical detail. Rank by annual dollar impact, highest first.
+
+Format each as:
+**[Issue Name]** · Annual impact: $XX,XXX–$XX,XXX
+[2-3 sentence business-language explanation of what it's costing and why it matters to leadership]
+
+## Recommended Action Plan
+Three phases framed for leadership:
+
+**Phase 1 — Quick Wins (Week 1–2)**
+[2-3 actions with combined savings estimate]
+
+**Phase 2 — Structural Savings (Month 1–3)**
+[2-3 actions with combined savings estimate]
+
+**Phase 3 — Governance & Prevention (Ongoing)**
+[2-3 actions that prevent future waste]
+
+## ROI Summary
+One paragraph. State: if the team implements all recommendations, what is the 12-month financial outcome vs. current trajectory? What does this free up for reinvestment?
+
+---
+
+Keep the tone professional but direct. This document will be shared with the board and investors. Avoid jargon. Every number should be in dollars.`;
+}
+
 // ── HTML EMAIL BUILDERS ───────────────────────────────────────────────────────
 function buildBlueprintEmail(report, meta) {
   const provider = meta.provider || 'AWS';
@@ -234,6 +295,47 @@ function buildBlueprintEmail(report, meta) {
   <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;text-align:center;">
     <p style="font-size:12px;color:#475569;margin:0 0 8px;">🔒 This blueprint was generated from your self-reported audit answers. We never accessed your cloud account.</p>
     <p style="font-size:12px;color:#475569;margin:0;">Questions? Reply to this email · <a href="mailto:admin@kloudaudit.eu" style="color:#00ffb4;">admin@kloudaudit.eu</a></p>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+function buildCfoEmail(report, meta) {
+  const provider   = meta.provider || 'AWS';
+  const company    = meta.companyName || 'Your Company';
+  const savingsMin = Number(meta.savingsMin || 0);
+  const savingsMax = Number(meta.savingsMax || 0);
+  const annualMin  = (savingsMin * 12).toLocaleString();
+  const annualMax  = (savingsMax * 12).toLocaleString();
+  const monthly    = `$${savingsMin.toLocaleString()}–$${savingsMax.toLocaleString()}`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#07070f;font-family:system-ui,sans-serif;">
+<div style="max-width:680px;margin:0 auto;padding:40px 24px;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:32px;">
+    <div style="width:36px;height:36px;background:#818cf8;border-radius:8px;font-size:18px;display:flex;align-items:center;justify-content:center;">📊</div>
+    <span style="font-size:20px;font-weight:800;color:#fff;">KloudAudit</span>
+    <span style="font-size:11px;font-weight:700;color:#818cf8;background:rgba(129,140,248,0.1);border:1px solid rgba(129,140,248,0.3);border-radius:10px;padding:2px 8px;margin-left:4px;">CFO Report</span>
+  </div>
+  <div style="background:linear-gradient(135deg,rgba(129,140,248,0.12),rgba(99,102,241,0.08));border:1.5px solid rgba(129,140,248,0.4);border-radius:16px;padding:28px;margin-bottom:28px;">
+    <p style="font-size:11px;font-weight:700;color:#818cf8;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">CFO & Board Report · ${company} · ${provider}</p>
+    <div style="font-size:13px;color:#94a3b8;margin-bottom:16px;">Annual savings opportunity identified:</div>
+    <div style="font-size:42px;font-weight:800;color:#818cf8;letter-spacing:-2px;line-height:1;margin-bottom:4px;">$${annualMin}–$${annualMax}</div>
+    <p style="font-size:14px;color:#94a3b8;margin:0;">per year · ${monthly}/month · ready to share with your board</p>
+  </div>
+  <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;margin-bottom:24px;">
+    <p style="font-size:13px;font-weight:700;color:#fff;margin:0 0 16px;text-transform:uppercase;letter-spacing:1px;">Your Executive Report</p>
+    <div style="font-family:system-ui;font-size:14px;line-height:1.9;color:#cbd5e1;white-space:pre-wrap;">${report.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+  </div>
+  <div style="background:rgba(129,140,248,0.04);border:1px solid rgba(129,140,248,0.12);border-radius:12px;padding:18px;margin-bottom:20px;text-align:center;">
+    <p style="font-size:12px;color:#818cf8;font-weight:700;margin:0 0 4px;">🔒 Methodology Note</p>
+    <p style="font-size:12px;color:#94a3b8;margin:0;">Savings figures are estimates based on self-reported audit answers and industry benchmarks. No cloud credentials were accessed. Actual savings depend on implementation.</p>
+  </div>
+  <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;text-align:center;">
+    <p style="font-size:12px;color:#475569;margin:0;">Questions? Reply to this email · <a href="mailto:admin@kloudaudit.eu" style="color:#818cf8;">admin@kloudaudit.eu</a></p>
   </div>
 </div>
 </body>
@@ -317,9 +419,10 @@ module.exports = async function handler(req, res) {
       try {
         const meta    = job.metadata;
         const email   = job.email;
-        const isSession = job.product_type === 'consulting_session';
-        const isSecur   = job.product_type === 'security_blueprint';
-        const isBundle  = job.product_type === 'bundle';
+        const isSession   = job.product_type === 'consulting_session';
+        const isSecur     = job.product_type === 'security_blueprint';
+        const isBundle    = job.product_type === 'bundle';
+        const isCfoReport = job.product_type === 'cfo_report';
 
         // ── CONSULTING SESSION — send confirmation to customer + alert to admin ─
         if (isSession) {
@@ -384,7 +487,7 @@ module.exports = async function handler(req, res) {
 
           if (!report) {
             console.log(`Cache miss — calling Claude for job ${job.id}`);
-            const prompt = isSecur ? buildSecurityPrompt(meta) : buildBlueprintPrompt(meta);
+            const prompt = isSecur ? buildSecurityPrompt(meta) : isCfoReport ? buildCfoPrompt(meta) : buildBlueprintPrompt(meta);
             const aiResp = await anthropic.messages.create({
               model:      'claude-sonnet-4-6',
               max_tokens: isSecur ? 2500 : 2000,
@@ -406,7 +509,9 @@ module.exports = async function handler(req, res) {
 
         const customerHtml = isSecur
           ? buildSecurityEmail(report, meta, assessmentId)
-          : buildBlueprintEmail(report, meta);
+          : isCfoReport
+            ? buildCfoEmail(report, meta)
+            : buildBlueprintEmail(report, meta);
 
         // 5. Send emails in parallel
         await Promise.all([
@@ -418,13 +523,15 @@ module.exports = async function handler(req, res) {
               ? `🎯 Your Cost + Security Bundle is ready — ${assessmentId}`
               : isSecur
                 ? `🛡 Your Security Blueprint is ready — ${assessmentId}`
-                : `⚡ Your ${provider} Cost Blueprint is ready`,
+                : isCfoReport
+                  ? `📊 Your CFO & Board Report is ready — ${assessmentId}`
+                  : `⚡ Your ${provider} Cost Blueprint is ready`,
             html: customerHtml,
           }),
           sgMail.send({
             to:      'admin@kloudaudit.eu',
             from:    { email: 'admin@kloudaudit.eu', name: 'KloudAudit System' },
-            subject: `${isBundle ? '🎯' : isSecur ? '🛡' : '⚡'} Blueprint delivered — ${email} · ${provider} · ${chargeDisplay}`,
+            subject: `${isBundle ? '🎯' : isSecur ? '🛡' : isCfoReport ? '📊' : '⚡'} ${isCfoReport ? 'CFO Report' : 'Blueprint'} delivered — ${email} · ${provider} · ${chargeDisplay}`,
             text:    `Email: ${email}\nProvider: ${provider}\nProduct: ${job.product_type}\nCharge: ${chargeDisplay}\nJob ID: ${job.id}\nIssues: ${(meta.flaggedIssueLabels || '').split('||').filter(Boolean).join(', ')}`,
           }),
         ]);

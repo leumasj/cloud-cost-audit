@@ -78,6 +78,60 @@ module.exports = async function handler(req, res)  {
       return res.status(200).json({ url: session.url, sessionId: session.id });
     }
 
+    // ── CFO REPORT (one-time, executive-grade PDF) ────────────────────────────
+    if (productType === 'cfo_report') {
+      if (!email) return res.status(400).json({ error: 'Email required' });
+      const chargeCurrency = (currency || 'usd').toLowerCase();
+      const chargeAmount   = currencyAmount || 19900; // $199 default
+      const numIssues      = (flaggedIssues || []).length;
+
+      const metadata = {
+        email,
+        type:            'cfo_report',
+        provider:        provider || 'AWS',
+        monthlyBill:     String(monthlyBill || 0),
+        companyName:     companyName || 'Your Company',
+        savingsMin:      String(savingsMin || 0),
+        savingsMax:      String(savingsMax || 0),
+        flaggedIssueIds:    (flaggedIssues || []).map(i => i.id).join(',').substring(0, 499),
+        flaggedIssueLabels: (flaggedIssues || []).map(i => i.label).join('||').substring(0, 499),
+        sessionId:       sessionId || '',
+      };
+
+      // Use the configured Stripe Price ID for USD (defined product + price in dashboard).
+      // Fall back to dynamic price_data for non-USD currencies.
+      const cfoPriceId = chargeCurrency === 'usd'
+        ? process.env.STRIPE_CFO_REPORT_PRICE_ID
+        : null;
+
+      const lineItems = cfoPriceId
+        ? [{ price: cfoPriceId, quantity: 1 }]
+        : [{
+            price_data: {
+              currency: chargeCurrency,
+              product_data: {
+                name: 'KloudAudit — CFO & Board Report',
+                description: `Executive cloud cost analysis for ${companyName || 'your company'} — ${numIssues} issues, board-ready PDF, delivered to ${email} instantly.`,
+                images: ['https://kloudaudit.eu/og-image.png'],
+              },
+              unit_amount: chargeAmount,
+            },
+            quantity: 1,
+          }];
+
+      const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://kloudaudit.eu';
+      const session = await stripe.checkout.sessions.create({
+        line_items:          lineItems,
+        mode:                'payment',
+        customer_email:      email,
+        success_url:         `${baseUrl}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url:          `${baseUrl}?payment=cancelled`,
+        metadata,
+        payment_intent_data: { metadata },
+      });
+      return res.status(200).json({ url: session.url, sessionId: session.id });
+    }
+
     // ── SUBSCRIPTION (recurring) ──────────────────────────────────────────────
     if (productType === 'subscription') {
       if (!email) return res.status(400).json({ error: 'Email required' });
