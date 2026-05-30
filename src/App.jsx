@@ -1721,6 +1721,52 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
 
 // ── CONTACT MODAL ─────────────────────────────────────────────────────────────
 // Defined OUTSIDE App — stable component type, owns its own status state.
+// ── NEWSLETTER WIDGET ─────────────────────────────────────────────────────────
+const NewsletterWidget = memo(function NewsletterWidget() {
+  const [nEmail, setNEmail] = useState('');
+  const [nStatus, setNStatus] = useState('idle'); // idle | loading | success | error
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!nEmail) return;
+    setNStatus('loading');
+    try {
+      const r = await fetch('/api/audits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'newsletter', email: nEmail }),
+      });
+      setNStatus(r.ok ? 'success' : 'error');
+    } catch {
+      setNStatus('error');
+    }
+  };
+
+  return (
+    <div style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "16px", padding: "28px 32px", marginBottom: "48px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}>
+      <div>
+        <p style={{ fontSize: "16px", fontWeight: 800, color: "#fff", letterSpacing: "-0.3px", marginBottom: "4px" }}>Stay in the loop</p>
+        <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: 0 }}>New blog posts, product updates, and cloud cost tips. No spam — unsubscribe any time.</p>
+      </div>
+      {nStatus === 'success' ? (
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--green)", fontSize: "14px", fontWeight: 700 }}>
+          <span>✓</span> You're subscribed!
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px", flexShrink: 0, flexWrap: "wrap" }}>
+          <input type="email" required value={nEmail} onChange={e => setNEmail(e.target.value)} placeholder="you@company.com"
+            style={{ padding: "11px 14px", background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(99,102,241,0.3)", borderRadius: "10px", color: "#fff", fontSize: "14px", width: "220px" }} />
+          <button type="submit" disabled={nStatus === 'loading'}
+            style={{ padding: "11px 20px", borderRadius: "10px", border: "none", background: nStatus === 'loading' ? "rgba(99,102,241,0.4)" : "linear-gradient(135deg,#818cf8,#6366f1)", color: "#fff", fontWeight: 800, fontSize: "13px", cursor: nStatus === 'loading' ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}>
+            {nStatus === 'loading' ? "…" : "Subscribe →"}
+          </button>
+          {nStatus === 'error' && <p style={{ fontSize: "11px", color: "#f87171", alignSelf: "center", margin: 0 }}>Something went wrong — try again</p>}
+        </form>
+      )}
+    </div>
+  );
+});
+
 // ── ABOUT MODAL ───────────────────────────────────────────────────────────────
 const AboutModal = memo(function AboutModal({ onClose }) {
   return (
@@ -4496,42 +4542,7 @@ aws iam simulate-principal-policy \\
           <footer style={{ marginTop: "48px", paddingTop: "48px", borderTop: "1px solid var(--border)" }}>
 
             {/* Newsletter banner */}
-            {(() => {
-              const [nEmail, setNEmail] = React.useState('');
-              const [nStatus, setNStatus] = React.useState('idle'); // idle | loading | success | error
-              const handleSubscribe = async (e) => {
-                e.preventDefault();
-                if (!nEmail) return;
-                setNStatus('loading');
-                try {
-                  const r = await fetch('/api/audits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'newsletter', email: nEmail }) });
-                  setNStatus(r.ok ? 'success' : 'error');
-                } catch { setNStatus('error'); }
-              };
-              return (
-                <div style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "16px", padding: "28px 32px", marginBottom: "48px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}>
-                  <div>
-                    <p style={{ fontSize: "16px", fontWeight: 800, color: "#fff", letterSpacing: "-0.3px", marginBottom: "4px" }}>Stay in the loop</p>
-                    <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: 0 }}>New blog posts, product updates, and cloud cost tips. No spam — unsubscribe any time.</p>
-                  </div>
-                  {nStatus === 'success' ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--green)", fontSize: "14px", fontWeight: 700 }}>
-                      <span>✓</span> You're subscribed!
-                    </div>
-                  ) : (
-                    <form onSubmit={handleSubscribe} style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
-                      <input type="email" required value={nEmail} onChange={e => setNEmail(e.target.value)} placeholder="you@company.com"
-                        style={{ padding: "11px 14px", background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(99,102,241,0.3)", borderRadius: "10px", color: "#fff", fontSize: "14px", width: "220px" }} />
-                      <button type="submit" disabled={nStatus === 'loading'}
-                        style={{ padding: "11px 20px", borderRadius: "10px", border: "none", background: nStatus === 'loading' ? "rgba(99,102,241,0.4)" : "linear-gradient(135deg,#818cf8,#6366f1)", color: "#fff", fontWeight: 800, fontSize: "13px", cursor: "pointer", whiteSpace: "nowrap" }}>
-                        {nStatus === 'loading' ? "…" : "Subscribe →"}
-                      </button>
-                      {nStatus === 'error' && <p style={{ fontSize: "11px", color: "#f87171", alignSelf: "center" }}>Try again</p>}
-                    </form>
-                  )}
-                </div>
-              );
-            })()}
+            <NewsletterWidget />
 
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "40px", marginBottom: "48px" }} className="footer-grid">
 
