@@ -46,7 +46,10 @@ const log = (level, event, data = {}) =>
 
 // ── RAW BODY READER ───────────────────────────────────────────────────────────
 // Required for Stripe signature verification — must be raw bytes, not parsed JSON.
+// Also handles pre-buffered bodies (node-mocks-http in tests, body-parser middleware).
 async function getRawBody(req) {
+  if (Buffer.isBuffer(req.body)) return req.body;
+  if (typeof req.body === 'string') return Buffer.from(req.body);
   return new Promise((resolve, reject) => {
     const chunks = [];
     req.on('data',  chunk => chunks.push(chunk));

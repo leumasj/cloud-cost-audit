@@ -424,6 +424,46 @@ module.exports = async function handler(req, res) {
         const isBundle    = job.product_type === 'bundle';
         const isCfoReport = job.product_type === 'cfo_report';
 
+        // ── 3-DAY FOLLOW-UP EMAIL ─────────────────────────────────────────────
+        if (job.product_type === 'followup_email') {
+          // Only process if scheduled_for time has passed
+          if (new Date(job.scheduled_for) > new Date()) {
+            // Not ready yet — skip this job
+            continue;
+          }
+
+          const followUpHtml = `
+    <p>Hi,</p>
+    <p>It's been 3 days since you received your KloudAudit ${meta.original_product} Blueprint.</p>
+    <p>Quick check-in — have you had a chance to implement any of the quick wins?</p>
+    <p>The three fastest fixes for most teams:</p>
+    <ul>
+      <li>Dev/staging RDS auto-stop — 20 minutes, saves $200-600/mo</li>
+      <li>Delete unattached EBS volumes — 10 minutes, saves $50-200/mo</li>
+      <li>Release unused Elastic IPs — 5 minutes, saves $3-15/mo each</li>
+    </ul>
+    <p>If you hit any blockers with the CLI commands or Terraform snippets,
+    just reply to this email — I read every response personally.</p>
+    <p>Samuel<br/>Founder, KloudAudit<br/>kloudaudit.eu</p>
+  `;
+
+          await sgMail.send({
+            to:      job.email,
+            from:    { email: 'admin@kloudaudit.eu', name: 'Samuel — KloudAudit' },
+            subject: 'How are the fixes going? (KloudAudit follow-up)',
+            html:    followUpHtml,
+          });
+
+          await supabaseAdmin
+            .from('delivery_queue')
+            .update({ status: 'delivered', delivered_at: new Date().toISOString() })
+            .eq('id', job.id);
+
+          results.push({ id: job.id, status: 'delivered', email: job.email, type: 'followup_email' });
+          processed++;
+          continue;
+        }
+
         // ── CONSULTING SESSION — send confirmation to customer + alert to admin ─
         if (isSession) {
           const chargeDisplay = meta.amount_total
@@ -574,6 +614,26 @@ module.exports = async function handler(req, res) {
           .insert(followUps)
           .then(() => {})
           .catch(err => console.warn('Follow-up queue insert failed (non-critical):', err.message));
+
+        // 9. Schedule 3-day follow-up email (non-blocking, idempotent via stripe_session_id suffix)
+        const followUpDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+        supabaseAdmin
+          .from('delivery_queue')
+          .insert({
+            stripe_session_id: job.stripe_session_id + '_followup',
+            product_type:      'followup_email',
+            email:             job.email,
+            metadata: {
+              original_product: job.product_type,
+              provider:         meta.provider,
+              flagged_count:    (meta.flaggedIssueIds || '').split(',').filter(Boolean).length,
+              savings_min:      meta.savingsMin,
+            },
+            scheduled_for: followUpDate.toISOString(),
+            status:        'pending',
+          })
+          .then(() => {})
+          .catch(() => {}); // ignore 23505 duplicate — follow-up already scheduled
 
         console.log(`✅ Delivered: ${job.id} | ${email} | ${job.product_type} | cache:${cacheHit}`);
         results.push({ id: job.id, status: 'delivered', email, cacheHit });

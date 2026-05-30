@@ -40,6 +40,7 @@ module.exports = async function handler(req, res) {
     const day30ago = new Date(now - 30 * 86400000).toISOString();
 
     // Fetch all stats in parallel
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const [
       { count: totalAudits },
       { count: audits7d },
@@ -49,6 +50,8 @@ module.exports = async function handler(req, res) {
       { data: recentAudits },
       { data: deliveryStats },
       { data: cacheStats },
+      { data: failedJobs },
+      { data: stuckJobs },
     ] = await Promise.all([
       supabaseAdmin.from('audits').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('audits').select('*', { count: 'exact', head: true }).gte('created_at', day7ago),
@@ -70,6 +73,17 @@ module.exports = async function handler(req, res) {
         const entries = (data || []).length;
         return { data: { total, entries } };
       }),
+      // Failed deliveries
+      supabaseAdmin.from('delivery_queue')
+        .select('id, email, product_type, attempts, created_at, error_message')
+        .eq('status', 'failed')
+        .order('created_at', { ascending: false })
+        .limit(20),
+      // Stuck jobs — pending for more than 1 hour
+      supabaseAdmin.from('delivery_queue')
+        .select('id, email, product_type, attempts, created_at')
+        .eq('status', 'pending')
+        .lt('created_at', oneHourAgo),
     ]);
 
     const convRate = totalAudits > 0 ? ((blueprintsPaid / totalAudits) * 100).toFixed(1) : '0.0';
@@ -188,6 +202,52 @@ module.exports = async function handler(req, res) {
       </table>
     </div>
   </div>
+
+  <!-- Delivery Failures -->
+  ${(failedJobs?.length || stuckJobs?.length) ? `
+  <div class="section" style="border-color:rgba(248,113,113,0.25)">
+    <h2 style="display:flex;align-items:center;gap:10px">
+      ⚠️ Delivery Health
+      ${failedJobs?.length ? `<span class="badge badge-red">${failedJobs.length} failed</span>` : ''}
+      ${stuckJobs?.length ? `<span class="badge badge-gray">${stuckJobs.length} stuck</span>` : ''}
+    </h2>
+
+    ${failedJobs?.length ? `
+    <p style="font-size:11px;font-weight:700;color:#f87171;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Failed Jobs</p>
+    <table style="margin-bottom:20px">
+      <thead><tr><th>Date</th><th>Email</th><th>Product</th><th>Attempts</th><th>Error</th></tr></thead>
+      <tbody>
+        ${failedJobs.map(j => `
+          <tr>
+            <td style="font-size:11px">${new Date(j.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
+            <td style="font-family:monospace;font-size:11px">${maskEmail(j.email)}</td>
+            <td><span class="badge badge-gray">${j.product_type}</span></td>
+            <td style="color:${j.attempts >= 3 ? '#f87171' : '#fbbf24'}">${j.attempts}/${3}</td>
+            <td style="font-size:11px;color:#f87171;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${j.error_message || '—'}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    ` : ''}
+
+    ${stuckJobs?.length ? `
+    <p style="font-size:11px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Stuck Jobs (pending &gt; 1 hour)</p>
+    <table>
+      <thead><tr><th>Date</th><th>Email</th><th>Product</th><th>Attempts</th></tr></thead>
+      <tbody>
+        ${stuckJobs.map(j => `
+          <tr>
+            <td style="font-size:11px">${new Date(j.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
+            <td style="font-family:monospace;font-size:11px">${maskEmail(j.email)}</td>
+            <td><span class="badge badge-gray">${j.product_type}</span></td>
+            <td style="color:#fbbf24">${j.attempts}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    ` : ''}
+  </div>
+  ` : ''}
 
   <!-- Recent audits -->
   <div class="section">

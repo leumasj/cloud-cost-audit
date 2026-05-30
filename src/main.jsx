@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { inject } from '@vercel/analytics'
 import { injectSpeedInsights } from '@vercel/speed-insights'
 import App from './App.jsx'
+import ErrorBoundary from './ErrorBoundary.jsx'
 
 // Inject Vercel Analytics — free, zero config
 inject()
@@ -12,6 +13,8 @@ injectSpeedInsights()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 )

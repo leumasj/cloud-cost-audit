@@ -33,8 +33,19 @@ module.exports = async function handler(req, res)  {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // Reject requests from origins not in the allowlist
+  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
   try {
     const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax, currency, currencyAmount, productType, sessionId, stripeCurrency } = req.body;
+
+    // Validate product type up front — unknown types are rejected before reaching Stripe
+    const VALID_PRODUCT_TYPES = ['blueprint', 'security_blueprint', 'bundle', 'cfo_report', 'subscription', 'session'];
+    if (productType && !VALID_PRODUCT_TYPES.includes(productType)) {
+      return res.status(400).json({ error: 'Invalid product type' });
+    }
 
     // ── CONSULTING SESSION (one-time, no quantity) ────────────────────────────
     // SETUP: Create a one-time Price in Stripe Dashboard for the session fee.
@@ -159,8 +170,8 @@ module.exports = async function handler(req, res)  {
     const chargeCurrency = currency || "pln";
     const chargeAmount   = currencyAmount || 29900;
 
-    if (!email || !flaggedIssues || flaggedIssues.length === 0) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!email) {
+      return res.status(400).json({ error: 'Email required' });
     }
 
     // Store audit data in Stripe metadata so we can use it in the webhook
@@ -169,6 +180,7 @@ module.exports = async function handler(req, res)  {
               : productType === 'bundle' ? 'bundle'
               : 'blueprint';
 
+    const issues = flaggedIssues || [];
     const metadata = {
       email,
       type,                                   // ← webhook routing key
@@ -177,8 +189,8 @@ module.exports = async function handler(req, res)  {
       companyName: companyName || 'Your Company',
       savingsMin: String(savingsMin || 0),
       savingsMax: String(savingsMax || 0),
-      flaggedIssueIds:    flaggedIssues.map(i => i.id).join(',').substring(0, 499),
-      flaggedIssueLabels: flaggedIssues.map(i => i.label).join('||').substring(0, 499),
+      flaggedIssueIds:    issues.map(i => i.id).join(',').substring(0, 499),
+      flaggedIssueLabels: issues.map(i => i.label).join('||').substring(0, 499),
       sessionId: sessionId || '',
     };
 
@@ -193,10 +205,10 @@ module.exports = async function handler(req, res)  {
                 ? 'KloudAudit — Cost + Security Bundle'
                 : 'KloudAudit — AI Cost Blueprint',
             description: type === 'security_certificate'
-              ? `${provider} security remediation for ${flaggedIssues.length} flagged issues. CLI commands, IAM policy fixes, compliance mapping. Delivered to ${email} instantly.`
+              ? `${provider} security remediation for ${issues.length} flagged issues. CLI commands, IAM policy fixes, compliance mapping. Delivered to ${email} instantly.`
               : type === 'bundle'
                 ? `Complete ${provider} cloud health — Cost Blueprint (CLI fixes, Terraform) + Security Blueprint (IAM fixes, compliance mapping). Delivered to ${email} instantly.`
-                : `Personalised ${provider} fix guide for ${flaggedIssues.length} detected issues. CLI commands, Terraform snippets, step-by-step. Delivered to ${email} instantly.`,
+                : `Personalised ${provider} fix guide for ${issues.length} detected issues. CLI commands, Terraform snippets, step-by-step. Delivered to ${email} instantly.`,
             images: ['https://kloudaudit.eu/og-image.png'],
           },
           unit_amount: chargeAmount,
