@@ -4436,7 +4436,7 @@ aws iam simulate-principal-policy \\
               You can. Here's what happens.
             </h2>
             <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "520px", margin: "0 auto" }}>
-              Claude is a general-purpose AI. KloudAudit is a structured audit framework trained on one problem — finding cloud waste and security gaps. The difference shows immediately.
+              Generic AI gives generic answers. KloudAudit runs 18 infrastructure-specific checks against your actual bill size and provider — then maps every finding to an exact CLI command, a savings estimate, and an implementation time. Tested across AWS, GCP, and Azure environments.
             </p>
           </div>
           <div className="compare-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px", background: "var(--border)", borderRadius: "20px", overflow: "hidden", border: "1px solid var(--border)", marginBottom: "24px" }}>
