@@ -4510,9 +4510,19 @@ aws iam simulate-principal-policy \\
           </div>
           <div className="audit-cats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
             {AUDIT_SECTIONS.map((s, i) => (
-              <div key={s.id} className="audit-cat-card scroll-reveal" data-reveal-index={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden" }}>
+              <div key={s.id}
+                className="audit-cat-card scroll-reveal"
+                data-reveal-index={i}
+                role="button"
+                tabIndex={0}
+                onClick={() => { setActiveSection(i); goTo("intake"); }}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveSection(i); goTo("intake"); } }}
+                style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden", cursor: "pointer" }}>
                 <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "100px", height: "100px", background: "radial-gradient(circle, rgba(0,255,180,0.06) 0%, transparent 70%)", borderRadius: "50%" }} />
-                <div style={{ fontSize: "32px", marginBottom: "16px" }}>{s.icon}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+                  <span style={{ fontSize: "32px" }}>{s.icon}</span>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", opacity: 0.7 }}>Audit this →</span>
+                </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
                   <h3 className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px" }}>{s.label}</h3>
                   <span style={{ background: "var(--green-dim)", color: "var(--green)", fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px", border: "1px solid var(--green-border)" }}>{s.checks.length} checks</span>
