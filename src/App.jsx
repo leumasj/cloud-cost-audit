@@ -323,6 +323,9 @@ const globalCss = `
     /* Bottom CTA padding */
     .bottom-cta-pad { padding: 40px 24px !important; }
 
+    /* Footer: 2-col on mobile */
+    .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
+
     /* Section padding */
     .section-pad { padding: 32px 20px !important; }
 
@@ -2224,6 +2227,108 @@ useEffect(() => {
     }
   };
 
+  const handleExportPDF = () => {
+    const isSec = step === 'security_report';
+    const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    const items = isSec
+      ? SEC_SECTIONS.flatMap(s => s.checks).filter(c => secChecked[c.id])
+      : flagged;
+
+    const rows = items.map(c => {
+      const sMin = !isSec && bill > 0 ? Math.round(bill * c.savingsRange[0] / 100) : null;
+      const sMax = !isSec && bill > 0 ? Math.round(bill * c.savingsRange[1] / 100) : null;
+      const severity = isSec ? c.risk : c.impact;
+      const sevColor = { Critical: '#dc2626', High: '#ea580c', Medium: '#d97706', Low: '#16a34a' }[severity] || '#64748b';
+      return `
+        <tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;">
+            <span style="font-weight:600;color:#0f172a;">${c.label}</span><br/>
+            <span style="font-size:12px;color:#64748b;">${c.detail || ''}</span>
+          </td>
+          <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;text-align:center;">
+            <span style="background:${sevColor}15;color:${sevColor};font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;border:1px solid ${sevColor}30;">${severity}</span>
+          </td>
+          ${!isSec && sMin !== null ? `<td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;color:#16a34a;">$${sMin.toLocaleString()}–$${sMax.toLocaleString()}/mo</td>` : '<td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;"></td>'}
+        </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>KloudAudit — ${isSec ? 'Security' : 'Cost'} Report · ${companyName || 'Cloud Audit'} · ${date}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; background: #fff; padding: 40px; max-width: 900px; margin: 0 auto; }
+    @page { margin: 20mm; }
+    @media print { body { padding: 0; } .no-print { display: none; } }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:24px;border-bottom:2px solid #00ffb4;margin-bottom:32px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:32px;height:32px;background:#00ffb4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;">⚡</div>
+      <span style="font-weight:800;font-size:20px;letter-spacing:-0.5px;">KloudAudit</span>
+    </div>
+    <div style="text-align:right;">
+      <p style="font-weight:700;font-size:14px;">${isSec ? 'Security' : 'Cost Optimisation'} Report</p>
+      <p style="font-size:12px;color:#64748b;">${companyName || 'Cloud Audit'} · ${provider || 'AWS'} · ${date}</p>
+    </div>
+  </div>
+
+  <!-- Summary cards -->
+  <div style="display:grid;grid-template-columns:repeat(${isSec ? 2 : 4},1fr);gap:16px;margin-bottom:32px;">
+    ${!isSec && bill > 0 ? `
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;">
+      <p style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Monthly Savings</p>
+      <p style="font-size:20px;font-weight:800;color:#15803d;">$${savMin.toLocaleString()}–$${savMax.toLocaleString()}</p>
+      <p style="font-size:11px;color:#64748b;">per month</p>
+    </div>
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:16px;">
+      <p style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Annual Opportunity</p>
+      <p style="font-size:20px;font-weight:800;color:#1d4ed8;">$${(savMin*12).toLocaleString()}+</p>
+      <p style="font-size:11px;color:#64748b;">per year</p>
+    </div>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px;">
+      <p style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Waste Rate</p>
+      <p style="font-size:20px;font-weight:800;color:#dc2626;">~${savPct}%</p>
+      <p style="font-size:11px;color:#64748b;">of total bill</p>
+    </div>` : ''}
+    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px;">
+      <p style="font-size:10px;font-weight:700;color:#c2410c;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Issues Found</p>
+      <p style="font-size:20px;font-weight:800;color:#c2410c;">${items.length}</p>
+      <p style="font-size:11px;color:#64748b;">of ${isSec ? '16' : '18'} checks</p>
+    </div>
+  </div>
+
+  <!-- Findings table -->
+  <h2 style="font-size:16px;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;">Issues Found</h2>
+  <table style="width:100%;border-collapse:collapse;margin-bottom:32px;">
+    <thead>
+      <tr style="background:#f8fafc;">
+        <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Issue</th>
+        <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Severity</th>
+        <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">${isSec ? '' : 'Est. Savings'}</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <!-- Footer -->
+  <div style="border-top:1px solid #e2e8f0;padding-top:20px;display:flex;justify-content:space-between;align-items:center;">
+    <p style="font-size:11px;color:#94a3b8;">🔒 Generated by KloudAudit · kloudaudit.eu · No cloud credentials were accessed</p>
+    <p style="font-size:11px;color:#94a3b8;">${date}</p>
+  </div>
+  <script>window.onload = () => window.print();</script>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+  };
+
   const handleBuySubscription = async (email) => {
     setSubStatus('loading');
     try {
@@ -2940,8 +3045,8 @@ aws iam simulate-principal-policy \\
               style={{ background: "#f87171", color: "#000", border: "none", borderRadius: "12px", padding: "13px 32px", fontSize: "15px", fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 20px rgba(248,113,113,0.3)" }}>
               {`🛡 Get Security Blueprint — ${currency.securityPrice || "$29"} →`}
             </button>
-            <button onClick={() => window.print()} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "12px", padding: "13px 24px", color: "var(--text-dim)", fontSize: "14px", cursor: "pointer", fontWeight: 600 }}>
-              🖨 Print Score
+            <button onClick={handleExportPDF} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "12px", padding: "13px 24px", color: "var(--text-dim)", fontSize: "14px", cursor: "pointer", fontWeight: 600 }}>
+              📄 Export PDF
             </button>
             <button onClick={() => { setSecChecked({}); setSecScore(null); setSecStep(0); goTo("security_intro"); }}
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "12px", padding: "13px 24px", color: "var(--text-dim)", fontSize: "14px", cursor: "pointer", fontWeight: 600 }}>
@@ -4201,49 +4306,88 @@ aws iam simulate-principal-policy \\
               </div>
             </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ width: "24px", height: "24px", background: "var(--green)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(0,255,180,0.3)", fontSize: "12px" }}>⚡</div>
-              <span className="display" style={{ fontWeight: 800, fontSize: "14px", color: "#fff" }}>KloudAudit</span>
-              <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>© {new Date().getFullYear()} Samuel Ayodele Adomeh · Wrocław, Poland</span>
-            </div>
+          {/* ── FOOTER ── */}
+          <footer style={{ marginTop: "48px", paddingTop: "48px", borderTop: "1px solid var(--border)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "40px", marginBottom: "48px" }} className="footer-grid">
 
-            {/* ── FOUNDER STRIP ── */}
-                <div style={{ marginBottom: "40px", padding: "28px 32px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px", display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
-                  <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "linear-gradient(135deg, #00ffb4, #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: 800, color: "#000", flexShrink: 0, fontFamily: "var(--display)" }}>SA</div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: "14px", fontWeight: 700, color: "#fff", marginBottom: "2px" }}>Built by Samuel Ayodele Adomeh</p>
-                    <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.6 }}>7 years reviewing cloud bills. Senior DevOps Engineer · Azure Solutions Architect · Based in Wrocław, Poland. Built KloudAudit after seeing the same waste patterns on every infrastructure I reviewed.</p>
-                  </div>
-                  <a href="https://www.linkedin.com/in/samuel-ayodele-adomeh" target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", fontWeight: 700, color: "#0077b5", background: "rgba(0,119,181,0.08)", border: "1px solid rgba(0,119,181,0.2)", borderRadius: "8px", padding: "8px 16px", textDecoration: "none", whiteSpace: "nowrap" }}>
-                    Connect on LinkedIn
-                  </a>
+              {/* Brand column */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+                  <div style={{ width: "28px", height: "28px", background: "var(--green)", borderRadius: "7px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 12px rgba(0,255,180,0.3)", fontSize: "14px" }}>⚡</div>
+                  <span className="display" style={{ fontWeight: 800, fontSize: "16px", color: "#fff", letterSpacing: "-0.5px" }}>KloudAudit</span>
                 </div>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.7, marginBottom: "20px", maxWidth: "240px" }}>
+                  Find what your cloud bill is hiding. Free audit in 15 minutes — no credentials, no signup, no agent.
+                </p>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  {[
+                    { label: "LinkedIn", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh", color: "#0077b5" },
+                    { label: "𝕏", href: "https://twitter.com/kloudaudit", color: "var(--text-dim)" },
+                    { label: "GitHub", href: "https://github.com/leumasj", color: "var(--text-dim)" },
+                    { label: "Upwork", href: "https://www.upwork.com/freelancers/~015c346a56b09a2a89", color: "#14a34a" },
+                  ].map(s => (
+                    <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: "12px", fontWeight: 600, color: s.color, textDecoration: "none", padding: "5px 12px", border: `1px solid ${s.color}30`, borderRadius: "7px", background: `${s.color}10`, transition: "all 0.15s" }}>
+                      {s.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
 
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
-              {[
-                { label: "Blog", href: "https://dev.to/kloudaudit" },
-                { label: "Terms", href: "https://www.kloudaudit.eu/terms/" },
-                { label: "Privacy", href: "https://www.kloudaudit.eu/privacy/" },
-                { label: "LinkedIn", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh" },
-                { label: "GitHub", href: "https://github.com/leumasj" },
-                { label: "𝕏 @kloudaudit", href: "https://twitter.com/kloudaudit" },
-              ].map(s => (
-                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--border)", borderRadius: "8px", background: "rgba(255,255,255,0.03)" }}>
-                  {s.label}
-                </a>
-              ))}
-              <a href="https://www.upwork.com/freelancers/~015c346a56b09a2a89" target="_blank" rel="noopener noreferrer"
-                style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#14a34a", textDecoration: "none", padding: "6px 14px", border: "1px solid rgba(20,163,74,0.3)", borderRadius: "8px", background: "rgba(20,163,74,0.08)" }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.561 13.158c-1.102 0-2.135-.467-3.074-1.227l.228-1.076.008-.042c.207-1.143.849-3.06 2.839-3.06 1.492 0 2.703 1.212 2.703 2.703-.001 1.489-1.212 2.702-2.704 2.702zm0-8.14c-2.539 0-4.51 1.649-5.31 4.366-1.22-1.834-2.148-4.036-2.687-5.892H7.828v7.112c-.002 1.406-1.141 2.546-2.547 2.546-1.405 0-2.543-1.14-2.543-2.546V3.492H0v7.112c0 2.914 2.37 5.303 5.281 5.303 2.913 0 5.283-2.389 5.283-5.303v-1.19c.529 1.107 1.182 2.229 1.974 3.221l-1.673 7.873h2.797l1.213-5.71c1.063.679 2.285 1.109 3.686 1.109 3 0 5.439-2.452 5.439-5.45 0-3-2.439-5.439-5.439-5.439z"/></svg>
-                ✓ Verified Cloud Engineer · $8K+ delivered
-              </a>
+              {/* Product column */}
+              <div>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "16px" }}>Product</p>
+                {[
+                  { label: "Cost Audit", action: () => goTo("intake") },
+                  { label: "Security Audit", action: () => goTo("security_intro") },
+                  { label: "Pricing", action: () => document.querySelector('[data-section="pricing"]')?.scrollIntoView({ behavior: "smooth" }) },
+                  { label: "Sample Report", action: () => setShowSample(true) },
+                  { label: "Blog", href: "https://dev.to/kloudaudit" },
+                ].map(l => (
+                  l.href
+                    ? <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" style={{ display: "block", fontSize: "13px", color: "var(--text-muted)", textDecoration: "none", marginBottom: "10px", transition: "color 0.15s" }} onMouseEnter={e => e.currentTarget.style.color = "var(--green)"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>{l.label}</a>
+                    : <button key={l.label} onClick={l.action} style={{ display: "block", fontSize: "13px", color: "var(--text-muted)", background: "none", border: "none", padding: 0, marginBottom: "10px", cursor: "pointer", fontFamily: "inherit", transition: "color 0.15s", textAlign: "left" }} onMouseEnter={e => e.currentTarget.style.color = "var(--green)"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>{l.label}</button>
+                ))}
+              </div>
+
+              {/* Company column */}
+              <div>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "16px" }}>Company</p>
+                {[
+                  { label: "About", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh" },
+                  { label: "Contact", action: () => setShowContact(true) },
+                  { label: "Book a Session", action: () => setShowBooking(true) },
+                  { label: "Hire on Upwork", href: "https://www.upwork.com/freelancers/~015c346a56b09a2a89" },
+                ].map(l => (
+                  l.href
+                    ? <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" style={{ display: "block", fontSize: "13px", color: "var(--text-muted)", textDecoration: "none", marginBottom: "10px", transition: "color 0.15s" }} onMouseEnter={e => e.currentTarget.style.color = "#fff"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>{l.label}</a>
+                    : <button key={l.label} onClick={l.action} style={{ display: "block", fontSize: "13px", color: "var(--text-muted)", background: "none", border: "none", padding: 0, marginBottom: "10px", cursor: "pointer", fontFamily: "inherit", transition: "color 0.15s", textAlign: "left" }} onMouseEnter={e => e.currentTarget.style.color = "#fff"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>{l.label}</button>
+                ))}
+              </div>
+
+              {/* Legal column */}
+              <div>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "16px" }}>Legal</p>
+                {[
+                  { label: "Privacy Policy", href: "https://www.kloudaudit.eu/privacy/" },
+                  { label: "Terms of Service", href: "https://www.kloudaudit.eu/terms/" },
+                  { label: "Unsubscribe", href: "https://www.kloudaudit.eu/api/unsubscribe" },
+                ].map(l => (
+                  <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" style={{ display: "block", fontSize: "13px", color: "var(--text-muted)", textDecoration: "none", marginBottom: "10px", transition: "color 0.15s" }} onMouseEnter={e => e.currentTarget.style.color = "#fff"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>{l.label}</a>
+                ))}
+              </div>
             </div>
-          </div>
-          <p style={{ fontSize: "11px", color: "rgba(148,163,184,0.25)", textAlign: "center", marginTop: "16px" }}>
-            admin@kloudaudit.eu · KloudAudit is a self-assessment tool. Savings estimates are projections based on self-reported data and industry benchmarks.
-          </p>
+
+            {/* Bottom bar */}
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: "24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+              <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", margin: 0 }}>
+                © {new Date().getFullYear()} KloudAudit · Samuel Ayodele Adomeh · Wrocław, Poland · <a href="mailto:admin@kloudaudit.eu" style={{ color: "rgba(148,163,184,0.45)", textDecoration: "none" }}>admin@kloudaudit.eu</a>
+              </p>
+              <p style={{ fontSize: "11px", color: "rgba(148,163,184,0.3)", margin: 0, maxWidth: "480px", textAlign: "right" }}>
+                Savings estimates are projections based on self-reported data and industry benchmarks. Not financial advice.
+              </p>
+            </div>
+          </footer>
         </div>
 
       </main>
@@ -4734,7 +4878,7 @@ aws iam simulate-principal-policy \\
               </p>
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
-              <button className="ghost-btn" onClick={() => window.print()} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "10px 18px", fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>🖨 Export</button>
+              <button className="ghost-btn" onClick={handleExportPDF} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "10px 18px", fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>📄 Export PDF</button>
               <button className="glow-btn" onClick={() => { setChecked({}); setActiveSection(0); goTo("audit"); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "10px 20px", fontSize: "13px", boxShadow: "0 0 16px rgba(0,255,180,0.25)" }}>Re-run</button>
             </div>
           </div>
