@@ -374,6 +374,60 @@ function buildSecurityEmail(report, meta, assessmentId) {
 </html>`;
 }
 
+// ── BLUEPRINT QUALITY VALIDATOR ──────────────────────────────────────────────
+function validateBlueprintQuality(content, productType) {
+  if (!content || typeof content !== 'string') {
+    return { valid: false, reason: 'Empty or invalid response' };
+  }
+
+  const wordCount = content.split(/\s+/).length;
+
+  // Minimum word counts by product type
+  const minimums = {
+    blueprint:  800,
+    security:   600,
+    cfo_report: 400,
+    bundle:     1200,
+  };
+
+  const minimum = minimums[productType] || 600;
+
+  if (wordCount < minimum) {
+    return {
+      valid:  false,
+      reason: `Too short: ${wordCount} words, expected at least ${minimum}`,
+    };
+  }
+
+  // Check for truncation signals
+  const truncationSignals = ['...', '[truncated]', 'I apologize', 'I cannot', 'As an AI'];
+  for (const signal of truncationSignals) {
+    if (content.includes(signal)) {
+      return { valid: false, reason: `Truncation signal detected: "${signal}"` };
+    }
+  }
+
+  // Blueprint / bundle must have CLI content
+  if (productType === 'blueprint' || productType === 'bundle') {
+    const hasRequiredContent = ['Step', 'CLI', 'aws '].some(s => content.includes(s));
+    if (!hasRequiredContent) {
+      return { valid: false, reason: 'Missing expected CLI/step content for blueprint' };
+    }
+  }
+
+  // CFO report must have executive summary content
+  if (productType === 'cfo_report') {
+    const hasRequiredContent = ['Executive', 'savings', 'ROI'].some(s =>
+      content.toLowerCase().includes(s.toLowerCase())
+    );
+    if (!hasRequiredContent) {
+      return { valid: false, reason: 'Missing expected executive summary content for CFO report' };
+    }
+  }
+
+  return { valid: true };
+}
+
 // ── MAIN HANDLER ─────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
   // Allow GET (from cron) or POST (manual trigger)
@@ -538,6 +592,44 @@ module.exports = async function handler(req, res) {
           } else {
             console.log(`Cache hit — delivering cached report for job ${job.id}`);
           }
+        }
+
+        // 3b. Validate Claude response quality before delivery
+        const validationType = isBundle ? 'bundle' : isSecur ? 'security' : isCfoReport ? 'cfo_report' : 'blueprint';
+        const quality = validateBlueprintQuality(report, validationType);
+
+        if (!quality.valid) {
+          console.warn(JSON.stringify({
+            level: 'warn', event: 'blueprint.quality_fail',
+            jobId: job.id, reason: quality.reason, attempt: job.attempts,
+          }));
+
+          if (job.attempts < 2) {
+            // First or second attempt — reset to pending so cron retries with a fresh Claude call
+            await supabaseAdmin
+              .from('delivery_queue')
+              .update({
+                status:        'pending',
+                attempts:      job.attempts + 1,
+                error_message: `Quality validation failed: ${quality.reason}`,
+              })
+              .eq('id', job.id);
+            results.push({ id: job.id, status: 'quality_retry', reason: quality.reason });
+            continue;
+          }
+
+          // Exhausted retries — deliver anyway and alert admin
+          console.error(JSON.stringify({
+            level: 'error', event: 'blueprint.quality_fail_final',
+            jobId: job.id, reason: quality.reason,
+          }));
+          await sgMail.send({
+            to:      'admin@kloudaudit.eu',
+            from:    { email: 'admin@kloudaudit.eu', name: 'KloudAudit System' },
+            subject: `⚠️ Blueprint quality warning — job ${job.id}`,
+            text:    `Blueprint quality validation failed after 2 attempts.\n\nJob: ${job.id}\nCustomer: ${email}\nProduct: ${job.product_type}\nReason: ${quality.reason}\n\nDelivering anyway — manual review recommended.`,
+          });
+          // Fall through to normal delivery below
         }
 
         // 4. Build emails
