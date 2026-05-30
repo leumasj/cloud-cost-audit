@@ -7,11 +7,11 @@ const AUDIT_SECTIONS = [
     description: "Instance sizing, reservation strategy & generation currency",
     summary: "Identifies idle VMs, missing savings plans, spot opportunities, and legacy instance types burning money silently.",
     checks: [
-      { id: "rightsizing", label: "Idle or oversized instances", detail: "Over 80% unused capacity detected", savingsRange: [15, 40], effort: "Medium", impact: "High" },
-      { id: "reserved", label: "No Reserved Instances / Savings Plans", detail: "Running fully on-demand pricing", savingsRange: [20, 45], effort: "Low", impact: "High" },
-      { id: "spot", label: "Spot instances unused for batch/dev", detail: "CI runners, ML training, ETL jobs eligible", savingsRange: [60, 80], effort: "Medium", impact: "Critical" },
-      { id: "old_gen", label: "Previous-generation instance types", detail: "m4, c4, r4 families still in use", savingsRange: [5, 15], effort: "Low", impact: "Medium" },
-      { id: "stopped", label: "Stopped instances still billing", detail: "EBS volumes and Elastic IPs accruing charges", savingsRange: [2, 8], effort: "Low", impact: "Low" },
+      { id: "rightsizing", label: "Idle or oversized instances", detail: "Over 80% unused capacity detected", savingsRange: [15, 40], effort: "Medium", impact: "High", tooltip: "AWS Compute Optimizer finds 32% of EC2 instances are overprovisioned on average. A t3.large → t3.medium migration saves ~$30/month per instance with no performance impact." },
+      { id: "reserved", label: "No Reserved Instances / Savings Plans", detail: "Running fully on-demand pricing", savingsRange: [20, 45], effort: "Low", impact: "High", tooltip: "A 1-year No Upfront Compute Savings Plan saves 36–40% vs on-demand. An m5.xlarge running 24/7 on-demand: ~$140/month. With a Savings Plan: ~$88/month. Commitment required, but the baseline workload qualifies." },
+      { id: "spot", label: "Spot instances unused for batch/dev", detail: "CI runners, ML training, ETL jobs eligible", savingsRange: [60, 80], effort: "Medium", impact: "Critical", tooltip: "Spot instances are 70–90% cheaper than on-demand for interruptible workloads. CI/CD runners and ML training are ideal — interruptions restart the job, not your product. Average interruption rate: 5%." },
+      { id: "old_gen", label: "Previous-generation instance types", detail: "m4, c4, r4 families still in use", savingsRange: [5, 15], effort: "Low", impact: "Medium", tooltip: "m4.large costs $0.10/hr (us-east-1). m7g.large (Graviton3) costs $0.0816/hr — 18% cheaper with better performance. Migration is a stop, resize, start operation taking under 10 minutes per instance." },
+      { id: "stopped", label: "Stopped instances still billing", detail: "EBS volumes and Elastic IPs accruing charges", savingsRange: [2, 8], effort: "Low", impact: "Low", tooltip: "AWS charges $0.005/hour per unattached Elastic IP (~$3.65/month each) and $0.10/GB/month for EBS volumes on stopped instances. Run: aws ec2 describe-volumes --filters Name=status,Values=available" },
     ],
   },
   {
@@ -19,10 +19,10 @@ const AUDIT_SECTIONS = [
     description: "Object storage tiering, orphaned volumes & data transfer",
     summary: "Uncovers untriered S3/GCS data, orphaned disks after instance deletion, stale snapshots, and expensive egress routing.",
     checks: [
-      { id: "s3_tier", label: "Storage not tiered by access frequency", detail: "All data sitting in Standard class", savingsRange: [30, 60], effort: "Low", impact: "High" },
-      { id: "unattached_volumes", label: "Unattached disks & orphaned volumes", detail: "Persisting after instance termination", savingsRange: [5, 20], effort: "Low", impact: "Medium" },
-      { id: "snapshots", label: "Snapshot retention policy missing", detail: "Old backups never purged or archived", savingsRange: [5, 15], effort: "Low", impact: "Medium" },
-      { id: "data_transfer", label: "Excessive cross-region egress costs", detail: "No CDN or VPC endpoint in place", savingsRange: [10, 35], effort: "Medium", impact: "High" },
+      { id: "s3_tier", label: "Storage not tiered by access frequency", detail: "All data sitting in Standard class", savingsRange: [30, 60], effort: "Low", impact: "High", tooltip: "S3 Standard: $0.023/GB/month. S3 Infrequent Access: $0.0125/GB/month (46% cheaper). S3 Intelligent-Tiering automates this at $0.0025/1,000 objects/month — zero management overhead." },
+      { id: "unattached_volumes", label: "Unattached disks & orphaned volumes", detail: "Persisting after instance termination", savingsRange: [5, 20], effort: "Low", impact: "Medium", tooltip: "EBS volumes persist after instance termination by default. A forgotten 500GB gp3 volume costs $40/month. Most accounts have 5–20 of these. Run: aws ec2 describe-volumes --filters Name=status,Values=available" },
+      { id: "snapshots", label: "Snapshot retention policy missing", detail: "Old backups never purged or archived", savingsRange: [5, 15], effort: "Low", impact: "Medium", tooltip: "EBS snapshots cost $0.05/GB/month. Without a lifecycle policy, they accumulate forever. 10TB of old snapshots: $500/month. AWS Data Lifecycle Manager sets retention rules in under 5 minutes." },
+      { id: "data_transfer", label: "Excessive cross-region egress costs", detail: "No CDN or VPC endpoint in place", savingsRange: [10, 35], effort: "Medium", impact: "High", tooltip: "Cross-region data transfer: $0.02/GB. CloudFront CDN: $0.0085/GB for the first 10TB — 57% cheaper. S3 → CloudFront origin transfer is free. VPC Gateway Endpoints for S3/DynamoDB cost $0." },
     ],
   },
   {
@@ -30,9 +30,9 @@ const AUDIT_SECTIONS = [
     description: "NAT gateways, static IPs & idle load balancers",
     summary: "Catches NAT gateway overuse for internal traffic, idle load balancers billing hourly, and unattached static IPs.",
     checks: [
-      { id: "nat_gateway", label: "Excessive NAT Gateway traffic", detail: "Internal traffic routed through NAT unnecessarily", savingsRange: [10, 30], effort: "Medium", impact: "High" },
-      { id: "unused_ips", label: "Unused static / Elastic IPs", detail: "Unattached IPs billed hourly", savingsRange: [1, 5], effort: "Low", impact: "Low" },
-      { id: "lb_unused", label: "Load balancers with no active targets", detail: "Idle ALBs and NLBs still billing", savingsRange: [3, 10], effort: "Low", impact: "Medium" },
+      { id: "nat_gateway", label: "Excessive NAT Gateway traffic", detail: "Internal traffic routed through NAT unnecessarily", savingsRange: [10, 30], effort: "Medium", impact: "High", tooltip: "NAT Gateway charges $0.045/GB processed + $0.045/hour. A VPC Gateway Endpoint for S3 or DynamoDB is completely free and eliminates all processing charges for that traffic. One command to create." },
+      { id: "unused_ips", label: "Unused static / Elastic IPs", detail: "Unattached IPs billed hourly", savingsRange: [1, 5], effort: "Low", impact: "Low", tooltip: "AWS charges $0.005/hour per unattached Elastic IP — $3.65/month each. Accounts commonly accumulate 5–15 forgotten IPs after instance terminations. Run: aws ec2 describe-addresses --query 'Addresses[?AssociationId==null]'" },
+      { id: "lb_unused", label: "Load balancers with no active targets", detail: "Idle ALBs and NLBs still billing", savingsRange: [3, 10], effort: "Low", impact: "Medium", tooltip: "An idle ALB costs ~$16/month (LCU-hours minimum) even with zero traffic. Check target health: aws elbv2 describe-target-groups. A load balancer with 0 healthy targets is safe to delete." },
     ],
   },
   {
@@ -40,9 +40,9 @@ const AUDIT_SECTIONS = [
     description: "RDS sizing, dev environment waste & caching gaps",
     summary: "Finds dev/staging RDS running 24/7, over-provisioned databases, and missing Redis layers that cause DB overload.",
     checks: [
-      { id: "rds_idle", label: "Dev/staging RDS running 24/7", detail: "Full-price uptime for non-production databases", savingsRange: [40, 70], effort: "Low", impact: "Critical" },
-      { id: "rds_size", label: "RDS instances over-provisioned", detail: "High memory, <10% actual usage", savingsRange: [20, 40], effort: "Medium", impact: "High" },
-      { id: "cache_missing", label: "No caching layer in front of database", detail: "Redis/Memcached could offload 60–80% of queries", savingsRange: [15, 30], effort: "High", impact: "High" },
+      { id: "rds_idle", label: "Dev/staging RDS running 24/7", detail: "Full-price uptime for non-production databases", savingsRange: [40, 70], effort: "Low", impact: "Critical", tooltip: "A db.t3.medium runs 24/7 at ~$50/month. Scheduled to business hours only (8am–8pm weekdays): ~$18/month. That's a 64% saving from a single EventBridge rule that takes 20 minutes to set up." },
+      { id: "rds_size", label: "RDS instances over-provisioned", detail: "High memory, <10% actual usage", savingsRange: [20, 40], effort: "Medium", impact: "High", tooltip: "RDS rightsizing signal: CloudWatch DatabaseConnections < 10 sustained AND FreeableMemory > 50% of total. Check: aws cloudwatch get-metric-statistics for both metrics over the last 14 days." },
+      { id: "cache_missing", label: "No caching layer in front of database", detail: "Redis/Memcached could offload 60–80% of queries", savingsRange: [15, 30], effort: "High", impact: "High", tooltip: "A cache.t3.micro ElastiCache node costs ~$12/month and can handle 60–80% of read traffic on typical web apps. This reduces RDS load, allows downsizing, and improves response time." },
     ],
   },
   {
@@ -50,9 +50,9 @@ const AUDIT_SECTIONS = [
     description: "Budgets, alerts, forgotten resources & environment parity",
     summary: "Exposes missing billing alerts, shadow IT resources accumulating cost, and dev environments mirroring production unnecessarily.",
     checks: [
-      { id: "no_budgets", label: "No cost budgets or billing alerts", detail: "Spend drifting without visibility", savingsRange: [5, 20], effort: "Low", impact: "High" },
-      { id: "unused_services", label: "Forgotten services & shadow IT", detail: "Old Lambdas, API GWs, queues accruing cost", savingsRange: [3, 15], effort: "Medium", impact: "Medium" },
-      { id: "dev_prod_parity", label: "Dev environment mirrors production", detail: "Should be 10–20% of prod size", savingsRange: [30, 50], effort: "Medium", impact: "Critical" },
+      { id: "no_budgets", label: "No cost budgets or billing alerts", detail: "Spend drifting without visibility", savingsRange: [5, 20], effort: "Low", impact: "High", tooltip: "AWS Budget alerts are free for your first 2 budgets. A threshold at 80% of your monthly target gives you 5–7 days to investigate before overspend compounds. Takes 3 minutes to set up in AWS Console." },
+      { id: "unused_services", label: "Forgotten services & shadow IT", detail: "Old Lambdas, API GWs, queues accruing cost", savingsRange: [3, 15], effort: "Medium", impact: "Medium", tooltip: "Old Lambda functions, abandoned API Gateways, and forgotten SQS queues accumulate from CI/CD pipelines and side experiments. They have low direct cost but often trigger other services that add up." },
+      { id: "dev_prod_parity", label: "Dev environment mirrors production", detail: "Should be 10–20% of prod size", savingsRange: [30, 50], effort: "Medium", impact: "Critical", tooltip: "Production needs high availability and headroom. Dev needs to run your stack — typically at 10–20% of production sizing. A 1:1 dev-to-prod ratio is the single most common infrastructure waste pattern we see." },
     ],
   },
 ];
@@ -919,6 +919,129 @@ function LiveFeedTicker() {
         );
       })}
     </div>
+    </div>
+  );
+}
+
+// ── NAT GATEWAY CALCULATOR ────────────────────────────────────────────────────
+function NATGatewayCalculator({ onRunAudit }) {
+  const [gbMonth, setGbMonth] = useState('');
+  const [pctS3, setPctS3] = useState(60);
+  const [numGateways, setNumGateways] = useState(1);
+
+  const gb = parseFloat(gbMonth) || 0;
+  const pct = pctS3 / 100;
+  const gateways = Math.max(1, parseInt(numGateways) || 1);
+
+  // Current costs (us-east-1 rates)
+  const dataProcessing = gb * 0.045;
+  const hourly = gateways * 0.045 * 720;
+  const totalCurrent = dataProcessing + hourly;
+
+  // With VPC endpoints: Gateway endpoint (S3/DDB) = $0, Interface endpoint = $0.01/GB
+  const s3SavingsGb = gb * pct;
+  const otherGb = gb * (1 - pct);
+  const savingsGateway = s3SavingsGb * 0.045;          // eliminated entirely
+  const savingsInterface = otherGb * (0.045 - 0.01);   // reduced to $0.01/GB
+  const totalSavings = savingsGateway + savingsInterface;
+  const monthlySavings = Math.round(totalSavings);
+  const annualSavings = monthlySavings * 12;
+  const savingsPct = totalCurrent > 0 ? Math.round((totalSavings / dataProcessing) * 100) : 0;
+  const hasResult = gb > 0;
+
+  return (
+    <div style={{ maxWidth: "780px", margin: "0 auto", padding: "80px 24px 80px", position: "relative", zIndex: 1 }}>
+      <div style={{ textAlign: "center", marginBottom: "48px" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(251,146,60,0.1)", border: "1px solid rgba(251,146,60,0.25)", borderRadius: "20px", padding: "5px 14px", marginBottom: "20px" }}>
+          <span style={{ fontSize: "11px", fontWeight: 700, color: "#fb923c", letterSpacing: "1px" }}>FREE CALCULATOR · NO SIGNUP</span>
+        </div>
+        <h1 className="display" style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 800, letterSpacing: "-2px", color: "#fff", marginBottom: "14px", lineHeight: 1.05 }}>
+          Am I Overpaying for<br /><span style={{ color: "#fb923c" }}>NAT Gateway?</span>
+        </h1>
+        <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "520px", margin: "0 auto", lineHeight: 1.7 }}>
+          NAT Gateway charges <strong style={{ color: "#fff" }}>$0.045/GB processed</strong> — including traffic to S3 and DynamoDB that a free VPC endpoint could route internally. Enter your numbers to see the saving.
+        </p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "32px" }} className="calc-cards">
+        {/* Input card */}
+        <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "20px", padding: "32px" }}>
+          <p style={{ fontSize: "13px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "24px" }}>Your Numbers</p>
+
+          <div style={{ marginBottom: "24px" }}>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-dim)", marginBottom: "8px" }}>GB processed through NAT per month</label>
+            <input type="number" value={gbMonth} onChange={e => setGbMonth(e.target.value)} placeholder="e.g. 2000"
+              style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "16px", boxSizing: "border-box" }} />
+            <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "5px" }}>Find this in CloudWatch → NatGateway → BytesOutToDestination</p>
+          </div>
+
+          <div style={{ marginBottom: "24px" }}>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-dim)", marginBottom: "8px" }}>
+              % of traffic going to S3 or DynamoDB — <span style={{ color: "#fb923c" }}>{pctS3}%</span>
+            </label>
+            <input type="range" min="0" max="100" value={pctS3} onChange={e => setPctS3(Number(e.target.value))}
+              style={{ width: "100%", accentColor: "#fb923c" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+              <span>0% (none)</span><span>Most teams: 50–80%</span><span>100%</span>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-dim)", marginBottom: "8px" }}>Number of NAT Gateways</label>
+            <input type="number" min="1" max="20" value={numGateways} onChange={e => setNumGateways(e.target.value)} placeholder="1"
+              style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "16px", boxSizing: "border-box" }} />
+          </div>
+        </div>
+
+        {/* Result card */}
+        <div style={{ background: hasResult ? "linear-gradient(135deg, rgba(251,146,60,0.08), rgba(0,255,180,0.05))" : "var(--bg2)", border: `1px solid ${hasResult ? "rgba(251,146,60,0.3)" : "var(--border)"}`, borderRadius: "20px", padding: "32px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          {hasResult ? (
+            <>
+              <div>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "#fb923c", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "20px" }}>Your Savings Estimate</p>
+                <div style={{ marginBottom: "20px" }}>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "4px" }}>Current monthly NAT data cost</p>
+                  <p className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#f87171", letterSpacing: "-1px" }}>${Math.round(dataProcessing).toLocaleString()}/mo</p>
+                </div>
+                <div style={{ height: "1px", background: "var(--border)", margin: "16px 0" }} />
+                <div style={{ marginBottom: "20px" }}>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "4px" }}>Potential monthly saving</p>
+                  <p className="display" style={{ fontSize: "36px", fontWeight: 800, color: "var(--green)", letterSpacing: "-1.5px" }}>−${monthlySavings.toLocaleString()}/mo</p>
+                  <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>= ${annualSavings.toLocaleString()}/year · {savingsPct}% of data processing cost</p>
+                </div>
+                <div style={{ background: "rgba(0,255,180,0.06)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "10px", padding: "12px 16px" }}>
+                  <p style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.6 }}>
+                    <strong style={{ color: "var(--green)" }}>Gateway endpoint for S3/DDB</strong> — free, eliminates ${Math.round(savingsGateway).toLocaleString()}/mo<br />
+                    <strong style={{ color: "var(--green)" }}>Interface endpoints for others</strong> — $0.01/GB, saves ${Math.round(savingsInterface).toLocaleString()}/mo
+                  </p>
+                </div>
+              </div>
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "16px" }}>Rates: us-east-1. Actual savings vary by region and traffic mix.</p>
+            </>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center" }}>
+              <span style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.3 }}>💡</span>
+              <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: 1.6 }}>Enter your monthly GB to see your savings estimate.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div style={{ background: "linear-gradient(135deg, rgba(251,146,60,0.08) 0%, rgba(0,255,180,0.06) 100%)", border: "1px solid rgba(251,146,60,0.25)", borderRadius: "20px", padding: "32px", textAlign: "center" }}>
+        <p style={{ fontSize: "13px", fontWeight: 700, color: "#fb923c", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "10px" }}>NAT Gateway is just 1 of 18 silent leaks</p>
+        <h3 className="display" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "10px" }}>
+          Run the full 15-minute audit to find the other 17.
+        </h3>
+        <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "24px", maxWidth: "480px", margin: "0 auto 24px" }}>
+          Compute, storage, database, governance — all 18 checks with savings estimates tied to your actual monthly bill. Free, no credentials required.
+        </p>
+        <button className="glow-btn" onClick={onRunAudit}
+          style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 36px", fontSize: "16px", boxShadow: "0 0 28px rgba(0,255,180,0.3)", cursor: "pointer" }}>
+          Run Full Cost Audit — Free →
+        </button>
+        <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "10px" }}>No signup · No cloud access · Results in 15 minutes</p>
+      </div>
     </div>
   );
 }
@@ -3103,6 +3226,20 @@ aws iam simulate-principal-policy \\
   };
 
   const seoSlug = window.location.pathname.replace(/^\/|\/$/g, "");
+
+  // ── NAT GATEWAY CALCULATOR ────────────────────────────────────────────────
+  if (step === "intro" && seoSlug === "nat-gateway-calculator") {
+    return (
+      <div className="app">
+        <style>{globalCss}</style>
+        <ParticleBackground />
+        {showContact && <ContactModal onClose={() => setShowContact(false)} />}
+        <Nav />
+        <NATGatewayCalculator onRunAudit={() => goTo("intake")} />
+      </div>
+    );
+  }
+
   const seoPage = step === "intro" && seoSlug
     ? SEO_PAGES.find(p => p.slug === seoSlug)
     : null;
@@ -4525,6 +4662,11 @@ aws iam simulate-principal-policy \\
                             <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--green)" }}>${sMin?.toLocaleString()} – ${sMax?.toLocaleString()}/mo savings</span>
                           </div>
                         )}
+                        {on && check.tooltip && (
+                          <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(99,102,241,0.07)", border: "1px solid rgba(99,102,241,0.18)", borderRadius: "8px", borderLeft: "3px solid #818cf8" }}>
+                            <p style={{ fontSize: "12px", color: "#a5b4fc", lineHeight: 1.65, margin: 0 }}>💡 {check.tooltip}</p>
+                          </div>
+                        )}
                       </div>
                       <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", flexShrink: 0, fontWeight: 600 }}>{check.savingsRange[0]}–{check.savingsRange[1]}%</div>
                     </div>
@@ -5161,23 +5303,40 @@ aws iam simulate-principal-policy \\
 
           {/* ── ACTION PLAN CTA ── */}
           <div className="fade-up stagger-4" style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.05) 0%, rgba(99,102,241,0.05) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "20px", padding: "40px" }}>
-            {/* ROI headline */}
+            {/* ── ROI ANCHOR BLOCK ── */}
             {savMin > 0 ? (() => {
               const bpCost = currency.blueprintAmount / 100;
               const daysToROI = Math.ceil(bpCost / (savMin / 30));
+              const roiPct = Math.round(((savMin * 12 - bpCost) / bpCost) * 100);
               return (
-                <div style={{ textAlign: "center", marginBottom: "28px" }}>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "rgba(0,255,180,0.08)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "14px", padding: "14px 24px" }}>
-                    <span style={{ fontSize: "22px" }}>💰</span>
-                    <div style={{ textAlign: "left" }}>
-                      <p style={{ fontSize: "18px", fontWeight: 800, color: "var(--green)", margin: 0, letterSpacing: "-0.5px" }}>${savMin.toLocaleString()}–${savMax.toLocaleString()}/mo in recoverable savings</p>
-                      <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>The {currency.blueprintPrice} Blueprint pays for itself in {daysToROI <= 1 ? "the first day" : daysToROI <= 7 ? `${daysToROI} days` : "the first week"} · saves ${(savMin * 12).toLocaleString()}+ per year</p>
+                <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.1) 0%, rgba(0,255,180,0.04) 100%)", border: "1.5px solid rgba(0,255,180,0.3)", borderRadius: "16px", padding: "28px 32px", marginBottom: "28px", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "160px", height: "160px", background: "radial-gradient(circle, rgba(0,255,180,0.08) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "24px", alignItems: "center", flexWrap: "wrap" }}>
+                    <div>
+                      <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px" }}>The math is simple</p>
+                      <p style={{ fontSize: "clamp(18px,2.5vw,26px)", fontWeight: 800, color: "#fff", letterSpacing: "-0.8px", lineHeight: 1.2, marginBottom: "6px" }}>
+                        Spend <span style={{ color: "var(--green)" }}>{currency.blueprintPrice}</span> once.
+                        Recover <span style={{ color: "var(--green)" }}>${savMin.toLocaleString()}/mo</span> after.
+                      </p>
+                      <p style={{ fontSize: "15px", color: "var(--text-dim)", marginBottom: "12px" }}>
+                        That's <strong style={{ color: "#fff" }}>${(savMin * 12).toLocaleString()}+ per year</strong> — the Blueprint pays for itself in <strong style={{ color: "var(--green)" }}>{daysToROI <= 1 ? "day one" : daysToROI <= 7 ? `${daysToROI} days` : "the first week"}</strong>.
+                      </p>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 12px" }}>
+                        <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>🛡 If the Blueprint doesn't cover its cost in 30 days — full refund, no questions asked.</span>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "center", flexShrink: 0 }}>
+                      <p style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>Annual ROI</p>
+                      <p className="display" style={{ fontSize: "clamp(32px,4vw,48px)", fontWeight: 800, color: "var(--green)", letterSpacing: "-2px", lineHeight: 1 }}>{roiPct.toLocaleString()}%</p>
                     </div>
                   </div>
                 </div>
               );
             })() : (
-              <p style={{ fontSize: "13px", color: "var(--text-muted)", textAlign: "center", marginBottom: "20px" }}>Teams typically find $500–$4,000+/month based on industry benchmarks. The blueprint pays for itself within days.</p>
+              <div style={{ background: "rgba(0,255,180,0.05)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "14px", padding: "20px 24px", marginBottom: "24px", textAlign: "center" }}>
+                <p style={{ fontSize: "15px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>Teams typically find $500–$4,000+/month.</p>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>At those numbers, the {currency.blueprintPrice} Blueprint pays for itself in hours — not days.</p>
+              </div>
             )}
 
             {/* Trust card */}
