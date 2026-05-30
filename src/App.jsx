@@ -1721,6 +1721,53 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
 
 // ── CONTACT MODAL ─────────────────────────────────────────────────────────────
 // Defined OUTSIDE App — stable component type, owns its own status state.
+// ── ABOUT MODAL ───────────────────────────────────────────────────────────────
+const AboutModal = memo(function AboutModal({ onClose }) {
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="about-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", overflow: "hidden" }}>
+        {/* Header */}
+        <div style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.1) 0%, rgba(99,102,241,0.08) 100%)", borderBottom: "1px solid rgba(0,255,180,0.12)", padding: "28px 32px 22px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{ width: "36px", height: "36px", background: "var(--green)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", boxShadow: "0 0 16px rgba(0,255,180,0.4)" }}>⚡</div>
+              <div>
+                <h2 id="about-dialog-title" className="display" style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.8px", color: "#fff", margin: 0 }}>About KloudAudit</h2>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>Built in 2026 · Wrocław, Poland</p>
+              </div>
+            </div>
+            <button onClick={onClose} aria-label="Close" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "20px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>×</button>
+          </div>
+        </div>
+        {/* Body */}
+        <div style={{ padding: "28px 32px 32px", display: "flex", flexDirection: "column", gap: "18px" }}>
+          <p style={{ fontSize: "15px", color: "var(--text-dim)", lineHeight: 1.75 }}>
+            KloudAudit was built after spending <strong style={{ color: "#fff" }}>4 months</strong> going through enterprise procurement just to connect a cloud cost tool at work — security reviews, IT tickets, legal approvals, OAuth scopes.
+          </p>
+          <p style={{ fontSize: "15px", color: "var(--text-dim)", lineHeight: 1.75 }}>
+            The premise: <strong style={{ color: "#fff" }}>you already know your infrastructure.</strong> You don't need to give a third-party tool your AWS credentials to find out you're running dev RDS 24/7, or that your NAT Gateway is routing S3 traffic that a free VPC endpoint could handle.
+          </p>
+          <p style={{ fontSize: "15px", color: "var(--text-dim)", lineHeight: 1.75 }}>
+            KloudAudit is a structured 15-minute self-assessment that asks the right questions, quantifies the waste in dollars against your actual bill, and delivers exact CLI commands and Terraform to fix it. <strong style={{ color: "#fff" }}>No credentials. No agents. No procurement.</strong>
+          </p>
+          {/* Founder */}
+          <div style={{ display: "flex", alignItems: "center", gap: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: "12px", padding: "16px" }}>
+            <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: 800, color: "#000", flexShrink: 0, fontFamily: "var(--display)" }}>SA</div>
+            <div>
+              <p style={{ fontSize: "14px", fontWeight: 700, color: "#fff", margin: "0 0 2px" }}>Samuel Ayodele Adomeh</p>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>Senior DevOps Engineer · Certified Azure Solutions Architect · Wrocław, Poland</p>
+            </div>
+            <a href="https://www.linkedin.com/in/samuel-ayodele-adomeh" target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", fontSize: "12px", fontWeight: 700, color: "#0077b5", background: "rgba(0,119,181,0.08)", border: "1px solid rgba(0,119,181,0.2)", borderRadius: "8px", padding: "6px 12px", textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>LinkedIn</a>
+          </div>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center", margin: 0 }}>
+            Questions? <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 const ContactModal = memo(function ContactModal({ onClose }) {
   const [status, setStatus] = useState("idle"); // idle | sending | success | error
 
@@ -1968,6 +2015,7 @@ export default function App() {
   const [showSample, setShowSample] = useState(false);
   const [sampleTab, setSampleTab] = useState("report");
   const [showContact, setShowContact] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const [showBlueprint, setShowBlueprint] = useState(false);
   const [pageKey, setPageKey] = useState(0);
@@ -3304,6 +3352,7 @@ aws iam simulate-principal-policy \\
 
       {/* ── EXIT INTENT MODAL ── */}
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
       <Nav />
@@ -4237,7 +4286,7 @@ aws iam simulate-principal-policy \\
         </div>
 
         {/* ── PRICING — Two buying journeys ── */}
-        <div style={{ marginBottom: "90px" }}>
+        <div id="pricing-section" style={{ marginBottom: "90px" }}>
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
             <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Pricing</p>
             <h2 className="display" style={{ fontSize: "clamp(26px,3vw,40px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "12px" }}>
@@ -4445,6 +4494,45 @@ aws iam simulate-principal-policy \\
           </div>
           {/* ── FOOTER ── */}
           <footer style={{ marginTop: "48px", paddingTop: "48px", borderTop: "1px solid var(--border)" }}>
+
+            {/* Newsletter banner */}
+            {(() => {
+              const [nEmail, setNEmail] = React.useState('');
+              const [nStatus, setNStatus] = React.useState('idle'); // idle | loading | success | error
+              const handleSubscribe = async (e) => {
+                e.preventDefault();
+                if (!nEmail) return;
+                setNStatus('loading');
+                try {
+                  const r = await fetch('/api/audits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'newsletter', email: nEmail }) });
+                  setNStatus(r.ok ? 'success' : 'error');
+                } catch { setNStatus('error'); }
+              };
+              return (
+                <div style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "16px", padding: "28px 32px", marginBottom: "48px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}>
+                  <div>
+                    <p style={{ fontSize: "16px", fontWeight: 800, color: "#fff", letterSpacing: "-0.3px", marginBottom: "4px" }}>Stay in the loop</p>
+                    <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: 0 }}>New blog posts, product updates, and cloud cost tips. No spam — unsubscribe any time.</p>
+                  </div>
+                  {nStatus === 'success' ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--green)", fontSize: "14px", fontWeight: 700 }}>
+                      <span>✓</span> You're subscribed!
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSubscribe} style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+                      <input type="email" required value={nEmail} onChange={e => setNEmail(e.target.value)} placeholder="you@company.com"
+                        style={{ padding: "11px 14px", background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(99,102,241,0.3)", borderRadius: "10px", color: "#fff", fontSize: "14px", width: "220px" }} />
+                      <button type="submit" disabled={nStatus === 'loading'}
+                        style={{ padding: "11px 20px", borderRadius: "10px", border: "none", background: nStatus === 'loading' ? "rgba(99,102,241,0.4)" : "linear-gradient(135deg,#818cf8,#6366f1)", color: "#fff", fontWeight: 800, fontSize: "13px", cursor: "pointer", whiteSpace: "nowrap" }}>
+                        {nStatus === 'loading' ? "…" : "Subscribe →"}
+                      </button>
+                      {nStatus === 'error' && <p style={{ fontSize: "11px", color: "#f87171", alignSelf: "center" }}>Try again</p>}
+                    </form>
+                  )}
+                </div>
+              );
+            })()}
+
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "40px", marginBottom: "48px" }} className="footer-grid">
 
               {/* Brand column */}
@@ -4477,7 +4565,7 @@ aws iam simulate-principal-policy \\
                 {[
                   { label: "Cost Audit", action: () => goTo("intake") },
                   { label: "Security Audit", action: () => goTo("security_intro") },
-                  { label: "Pricing", action: () => document.querySelector('[data-section="pricing"]')?.scrollIntoView({ behavior: "smooth" }) },
+                  { label: "Pricing", action: () => { if (step !== 'intro') { goTo('intro'); setTimeout(() => document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 600); } else { document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } } },
                   { label: "Sample Report", action: () => setShowSample(true) },
                   { label: "Blog", href: "https://dev.to/kloudaudit" },
                 ].map(l => (
@@ -4491,7 +4579,7 @@ aws iam simulate-principal-policy \\
               <div>
                 <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "16px" }}>Company</p>
                 {[
-                  { label: "About", href: "https://www.linkedin.com/in/samuel-ayodele-adomeh" },
+                  { label: "About", action: () => setShowAbout(true) },
                   { label: "Contact", action: () => setShowContact(true) },
                   { label: "Book a Session", action: () => setShowBooking(true) },
                   { label: "Hire on Upwork", href: "https://www.upwork.com/freelancers/~015c346a56b09a2a89" },
