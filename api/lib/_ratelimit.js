@@ -8,11 +8,11 @@
 // Required table (run once in Supabase SQL editor):
 //   CREATE TABLE IF NOT EXISTS rate_limits (
 //     id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-//     key        TEXT        NOT NULL,
+//     ip         TEXT        NOT NULL,
 //     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 //   );
-//   CREATE INDEX IF NOT EXISTS rate_limits_key_created_idx
-//     ON rate_limits(key, created_at);
+//   CREATE INDEX IF NOT EXISTS rate_limits_ip_created_idx
+//     ON rate_limits(ip, created_at);
 
 'use strict';
 
@@ -39,7 +39,7 @@ async function checkRateLimit(req, action, maxRequests, windowMs) {
     const { count } = await supabase
       .from('rate_limits')
       .select('*', { count: 'exact', head: true })
-      .eq('key', key)
+      .eq('ip', key)
       .gte('created_at', windowStart);
 
     if (count >= maxRequests) {
@@ -47,7 +47,7 @@ async function checkRateLimit(req, action, maxRequests, windowMs) {
       const { data: oldest } = await supabase
         .from('rate_limits')
         .select('created_at')
-        .eq('key', key)
+        .eq('ip', key)
         .gte('created_at', windowStart)
         .order('created_at', { ascending: true })
         .limit(1)
@@ -69,7 +69,7 @@ async function checkRateLimit(req, action, maxRequests, windowMs) {
     // Log this request
     await supabase
       .from('rate_limits')
-      .insert({ key, created_at: new Date().toISOString() });
+      .insert({ ip: key, created_at: new Date().toISOString() });
 
     // Clean up expired entries (best-effort, non-blocking)
     supabase
