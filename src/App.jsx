@@ -1967,6 +1967,184 @@ const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, 
   );
 });
 
+// ── PRICING MODAL ─────────────────────────────────────────────────────────────
+const PricingModal = memo(function PricingModal({
+  onClose, currency,
+  onStartAudit, onStartSecAudit,
+  onBlueprintClick, onSecBlueprintClick, onCfoReportClick, onSessionClick,
+  onSubscribe,
+}) {
+  const [subEmail, setSubEmail] = useState('');
+  const [subStatus, setSubStatus] = useState('idle');
+
+  const handleSubscribe = async () => {
+    if (!subEmail) return;
+    setSubStatus('loading');
+    try {
+      await onSubscribe(subEmail);
+    } catch {
+      setSubStatus('error');
+      setTimeout(() => setSubStatus('idle'), 4000);
+    }
+  };
+
+  const PRODUCTS = [
+    {
+      id: 'free',
+      icon: '✅',
+      label: 'Free Audit',
+      badge: null,
+      badgeColor: null,
+      price: '$0',
+      priceSub: 'forever free',
+      color: '#4ade80',
+      border: 'rgba(74,222,128,0.2)',
+      bg: 'rgba(74,222,128,0.04)',
+      features: ['18 cost + 16 security checks', 'Dollar savings per issue', 'Waste score & shareable link'],
+      cta: 'Start Free Audit →',
+      onClick: () => { onClose(); onStartAudit(); },
+    },
+    {
+      id: 'blueprint',
+      icon: '⚡',
+      label: 'Cost Blueprint',
+      badge: 'Most popular',
+      badgeColor: '#00ffb4',
+      price: currency.blueprintPrice,
+      priceSub: 'one-time',
+      color: '#00ffb4',
+      border: 'rgba(0,255,180,0.35)',
+      bg: 'rgba(0,255,180,0.05)',
+      features: ['Exact CLI commands per issue', 'Terraform / IaC snippets', 'Step-by-step · Delivered in 2 min'],
+      cta: `Get Cost Blueprint →`,
+      onClick: () => { onClose(); onBlueprintClick(); },
+    },
+    {
+      id: 'security',
+      icon: '🛡',
+      label: 'Security Blueprint',
+      badge: 'High ROI',
+      badgeColor: '#f87171',
+      price: currency.securityPrice || '$29',
+      priceSub: 'one-time',
+      color: '#f87171',
+      border: 'rgba(248,113,113,0.25)',
+      bg: 'rgba(248,113,113,0.04)',
+      features: ['IAM policy templates ready to deploy', 'Compliance gap mapping (SOC 2, GDPR)', '30-day prioritised remediation roadmap'],
+      cta: 'Get Security Blueprint →',
+      onClick: () => { onClose(); onSecBlueprintClick(); },
+    },
+    {
+      id: 'cfo',
+      icon: '📊',
+      label: 'CFO & Board Report',
+      badge: 'New',
+      badgeColor: '#818cf8',
+      price: currency.cfoReportPrice || '$199',
+      priceSub: 'one-time',
+      color: '#818cf8',
+      border: 'rgba(129,140,248,0.3)',
+      bg: 'rgba(99,102,241,0.05)',
+      features: ['Executive summary for board/CFO', 'Annual ROI table + 3-phase action plan', 'No CLI commands — leadership language'],
+      cta: 'Get Board Report →',
+      onClick: () => { onClose(); onCfoReportClick(); },
+    },
+    {
+      id: 'monitor',
+      icon: '📈',
+      label: 'Cloud Health Monitor',
+      badge: 'Subscription',
+      badgeColor: '#818cf8',
+      price: currency.subscriptionPrice || '$19/mo',
+      priceSub: 'cancel anytime',
+      color: '#818cf8',
+      border: 'rgba(99,102,241,0.25)',
+      bg: 'rgba(99,102,241,0.04)',
+      features: ['Monthly waste score tracking', 'New issues flagged automatically', 'One discounted Blueprint/month included'],
+      cta: null, // inline email input
+    },
+    {
+      id: 'session',
+      icon: '💬',
+      label: 'Consulting Session',
+      badge: null,
+      badgeColor: null,
+      price: currency.sessionPrice || '$249',
+      priceSub: 'per session',
+      color: '#00d4ff',
+      border: 'rgba(0,212,255,0.2)',
+      bg: 'rgba(0,212,255,0.03)',
+      features: ['60-min 1:1 with a senior DevOps engineer', 'Live implementation of your top fixes', 'Full notes + follow-up docs included'],
+      cta: 'Book a Session →',
+      onClick: () => { onClose(); onSessionClick(); },
+    },
+  ];
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', animation: 'fadeIn 0.2s ease', overflowY: 'auto' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px', maxWidth: '920px', width: '100%', padding: '40px', boxShadow: '0 40px 100px rgba(0,0,0,0.8)', animation: 'scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)', position: 'relative' }}>
+        <button onClick={onClose} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'var(--text-muted)', fontSize: '18px', width: '36px', height: '36px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>×</button>
+
+        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+          <p style={{ fontSize: '11px', letterSpacing: '3px', color: 'var(--green)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '10px' }}>Pricing</p>
+          <h2 className="display" style={{ fontSize: 'clamp(24px,3vw,36px)', fontWeight: 800, letterSpacing: '-1px', color: '#fff', marginBottom: '8px' }}>Choose what you need</h2>
+          <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Run the free audit first — upgrade to a paid tier whenever you're ready.</p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }} className="pricing-modal-grid">
+          <style>{`
+            @media (max-width: 700px) { .pricing-modal-grid { grid-template-columns: 1fr !important; } }
+            @media (max-width: 960px) and (min-width: 701px) { .pricing-modal-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+          `}</style>
+          {PRODUCTS.map(p => (
+            <div key={p.id} style={{ background: p.bg, border: `1.5px solid ${p.border}`, borderRadius: '16px', padding: '22px', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+              {p.badge && (
+                <div style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: p.badgeColor, color: p.badgeColor === '#00ffb4' || p.badgeColor === '#4ade80' ? '#000' : '#fff', fontSize: '10px', fontWeight: 800, padding: '3px 12px', borderRadius: '20px', whiteSpace: 'nowrap', letterSpacing: '0.3px' }}>{p.badge}</div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <span style={{ fontSize: '18px' }}>{p.icon}</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: p.color, letterSpacing: '1px', textTransform: 'uppercase' }}>{p.label}</span>
+              </div>
+              <div style={{ marginBottom: '14px' }}>
+                <span className="display" style={{ fontSize: '24px', fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>{p.price}</span>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '6px' }}>{p.priceSub}</span>
+              </div>
+              <div style={{ flex: 1, marginBottom: '16px' }}>
+                {p.features.map(f => (
+                  <div key={f} style={{ display: 'flex', gap: '7px', alignItems: 'flex-start', marginBottom: '7px' }}>
+                    <span style={{ color: p.color, fontSize: '12px', flexShrink: 0, marginTop: '2px' }}>✓</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-dim)', lineHeight: 1.5 }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              {p.id === 'monitor' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                  <input type="email" placeholder="your@company.com" value={subEmail} onChange={e => setSubEmail(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', background: 'rgba(99,102,241,0.08)', border: '1.5px solid rgba(99,102,241,0.3)', borderRadius: '9px', color: '#fff', fontSize: '13px', boxSizing: 'border-box' }} />
+                  <button onClick={handleSubscribe} disabled={subStatus === 'loading'}
+                    style={{ padding: '10px', borderRadius: '9px', border: 'none', background: subStatus === 'loading' ? 'rgba(99,102,241,0.4)' : 'linear-gradient(135deg,#818cf8,#6366f1)', color: '#fff', fontWeight: 800, fontSize: '12px', cursor: subStatus === 'loading' ? 'not-allowed' : 'pointer' }}>
+                    {subStatus === 'loading' ? 'Redirecting…' : `Subscribe — ${currency.subscriptionPrice || '$19/mo'} →`}
+                  </button>
+                  {subStatus === 'error' && <p style={{ fontSize: '11px', color: '#f87171', margin: 0 }}>Something went wrong — try again</p>}
+                </div>
+              ) : (
+                <button onClick={p.onClick}
+                  style={{ padding: '11px', borderRadius: '9px', border: p.id === 'free' ? `1px solid ${p.border}` : 'none', background: p.id === 'free' ? 'transparent' : p.id === 'blueprint' ? 'var(--green)' : p.id === 'security' ? '#f87171' : p.id === 'cfo' || p.id === 'monitor' ? 'linear-gradient(135deg,#818cf8,#6366f1)' : 'rgba(0,212,255,0.15)', color: p.id === 'blueprint' ? '#000' : p.id === 'security' ? '#000' : p.id === 'free' ? p.color : '#fff', fontWeight: 800, fontSize: '12px', cursor: 'pointer', boxShadow: p.id === 'blueprint' ? '0 0 16px rgba(0,255,180,0.3)' : 'none' }}>
+                  {p.cta}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)', marginTop: '24px' }}>
+          All blueprints include a full refund if no actionable fix is found. Questions? <a href="mailto:admin@kloudaudit.eu" style={{ color: 'var(--green)', textDecoration: 'none' }}>admin@kloudaudit.eu</a>
+        </p>
+      </div>
+    </div>
+  );
+});
+
 // ── CONTACT MODAL ─────────────────────────────────────────────────────────────
 // Defined OUTSIDE App — stable component type, owns its own status state.
 // ── NEWSLETTER WIDGET ─────────────────────────────────────────────────────────
@@ -2311,6 +2489,7 @@ export default function App() {
   const [showContact, setShowContact] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
   const [showBlueprint, setShowBlueprint] = useState(false);
   const [pageKey, setPageKey] = useState(0);
   // ── INTRO-SCREEN STATE (must live at top level — Rules of Hooks) ──────────
@@ -3700,6 +3879,7 @@ aws iam simulate-principal-policy \\
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
       <Nav />
 
       {/* ── RESUME AUDIT BANNER ── */}
@@ -4810,7 +4990,7 @@ aws iam simulate-principal-policy \\
                 {[
                   { label: "Cost Audit", action: () => goTo("intake") },
                   { label: "Security Audit", action: () => goTo("security_intro") },
-                  { label: "Pricing", action: () => { if (step !== 'intro') { goTo('intro'); setTimeout(() => document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 600); } else { document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } } },
+                  { label: "Pricing", action: () => setShowPricingModal(true) },
                   { label: "Sample Report", action: () => setShowSample(true) },
                   { label: "Blog", href: "https://dev.to/kloudaudit" },
                 ].map(l => (
@@ -4875,6 +5055,7 @@ aws iam simulate-principal-policy \\
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
         <div className="fade-up">
@@ -4938,6 +5119,7 @@ aws iam simulate-principal-policy \\
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
         <Nav showBack onBack={() => goTo("intake")} />
         {/* ── SECTION COMPLETE TOAST ── */}
         {sectionToast && (
@@ -5340,6 +5522,7 @@ aws iam simulate-principal-policy \\
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
           {/* Header */}
