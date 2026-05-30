@@ -4788,33 +4788,6 @@ aws iam simulate-principal-policy \\
           </div>
         </div>
 
-        {/* ── FAQ ── */}
-        <div style={{ marginBottom: "90px", maxWidth: "760px", margin: "0 auto 90px" }}>
-          <div style={{ textAlign: "center", marginBottom: "40px" }}>
-            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Got questions?</p>
-            <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>Frequently asked</h2>
-            <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "10px" }}>Cost audits · Security audits · Pricing · Privacy</p>
-          </div>
-          {FAQS.map((faq, i) => (
-            <div key={i} style={{ background: "var(--bg2)", border: `1px solid ${openFaq === i ? (faq.tag === "security" ? "rgba(248,113,113,0.25)" : "rgba(0,255,180,0.2)") : "var(--border)"}`, borderRadius: "14px", marginBottom: "10px", overflow: "hidden", transition: "border-color 0.2s" }}>
-              <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                style={{ width: "100%", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
-                  {faq.tag === "security" && <span style={{ fontSize: "10px", fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "4px", padding: "2px 7px", whiteSpace: "nowrap", flexShrink: 0 }}>Security</span>}
-                  {faq.tag === "cost" && <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--green)", background: "rgba(0,255,180,0.08)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "4px", padding: "2px 7px", whiteSpace: "nowrap", flexShrink: 0 }}>Cost</span>}
-                  <span style={{ fontSize: "15px", fontWeight: 600, color: openFaq === i ? (faq.tag === "security" ? "#f87171" : "var(--green)") : "#fff", transition: "color 0.2s" }}>{faq.q}</span>
-                </div>
-                <span style={{ fontSize: "18px", color: openFaq === i ? "var(--green)" : "var(--text-muted)", flexShrink: 0, transition: "all 0.2s", transform: openFaq === i ? "rotate(45deg)" : "none" }}>+</span>
-              </button>
-              {openFaq === i && (
-                <div style={{ padding: "0 24px 20px", animation: "fadeUp 0.2s ease" }}>
-                  <p style={{ fontSize: "14px", color: "var(--text-dim)", lineHeight: 1.75, borderTop: "1px solid var(--border)", paddingTop: "16px" }}>{faq.a}</p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
         {/* ── PRICING — Two buying journeys ── */}
         <div id="pricing-section" style={{ marginBottom: "90px" }}>
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
@@ -4998,6 +4971,33 @@ aws iam simulate-principal-policy \\
           <p style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "20px" }}>
             All blueprints include a full refund if no actionable fix is identified. Questions? <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a>
           </p>
+        </div>
+
+        {/* ── FAQ ── */}
+        <div style={{ marginBottom: "90px", maxWidth: "760px", margin: "0 auto 90px" }}>
+          <div style={{ textAlign: "center", marginBottom: "40px" }}>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Got questions?</p>
+            <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>Frequently asked</h2>
+            <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "10px" }}>Cost audits · Security audits · Pricing · Privacy</p>
+          </div>
+          {FAQS.map((faq, i) => (
+            <div key={i} style={{ background: "var(--bg2)", border: `1px solid ${openFaq === i ? (faq.tag === "security" ? "rgba(248,113,113,0.25)" : "rgba(0,255,180,0.2)") : "var(--border)"}`, borderRadius: "14px", marginBottom: "10px", overflow: "hidden", transition: "border-color 0.2s" }}>
+              <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                style={{ width: "100%", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
+                  {faq.tag === "security" && <span style={{ fontSize: "10px", fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "4px", padding: "2px 7px", whiteSpace: "nowrap", flexShrink: 0 }}>Security</span>}
+                  {faq.tag === "cost" && <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--green)", background: "rgba(0,255,180,0.08)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "4px", padding: "2px 7px", whiteSpace: "nowrap", flexShrink: 0 }}>Cost</span>}
+                  <span style={{ fontSize: "15px", fontWeight: 600, color: openFaq === i ? (faq.tag === "security" ? "#f87171" : "var(--green)") : "#fff", transition: "color 0.2s" }}>{faq.q}</span>
+                </div>
+                <span style={{ fontSize: "18px", color: openFaq === i ? "var(--green)" : "var(--text-muted)", flexShrink: 0, transition: "all 0.2s", transform: openFaq === i ? "rotate(45deg)" : "none" }}>+</span>
+              </button>
+              {openFaq === i && (
+                <div style={{ padding: "0 24px 20px", animation: "fadeUp 0.2s ease" }}>
+                  <p style={{ fontSize: "14px", color: "var(--text-dim)", lineHeight: 1.75, borderTop: "1px solid var(--border)", paddingTop: "16px" }}>{faq.a}</p>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
         {/* ── BOTTOM CTA ── */}
