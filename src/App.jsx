@@ -2464,6 +2464,10 @@ export default function App() {
     return <PublicAuditViewer slug={auditSlug} />;
   }
   
+  // ── URL SESSION PARAM — captured once at mount for cross-device restore ────
+  const [urlSessionId] = useState(() => new URLSearchParams(window.location.search).get('session'));
+  const [copiedLink, setCopiedLink] = useState(false);
+
   // ── SESSION RESTORE — read localStorage once at mount ─────────────────────
   const [initialSession] = useState(() => {
     try {
@@ -2836,7 +2840,37 @@ useEffect(() => {
       version: SESSION_VERSION,
       step, provider, monthlyBill, companyName, checked, activeSection, gateEmail,
     }));
+    // Mirror to Supabase for cross-device resume — fire and forget
+    if (sessionId && step !== 'intro' && step !== 'payment_success') {
+      fetch('/api/audits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'save-session',
+          sessionId,
+          sessionData: { step, provider, monthlyBill, companyName, checked, activeSection, gateEmail },
+        }),
+      }).catch(() => {}); // localStorage is the primary store; Supabase is backup
+    }
   }, [step, provider, monthlyBill, companyName, checked, activeSection, gateEmail]);
+
+  // ── URL SESSION RESTORE — fetch remote session when ?session= is in URL ────
+  useEffect(() => {
+    if (!urlSessionId) return;
+    fetch(`/api/audits?action=get-session&sessionId=${urlSessionId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.session) return;
+        const s = data.session;
+        setProvider(s.provider || '');
+        setMonthlyBill(s.monthlyBill || '');
+        setCompanyName(s.companyName || '');
+        setChecked(s.checked || {});
+        setActiveSection(typeof s.activeSection === 'number' ? s.activeSection : 0);
+        setStep(s.step || 'intro');
+      })
+      .catch(() => {}); // silently fall back to localStorage on any error
+  }, [urlSessionId]);
 
   // Buy Blueprint → Vercel Function → Stripe Checkout
   const handleBuyBlueprint = async (email) => {
@@ -3888,6 +3922,9 @@ aws iam simulate-principal-policy \\
           <span>↩ You have an audit in progress</span>
           <button className="glow-btn" onClick={() => goTo(initialSession.step)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "8px", padding: "6px 14px", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>Resume Audit →</button>
           <button onClick={() => { localStorage.removeItem('ka_session'); setChecked({}); setProvider(''); setMonthlyBill(''); setCompanyName(''); setActiveSection(0); setGateEmail(''); }} className="ghost-btn" style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "12px", fontWeight: 600, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>Start Over</button>
+          <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}?session=${sessionId}`); setCopiedLink(true); setTimeout(() => setCopiedLink(false), 2000); }} style={{ fontSize: "12px", color: "var(--text-muted)", background: "none", border: "1px solid var(--border)", borderRadius: "6px", padding: "4px 10px", cursor: "pointer", fontFamily: "inherit" }}>
+            {copiedLink ? '✓ Copied!' : '📋 Copy resume link'}
+          </button>
         </div>
       )}
 

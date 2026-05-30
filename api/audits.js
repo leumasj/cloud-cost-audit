@@ -22,9 +22,17 @@ module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
   }
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // GET is only used for session retrieval
+  if (req.method === 'GET') {
+    const { action: getAction } = req.query;
+    if (getAction === 'get-session') return await handleGetSession(req, res, supabase);
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
@@ -44,6 +52,8 @@ module.exports = async function handler(req, res) {
         return await handleLeadMagnet(req, res, supabase);
       case 'newsletter':
         return await handleNewsletter(req, res, supabase);
+      case 'save-session':
+        return await handleSaveSession(req, res, supabase);
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
@@ -352,5 +362,60 @@ async function handleNewsletter(req, res, supabase) {
   }
 
   return res.status(200).json({ success: true });
+}
+
+// ── SAVE SESSION ──────────────────────────────────────────────────────────────
+async function handleSaveSession(req, res, supabase) {
+  const { sessionId, sessionData } = req.body;
+
+  if (!sessionId || !sessionData) {
+    return res.status(400).json({ error: 'Missing sessionId or sessionData' });
+  }
+
+  const { error } = await supabase
+    .from('audits')
+    .upsert({
+      session_id:    sessionId,
+      provider:      sessionData.provider || null,
+      monthly_bill:  sessionData.monthlyBill || null,
+      company_name:  sessionData.companyName || null,
+      flagged_ids:   Object.keys(sessionData.checked || {}).filter(k => sessionData.checked[k]),
+      audit_type:    'cost',
+      session_state: sessionData,
+      updated_at:    new Date().toISOString(),
+    }, { onConflict: 'session_id', ignoreDuplicates: false });
+
+  if (error) {
+    return res.status(500).json({ error: 'Failed to save session' });
+  }
+
+  return res.status(200).json({ success: true });
+}
+
+// ── GET SESSION ───────────────────────────────────────────────────────────────
+async function handleGetSession(req, res, supabase) {
+  const { sessionId } = req.query;
+
+  if (!sessionId) {
+    return res.status(400).json({ error: 'Missing sessionId' });
+  }
+
+  const { data, error } = await supabase
+    .from('audits')
+    .select('session_state, provider, monthly_bill, company_name, flagged_ids')
+    .eq('session_id', sessionId)
+    .single();
+
+  if (error || !data) {
+    return res.status(404).json({ error: 'Session not found' });
+  }
+
+  return res.status(200).json({
+    session: data.session_state || {
+      provider:    data.provider,
+      monthlyBill: data.monthly_bill,
+      companyName: data.company_name,
+    },
+  });
 }
 
