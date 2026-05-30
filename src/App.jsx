@@ -4506,7 +4506,7 @@ aws iam simulate-principal-policy \\
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
             <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Comprehensive coverage</p>
             <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>What we audit</h2>
-            <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "560px", margin: "12px auto 0" }}>Five areas where cloud spend leaks — plus two where security gaps hide. Cost and security, one platform, zero access required.</p>
+            <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "560px", margin: "12px auto 0" }}>Five areas where cloud spend leaks — plus a full 16-check security audit. Cost and security in one platform, zero access required.</p>
           </div>
           <div className="audit-cats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
             {AUDIT_SECTIONS.map((s, i) => (
