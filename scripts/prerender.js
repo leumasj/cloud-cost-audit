@@ -39,9 +39,14 @@ const SEO_PAGES = [
   { slug: "gcp-bigquery-cost-control",        provider: "GCP",         title: "BigQuery Cost Control Stop Paying for Unused Slots",                    saving: "20-40%",  keyword: "Reduce BigQuery costs GCP" },
   { slug: "gcp-preemptible-vms",              provider: "GCP",         title: "GCP Preemptible VMs Cut Compute Costs by 80%",                          saving: "60-80%",  keyword: "GCP preemptible VMs cost saving" },
   { slug: "gcp-network-egress-costs",         provider: "GCP",         title: "Reduce GCP Network Egress Costs With Cloud CDN",                        saving: "10-30%",  keyword: "Reduce GCP egress costs" },
+  { slug: "gcp-egress-costs",                 provider: "GCP",         title: "GCP Egress Costs Explained: How to Stop Paying Too Much for Data Out",   saving: "10-30%",  keyword: "GCP egress costs reduce" },
   { slug: "gcp-sustained-use-discounts",      provider: "GCP",         title: "Maximise GCP Sustained Use Discounts The Complete Guide",               saving: "20-30%",  keyword: "GCP sustained use discount guide" },
   { slug: "gcp-cloud-run-optimization",       provider: "GCP",         title: "GCP Cloud Run Cost Optimization Stop Over-Provisioning",                saving: "20-40%",  keyword: "GCP Cloud Run cost optimization" },
   { slug: "gcp-billing-export-setup",         provider: "GCP",         title: "GCP Billing Export to BigQuery Full Setup Guide",                       saving: "5-20%",   keyword: "GCP billing export BigQuery setup" },
+  { slug: "gcp-billing-budgets",              provider: "GCP",         title: "GCP Billing Budgets and Alerts: Never Get Surprised by Your GCP Bill",  saving: "5-20%",   keyword: "GCP billing budget alerts setup" },
+  { slug: "gcp-cloud-storage-costs",          provider: "GCP",         title: "Reduce GCP Cloud Storage Costs With Lifecycle Rules and Right Tiering",  saving: "30-60%",  keyword: "GCP Cloud Storage cost optimization" },
+  { slug: "gcp-cloudsql-costs",               provider: "GCP",         title: "GCP Cloud SQL Costs: Stop Running Dev Databases 24/7",                  saving: "40-70%",  keyword: "GCP Cloud SQL cost reduction" },
+  { slug: "reduce-gcp-compute-costs",         provider: "GCP",         title: "How to Reduce GCP Compute Engine Costs by 40% This Month",              saving: "20-45%",  keyword: "reduce GCP Compute Engine costs" },
   // Azure Cost (10)
   { slug: "azure-cost-optimization",          provider: "Azure",       title: "Azure Cost Optimisation Cut Your Monthly Bill by 30%",                  saving: "20-40%",  keyword: "Azure cost optimization guide" },
   { slug: "fix-azure-vm-costs",               provider: "Azure",       title: "How to Reduce Azure VM Costs by 40% Immediately",                       saving: "15-40%",  keyword: "Reduce Azure VM costs" },
@@ -53,12 +58,19 @@ const SEO_PAGES = [
   { slug: "azure-spot-vms",                   provider: "Azure",       title: "Azure Spot VMs Run Workloads for 90% Less",                             saving: "60-90%",  keyword: "Azure Spot VMs cost saving" },
   { slug: "azure-storage-tiers",              provider: "Azure",       title: "Azure Blob Storage Tiers Move Cold Data and Save Immediately",          saving: "30-60%",  keyword: "Azure blob storage tier optimization" },
   { slug: "azure-cost-management-setup",      provider: "Azure",       title: "Azure Cost Management Budgets Alerts and Reports Setup",                saving: "5-20%",   keyword: "Azure cost management setup guide" },
-  // Multi-cloud (5)
+  // Multi-cloud (10)
   { slug: "cloud-finops-guide",               provider: "Multi-Cloud", title: "The DevOps Teams FinOps Guide Cut Cloud Costs Without Slowing Down",    saving: "20-45%",  keyword: "Cloud FinOps guide teams" },
   { slug: "multi-cloud-cost-comparison",      provider: "Multi-Cloud", title: "AWS vs GCP vs Azure Cost Comparison for Common Workloads",              saving: "10-30%",  keyword: "AWS GCP Azure cost comparison" },
   { slug: "cloud-cost-tagging-strategy",      provider: "Multi-Cloud", title: "Cloud Cost Tagging Strategy Allocate Costs to Teams and Projects",      saving: "5-20%",   keyword: "Cloud cost tagging best practices" },
   { slug: "devops-cloud-cost-checklist",      provider: "Multi-Cloud", title: "DevOps Cloud Cost Checklist 20 Things to Review Every Quarter",         saving: "20-45%",  keyword: "DevOps cloud cost review checklist" },
   { slug: "finops-guide-startups",            provider: "Multi-Cloud", title: "FinOps for Startups Cut Cloud Costs Without Cutting Features",          saving: "20-45%",  keyword: "FinOps guide for startups" },
+  { slug: "cloud-cost-monitoring-tools",      provider: "Multi-Cloud", title: "Best Cloud Cost Monitoring Tools 2026 Free and Paid Compared",          saving: "20-45%",  keyword: "cloud cost monitoring tools comparison" },
+  { slug: "cloud-cost-per-engineer",          provider: "Multi-Cloud", title: "Cloud Cost Per Engineer The Metric Every CTO Should Track",             saving: "10-30%",  keyword: "cloud cost per engineer benchmark" },
+  { slug: "cloud-cost-saving-tips-2026",      provider: "Multi-Cloud", title: "25 Cloud Cost Saving Tips for 2026 Tested on AWS GCP and Azure",        saving: "20-45%",  keyword: "cloud cost saving tips 2026" },
+  { slug: "cloud-costs-poland",               provider: "Multi-Cloud", title: "Cloud Costs in Poland: How Polish Startups Cut AWS Bills by 40%",       saving: "20-45%",  keyword: "cloud costs Poland AWS GCP Azure" },
+  { slug: "startup-cloud-costs",              provider: "Multi-Cloud", title: "Startup Cloud Costs: How to Keep Your AWS Bill Under Control",          saving: "30-50%",  keyword: "startup cloud costs reduce AWS" },
+  // Azure additional
+  { slug: "azure-vs-aws-costs",               provider: "Azure",       title: "Azure vs AWS Costs: Which Cloud Is Cheaper for Your Workload in 2026",  saving: "10-30%",  keyword: "Azure vs AWS cost comparison 2026" },
   // Blog posts (3)
   { slug: "blog/how-we-found-2400-month-cloud-waste",     provider: "AWS",         title: "How We Found $2,400/Month in Cloud Waste in 15 Minutes",                saving: null, keyword: "find cloud waste fast", type: "blog" },
   { slug: "blog/cloud-cost-audit-no-credentials",         provider: "Multi-Cloud", title: "How to Audit Cloud Costs Without Giving Anyone Your AWS Keys",          saving: null, keyword: "cloud cost audit no credentials", type: "blog" },
@@ -96,6 +108,14 @@ const SEO_PAGES = [
   { slug: "azure-security-posture-review",    provider: "Azure",       title: "Azure Security Posture Review No Access Required Checklist",            saving: null, keyword: "Azure security posture assessment",    type: "security" },
   { slug: "cloud-security-audit-checklist",   provider: "Multi-Cloud", title: "Cloud Security Audit Checklist 2026 16 Checks for AWS GCP and Azure",  saving: null, keyword: "Cloud security audit checklist 2026",  type: "security" },
   { slug: "devsecops-cloud-checklist",        provider: "Multi-Cloud", title: "DevSecOps Cloud Security Checklist 16 Controls Every Team Needs",       saving: null, keyword: "DevSecOps cloud security checklist",   type: "security" },
+  // Tools / calculators (2)
+  { slug: "nat-gateway-calculator",            provider: "AWS",         title: "NAT Gateway Cost Calculator: See How Much You Can Save With VPC Endpoints", saving: "10-30%", keyword: "AWS NAT gateway cost calculator" },
+  { slug: "spot-instance-calculator",          provider: "AWS",         title: "Spot Instance Savings Calculator: How Much Would Spot Actually Save You",    saving: "60-80%", keyword: "AWS spot instance savings calculator" },
+  // AWS additional
+  { slug: "aws-bill-jumped",                   provider: "AWS",         title: "Why Did My AWS Bill Jump? How to Find the Cause in Under 10 Minutes",        saving: "10-40%", keyword: "AWS bill jumped suddenly why" },
+  // Multi-cloud problem pages
+  { slug: "kubernetes-cost-optimization",      provider: "Multi-Cloud", title: "Kubernetes Cost Optimization: Find and Fix Waste in Your K8s Cluster",      saving: "20-50%", keyword: "Kubernetes cost optimization guide",     type: "problem", cmd: "kubectl top pods --all-namespaces --sort-by=cpu", saving_est: "$100-500/mo" },
+  { slug: "terraform-cost-estimation",         provider: "Multi-Cloud", title: "Terraform Cost Estimation: Know the Price Before You Apply",                 saving: "10-30%", keyword: "terraform cost estimation before apply", type: "problem", cmd: "terraform plan -out=tfplan && terraform show -json tfplan", saving_est: "10-30%" },
   // Comparison pages (4)
   { slug: "kloudaudit-vs-aws-cost-explorer",  provider: "AWS",         title: "KloudAudit vs AWS Cost Explorer: Which Finds More Waste in Less Time",    saving: "20-45%", keyword: "KloudAudit vs AWS Cost Explorer",             type: "comparison" },
   { slug: "kloudaudit-vs-cloudhealth",        provider: "Multi-Cloud", title: "KloudAudit vs CloudHealth: Zero-Access Audit vs Full Integration",         saving: "20-45%", keyword: "KloudAudit vs CloudHealth alternative",       type: "comparison" },
