@@ -2883,8 +2883,12 @@ useEffect(() => {
       step, provider, monthlyBill, companyName, checked, activeSection, gateEmail,
     }));
     // Mirror to Supabase for cross-device resume — fire and forget
-    // Only persist remotely when the user has meaningful data to avoid empty/zero audits
-    if (sessionId && step !== 'intro' && step !== 'payment_success' && provider && monthlyBill && parseFloat(monthlyBill) > 0 && Object.values(checked || {}).some(v => v)) {
+    // LocalStorage persists immediately; only the remote write should be guarded
+    if (sessionId && step !== 'intro' && step !== 'payment_success') {
+      // Only save when user has meaningful data
+      if (!provider || provider === '') return;
+      if (!monthlyBill || parseFloat(monthlyBill) <= 0) return;
+
       fetch('/api/audits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
