@@ -2790,6 +2790,10 @@ export default function App() {
 
   // ── SAVE AUDIT — non-blocking, fires and forgets with one retry ─────────
   const saveAudit = async (emailOverride) => {
+  // Guard: only save meaningful audits (provider set, positive bill, at least one check)
+  if (!provider || !monthlyBill || parseFloat(monthlyBill) <= 0) return;
+  if (!Object.values(checked || {}).some(v => v)) return;
+
   const issueW  = Math.min(flagged.length / allChecks.length, 1) * 30;
   const pctW    = Math.min(savPct / 50, 1) * 70;
   const wScore  = Math.max(0, Math.min(100, Math.round(100 - issueW - pctW)));
@@ -2879,7 +2883,8 @@ useEffect(() => {
       step, provider, monthlyBill, companyName, checked, activeSection, gateEmail,
     }));
     // Mirror to Supabase for cross-device resume — fire and forget
-    if (sessionId && step !== 'intro' && step !== 'payment_success') {
+    // Only persist remotely when the user has meaningful data to avoid empty/zero audits
+    if (sessionId && step !== 'intro' && step !== 'payment_success' && provider && monthlyBill && parseFloat(monthlyBill) > 0 && Object.values(checked || {}).some(v => v)) {
       fetch('/api/audits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
