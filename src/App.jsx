@@ -313,8 +313,15 @@ const globalCss = `
     /* Free vs paid: hide the ✗ items on free card to save space */
     .hide-mobile { display: none !important; }
 
-    /* Hero headline tighter on mobile */
-    .hero-h1 { letter-spacing: -1.5px !important; }
+    /* Hero section mobile optimization */
+    .hero-badge { display: inline-flex !important; }
+    .hero-h1 { letter-spacing: -1.2px !important; font-size: clamp(28px, 5vw, 42px) !important; line-height: 1.15 !important; }
+    .hero-subheading { display: none !important; }
+    .methodology-note { display: none !important; }
+    .stats-pills { display: none !important; }
+    .lead-magnet-btn { display: none !important; }
+    .competitor-kill-line { display: none !important; }
+    .secondary-cta { display: none !important; }
   }
 
  @media (max-width: 480px) {
@@ -4212,8 +4219,14 @@ aws iam simulate-principal-policy \\
 
         {/* ── HERO ── */}
         <div className="hero-pad" style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center", minHeight: "85vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          {/* ── MOBILE BADGE ── */}
+          <div className="hero-badge fade-up stagger-1" style={{ display: "none", marginBottom: "16px" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(0,255,180,0.1)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "6px 14px" }}>
+              <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px" }}>FREE · NO AWS CREDENTIALS · 15 MINUTES</span>
+            </div>
+          </div>
           {/* ── HEADLINE ── */}
-          <h1 className="display fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "20px" }}>
+          <h1 className="display hero-h1 fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "20px" }}>
             The audit your<br />
             <span style={{ position: "relative", display: "inline-block", background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               cloud provider
@@ -4278,13 +4291,15 @@ aws iam simulate-principal-policy \\
       )}
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
           {/* ── SUBHEADING ── */}
-          <p className="fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "520px", margin: "0 auto 28px" }}>
+          <p className="hero-subheading fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "520px", margin: "0 auto 28px" }}>
             Find unused cloud spend in minutes. Covers AWS, GCP and Azure — <strong style={{ color: "#fff" }}>no credentials required, ever</strong>. Teams typically uncover <strong style={{ color: "var(--green)" }}>20–45% in savings</strong>.
           </p>
-          <MethodologyNote />
+          <div className="methodology-note">
+            <MethodologyNote />
+          </div>
 
           {/* ── PRIMARY ACTION — Provider buttons front and centre ── */}
-          <div className="fade-up stagger-2" style={{ marginBottom: "16px" }}>
+          <div className="hero-provider-btns fade-up stagger-2" style={{ marginBottom: "16px" }}>
             <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap", marginBottom: "12px" }}>
               {[
                 { label: "AWS", color: "#ff9900" },
@@ -4313,7 +4328,7 @@ aws iam simulate-principal-policy \\
           </div>
 
           {/* ── SECONDARY CTA ── */}
-          <div id="start-audit" className="fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
+          <div id="start-audit" className="secondary-cta fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
             <button className="glow-btn" onClick={() => goTo("intake")}
               style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
               Start Free Audit <span style={{ fontSize: "18px" }}>→</span>
@@ -4327,7 +4342,7 @@ aws iam simulate-principal-policy \\
           <p style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "-28px", marginBottom: "32px" }}>⚡ Free · No signup · Results in 15 minutes</p>
 
           {/* ── SOCIAL PROOF ── */}
-          <div className="fade-up stagger-4" style={{ display: "flex", gap: "24px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
+          <div className="stats-pills fade-up stagger-4" style={{ display: "flex", gap: "24px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
             {[
               { icon: "⚡", text: "15 minutes" },
               { icon: "🔒", text: "Zero cloud access" },
@@ -4343,7 +4358,7 @@ aws iam simulate-principal-policy \\
 
 
           {/* ── LEAD MAGNET CTA ── */}
-          <div className="fade-up stagger-4" style={{ marginBottom: "16px" }}>
+          <div className="lead-magnet-btn fade-up stagger-4" style={{ marginBottom: "16px" }}>
             <button onClick={() => setShowLeadMagnet(true)}
               style={{ background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"10px",padding:"10px 20px",color:"var(--text-dim)",fontSize:"13px",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"8px" }}>
               <span>📥</span> Free PDF: 2026 Cloud Cost Checklist
@@ -4351,7 +4366,7 @@ aws iam simulate-principal-policy \\
           </div>
 
           {/* ── COMPETITOR KILL LINE ── */}
-          <p className="fade-up stagger-4" style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: "440px", margin: "0 auto", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "10px 16px" }}>
+          <p className="competitor-kill-line fade-up stagger-4" style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: "440px", margin: "0 auto", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "10px 16px" }}>
             💡 The average team needs <strong style={{ color: "#fff" }}>4 months of procurement</strong> to connect a cloud cost tool. KloudAudit takes 15 minutes — no IT ticket, no security review, no approval needed.
           </p>
           <div className="fade-up stagger-4" style={{ marginTop: "22px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
