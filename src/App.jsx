@@ -1,5 +1,14 @@
-import { useState, useEffect, useRef, useMemo, memo } from "react";
+import React, { useState, useEffect, useRef, useMemo, memo } from "react";
 import SEOPage, { SEO_PAGES } from "./SEOPages.jsx";
+
+const ParticleBackground = React.lazy(() => import("./ParticleBackground"));
+function SuspendedParticleBackground() {
+  return (
+    <React.Suspense fallback={null}>
+      <ParticleBackground />
+    </React.Suspense>
+  );
+}
 
 const AUDIT_SECTIONS = [
   {
@@ -191,35 +200,6 @@ function CodeBlock({ code }) {
       <button onClick={copy} style={{ position: "absolute", top: "10px", right: "10px", background: copied ? "rgba(0,255,180,0.2)" : "rgba(255,255,255,0.06)", border: `1px solid ${copied ? "rgba(0,255,180,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius: "6px", color: copied ? "#00ffb4" : "#94a3b8", fontSize: "10px", fontWeight: 700, padding: "4px 8px", cursor: "pointer", transition: "all 0.2s" }}>
         {copied ? "✓ Copied" : "Copy"}
       </button>
-    </div>
-  );
-}
-
-function ParticleBackground() {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const init = () => {
-      setReady(true);
-    };
-
-    if ('requestIdleCallback' in window) {
-      const id = requestIdleCallback(init, { timeout: 2000 });
-      return () => cancelIdleCallback(id);
-    } else {
-      const timer = setTimeout(init, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
-  if (!ready) return null;
-
-  return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none", willChange: "auto" }}>
-      <div style={{ position: "absolute", top: "-200px", left: "-200px", width: "600px", height: "600px", background: "radial-gradient(circle, rgba(0,255,180,0.07) 0%, transparent 70%)", borderRadius: "50%" }} />
-      <div style={{ position: "absolute", bottom: "-200px", right: "-100px", width: "500px", height: "500px", background: "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)", borderRadius: "50%" }} />
-      <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
-      <div style={{ position: "absolute", inset: 0, opacity: 0.04, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
     </div>
   );
 }
@@ -1263,6 +1243,227 @@ const TESTIMONIALS = [
   { name: "Priya S.", role: "Cloud Architect · Singapore SaaS", text: "We were on full on-demand pricing for 18 months. One Savings Plan switch later — $1,800/month saved. Blueprint paid for itself in week one.", savings: "$1,800/mo", provider: "GCP" },
   { name: "Marco D.", role: "Infrastructure Lead · Milan e-commerce", text: "Orphaned EBS volumes and a forgotten NAT Gateway were costing us $960/month. CLI commands were copy-paste ready. Fixed same afternoon.", savings: "$960/mo", provider: "Azure" },
 ];
+
+const WALL_FILTERS = ["All", "AWS", "GCP", "Azure", "Multi-Cloud"];
+const COMPARISON_COLUMNS = [
+  { label: "KloudAudit", kloud: true },
+  { label: "CloudHealth", kloud: false },
+  { label: "AWS Cost Explorer", kloud: false },
+  { label: "Consultant", kloud: false },
+];
+const COMPARISON_ROWS = [
+  { label: "Setup time", vals: ["15 minutes", "4–6 months", "Immediate", "2–4 weeks"] },
+  { label: "Credentials required", vals: ["None", "Full IAM access", "AWS login", "Full access"] },
+  { label: "First finding", vals: ["Immediate", "30+ days", "Hours of exploration", "1–2 weeks"] },
+  { label: "Cost", vals: ["Free / $79", "$$$$ enterprise", "Free", "$$$"] },
+  { label: "Prioritised fix list", vals: ["✓", "Partial", "✗", "✓"] },
+  { label: "AI fix commands", vals: ["✓", "✗", "✗", "✗"] },
+];
+
+const ComparisonTable = memo(function ComparisonTable() {
+  return (
+    <div style={{ marginBottom: "90px" }}>
+      <div style={{ textAlign: "center", marginBottom: "48px" }}>
+        <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>No sales calls required</p>
+        <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>Why engineers choose KloudAudit</h2>
+        <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px" }}>vs. traditional cloud cost tools</p>
+      </div>
+      <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        <div style={{ minWidth: "640px", background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", overflow: "hidden" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: "1px solid var(--border)" }}>
+            <div style={{ padding: "18px 20px" }} />
+            {COMPARISON_COLUMNS.map(({ label, kloud }) => (
+              <div key={label} style={{ padding: "16px 12px", textAlign: "center", background: kloud ? "rgba(0,255,180,0.08)" : "transparent", borderLeft: `1px solid ${kloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
+                <p style={{ fontSize: "13px", fontWeight: 800, color: kloud ? "var(--green)" : "var(--text-dim)", marginBottom: kloud ? "5px" : "0" }}>{label}</p>
+                {kloud && <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--green)", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.3)", borderRadius: "10px", padding: "1px 7px" }}>← this</span>}
+              </div>
+            ))}
+          </div>
+          {COMPARISON_ROWS.map((row, ri, arr) => (
+            <div key={row.label} style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: ri < arr.length - 1 ? "1px solid var(--border)" : "none", background: ri % 2 === 1 ? "rgba(255,255,255,0.015)" : "transparent" }}>
+              <div style={{ padding: "14px 20px", display: "flex", alignItems: "center" }}>
+                <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)" }}>{row.label}</span>
+              </div>
+              {row.vals.map((val, ci) => {
+                const isKloud = ci === 0;
+                const color = val === "✓" ? "#4ade80" : val === "✗" ? "#f87171" : val === "Partial" ? "#fbbf24" : isKloud ? "#fff" : "var(--text-muted)";
+                return (
+                  <div key={ci} style={{ padding: "14px 10px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: isKloud ? "rgba(0,255,180,0.05)" : "transparent", borderLeft: `1px solid ${isKloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
+                    <span style={{ fontSize: val === "✓" || val === "✗" ? "16px" : "12px", fontWeight: isKloud ? 700 : 400, color }}>{val}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+const TestimonialsSection = memo(function TestimonialsSection({ testimonials }) {
+  return (
+    <div style={{ marginBottom: "90px" }}>
+      <div style={{ textAlign: "center", marginBottom: "40px" }}>
+        <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Typical results</p>
+        <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>What engineers find</h2>
+        <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", marginTop: "8px" }}>Based on real audit patterns across 500+ cloud environments</p>
+      </div>
+      <div className="testimonials-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
+        {testimonials.map((t) => (
+          <div key={t.name} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: "20px", right: "20px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "4px 10px", fontSize: "12px", fontWeight: 700, color: "var(--green)" }}>{t.savings}</div>
+            <div style={{ display: "flex", gap: "6px", marginBottom: "16px" }}>
+              {[...Array(5)].map((_, j) => <span key={j} style={{ color: "#fbbf24", fontSize: "14px" }}>★</span>)}
+            </div>
+            <p style={{ fontSize: "14px", color: "var(--text-dim)", lineHeight: 1.7, marginBottom: "20px", fontStyle: "italic" }}>&quot;{t.text}&quot;</p>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", borderTop: "1px solid var(--border)", paddingTop: "16px" }}>
+              <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 800, color: "#000", flexShrink: 0, fontFamily: "var(--display)" }}>
+                {t.name.split(" ").map(n => n[0]).join("")}
+              </div>
+              <div>
+                <p style={{ fontSize: "14px", fontWeight: 700, color: "#fff", marginBottom: "2px" }}>{t.name}</p>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>{t.role}</p>
+              </div>
+              <span style={{ marginLeft: "auto", fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px" }}>{t.provider}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
+const WallOfSavings = memo(function WallOfSavings({ savingsFilter, onFilterChange }) {
+  return (
+    <div style={{ marginBottom: "90px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "28px" }}>
+        <span style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)", animation: "pulse-dot 2s infinite", flexShrink: 0 }} />
+        <h2 className="display" style={{ fontSize: "20px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px", margin: 0 }}>Recent audits</h2>
+        <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>· results updated in real time</span>
+      </div>
+      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "16px" }}>
+        {WALL_FILTERS.map((f) => {
+          const active = savingsFilter === f;
+          return (
+            <button key={f} onClick={() => onFilterChange(f)} style={{ fontSize: "11px", padding: "4px 12px", borderRadius: "20px", border: `1px solid ${active ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.1)"}`, background: active ? "rgba(0,255,180,0.08)" : "rgba(255,255,255,0.03)", color: active ? "#00ffb4" : "#64748b", cursor: "pointer", fontFamily: "inherit", fontWeight: active ? 600 : 400, transition: "all 0.15s" }}>
+              {f}
+            </button>
+          );
+        })}
+      </div>
+      <div className="wall-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
+        {WALL_SAVINGS.filter((a) => savingsFilter === "All" || a.provider === savingsFilter).map((a) => {
+          const providerColor = PROVIDER_BADGE_COLOR[a.provider] || "#00ffb4";
+
+          if (a.variant === "before_after") {
+            return (
+              <div key={a.company} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                  <div>
+                    <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
+                  </div>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}>⏱ {a.time}</span>
+                </div>
+                <div>
+                  <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Before / After</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "16px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.billBefore}</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>→</span>
+                    <span style={{ fontSize: "16px", fontWeight: 800, color: "var(--green)", fontFamily: "var(--display)" }}>{a.billAfter}</span>
+                  </div>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>monthly bill potential</p>
+                </div>
+                <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
+                  <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged</span>
+                </div>
+              </div>
+            );
+          }
+
+          if (a.variant === "waste_score") {
+            const circ = 2 * Math.PI * 22;
+            const offset = circ * (1 - a.score / 100);
+            return (
+              <div key={a.company} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                  <div>
+                    <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
+                  </div>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}>⏱ {a.time}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <svg width="52" height="52" style={{ transform: "rotate(-90deg)" }}>
+                      <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4" />
+                      <circle cx="26" cy="26" r="22" fill="none" stroke="#f87171" strokeWidth="4" strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
+                    </svg>
+                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 800, color: "#f87171" }}>{a.score}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="display" style={{ fontSize: "20px", fontWeight: 800, color: "#f87171", letterSpacing: "-0.5px", lineHeight: 1, marginBottom: "2px" }}>Score: {a.score}/100</p>
+                    <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>critical waste level</p>
+                  </div>
+                </div>
+                <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
+                  <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged</span>
+                </div>
+              </div>
+            );
+          }
+
+          if (a.variant === "time_saved") {
+            return (
+              <div key={a.company} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                  <div>
+                    <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: "4px", padding: "8px 0" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px" }}>Found in</span>
+                  <p className="display" style={{ fontSize: "36px", fontWeight: 800, color: "var(--green)", letterSpacing: "-1.5px", lineHeight: 1 }}>{a.time}</p>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>start to full savings report</span>
+                </div>
+                <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
+                  <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged · {a.savings}</span>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div key={a.company} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                <div>
+                  <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
+                </div>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}>⏱ {a.time}</span>
+              </div>
+              <div>
+                <p className="display" style={{ fontSize: "22px", fontWeight: 800, color: "var(--green)", letterSpacing: "-0.8px", lineHeight: 1, marginBottom: "4px" }}>{a.savings}</p>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>estimated monthly savings</p>
+              </div>
+              <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+});
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PUBLIC AUDIT VIEWER - Shows shared audits at /audit/{slug}
@@ -3363,7 +3564,7 @@ aws ec2 describe-reserved-instances \\
   if (step === "payment_success") return (
     <div className="app">
       <style>{globalCss}</style>
-      <ParticleBackground />
+      <SuspendedParticleBackground />
       <Nav />
       <div style={{ maxWidth: "560px", margin: "0 auto", padding: "120px 24px", textAlign: "center", position: "relative", zIndex: 1 }}>
         <div style={{ fontSize: "72px", marginBottom: "24px" }}>🎉</div>
@@ -3396,7 +3597,7 @@ aws ec2 describe-reserved-instances \\
     return (
       <div className="app">
         <style>{globalCss}</style>
-        <ParticleBackground />
+        <SuspendedParticleBackground />
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         <Nav showBack onBack={() => goTo("intro")} />
@@ -3627,7 +3828,7 @@ aws ec2 describe-reserved-instances \\
     return (
       <div className="app">
         <style>{globalCss}</style>
-        <ParticleBackground />
+        <SuspendedParticleBackground />
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showSecBlueprint && <SecurityBlueprintModal onClose={() => setShowSecBlueprint(false)} secChecked={secChecked} currency={currency} provider={provider} companyName={companyName} />}
@@ -3889,7 +4090,7 @@ aws iam simulate-principal-policy \\
     return (
       <div className="app">
         <style>{globalCss}</style>
-        <ParticleBackground />
+        <SuspendedParticleBackground />
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         <Nav />
         <NATGatewayCalculator onRunAudit={() => goTo("intake")} />
@@ -3902,7 +4103,7 @@ aws iam simulate-principal-policy \\
     return (
       <div className="app">
         <style>{globalCss}</style>
-        <ParticleBackground />
+        <SuspendedParticleBackground />
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         <Nav />
         <SpotInstanceCalculator onRunAudit={() => goTo("intake")} />
@@ -3931,7 +4132,7 @@ aws iam simulate-principal-policy \\
     return (
       <div className="app">
         <style>{globalCss}</style>
-        <ParticleBackground />
+        <SuspendedParticleBackground />
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         <Nav />
         <SEOPage page={seoPage} onStartAudit={handleSeoStartAudit} />
@@ -3969,7 +4170,7 @@ aws iam simulate-principal-policy \\
     return (
     <div className="app">
       <style>{globalCss}</style>
-      <ParticleBackground />
+      <SuspendedParticleBackground />
       {showSample && <SampleModal />}
 
       {/* ── EXIT INTENT MODAL ── */}
@@ -4255,57 +4456,7 @@ aws iam simulate-principal-policy \\
           </div>
         </div>
 
-        {/* ── COMPARISON TABLE ── */}
-        <div style={{ marginBottom: "90px" }}>
-          <div style={{ textAlign: "center", marginBottom: "48px" }}>
-            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>No sales calls required</p>
-            <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>Why engineers choose KloudAudit</h2>
-            <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px" }}>vs. traditional cloud cost tools</p>
-          </div>
-          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            <div style={{ minWidth: "640px", background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", overflow: "hidden" }}>
-              {/* Header row */}
-              <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: "1px solid var(--border)" }}>
-                <div style={{ padding: "18px 20px" }} />
-                {[
-                  { label: "KloudAudit",         kloud: true  },
-                  { label: "CloudHealth",         kloud: false },
-                  { label: "AWS Cost Explorer",   kloud: false },
-                  { label: "Consultant",          kloud: false },
-                ].map(({ label, kloud }) => (
-                  <div key={label} style={{ padding: "16px 12px", textAlign: "center", background: kloud ? "rgba(0,255,180,0.08)" : "transparent", borderLeft: `1px solid ${kloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
-                    <p style={{ fontSize: "13px", fontWeight: 800, color: kloud ? "var(--green)" : "var(--text-dim)", marginBottom: kloud ? "5px" : "0" }}>{label}</p>
-                    {kloud && <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--green)", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.3)", borderRadius: "10px", padding: "1px 7px" }}>← this</span>}
-                  </div>
-                ))}
-              </div>
-              {/* Data rows */}
-              {[
-                { label: "Setup time",           vals: ["15 minutes",  "4–6 months",        "Immediate",             "2–4 weeks"] },
-                { label: "Credentials required", vals: ["None",        "Full IAM access",   "AWS login",             "Full access"] },
-                { label: "First finding",        vals: ["Immediate",   "30+ days",          "Hours of exploration",  "1–2 weeks"] },
-                { label: "Cost",                 vals: ["Free / $79",  "$$$$ enterprise",   "Free",                  "$$$"] },
-                { label: "Prioritised fix list",  vals: ["✓",           "Partial",           "✗",                     "✓"] },
-                { label: "AI fix commands",       vals: ["✓",           "✗",                 "✗",                     "✗"] },
-              ].map((row, ri, arr) => (
-                <div key={row.label} style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: ri < arr.length - 1 ? "1px solid var(--border)" : "none", background: ri % 2 === 1 ? "rgba(255,255,255,0.015)" : "transparent" }}>
-                  <div style={{ padding: "14px 20px", display: "flex", alignItems: "center" }}>
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)" }}>{row.label}</span>
-                  </div>
-                  {row.vals.map((val, ci) => {
-                    const isKloud = ci === 0;
-                    const color = val === "✓" ? "#4ade80" : val === "✗" ? "#f87171" : val === "Partial" ? "#fbbf24" : isKloud ? "#fff" : "var(--text-muted)";
-                    return (
-                      <div key={ci} style={{ padding: "14px 10px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: isKloud ? "rgba(0,255,180,0.05)" : "transparent", borderLeft: `1px solid ${isKloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
-                        <span style={{ fontSize: val === "✓" || val === "✗" ? "16px" : "12px", fontWeight: isKloud ? 700 : 400, color }}>{val}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <ComparisonTable />
 
         {/* ── REPORT PREVIEW ── */}
           <div className="fade-up" style={{ marginBottom: "80px" }}>
@@ -4608,164 +4759,9 @@ aws iam simulate-principal-policy \\
           </div>
         </div>
 
-        {/* ── TESTIMONIALS ── */}
-        <div style={{ marginBottom: "90px" }}>
-          <div style={{ textAlign: "center", marginBottom: "40px" }}>
-            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Typical results</p>
-            <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>What engineers find</h2>
-            <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", marginTop: "8px" }}>Based on real audit patterns across 500+ cloud environments</p>
-          </div>
-          <div className="testimonials-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", position: "relative", overflow: "hidden" }}>
-                <div style={{ position: "absolute", top: "20px", right: "20px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "4px 10px", fontSize: "12px", fontWeight: 700, color: "var(--green)" }}>{t.savings}</div>
-                <div style={{ display: "flex", gap: "6px", marginBottom: "16px" }}>
-                  {[...Array(5)].map((_, j) => <span key={j} style={{ color: "#fbbf24", fontSize: "14px" }}>★</span>)}
-                </div>
-                <p style={{ fontSize: "14px", color: "var(--text-dim)", lineHeight: 1.7, marginBottom: "20px", fontStyle: "italic" }}>"{t.text}"</p>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", borderTop: "1px solid var(--border)", paddingTop: "16px" }}>
-                  <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 800, color: "#000", flexShrink: 0, fontFamily: "var(--display)" }}>
-                    {t.name.split(" ").map(n => n[0]).join("")}
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "14px", fontWeight: 700, color: "#fff", marginBottom: "2px" }}>{t.name}</p>
-                    <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>{t.role}</p>
-                  </div>
-                  <span style={{ marginLeft: "auto", fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px" }}>{t.provider}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <TestimonialsSection testimonials={TESTIMONIALS} />
 
-        {/* ── WALL OF SAVINGS ── */}
-        <div style={{ marginBottom: "90px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "28px" }}>
-            <span style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)", animation: "pulse-dot 2s infinite", flexShrink: 0 }} />
-            <h2 className="display" style={{ fontSize: "20px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px", margin: 0 }}>Recent audits</h2>
-            <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>· results updated in real time</span>
-          </div>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "16px" }}>
-            {["All", "AWS", "GCP", "Azure", "Multi-Cloud"].map(f => {
-              const active = savingsFilter === f;
-              return (
-                <button key={f} onClick={() => setSavingsFilter(f)} style={{ fontSize: "11px", padding: "4px 12px", borderRadius: "20px", border: `1px solid ${active ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.1)"}`, background: active ? "rgba(0,255,180,0.08)" : "rgba(255,255,255,0.03)", color: active ? "#00ffb4" : "#64748b", cursor: "pointer", fontFamily: "inherit", fontWeight: active ? 600 : 400, transition: "all 0.15s" }}>
-                  {f}
-                </button>
-              );
-            })}
-          </div>
-          <div className="wall-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
-            {WALL_SAVINGS.filter(a => savingsFilter === "All" || a.provider === savingsFilter).map((a, i) => {
-              const providerColor = PROVIDER_BADGE_COLOR[a.provider] || "#00ffb4";
-
-              /* ── BEFORE/AFTER variant (card 3) ── */
-              if (a.variant === "before_after") return (
-                <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                    <div>
-                      <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
-                      <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
-                    </div>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}>⏱ {a.time}</span>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Before / After</p>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ fontSize: "16px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.billBefore}</span>
-                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>→</span>
-                      <span style={{ fontSize: "16px", fontWeight: 800, color: "var(--green)", fontFamily: "var(--display)" }}>{a.billAfter}</span>
-                    </div>
-                    <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>monthly bill potential</p>
-                  </div>
-                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged</span>
-                  </div>
-                </div>
-              );
-
-              /* ── WASTE SCORE variant (card 6) ── */
-              if (a.variant === "waste_score") {
-                const circ = 2 * Math.PI * 22;
-                const offset = circ * (1 - a.score / 100);
-                return (
-                  <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                      <div>
-                        <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
-                        <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
-                      </div>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}>⏱ {a.time}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                      <div style={{ position: "relative", flexShrink: 0 }}>
-                        <svg width="52" height="52" style={{ transform: "rotate(-90deg)" }}>
-                          <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4" />
-                          <circle cx="26" cy="26" r="22" fill="none" stroke="#f87171" strokeWidth="4"
-                            strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
-                        </svg>
-                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <span style={{ fontSize: "11px", fontWeight: 800, color: "#f87171" }}>{a.score}</span>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="display" style={{ fontSize: "20px", fontWeight: 800, color: "#f87171", letterSpacing: "-0.5px", lineHeight: 1, marginBottom: "2px" }}>Score: {a.score}/100</p>
-                        <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>critical waste level</p>
-                      </div>
-                    </div>
-                    <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
-                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged</span>
-                    </div>
-                  </div>
-                );
-              }
-
-              /* ── TIME SAVED variant (card 9) ── */
-              if (a.variant === "time_saved") return (
-                <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                    <div>
-                      <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
-                      <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: "4px", padding: "8px 0" }}>
-                    <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px" }}>Found in</span>
-                    <p className="display" style={{ fontSize: "36px", fontWeight: 800, color: "var(--green)", letterSpacing: "-1.5px", lineHeight: 1 }}>{a.time}</p>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>start to full savings report</span>
-                  </div>
-                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged · {a.savings}</span>
-                  </div>
-                </div>
-              );
-
-              /* ── DEFAULT card ── */
-              return (
-                <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                    <div>
-                      <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
-                      <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
-                    </div>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}>⏱ {a.time}</span>
-                  </div>
-                  <div>
-                    <p className="display" style={{ fontSize: "22px", fontWeight: 800, color: "var(--green)", letterSpacing: "-0.8px", lineHeight: 1, marginBottom: "4px" }}>{a.savings}</p>
-                    <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>estimated monthly savings</p>
-                  </div>
-                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <WallOfSavings savingsFilter={savingsFilter} onFilterChange={setSavingsFilter} />
 
         {/* ── SECURITY AUDIT PRODUCT CARD ── */}
         <div id="security-audit" style={{ marginBottom: "48px" }}>
@@ -5165,7 +5161,7 @@ aws iam simulate-principal-policy \\
   if (step === "intake") return (
     <div className="app">
       <style>{globalCss}</style>
-      <ParticleBackground />
+      <SuspendedParticleBackground />
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
@@ -5231,7 +5227,7 @@ aws iam simulate-principal-policy \\
     return (
       <div className="app">
         <style>{globalCss}</style>
-        <ParticleBackground />
+        <SuspendedParticleBackground />
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
@@ -5496,7 +5492,7 @@ aws iam simulate-principal-policy \\
     return (
       <div className="app">
         <style>{globalCss}</style>
-        <ParticleBackground />
+        <SuspendedParticleBackground />
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         <Nav showBack onBack={() => goTo("audit")} />
 
@@ -5649,7 +5645,7 @@ aws iam simulate-principal-policy \\
     return (
       <div className="app">
         <style>{globalCss}</style>
-        <ParticleBackground />
+        <SuspendedParticleBackground />
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
