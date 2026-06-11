@@ -471,12 +471,13 @@ module.exports = async function handler(req, res) {
         .eq('status', 'pending'); // only claim if still pending
 
       try {
-        const meta    = job.metadata;
-        const email   = job.email;
-        const isSession   = job.product_type === 'consulting_session';
-        const isSecur     = job.product_type === 'security_blueprint';
-        const isBundle    = job.product_type === 'bundle';
-        const isCfoReport = job.product_type === 'cfo_report';
+        const meta          = job.metadata;
+        const email         = job.email;
+        const customerEmail = job.customer_email || job.email;
+        const isSession     = job.product_type === 'consulting_session';
+        const isSecur       = job.product_type === 'security_blueprint';
+        const isBundle      = job.product_type === 'bundle';
+        const isCfoReport   = job.product_type === 'cfo_report';
 
         // ── 3-DAY FOLLOW-UP EMAIL ─────────────────────────────────────────────
         if (job.product_type === 'followup_email') {
@@ -514,6 +515,94 @@ module.exports = async function handler(req, res) {
             .eq('id', job.id);
 
           results.push({ id: job.id, status: 'delivered', email: job.email, type: 'followup_email' });
+          processed++;
+          continue;
+        }
+
+        if (job.product_type === 'abandoned_audit_email') {
+          // Only process if 48 hours have passed
+          if (new Date(job.scheduled_for) > new Date()) {
+            continue;
+          }
+
+          const { data: purchased, error: purchaseError } = await supabase
+            .from('audits')
+            .select('blueprint_paid')
+            .eq('email', customerEmail)
+            .eq('blueprint_paid', true)
+            .limit(1);
+
+          if (purchaseError) {
+            throw purchaseError;
+          }
+
+          if (purchased && purchased.length > 0) {
+            await supabaseAdmin.from('delivery_queue')
+              .update({ status: 'delivered', delivered_at: new Date().toISOString() })
+              .eq('id', job.id);
+            results.push({ id: job.id, status: 'delivered', email: customerEmail, type: 'abandoned_audit_email', reason: 'already_purchased' });
+            processed++;
+            continue;
+          }
+
+          const abandonedMeta = job.metadata || {};
+          const savingsLine = abandonedMeta.savingsMin > 0
+            ? `$${Number(abandonedMeta.savingsMin).toLocaleString()}–$${Number(abandonedMeta.savingsMax).toLocaleString()}/month`
+            : '$500–$2,000/month';
+
+          const html = `
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#080810;color:#e2e8f0;border-radius:12px;overflow:hidden">
+  <div style="background:#1a1a2e;padding:24px;border-bottom:3px solid #00ffb4">
+    <p style="font-size:11px;font-weight:700;color:#00ffb4;letter-spacing:2px;margin:0">KLOUDAUDIT</p>
+  </div>
+  <div style="padding:32px 28px">
+    <h2 style="font-size:20px;font-weight:700;color:#fff;margin:0 0 16px">
+      Your ${abandonedMeta.provider || 'Cloud'} audit found ${abandonedMeta.flaggedCount || 0} issues
+    </h2>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px">
+      You ran a KloudAudit audit 48 hours ago and found 
+      ${savingsLine} in recoverable spend. 
+      The free report shows what's wrong. 
+      The Blueprint shows exactly how to fix it.
+    </p>
+    <div style="background:#0f0f1a;border:1px solid rgba(0,255,180,0.2);border-radius:10px;padding:20px;margin-bottom:24px">
+      <p style="font-size:12px;font-weight:700;color:#00ffb4;margin:0 0 12px;letter-spacing:1px">WHAT THE BLUEPRINT INCLUDES</p>
+      ${['Exact CLI commands for every flagged issue',
+         'Terraform snippets ready to apply',
+         'Step-by-step verification commands',
+         'Priority order — quick wins first',
+         'Delivered to your inbox in 2 minutes'].map(f => 
+        `<p style="color:#94a3b8;font-size:13px;margin:0 0 8px">✓ ${f}</p>`
+      ).join('')}
+    </div>
+    <a href="https://www.kloudaudit.eu" 
+       style="display:block;text-align:center;background:#00ffb4;color:#000;font-weight:800;font-size:15px;padding:14px;border-radius:10px;text-decoration:none;margin-bottom:16px">
+      Get the Blueprint — $79 →
+    </a>
+    <p style="font-size:12px;color:#475569;text-align:center;margin:0">
+      💚 Money-back guarantee if no actionable findings. 
+      No questions asked.
+    </p>
+  </div>
+  <div style="padding:20px 28px;border-top:1px solid rgba(255,255,255,0.06)">
+    <p style="font-size:12px;color:#334155;margin:0">
+      Samuel Ayodele Adomeh · Founder, KloudAudit · kloudaudit.eu
+    </p>
+  </div>
+</div>`;
+
+          await sgMail.send({
+            to: customerEmail,
+            from: { email: 'admin@kloudaudit.eu', name: 'Samuel — KloudAudit' },
+            subject: `Your ${abandonedMeta.provider || 'Cloud'} audit: ${abandonedMeta.flaggedCount || 0} issues, ${savingsLine} recoverable`,
+            html,
+          });
+
+          await supabaseAdmin.from('delivery_queue')
+            .update({ status: 'delivered', delivered_at: new Date().toISOString() })
+            .eq('id', job.id);
+
+          results.push({ id: job.id, status: 'delivered', email: customerEmail, type: 'abandoned_audit_email' });
           processed++;
           continue;
         }

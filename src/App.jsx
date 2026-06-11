@@ -1317,6 +1317,32 @@ const TestimonialsSection = memo(function TestimonialsSection({ testimonials }) 
         <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", marginTop: "8px" }}>Based on real audit patterns across 500+ cloud environments</p>
       </div>
       <div className="testimonials-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
+        <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px", position: "relative" }}>
+          <div style={{
+            position: "absolute", top: "12px", right: "12px",
+            fontSize: "11px", fontWeight: 700,
+            color: "#14a800",
+            background: "rgba(20,168,0,0.08)",
+            border: "1px solid rgba(20,168,0,0.2)",
+            borderRadius: "6px", padding: "3px 8px"
+          }}>✓ Upwork Verified</div>
+          <div style={{ fontSize: "13px", color: "var(--text-dim)", lineHeight: 1.6, marginBottom: "12px", fontStyle: "italic" }}>
+            "Samuel identified $2,400/month in idle RDS instances we had completely forgotten about. Implemented the fix in under an hour. Best $79 I've spent this year."
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{
+              width: "32px", height: "32px", borderRadius: "50%",
+              background: "rgba(0,255,180,0.1)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "12px", fontWeight: 800, color: "var(--green)"
+            }}>JK</div>
+            <div>
+              <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", margin: 0 }}>James K.</p>
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0 }}>Senior DevOps Engineer · London fintech</p>
+            </div>
+            <div style={{ marginLeft: "auto", fontSize: "13px", color: "var(--green)", fontWeight: 700 }}>$2,400/mo</div>
+          </div>
+        </div>
         {testimonials.map((t) => (
           <div key={t.name} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: "20px", right: "20px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "4px 10px", fontSize: "12px", fontWeight: 700, color: "var(--green)" }}>{t.savings}</div>
@@ -2110,6 +2136,46 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
             I understand this is a digital product delivered immediately and I waive my right of withdrawal upon delivery. See <a href="https://www.kloudaudit.eu/terms/" target="_blank" rel="noopener" style={{ color: "#00ffb4" }}>Terms</a>.
           </label>
         </div>
+        <div style={{
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '10px',
+          padding: '12px 16px',
+          marginBottom: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, #00ffb4, #00d4ff)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '12px', fontWeight: 800, color: '#000', flexShrink: 0
+          }}>SA</div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: '12px', color: '#fff', fontWeight: 700, margin: '0 0 2px' }}>
+              Samuel Ayodele Adomeh — Verified Upwork Expert
+            </p>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>
+              $8,000+ earned · Top Rated · Azure Architect · DevOps Engineer
+            </p>
+          </div>
+          <a 
+            href="https://www.upwork.com/freelancers/samueladomeh"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: '11px', fontWeight: 700,
+              color: '#14a800',
+              background: 'rgba(20,168,0,0.08)',
+              border: '1px solid rgba(20,168,0,0.2)',
+              borderRadius: '6px', padding: '4px 10px',
+              textDecoration: 'none', whiteSpace: 'nowrap'
+            }}
+          >
+            View Profile ↗
+          </a>
+        </div>
         <button className="glow-btn" onClick={handleSubmit}
           disabled={status === "loading" || !withdrawalChecked}
           style={{ background: withdrawalChecked ? "var(--green)" : "rgba(0,255,180,0.4)", color: "#000", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: withdrawalChecked ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
@@ -2196,6 +2262,46 @@ const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, 
           <label htmlFor="withdrawal-cfo" style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.55, cursor: "pointer" }}>
             I understand this is a digital product delivered immediately and I waive my right of withdrawal upon delivery. See <a href="https://www.kloudaudit.eu/terms/" target="_blank" rel="noopener" style={{ color: "#818cf8" }}>Terms</a>.
           </label>
+        </div>
+        <div style={{
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '10px',
+          padding: '12px 16px',
+          marginBottom: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, #00ffb4, #00d4ff)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '12px', fontWeight: 800, color: '#000', flexShrink: 0
+          }}>SA</div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: '12px', color: '#fff', fontWeight: 700, margin: '0 0 2px' }}>
+              Samuel Ayodele Adomeh — Verified Upwork Expert
+            </p>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>
+              $8,000+ earned · Top Rated · Azure Architect · DevOps Engineer
+            </p>
+          </div>
+          <a 
+            href="https://www.upwork.com/freelancers/samueladomeh"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: '11px', fontWeight: 700,
+              color: '#14a800',
+              background: 'rgba(20,168,0,0.08)',
+              border: '1px solid rgba(20,168,0,0.2)',
+              borderRadius: '6px', padding: '4px 10px',
+              textDecoration: 'none', whiteSpace: 'nowrap'
+            }}
+          >
+            View Profile ↗
+          </a>
         </div>
         <button onClick={handleSubmit}
           disabled={status === "loading" || !withdrawalChecked}
@@ -3554,9 +3660,57 @@ aws ec2 describe-reserved-instances \\
                 </div>
 
                 {/* ── Blueprint CTA ── */}
+          <div style={{ marginBottom: "12px" }}>
+            <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: 0 }}>
+              Not sure what the Blueprint contains?{" "}
+              <button onClick={() => setShowSample(true)} style={{ background: "none", border: "none", color: "var(--green)", fontSize: "13px", cursor: "pointer", textDecoration: "underline", padding: 0, fontFamily: "inherit" }}>
+                See sample output
+              </button>
+            </p>
+          </div>
                 <div style={{ background: "linear-gradient(135deg, rgba(129,140,248,0.08) 0%, rgba(0,255,180,0.06) 100%)", border: "1px solid rgba(129,140,248,0.25)", borderRadius: "14px", padding: "24px", marginTop: "8px" }}>
                   <p style={{ fontSize: "13px", color: "var(--text-dim)", marginBottom: "6px" }}>✅ Your blueprint covers all <strong style={{ color: "#fff" }}>{sampleFlagged.length} issues</strong> found in your audit — not just these 3</p>
                   <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "20px" }}>⚡ Delivered to your inbox within 2 minutes of payment</p>
+                  <div style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '10px',
+                    padding: '12px 16px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                  }}>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #00ffb4, #00d4ff)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '12px', fontWeight: 800, color: '#000', flexShrink: 0
+                    }}>SA</div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '12px', color: '#fff', fontWeight: 700, margin: '0 0 2px' }}>
+                        Samuel Ayodele Adomeh — Verified Upwork Expert
+                      </p>
+                      <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>
+                        $8,000+ earned · Top Rated · Azure Architect · DevOps Engineer
+                      </p>
+                    </div>
+                    <a 
+                      href="https://www.upwork.com/freelancers/samueladomeh"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontSize: '11px', fontWeight: 700,
+                        color: '#14a800',
+                        background: 'rgba(20,168,0,0.08)',
+                        border: '1px solid rgba(20,168,0,0.2)',
+                        borderRadius: '6px', padding: '4px 10px',
+                        textDecoration: 'none', whiteSpace: 'nowrap'
+                      }}
+                    >
+                      View Profile ↗
+                    </a>
+                  </div>
                   <button className="glow-btn" onClick={() => { closeModal(); window.gtag?.('event', 'blueprint_clicked', { provider: provider, savings_min: savMin, currency: currency.code }); window.gtag?.('event', 'blueprint_modal_opened', { provider: provider }); setShowBlueprint(true); }} style={{ background: "linear-gradient(135deg, #818cf8, #6366f1)", color: "#fff", border: "none", borderRadius: "10px", padding: "13px 32px", fontSize: "15px", fontWeight: 700, boxShadow: "0 0 20px rgba(129,140,248,0.3)" }}>Get Full Blueprint — {currency.blueprintPrice} →</button>
                 </div>
               </>
@@ -4319,12 +4473,25 @@ aws iam simulate-principal-policy \\
               ))}
             </div>
             <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: "0 0 8px" }}>No signup · No credit card · No cloud access required</p>
-            <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: 0 }}>
-              Not sure what you&apos;ll get?{" "}
-              <button onClick={() => setShowSample(true)} style={{ background: "none", border: "none", color: "var(--green)", fontSize: "13px", cursor: "pointer", textDecoration: "underline", padding: 0, fontFamily: "inherit" }}>
-                See a sample report first →
-              </button>
-            </p>
+            <button 
+              onClick={() => setShowSample(true)}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(0,255,180,0.4)',
+                borderRadius: '10px',
+                padding: '10px 24px',
+                color: '#00ffb4',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginTop: '12px',
+              }}
+            >
+              <span>👁</span> See a sample report first →
+            </button>
           </div>
 
           {/* ── SECONDARY CTA ── */}

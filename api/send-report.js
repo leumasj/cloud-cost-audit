@@ -2,6 +2,13 @@
 // Sends the free audit report summary to the user's email via SendGrid
 
 const sgMail = require('@sendgrid/mail');
+const { createClient } = require('@supabase/supabase-js');
+
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+);
+
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 module.exports = async function handler(req, res) {
@@ -91,6 +98,28 @@ module.exports = async function handler(req, res) {
         text: `Email: ${email}\nProvider: ${provider}\nBill: $${monthlyBill}/mo\nSavings: $${savingsMin}–$${savingsMax}/mo\nIssues: ${flaggedCount}\n${flaggedIssues.join(', ')}`,
       }),
     ]);
+
+    const sessionId = req.body.sessionId || req.body.session_id || 'unknown';
+    const followUpAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    await supabaseAdmin
+      .from('delivery_queue')
+      .insert({
+        stripe_session_id: `abandoned_${sessionId}_${Date.now()}`,
+        product_type: 'abandoned_audit_email',
+        customer_email: email,
+        metadata: {
+          provider: provider,
+          wasteScore: savPct,
+          savingsMin: savingsMin,
+          savingsMax: savingsMax,
+          flaggedCount: flaggedCount,
+          monthlyBill: monthlyBill,
+        },
+        scheduled_for: followUpAt.toISOString(),
+        status: 'pending',
+      })
+      .onConflict('stripe_session_id')
+      .ignore();
 
     return res.status(200).json({ success: true });
 
