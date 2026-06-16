@@ -10,9 +10,17 @@ function SuspendedParticleBackground() {
   );
 }
 
+const SECTION_ICONS = {
+  Compute: '🖥️',
+  Storage: '💾',
+  Network: '🌐',
+  Database: '🗄️',
+  Governance: '🛡️',
+};
+
 const AUDIT_SECTIONS = [
   {
-    id: "compute", label: "Compute", icon: "⚡",
+    id: "compute", label: "Compute", title: "Compute", icon: SECTION_ICONS.Compute,
     description: "Instance sizing, reservation strategy & generation currency",
     summary: "Identifies idle VMs, missing savings plans, spot opportunities, and legacy instance types burning money silently.",
     checks: [
@@ -24,7 +32,7 @@ const AUDIT_SECTIONS = [
     ],
   },
   {
-    id: "storage", label: "Storage", icon: "🗄",
+    id: "storage", label: "Storage", title: "Storage", icon: SECTION_ICONS.Storage,
     description: "Object storage tiering, orphaned volumes & data transfer",
     summary: "Uncovers untriered S3/GCS data, orphaned disks after instance deletion, stale snapshots, and expensive egress routing.",
     checks: [
@@ -35,7 +43,7 @@ const AUDIT_SECTIONS = [
     ],
   },
   {
-    id: "network", label: "Network", icon: "🌐",
+    id: "network", label: "Network", title: "Network", icon: SECTION_ICONS.Network,
     description: "NAT gateways, static IPs & idle load balancers",
     summary: "Catches NAT gateway overuse for internal traffic, idle load balancers billing hourly, and unattached static IPs.",
     checks: [
@@ -45,7 +53,7 @@ const AUDIT_SECTIONS = [
     ],
   },
   {
-    id: "database", label: "Database", icon: "🗃",
+    id: "database", label: "Database", title: "Database", icon: SECTION_ICONS.Database,
     description: "RDS sizing, dev environment waste & caching gaps",
     summary: "Finds dev/staging RDS running 24/7, over-provisioned databases, and missing Redis layers that cause DB overload.",
     checks: [
@@ -55,7 +63,7 @@ const AUDIT_SECTIONS = [
     ],
   },
   {
-    id: "governance", label: "Governance", icon: "📊",
+    id: "governance", label: "Governance", title: "Governance", icon: SECTION_ICONS.Governance,
     description: "Budgets, alerts, forgotten resources & environment parity",
     summary: "Exposes missing billing alerts, shadow IT resources accumulating cost, and dev environments mirroring production unnecessarily.",
     checks: [
@@ -2839,9 +2847,20 @@ export default function App() {
   const [companyName, setCompanyName] = useState(() => initialSession?.companyName || '');
   const [checked, setChecked] = useState(() => initialSession?.checked || {});
   const [activeSection, setActiveSection] = useState(() => typeof initialSession?.activeSection === 'number' ? initialSession.activeSection : 0);
+  const [isMobile, setIsMobile] = useState(false);
+  const [sectionCheckIndex, setSectionCheckIndex] = useState(0);
   const [showToast, setShowToast] = useState(null);
   const [showSample, setShowSample] = useState(false);
   const [sampleTab, setSampleTab] = useState("report");
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  useEffect(() => {
+    setSectionCheckIndex(0);
+  }, [activeSection]);
   const [showContact, setShowContact] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
@@ -3710,6 +3729,24 @@ aws ec2 describe-reserved-instances \\
                     >
                       View Profile ↗
                     </a>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', marginBottom: '24px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                    <div style={{ background: 'var(--bg2)', padding: '20px' }}>
+                      <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '12px' }}>FREE REPORT (what you have)</p>
+                      <p style={{ fontSize: '13px', color: 'var(--text-dim)', marginBottom: '8px' }}>✓ Waste score</p>
+                      <p style={{ fontSize: '13px', color: 'var(--text-dim)', marginBottom: '8px' }}>✓ Savings estimate</p>
+                      <p style={{ fontSize: '13px', color: 'var(--text-dim)', marginBottom: '8px' }}>✓ List of issues found</p>
+                      <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>✗ No CLI commands</p>
+                      <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>✗ No implementation steps</p>
+                    </div>
+                    <div style={{ background: 'rgba(0,255,180,0.04)', padding: '20px', border: '1px solid rgba(0,255,180,0.2)' }}>
+                      <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--green)', marginBottom: '12px' }}>BLUEPRINT — {currency.blueprintPrice}</p>
+                      <p style={{ fontSize: '13px', color: '#fff', marginBottom: '8px' }}>✓ Everything in free report</p>
+                      <p style={{ fontSize: '13px', color: '#fff', marginBottom: '8px' }}>✓ Exact CLI commands per issue</p>
+                      <p style={{ fontSize: '13px', color: '#fff', marginBottom: '8px' }}>✓ Terraform snippets</p>
+                      <p style={{ fontSize: '13px', color: '#fff', marginBottom: '8px' }}>✓ Step-by-step fix guide</p>
+                      <p style={{ fontSize: '13px', color: '#fff' }}>✓ Delivered in 2 minutes</p>
+                    </div>
                   </div>
                   <button className="glow-btn" onClick={() => { closeModal(); window.gtag?.('event', 'blueprint_clicked', { provider: provider, savings_min: savMin, currency: currency.code }); window.gtag?.('event', 'blueprint_modal_opened', { provider: provider }); setShowBlueprint(true); }} style={{ background: "linear-gradient(135deg, #818cf8, #6366f1)", color: "#fff", border: "none", borderRadius: "10px", padding: "13px 32px", fontSize: "15px", fontWeight: 700, boxShadow: "0 0 20px rgba(129,140,248,0.3)" }}>Get Full Blueprint — {currency.blueprintPrice} →</button>
                 </div>
@@ -5406,6 +5443,8 @@ aws iam simulate-principal-policy \\
   // ── AUDIT ──────────────────────────────────────────────────────────────────
   if (step === "audit") {
     const section = AUDIT_SECTIONS[activeSection];
+    const mobileCheck = section.checks[Math.min(sectionCheckIndex, section.checks.length - 1)];
+    const mobileDone = sectionCheckIndex + 1;
     return (
       <div className="app">
         <style>{globalCss}</style>
@@ -5462,43 +5501,83 @@ aws iam simulate-principal-policy \\
                 </div>
               )}
               <div style={{ marginBottom: "24px" }}>
-                <h2 className="display" style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-0.5px", color: "#fff" }}>{section.icon} {section.label}</h2>
+                <h2 className="display" style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-0.5px", color: "#fff", display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span style={{ fontSize: "1.1em" }}>{section.icon}</span>
+                  {section.label}
+                </h2>
                 <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>{section.description}</p>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {section.checks.map((check, i) => {
-                  const on = !!checked[check.id];
-                  const sMin = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
-                  const sMax = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
-                  return (
-                    <div key={check.id} className="check-card" role="checkbox" aria-checked={on} tabIndex={0} onKeyDown={e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), toggle(check.id))} onClick={() => toggle(check.id)}
-                      style={{ background: on ? "rgba(0,255,180,0.05)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${on ? "rgba(0,255,180,0.25)" : "var(--border)"}`, borderRadius: "14px", padding: "18px 20px", display: "flex", gap: "14px", alignItems: "flex-start", boxShadow: on ? "0 4px 20px rgba(0,255,180,0.08)" : "0 1px 4px rgba(0,0,0,0.2)", animation: "card-in 0.35s ease both", animationDelay: `${i * 55}ms` }}>
-                      <div style={{ width: "24px", height: "24px", borderRadius: "7px", flexShrink: 0, marginTop: "1px", background: on ? "var(--green)" : "transparent", border: `2px solid ${on ? "var(--green)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: on ? "0 0 12px rgba(0,255,180,0.5)" : "none" }}>
-                        {on && <svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4L4.5 7.5L11 1" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginBottom: "4px" }}>
-                          <span style={{ fontSize: "15px", fontWeight: 600, color: on ? "#fff" : "var(--text-dim)" }}>{check.label}</span>
-                          <span style={{ fontSize: "11px", fontWeight: 700, color: IMPACT_COLOR[check.impact], background: `${IMPACT_COLOR[check.impact]}15`, borderRadius: "4px", padding: "2px 7px" }}>{check.impact}</span>
-                          <span style={{ fontSize: "11px", fontWeight: 600, color: EFFORT_COLOR[check.effort], background: `${EFFORT_COLOR[check.effort]}10`, borderRadius: "4px", padding: "2px 7px" }}>Effort: {check.effort}</span>
-                        </div>
-                        <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>{check.detail}</p>
-                        {on && bill > 0 && (
-                          <div style={{ marginTop: "10px", display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "5px 12px" }}>
-                            <span style={{ fontSize: "13px" }}>💰</span>
-                            <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--green)" }}>${sMin?.toLocaleString()} – ${sMax?.toLocaleString()}/mo savings</span>
-                          </div>
-                        )}
-                        {on && check.tooltip && (
-                          <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(99,102,241,0.07)", border: "1px solid rgba(99,102,241,0.18)", borderRadius: "8px", borderLeft: "3px solid #818cf8" }}>
-                            <p style={{ fontSize: "12px", color: "#a5b4fc", lineHeight: 1.65, margin: 0 }}>💡 {check.tooltip}</p>
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", flexShrink: 0, fontWeight: 600 }}>{check.savingsRange[0]}–{check.savingsRange[1]}%</div>
+                {isMobile ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: "14px", padding: "12px 16px" }}>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>Check {mobileDone} of {section.checks.length}</span>
+                      <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)" }}>{Math.round((mobileDone / section.checks.length) * 100)}%</span>
                     </div>
-                  );
-                })}
+                    <div key={mobileCheck.id} role="group" aria-labelledby={`mobile-check-${mobileCheck.id}`} style={{ background: "rgba(255,255,255,0.02)", border: "1.5px solid var(--border)", borderRadius: "18px", padding: "20px", minHeight: "80px", display: "flex", flexDirection: "column", gap: "18px", justifyContent: "space-between", touchAction: "pan-y" }}>
+                      <div>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginBottom: "12px" }}>
+                          <span id={`mobile-check-${mobileCheck.id}`} style={{ fontSize: "15px", fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{mobileCheck.label}</span>
+                        </div>
+                        <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.6, margin: 0 }}>{mobileCheck.detail}</p>
+                      </div>
+                      <div style={{ display: "grid", gap: "12px" }}>
+                        {[["Yes", true, "var(--green)"], ["No", false, "rgba(255,255,255,0.1)"], ["Not Sure", false, "rgba(255,255,255,0.06)"]].map(([label, value, bg]) => (
+                          <button key={label} onClick={() => {
+                            setChecked(prev => ({ ...prev, [mobileCheck.id]: value }));
+                            if (sectionCheckIndex < section.checks.length - 1) setSectionCheckIndex(idx => idx + 1);
+                          }}
+                            style={{ width: "100%", minHeight: "80px", background: bg, border: "1px solid var(--border)", borderRadius: "16px", color: label === "Yes" ? "#000" : "#fff", fontSize: "16px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: "18px" }}>
+                            {label}
+                          </button>
+                        ))}
+                        {sectionCheckIndex < section.checks.length - 1 && (
+                          <button onClick={() => setSectionCheckIndex(idx => Math.min(idx + 1, section.checks.length - 1))}
+                            style={{ width: "100%", minHeight: "56px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "16px", color: "#fff", fontSize: "15px", fontWeight: 700, cursor: "pointer", padding: "16px" }}>
+                            Next check →
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {mobileCheck.tooltip && (
+                      <div style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.6, borderLeft: "3px solid #818cf8", paddingLeft: "12px" }}>💡 {mobileCheck.tooltip}</div>
+                    )}
+                  </div>
+                ) : (
+                  section.checks.map((check, i) => {
+                    const on = !!checked[check.id];
+                    const sMin = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
+                    const sMax = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
+                    return (
+                      <div key={check.id} className="check-card" role="checkbox" aria-checked={on} tabIndex={0} onKeyDown={e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), toggle(check.id))} onClick={() => toggle(check.id)}
+                        style={{ background: on ? "rgba(0,255,180,0.05)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${on ? "rgba(0,255,180,0.25)" : "var(--border)"}`, borderRadius: "14px", padding: "18px 20px", display: "flex", gap: "14px", alignItems: "flex-start", boxShadow: on ? "0 4px 20px rgba(0,255,180,0.08)" : "0 1px 4px rgba(0,0,0,0.2)", animation: "card-in 0.35s ease both", animationDelay: `${i * 55}ms` }}>
+                        <div style={{ width: "24px", height: "24px", borderRadius: "7px", flexShrink: 0, marginTop: "1px", background: on ? "var(--green)" : "transparent", border: `2px solid ${on ? "var(--green)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: on ? "0 0 12px rgba(0,255,180,0.5)" : "none" }}>
+                          {on && <svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4L4.5 7.5L11 1" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginBottom: "4px" }}>
+                            <span style={{ fontSize: "15px", fontWeight: 600, color: on ? "#fff" : "var(--text-dim)" }}>{check.label}</span>
+                            <span style={{ fontSize: "11px", fontWeight: 700, color: IMPACT_COLOR[check.impact], background: `${IMPACT_COLOR[check.impact]}15`, borderRadius: "4px", padding: "2px 7px" }}>{check.impact}</span>
+                            <span style={{ fontSize: "11px", fontWeight: 600, color: EFFORT_COLOR[check.effort], background: `${EFFORT_COLOR[check.effort]}10`, borderRadius: "4px", padding: "2px 7px" }}>Effort: {check.effort}</span>
+                          </div>
+                          <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>{check.detail}</p>
+                          {on && bill > 0 && (
+                            <div style={{ marginTop: "10px", display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "5px 12px" }}>
+                              <span style={{ fontSize: "13px" }}>💰</span>
+                              <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--green)" }}>${sMin?.toLocaleString()} – ${sMax?.toLocaleString()}/mo savings</span>
+                            </div>
+                          )}
+                          {on && check.tooltip && (
+                            <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(99,102,241,0.07)", border: "1px solid rgba(99,102,241,0.18)", borderRadius: "8px", borderLeft: "3px solid #818cf8" }}>
+                              <p style={{ fontSize: "12px", color: "#a5b4fc", lineHeight: 1.65, margin: 0 }}>💡 {check.tooltip}</p>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", flexShrink: 0, fontWeight: 600 }}>{check.savingsRange[0]}–{check.savingsRange[1]}%</div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
               <div style={{ display: "flex", gap: "10px", marginTop: "28px" }}>
                 {activeSection > 0 && <button className="ghost-btn" onClick={() => setActiveSection(a => a - 1)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px 22px", fontSize: "14px", fontWeight: 600, color: "var(--text-muted)" }}>← Previous</button>}
@@ -5569,7 +5648,10 @@ aws iam simulate-principal-policy \\
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
                           <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                            <span style={{ fontSize: "11px", fontWeight: 600, color: i === activeSection ? "var(--green)" : "var(--text-dim)" }}>{s.label}</span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span style={{ fontSize: "13px", lineHeight: 1 }}>{s.icon}</span>
+                          <span style={{ fontSize: "11px", fontWeight: 600, color: i === activeSection ? "var(--green)" : "var(--text-dim)" }}>{s.label}</span>
+                        </div>
                             {(s.id === "compute" || s.id === "database") && (
                               <span style={{ fontSize: "9px", fontWeight: 700, color: "#00ffb4", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "8px", padding: "1px 6px", width: "fit-content" }}>Most teams find issues here</span>
                             )}
