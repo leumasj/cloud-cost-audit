@@ -5216,7 +5216,7 @@ aws iam simulate-principal-policy \\
                 <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>Cancel anytime · Secure via Stripe · No cloud access required</p>
               </div>
             </div>
-          </div>
+          </div>) : null}
 
           <p style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "20px" }}>
             All blueprints include a full refund if no actionable fix is identified. Questions? <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a>
