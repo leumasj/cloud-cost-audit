@@ -76,7 +76,7 @@ module.exports = async function handler(req, res) {
            || req.socket?.remoteAddress
            || 'unknown';
 
-  if (isRateLimited(ip)) {
+  if (await isRateLimited(ip)) {
     return res.status(429).json({
       error: 'Too many requests. Please try again later.',
       retryAfter: 3600,

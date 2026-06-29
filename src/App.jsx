@@ -2916,7 +2916,8 @@ export default function App() {
   const [aiPreview, setAiPreview] = useState(null);
   const [aiPreviewLoading, setAiPreviewLoading] = useState(false);
   const [subEmail, setSubEmail] = useState(() => '');
-  const [subStatus, setSubStatus] = useState('idle'); // idle | loading | error
+  const [subStatus, setSubStatus] = useState('idle'); // idle | loading | error | not_configured
+  const [subscriptionAvailable, setSubscriptionAvailable] = useState(true);
   const [gateSubmitted, setGateSubmitted] = useState(false);
   const [gateSending, setGateSending] = useState(false);
   // ── MULTI-CURRENCY ────────────────────────────────────────────────────────
@@ -2994,12 +2995,35 @@ export default function App() {
 
   // FIX #2: Payment success detection on mount
   useEffect(() => {
-    // Handle Stripe payment success redirect
+    // Handle Stripe payment redirect states
     const params = new URLSearchParams(window.location.search);
-    if (params.get("payment") === "success") {
+    const paymentStatus = params.get("payment");
+    const checkoutSessionId = params.get("session_id");
+
+    if (paymentStatus === "success" || paymentStatus === "sub_success" || paymentStatus === "session_success") {
       localStorage.removeItem('ka_session');
       setStep("payment_success");
-      window.history.replaceState({}, "", "/");
+      window.gtag?.('event', 'purchase', {
+        transaction_id: checkoutSessionId || undefined,
+        currency: currency.stripeCurrency || undefined,
+        value: bill || undefined,
+        purchase_type: paymentStatus,
+      });
+      params.delete('payment');
+      params.delete('session_id');
+      const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}${window.location.hash}`;
+      window.history.replaceState({}, "", newUrl);
+      return;
+    }
+
+    if (paymentStatus === "cancelled") {
+      params.delete('payment');
+      params.delete('session_id');
+      const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}${window.location.hash}`;
+      window.history.replaceState({}, "", newUrl);
+      if (initialSession && RESTORABLE_STEPS.includes(initialSession.step)) {
+        setStep(initialSession.step);
+      }
       return;
     }
 
@@ -3462,6 +3486,7 @@ useEffect(() => {
       if (data.code === 'subscription_not_configured') {
         // Price ID not set up in Stripe yet — fall back gracefully
         setSubStatus('not_configured');
+        setSubscriptionAvailable(false);
         return;
       }
       if (!res.ok) throw new Error(data.error || `Checkout failed (${res.status})`);
@@ -5147,8 +5172,9 @@ aws iam simulate-principal-policy \\
             </div>
           </div>
 
-          <div style={{ background: "rgba(99,102,241,0.06)", border: "1.5px solid rgba(99,102,241,0.25)", borderRadius: "18px", padding: "32px", display: "flex", alignItems: "flex-start", gap: "32px", flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: "260px" }}>
+          {subscriptionAvailable ? (
+            <div style={{ background: "rgba(99,102,241,0.06)", border: "1.5px solid rgba(99,102,241,0.25)", borderRadius: "18px", padding: "32px", display: "flex", alignItems: "flex-start", gap: "32px", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: "260px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
                 <p style={{ fontSize: "12px", fontWeight: 700, color: "#818cf8", letterSpacing: "1px", textTransform: "uppercase", margin: 0 }}>Cloud Health Monitor</p>
                 <span style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "20px", fontSize: "11px", color: "#818cf8", fontWeight: 700, padding: "2px 10px" }}>New</span>

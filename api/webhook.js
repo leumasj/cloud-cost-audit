@@ -33,6 +33,8 @@ const PRODUCT_TYPE_MAP = {
   'security_certificate':'security_blueprint',
   'bundle':              'bundle',
   'cfo_report':          'cfo_report',
+  'consulting_session':  'consulting_session',
+  'monthly_plan':        'subscription',
 };
 
 // ── STRUCTURED LOGGER ─────────────────────────────────────────────────────────
@@ -99,12 +101,22 @@ module.exports = async function handler(req, res) {
   const productType = PRODUCT_TYPE_MAP[meta.type] || 'blueprint';
 
   if (!PRODUCT_TYPE_MAP[meta.type]) {
-    // Unknown type — log and default to blueprint rather than silently failing
     log('warn', 'webhook.unknown_product_type', {
       sessionId: session.id,
       rawType: meta.type,
       resolvedTo: 'blueprint',
     });
+  }
+
+  if (productType === 'subscription') {
+    log('info', 'webhook.subscription_ignored', {
+      sessionId: session.id,
+      email,
+      amount: session.amount_total,
+      currency: session.currency,
+      provider: meta.provider,
+    });
+    return res.status(200).json({ received: true, skipped: 'subscription' });
   }
 
   // 5. Save to delivery queue — FAST (~100ms)

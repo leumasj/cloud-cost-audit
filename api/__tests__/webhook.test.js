@@ -160,6 +160,18 @@ test('maps bundle type to "bundle" — not coerced to "blueprint"', async () => 
   );
 });
 
+test('ignores subscription checkout events and does not queue them', async () => {
+  mockConstructEvent.mockReturnValue(makeCheckoutEvent({ metadata: { email: 'buyer@example.com', type: 'monthly_plan' } }));
+  const handler = loadHandler();
+  const res = makeRes();
+  await handler(makeReq(), res);
+  expect(mockInsert).not.toHaveBeenCalled();
+  expect(res.status).toHaveBeenCalledWith(200);
+  expect(res.json).toHaveBeenCalledWith(
+    expect.objectContaining({ received: true, skipped: 'subscription' })
+  );
+});
+
 test('returns 200 with duplicate:true on unique-constraint violation (23505)', async () => {
   mockConstructEvent.mockReturnValue(makeCheckoutEvent());
   mockInsert.mockResolvedValue({ error: { code: '23505', message: 'duplicate key' } });
