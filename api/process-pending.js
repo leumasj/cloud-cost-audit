@@ -35,7 +35,7 @@ const supabaseAdmin = createClient(
 // Vercel cron can fire multiple times if a run takes longer than 60s.
 // We mark jobs as 'processing' immediately to prevent double-delivery.
 
-const MAX_ATTEMPTS = 3;
+const MAX_ATTEMPTS = 5;
 const PROCESS_BATCH = 5; // process up to 5 jobs per cron run
 
 // ── CACHE HELPERS ─────────────────────────────────────────────────────────────
