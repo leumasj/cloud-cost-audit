@@ -9,7 +9,6 @@
 // Merged from send-followups.js to stay within Vercel Hobby's 12-function limit.
 
 const Anthropic = require('@anthropic-ai/sdk');
-const { Resend } = require('resend');
 const crypto    = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const sentry = require('./lib/_sentry');
@@ -430,6 +429,7 @@ function validateBlueprintQuality(content, productType) {
 
 // ── MAIN HANDLER ─────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
+  const { Resend } = require('resend');
   const resend = new Resend(process.env.RESEND_API_KEY);
   // Allow GET (from cron) or POST (manual trigger)
   if (req.method !== 'GET' && req.method !== 'POST') {

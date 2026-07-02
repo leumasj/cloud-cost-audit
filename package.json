@@ -1,6 +1,7 @@
 {
   "name": "cloud-cost-audit",
   "version": "2.0.0",
+  "engines": { "node": "20.x" },
   "private": true,
   "scripts": {
     "dev": "vite",

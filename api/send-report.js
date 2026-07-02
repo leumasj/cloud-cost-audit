@@ -1,7 +1,6 @@
 // api/send-report.js
 // Sends the free audit report summary to the user's email via SendGrid
 
-const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
 
 const supabaseAdmin = createClient(
@@ -10,6 +9,7 @@ const supabaseAdmin = createClient(
 );
 
 module.exports = async function handler(req, res) {
+  const { Resend } = require('resend');
   const resend = new Resend(process.env.RESEND_API_KEY);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');

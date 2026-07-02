@@ -8,7 +8,6 @@
 // Psychology: user already knows KloudAudit works (they used it before).
 // The email re-activates that trust and creates urgency — cloud waste accumulates.
 
-const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
@@ -131,6 +130,7 @@ function buildReauditEmail(subscriber) {
 
 // ── HANDLER ───────────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
+  const { Resend } = require('resend');
   const resend = new Resend(process.env.RESEND_API_KEY);
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
