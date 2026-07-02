@@ -16,8 +16,6 @@ const sentry = require('./lib/_sentry');
 
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 // anon client — for operations that don't need elevated access
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -106,7 +104,9 @@ function buildBlueprintPrompt(meta) {
     ? `${(meta.amount_total / 100).toFixed(2)} ${(meta.currency || 'PLN').toUpperCase()}`
     : '299 PLN';
 
-  return `You are a senior DevOps engineer writing a personalised cloud cost optimisation guide for ${companyName}.
+  return `Be concise. Target 600-700 words total. Focus on the most impactful fixes only.
+
+You are a senior DevOps engineer writing a personalised cloud cost optimisation guide for ${companyName}.
 
 Provider: ${provider}
 Monthly cloud bill: $${monthlyBill}
@@ -430,6 +430,7 @@ function validateBlueprintQuality(content, productType) {
 
 // ── MAIN HANDLER ─────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
   // Allow GET (from cron) or POST (manual trigger)
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -671,11 +672,16 @@ module.exports = async function handler(req, res) {
           if (!report) {
             console.log(`Cache miss — calling Claude for job ${job.id}`);
             const prompt = isSecur ? buildSecurityPrompt(meta) : isCfoReport ? buildCfoPrompt(meta) : buildBlueprintPrompt(meta);
-            const aiResp = await anthropic.messages.create({
-              model:      'claude-sonnet-4-6',
-              max_tokens: isSecur ? 2500 : 2000,
-              messages:   [{ role: 'user', content: prompt }],
-            });
+            const aiResp = await Promise.race([
+              anthropic.messages.create({
+                model:      'claude-sonnet-4-6',
+                max_tokens: isSecur ? 2500 : 1500,
+                messages:   [{ role: 'user', content: prompt }],
+              }),
+              new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Claude API timeout after 45s')), 45000)
+              ),
+            ]);
             report = aiResp.content[0].text;
             setCachedReport(cacheKey, job.product_type, report);
           } else {

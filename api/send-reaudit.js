@@ -11,8 +11,6 @@
 const sgMail  = require('@sendgrid/mail');
 const { createClient } = require('@supabase/supabase-js');
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
@@ -133,6 +131,7 @@ function buildReauditEmail(subscriber) {
 
 // ── HANDLER ───────────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

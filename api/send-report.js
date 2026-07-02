@@ -9,9 +9,8 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
 );
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 module.exports = async function handler(req, res) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
