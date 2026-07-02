@@ -9,7 +9,7 @@
 // Merged from send-followups.js to stay within Vercel Hobby's 12-function limit.
 
 const Anthropic = require('@anthropic-ai/sdk');
-const sgMail    = require('@sendgrid/mail');
+const { Resend } = require('resend');
 const crypto    = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const sentry = require('./lib/_sentry');
@@ -430,7 +430,7 @@ function validateBlueprintQuality(content, productType) {
 
 // ── MAIN HANDLER ─────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  const resend = new Resend(process.env.RESEND_API_KEY);
   // Allow GET (from cron) or POST (manual trigger)
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -503,9 +503,9 @@ module.exports = async function handler(req, res) {
     <p>Samuel<br/>Founder, KloudAudit<br/>kloudaudit.eu</p>
   `;
 
-          await sgMail.send({
-            to:      job.email,
-            from:    { email: 'admin@kloudaudit.eu', name: 'Samuel — KloudAudit' },
+          await resend.emails.send({
+            from:    'Samuel — KloudAudit <admin@kloudaudit.eu>',
+            to:      [job.email],
             subject: 'How are the fixes going? (KloudAudit follow-up)',
             html:    followUpHtml,
           });
@@ -592,9 +592,9 @@ module.exports = async function handler(req, res) {
   </div>
 </div>`;
 
-          await sgMail.send({
-            to: customerEmail,
-            from: { email: 'admin@kloudaudit.eu', name: 'Samuel — KloudAudit' },
+          await resend.emails.send({
+            from:    'Samuel — KloudAudit <admin@kloudaudit.eu>',
+            to:      [customerEmail],
             subject: `Your ${abandonedMeta.provider || 'Cloud'} audit: ${abandonedMeta.flaggedCount || 0} issues, ${savingsLine} recoverable`,
             html,
           });
@@ -614,16 +614,15 @@ module.exports = async function handler(req, res) {
             ? `${(meta.amount_total / 100).toFixed(2)} ${(meta.currency || 'usd').toUpperCase()}`
             : 'session fee';
           await Promise.all([
-            sgMail.send({
-              to:      email,
-              from:    { email: 'admin@kloudaudit.eu', name: 'Samuel @ KloudAudit' },
-              replyTo: 'admin@kloudaudit.eu',
+            resend.emails.send({
+              from:    'Samuel @ KloudAudit <admin@kloudaudit.eu>',
+              to:      [email],
               subject: '✅ Session booked — we\'ll confirm your slot within 24hrs',
               html: `<!DOCTYPE html><html><body style="background:#07070f;font-family:system-ui;margin:0;padding:0;"><div style="max-width:600px;margin:0 auto;padding:40px 24px;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:32px;"><div style="width:36px;height:36px;background:#00ffb4;border-radius:8px;font-size:18px;display:flex;align-items:center;justify-content:center;">⚡</div><span style="font-size:20px;font-weight:800;color:#fff;">KloudAudit</span></div><div style="background:linear-gradient(135deg,rgba(0,255,180,0.1),rgba(99,102,241,0.08));border:1.5px solid #00ffb4;border-radius:16px;padding:28px;margin-bottom:24px;"><p style="font-size:11px;font-weight:700;color:#00ffb4;letter-spacing:2px;text-transform:uppercase;margin:0 0 10px;">SESSION CONFIRMED</p><h1 style="font-size:26px;font-weight:800;color:#fff;margin:0 0 12px;">Payment received — session booked</h1><p style="font-size:15px;color:#94a3b8;line-height:1.7;margin:0;">Samuel will email you within 24 hours to agree on a time slot. Check <strong style="color:#fff;">admin@kloudaudit.eu</strong> — reply directly to that email to share your availability.</p></div><div style="background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px 24px;margin-bottom:24px;"><p style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">What to prepare</p>${["Your cloud provider console (read-only access helpful)", "Your current monthly bill or Cost Explorer screenshot", "The specific issues you want to fix", "Any Terraform or IaC files relevant to the audit"].map(i => `<div style="display:flex;gap:10px;margin-bottom:8px;"><span style="color:#00ffb4;flex-shrink:0;">→</span><p style="font-size:13px;color:#94a3b8;margin:0;">${i}</p></div>`).join('')}</div><p style="font-size:12px;color:#374151;text-align:center;">Questions? Reply to this email · admin@kloudaudit.eu</p></div></body></html>`,
             }),
-            sgMail.send({
-              to:      'admin@kloudaudit.eu',
-              from:    { email: 'admin@kloudaudit.eu', name: 'KloudAudit System' },
+            resend.emails.send({
+              from:    'KloudAudit System <admin@kloudaudit.eu>',
+              to:      ['admin@kloudaudit.eu'],
               subject: `💼 Session booked — ${email} · ${meta.provider || 'AWS'} · ${chargeDisplay}`,
               text:    `New consulting session booked.\n\nEmail: ${email}\nProvider: ${meta.provider || 'AWS'}\nCharge: ${chargeDisplay}\nJob ID: ${job.id}\n\nReply to ${email} within 24hrs to schedule the slot.`,
             }),
@@ -721,9 +720,9 @@ module.exports = async function handler(req, res) {
             level: 'error', event: 'blueprint.quality_fail_final',
             jobId: job.id, reason: quality.reason,
           }));
-          await sgMail.send({
-            to:      'admin@kloudaudit.eu',
-            from:    { email: 'admin@kloudaudit.eu', name: 'KloudAudit System' },
+          await resend.emails.send({
+            from:    'KloudAudit System <admin@kloudaudit.eu>',
+            to:      ['admin@kloudaudit.eu'],
             subject: `⚠️ Blueprint quality warning — job ${job.id}`,
             text:    `Blueprint quality validation failed after 2 attempts.\n\nJob: ${job.id}\nCustomer: ${email}\nProduct: ${job.product_type}\nReason: ${quality.reason}\n\nDelivering anyway — manual review recommended.`,
           });
@@ -745,10 +744,9 @@ module.exports = async function handler(req, res) {
 
         // 5. Send emails in parallel
         await Promise.all([
-          sgMail.send({
-            to:       email,
-            from:     { email: 'admin@kloudaudit.eu', name: 'Samuel @ KloudAudit' },
-            replyTo:  'admin@kloudaudit.eu',
+          resend.emails.send({
+            from:    'Samuel @ KloudAudit <admin@kloudaudit.eu>',
+            to:      [email],
             subject:  isBundle
               ? `🎯 Your Cost + Security Bundle is ready — ${assessmentId}`
               : isSecur
@@ -758,9 +756,9 @@ module.exports = async function handler(req, res) {
                   : `⚡ Your ${provider} Cost Blueprint is ready`,
             html: customerHtml,
           }),
-          sgMail.send({
-            to:      'admin@kloudaudit.eu',
-            from:    { email: 'admin@kloudaudit.eu', name: 'KloudAudit System' },
+          resend.emails.send({
+            from:    'KloudAudit System <admin@kloudaudit.eu>',
+            to:      ['admin@kloudaudit.eu'],
             subject: `${isBundle ? '🎯' : isSecur ? '🛡' : isCfoReport ? '📊' : '⚡'} ${isCfoReport ? 'CFO Report' : 'Blueprint'} delivered — ${email} · ${provider} · ${chargeDisplay}`,
             text:    `Email: ${email}\nProvider: ${provider}\nProduct: ${job.product_type}\nCharge: ${chargeDisplay}\nJob ID: ${job.id}\nIssues: ${(meta.flaggedIssueLabels || '').split('||').filter(Boolean).join(', ')}`,
           }),
@@ -846,9 +844,9 @@ module.exports = async function handler(req, res) {
         // Alert admin on final failure
         if (isFinalAttempt) {
           try {
-            await sgMail.send({
-              to:      'admin@kloudaudit.eu',
-              from:    { email: 'admin@kloudaudit.eu', name: 'KloudAudit Alert' },
+            await resend.emails.send({
+              from:    'KloudAudit Alert <admin@kloudaudit.eu>',
+              to:      ['admin@kloudaudit.eu'],
               subject: `🚨 Blueprint delivery FAILED after ${MAX_ATTEMPTS} attempts — ${job.email}`,
               text:    `Job ID: ${job.id}\nEmail: ${job.email}\nProduct: ${job.product_type}\nError: ${jobErr.message}\n\nManually investigate via Supabase dashboard.`,
             });
@@ -907,7 +905,7 @@ module.exports = async function handler(req, res) {
             continue;
           }
 
-          await sgMail.send({ to: fu.email, from: { email: 'admin@kloudaudit.eu', name: 'Samuel @ KloudAudit' }, replyTo: 'admin@kloudaudit.eu', subject, html });
+          await resend.emails.send({ from: 'Samuel @ KloudAudit <admin@kloudaudit.eu>', to: [fu.email], subject, html });
           await supabaseAdmin.from('follow_up_queue').update({ status: 'sent', sent_at: nowTs.toISOString() }).eq('id', fu.id);
           console.log(`✅ Follow-up sent: ${fu.follow_up_type} → ${fu.email}`);
           followUpsSent++;

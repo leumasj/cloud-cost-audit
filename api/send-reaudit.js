@@ -8,7 +8,7 @@
 // Psychology: user already knows KloudAudit works (they used it before).
 // The email re-activates that trust and creates urgency — cloud waste accumulates.
 
-const sgMail  = require('@sendgrid/mail');
+const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
@@ -131,7 +131,7 @@ function buildReauditEmail(subscriber) {
 
 // ── HANDLER ───────────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  const resend = new Resend(process.env.RESEND_API_KEY);
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -177,10 +177,9 @@ module.exports = async function handler(req, res) {
       try {
         const html = buildReauditEmail(subscriber);
 
-        await sgMail.send({
-          to:      subscriber.email,
-          from:    { email: 'admin@kloudaudit.eu', name: 'Samuel @ KloudAudit' },
-          replyTo: 'admin@kloudaudit.eu',
+        await resend.emails.send({
+          from:    'Samuel @ KloudAudit <admin@kloudaudit.eu>',
+          to:      [subscriber.email],
           subject: `Your ${subscriber.provider || 'cloud'} bill has drifted — free re-audit ready`,
           html,
         });
@@ -202,9 +201,9 @@ module.exports = async function handler(req, res) {
 
     // Notify admin of daily batch
     if (sent > 0) {
-      await sgMail.send({
-        to:      'admin@kloudaudit.eu',
-        from:    { email: 'admin@kloudaudit.eu', name: 'KloudAudit System' },
+      await resend.emails.send({
+        from:    'KloudAudit System <admin@kloudaudit.eu>',
+        to:      ['admin@kloudaudit.eu'],
         subject: `📬 Re-audit reminders sent: ${sent} emails`,
         text:    `Sent: ${sent}\nFailed: ${failed}\nTotal due: ${subscribers.length}`,
       });

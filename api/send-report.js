@@ -1,7 +1,7 @@
 // api/send-report.js
 // Sends the free audit report summary to the user's email via SendGrid
 
-const sgMail = require('@sendgrid/mail');
+const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
 
 const supabaseAdmin = createClient(
@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 );
 
 module.exports = async function handler(req, res) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  const resend = new Resend(process.env.RESEND_API_KEY);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -82,17 +82,16 @@ module.exports = async function handler(req, res) {
 
     await Promise.all([
       // Send report to user
-      sgMail.send({
-        to: email,
-        from: { email: 'admin@kloudaudit.eu', name: 'Samuel @ KloudAudit' },
-        replyTo: 'admin@kloudaudit.eu',
+      resend.emails.send({
+        from:    'Samuel @ KloudAudit <admin@kloudaudit.eu>',
+        to:      [email],
         subject: `Your ${provider || 'Cloud'} Audit Report — $${Number(savingsMin).toLocaleString()}–$${Number(savingsMax).toLocaleString()}/mo found`,
         html,
       }),
       // Notify admin
-      sgMail.send({
-        to: 'admin@kloudaudit.eu',
-        from: { email: 'admin@kloudaudit.eu', name: 'KloudAudit System' },
+      resend.emails.send({
+        from:    'KloudAudit System <admin@kloudaudit.eu>',
+        to:      ['admin@kloudaudit.eu'],
         subject: `📬 Free report requested — ${email} · ${provider} · $${Number(savingsMin).toLocaleString()}–$${Number(savingsMax).toLocaleString()}/mo`,
         text: `Email: ${email}\nProvider: ${provider}\nBill: $${monthlyBill}/mo\nSavings: $${savingsMin}–$${savingsMax}/mo\nIssues: ${flaggedCount}\n${flaggedIssues.join(', ')}`,
       }),
