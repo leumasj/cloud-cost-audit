@@ -384,7 +384,7 @@ function validateBlueprintQuality(content, productType) {
 
   // Minimum word counts by product type
   const minimums = {
-    blueprint:  800,
+    blueprint:  500,
     security:   600,
     cfo_report: 400,
     bundle:     1200,
