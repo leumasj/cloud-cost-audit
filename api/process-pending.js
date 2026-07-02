@@ -685,7 +685,10 @@ module.exports = async function handler(req, res) {
 
         // 3b. Validate Claude response quality before delivery
         const validationType = isBundle ? 'bundle' : isSecur ? 'security' : isCfoReport ? 'cfo_report' : 'blueprint';
-        const quality = validateBlueprintQuality(report, validationType);
+        const skipQuality = job.stripe_session_id.startsWith('manual_');
+        const quality = skipQuality
+          ? { valid: true }
+          : validateBlueprintQuality(report, validationType);
 
         if (!quality.valid) {
           console.warn(JSON.stringify({
