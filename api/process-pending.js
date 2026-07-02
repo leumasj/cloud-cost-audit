@@ -429,6 +429,15 @@ function validateBlueprintQuality(content, productType) {
 
 // ── MAIN HANDLER ─────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
+  try {
+    const { Resend } = require('resend');
+    console.log('Resend loaded OK');
+  } catch(e) {
+    console.error('Resend load failed:', e.message);
+    return res.status(500).json({ error: 'Module load failed', detail: e.message });
+  }
+
+  try {
   const { Resend } = require('resend');
   const resend = new Resend(process.env.RESEND_API_KEY);
   // Allow GET (from cron) or POST (manual trigger)
@@ -932,5 +941,9 @@ module.exports = async function handler(req, res) {
     console.error('process-pending error:', err.message);
     sentry.captureException(err, { context: 'process-pending-outer' });
     return res.status(500).json({ error: err.message });
+  }
+  } catch (fatalError) {
+    console.error('Fatal handler error:', fatalError.message, fatalError.stack);
+    return res.status(500).json({ error: fatalError.message });
   }
 };
