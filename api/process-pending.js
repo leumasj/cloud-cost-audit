@@ -383,7 +383,7 @@ function validateBlueprintQuality(content, productType) {
 
   // Minimum word counts by product type
   const minimums = {
-    blueprint:  500,
+    blueprint:  600,
     security:   600,
     cfo_report: 400,
     bundle:     1200,
@@ -699,10 +699,7 @@ module.exports = async function handler(req, res) {
 
         // 3b. Validate Claude response quality before delivery
         const validationType = isBundle ? 'bundle' : isSecur ? 'security' : isCfoReport ? 'cfo_report' : 'blueprint';
-        const skipQuality = job.stripe_session_id.startsWith('manual_');
-        const quality = skipQuality
-          ? { valid: true }
-          : validateBlueprintQuality(report, validationType);
+        const quality = validateBlueprintQuality(report, validationType);
 
         if (!quality.valid) {
           console.warn(JSON.stringify({
