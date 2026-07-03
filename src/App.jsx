@@ -2896,6 +2896,7 @@ export default function App() {
   const [secScore, setSecScore] = useState(null); // computed after audit
   const [secEmail, setSecEmail] = useState("");
   const [secPaymentLoading, setSecPaymentLoading] = useState(false);
+  const [earlyEmail, setEarlyEmail] = useState('');
   const [gateEmail, setGateEmail] = useState(() => initialSession?.gateEmail || '');
   const [scores, setScores] = useState(null);
   const [shareUrl, setShareUrl] = useState(null);
@@ -5449,12 +5450,23 @@ aws iam simulate-principal-policy \\
               </div>
             )}
           </div>
+          <div>
+            <label htmlFor="intake-email" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Email (optional — get your report sent automatically)</label>
+            <input
+              id="intake-email"
+              type="email"
+              placeholder="you@company.com"
+              value={earlyEmail}
+              onChange={e => setEarlyEmail(e.target.value)}
+              style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "12px", color: "#fff", fontSize: "15px", transition: "all 0.2s" }}
+            />
+          </div>
           {bill > 0 && bill < 500 && (
             <div style={{ padding: "12px 16px", background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.2)", borderRadius: "10px", fontSize: "13px", color: "#fbbf24" }}>
               💡 For bills under $500/month, the free audit checklist gives you the most value. The paid Blueprint ROI is strongest at $1,500+/month.
             </div>
           )}
-          <button className="glow-btn" disabled={!provider || !monthlyBill || parseFloat(monthlyBill) <= 0} onClick={() => goTo("audit")}
+          <button className="glow-btn" disabled={!provider || !monthlyBill || parseFloat(monthlyBill) <= 0} onClick={() => { if (earlyEmail && !gateEmail) setGateEmail(earlyEmail); goTo("audit"); }}
             style={{ background: provider && monthlyBill ? "var(--green)" : "rgba(255,255,255,0.06)", color: provider && monthlyBill ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "16px", fontSize: "15px", boxShadow: provider && monthlyBill ? "0 0 24px rgba(0,255,180,0.3)" : "none", cursor: provider && monthlyBill ? "pointer" : "not-allowed", marginTop: "8px" }}>
             Begin Audit →
           </button>

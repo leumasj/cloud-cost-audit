@@ -59,10 +59,27 @@ module.exports = async function handler(req, res) {
       supabaseAdmin.from('audits').select('*', { count: 'exact', head: true }).eq('blueprint_paid', true),
       supabaseAdmin.from('audits').select('provider').then(({ data }) => {
         const counts = {};
-        (data || []).forEach(a => { counts[a.provider] = (counts[a.provider] || 0) + 1; });
+        (data || []).forEach(a => { const provider = a.provider === 'Multi-cloud' ? 'Multi-Cloud' : a.provider; counts[provider] = (counts[provider] || 0) + 1; });
         return { data: Object.entries(counts).sort((a,b) => b[1]-a[1]) };
       }),
-      supabaseAdmin.from('audits').select('created_at, email, provider, monthly_bill, waste_score, savings_min, savings_max, blueprint_paid, audit_type').order('created_at', { ascending: false }).limit(10),
+      Promise.all([
+        supabaseAdmin.from('audits')
+          .select('id, created_at, email, provider, monthly_bill, waste_score, savings_min, savings_max, blueprint_paid, audit_type')
+          .eq('blueprint_paid', true)
+          .order('created_at', { ascending: false })
+          .limit(5),
+        supabaseAdmin.from('audits')
+          .select('id, created_at, email, provider, monthly_bill, waste_score, savings_min, savings_max, blueprint_paid, audit_type')
+          .order('created_at', { ascending: false })
+          .limit(10),
+      ]).then(([{ data: paid }, { data: recent }]) => {
+        const seen = new Set();
+        const merged = [];
+        for (const a of [...(paid || []), ...(recent || [])]) {
+          if (!seen.has(a.id)) { seen.add(a.id); merged.push(a); }
+        }
+        return { data: merged };
+      }),
       supabaseAdmin.from('delivery_queue').select('status').then(({ data }) => {
         const counts = { pending: 0, processing: 0, delivered: 0, failed: 0 };
         (data || []).forEach(d => { counts[d.status] = (counts[d.status] || 0) + 1; });
@@ -160,8 +177,8 @@ module.exports = async function handler(req, res) {
     </div>
     <div class="card">
       <div class="card-label">Cache Hits</div>
-      <div class="card-value yellow">${cacheStats?.total || 0}</div>
-      <div class="card-sub">${cacheStats?.entries || 0} cached responses</div>
+      <div class="card-value yellow">${cacheStats?.entries || 0}</div>
+      <div class="card-sub">${cacheStats?.total || 0} total cache hits</div>
     </div>
     <div class="card">
       <div class="card-label">Delivery Queue</div>
@@ -263,7 +280,7 @@ module.exports = async function handler(req, res) {
             <td>$${Number(a.monthly_bill || 0).toLocaleString()}</td>
             <td>
               <span style="color:${a.waste_score >= 70 ? '#4ade80' : a.waste_score >= 50 ? '#fbbf24' : '#f87171'};font-weight:700">
-                ${a.waste_score || '—'}${a.waste_score ? '/100' : ''}
+                ${a.waste_score ? `${a.waste_score}/100` : '<span style="color:#475569;font-size:11px">incomplete</span>'}
               </span>
             </td>
             <td style="color:#00ffb4">$${Number(a.savings_min || 0).toLocaleString()}–$${Number(a.savings_max || 0).toLocaleString()}</td>
