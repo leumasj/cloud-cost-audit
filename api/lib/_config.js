@@ -31,12 +31,15 @@ const PRODUCT_TYPE_MAP = {
   'blueprint':            'blueprint',
   'security_certificate': 'security_blueprint',
   'bundle':               'bundle',
+  'consulting_session':   'consulting_session',
+  'cfo_report':           'cfo_report',
 };
 
 // ── ALLOWED CORS ORIGINS ──────────────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
   'https://www.kloudaudit.eu',
   'https://kloudaudit.eu',
+  'http://localhost:5173',
 ];
 
 // ── REQUIRED ENVIRONMENT VARIABLES ───────────────────────────────────────────
@@ -45,7 +48,7 @@ const REQUIRED_ENV = [
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
   'ANTHROPIC_API_KEY',
-  'SENDGRID_API_KEY',
+  'RESEND_API_KEY',
   'SUPABASE_URL',
   'SUPABASE_ANON_KEY',
   'CRON_SECRET',

@@ -15,24 +15,23 @@ const sentry = require('./lib/_sentry');
 
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-// anon client — for operations that don't need elevated access
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
 
-// service role client — bypasses RLS for admin operations (delivery, cache reads)
-// NEVER expose this key to the browser or frontend
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY // fallback for backward compat
-);
+// ── SUPABASE FACTORY — initialised inside handler to pick up env vars safely ──
+function getSupabase() {
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+}
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+  );
+}
 
 // ── CRON GUARD — prevent concurrent runs ─────────────────────────────────────
 // Vercel cron can fire multiple times if a run takes longer than 60s.
 // We mark jobs as 'processing' immediately to prevent double-delivery.
 
-const MAX_ATTEMPTS = 5;
+const MAX_ATTEMPTS = 3;
 const PROCESS_BATCH = 5; // process up to 5 jobs per cron run
 
 // ── CACHE HELPERS ─────────────────────────────────────────────────────────────
@@ -429,17 +428,20 @@ function validateBlueprintQuality(content, productType) {
 
 // ── MAIN HANDLER ─────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
+  // Initialise clients inside handler so env vars are available at call time
+  const supabase      = getSupabase();
+  const supabaseAdmin = getSupabaseAdmin();
+
+  let resend;
   try {
     const { Resend } = require('resend');
-    console.log('Resend loaded OK');
+    resend = new Resend(process.env.RESEND_API_KEY);
   } catch(e) {
     console.error('Resend load failed:', e.message);
     return res.status(500).json({ error: 'Module load failed', detail: e.message });
   }
 
   try {
-  const { Resend } = require('resend');
-  const resend = new Resend(process.env.RESEND_API_KEY);
   // Allow GET (from cron) or POST (manual trigger)
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -492,7 +494,8 @@ module.exports = async function handler(req, res) {
         // ── 3-DAY FOLLOW-UP EMAIL ─────────────────────────────────────────────
         if (job.product_type === 'followup_email') {
           // Only process if scheduled_for time has passed
-          if (new Date(job.scheduled_for) > new Date()) {
+          // Guard: delivery_queue may not have scheduled_for column — treat missing as ready
+          if (job.scheduled_for && new Date(job.scheduled_for) > new Date()) {
             // Not ready yet — skip this job
             continue;
           }
@@ -531,7 +534,8 @@ module.exports = async function handler(req, res) {
 
         if (job.product_type === 'abandoned_audit_email') {
           // Only process if 48 hours have passed
-          if (new Date(job.scheduled_for) > new Date()) {
+          // Guard: delivery_queue may not have scheduled_for column — treat missing as ready
+          if (job.scheduled_for && new Date(job.scheduled_for) > new Date()) {
             continue;
           }
 
@@ -624,7 +628,7 @@ module.exports = async function handler(req, res) {
             : 'session fee';
           await Promise.all([
             resend.emails.send({
-              from:    'Samuel @ KloudAudit <admin@kloudaudit.eu>',
+              from:    'Samuel — KloudAudit <admin@kloudaudit.eu>',
               to:      [email],
               subject: '✅ Session booked — we\'ll confirm your slot within 24hrs',
               html: `<!DOCTYPE html><html><body style="background:#07070f;font-family:system-ui;margin:0;padding:0;"><div style="max-width:600px;margin:0 auto;padding:40px 24px;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:32px;"><div style="width:36px;height:36px;background:#00ffb4;border-radius:8px;font-size:18px;display:flex;align-items:center;justify-content:center;">⚡</div><span style="font-size:20px;font-weight:800;color:#fff;">KloudAudit</span></div><div style="background:linear-gradient(135deg,rgba(0,255,180,0.1),rgba(99,102,241,0.08));border:1.5px solid #00ffb4;border-radius:16px;padding:28px;margin-bottom:24px;"><p style="font-size:11px;font-weight:700;color:#00ffb4;letter-spacing:2px;text-transform:uppercase;margin:0 0 10px;">SESSION CONFIRMED</p><h1 style="font-size:26px;font-weight:800;color:#fff;margin:0 0 12px;">Payment received — session booked</h1><p style="font-size:15px;color:#94a3b8;line-height:1.7;margin:0;">Samuel will email you within 24 hours to agree on a time slot. Check <strong style="color:#fff;">admin@kloudaudit.eu</strong> — reply directly to that email to share your availability.</p></div><div style="background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px 24px;margin-bottom:24px;"><p style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">What to prepare</p>${["Your cloud provider console (read-only access helpful)", "Your current monthly bill or Cost Explorer screenshot", "The specific issues you want to fix", "Any Terraform or IaC files relevant to the audit"].map(i => `<div style="display:flex;gap:10px;margin-bottom:8px;"><span style="color:#00ffb4;flex-shrink:0;">→</span><p style="font-size:13px;color:#94a3b8;margin:0;">${i}</p></div>`).join('')}</div><p style="font-size:12px;color:#374151;text-align:center;">Questions? Reply to this email · admin@kloudaudit.eu</p></div></body></html>`,
@@ -751,7 +755,7 @@ module.exports = async function handler(req, res) {
         // 5. Send emails in parallel
         await Promise.all([
           resend.emails.send({
-            from:    'Samuel @ KloudAudit <admin@kloudaudit.eu>',
+            from:    'Samuel — KloudAudit <admin@kloudaudit.eu>',
             to:      [email],
             subject:  isBundle
               ? `🎯 Your Cost + Security Bundle is ready — ${assessmentId}`
@@ -911,7 +915,7 @@ module.exports = async function handler(req, res) {
             continue;
           }
 
-          await resend.emails.send({ from: 'Samuel @ KloudAudit <admin@kloudaudit.eu>', to: [fu.email], subject, html });
+          await resend.emails.send({ from: 'Samuel — KloudAudit <admin@kloudaudit.eu>', to: [fu.email], subject, html });
           await supabaseAdmin.from('follow_up_queue').update({ status: 'sent', sent_at: nowTs.toISOString() }).eq('id', fu.id);
           console.log(`✅ Follow-up sent: ${fu.follow_up_type} → ${fu.email}`);
           followUpsSent++;

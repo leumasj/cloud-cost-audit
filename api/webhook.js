@@ -18,11 +18,6 @@ const stripe  = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 const sentry  = require('./lib/_sentry');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
-
 // ── PRODUCT TYPE MAP ──────────────────────────────────────────────────────────
 // Maps Stripe metadata 'type' values to delivery_queue product_type values.
 // CRITICAL: must be an explicit map — a ternary cannot handle 3 product types.
@@ -62,6 +57,9 @@ async function getRawBody(req) {
 
 // ── HANDLER ───────────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
+  // Initialise inside handler so env vars are available at call time
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
