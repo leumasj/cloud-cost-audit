@@ -1090,7 +1090,7 @@ function NATGatewayCalculator({ onRunAudit }) {
         <h3 className="display" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "10px" }}>
           Run the full 15-minute audit to find the other 17.
         </h3>
-        <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "24px", maxWidth: "480px", margin: "0 auto 24px" }}>
+        <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "24px", maxWidth: "min(480px, calc(100vw - 32px))", margin: "0 auto 24px" }}>
           Compute, storage, database, governance — all 18 checks with savings estimates tied to your actual monthly bill. Free, no credentials required.
         </p>
         <button className="glow-btn" onClick={onRunAudit}
@@ -1226,7 +1226,7 @@ function SpotInstanceCalculator({ onRunAudit }) {
         <h3 className="display" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "10px" }}>
           Run the full audit to find the other 17.
         </h3>
-        <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "24px", maxWidth: "480px", margin: "0 auto 24px" }}>
+        <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "24px", maxWidth: "min(480px, calc(100vw - 32px))", margin: "0 auto 24px" }}>
           Storage, databases, network, governance — all 18 checks with savings estimates tied to your actual monthly bill. Free, no credentials required.
         </p>
         <button className="glow-btn" onClick={onRunAudit}
