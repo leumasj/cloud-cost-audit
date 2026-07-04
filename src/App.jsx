@@ -660,7 +660,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(12px)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", animation: "fadeIn 0.2s ease" }}>
-      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="sec-blueprint-dialog-title" style={{ background: "linear-gradient(145deg, #0f0f1a, #13131f)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "24px", maxWidth: "480px", width: "100%", overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(248,113,113,0.08)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="sec-blueprint-dialog-title" style={{ background: "linear-gradient(145deg, #0f0f1a, #13131f)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "24px", maxWidth: "min(480px, calc(100vw - 32px))", width: "100%", overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(248,113,113,0.08)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
 
         {/* Header */}
         <div style={{ background: "linear-gradient(135deg, rgba(248,113,113,0.1), rgba(251,146,60,0.08))", borderBottom: "1px solid rgba(248,113,113,0.15)", padding: "28px 32px 22px" }}>
@@ -2225,7 +2225,7 @@ const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, 
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
-      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" style={{ background: "var(--bg2)", border: "1px solid rgba(129,140,248,0.3)", borderRadius: "20px", maxWidth: "480px", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" style={{ background: "var(--bg2)", border: "1px solid rgba(129,140,248,0.3)", borderRadius: "20px", maxWidth: "min(480px, calc(100vw - 32px))", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>📊</div>
           <h2 className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>CFO & Board Report</h2>
@@ -2511,6 +2511,7 @@ const PricingModal = memo(function PricingModal({
 const NewsletterWidget = memo(function NewsletterWidget() {
   const [nEmail, setNEmail] = useState('');
   const [nStatus, setNStatus] = useState('idle'); // idle | loading | success | error
+  const [nError, setNError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -2522,9 +2523,17 @@ const NewsletterWidget = memo(function NewsletterWidget() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'newsletter', email: nEmail }),
       });
-      setNStatus(r.ok ? 'success' : 'error');
+      if (r.ok) {
+        setNStatus('success');
+      } else {
+        setNStatus('idle');
+        setNError('Something went wrong. Please try again.');
+        setTimeout(() => setNError(''), 4000);
+      }
     } catch {
-      setNStatus('error');
+      setNStatus('idle');
+      setNError('Something went wrong. Please try again.');
+      setTimeout(() => setNError(''), 4000);
     }
   };
 
@@ -2546,7 +2555,7 @@ const NewsletterWidget = memo(function NewsletterWidget() {
             style={{ padding: "11px 20px", borderRadius: "10px", border: "none", background: nStatus === 'loading' ? "rgba(99,102,241,0.4)" : "linear-gradient(135deg,#818cf8,#6366f1)", color: "#fff", fontWeight: 800, fontSize: "13px", cursor: nStatus === 'loading' ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}>
             {nStatus === 'loading' ? "…" : "Subscribe →"}
           </button>
-          {nStatus === 'error' && <p style={{ fontSize: "11px", color: "#f87171", alignSelf: "center", margin: 0 }}>Something went wrong — try again</p>}
+          {nError && <p style={{ color: '#f87171', fontSize: '13px', marginTop: '8px', width: '100%', margin: 0, alignSelf: 'center' }}>{nError}</p>}
         </form>
       )}
     </div>
@@ -3002,7 +3011,6 @@ export default function App() {
     const checkoutSessionId = params.get("session_id");
 
     if (paymentStatus === "success" || paymentStatus === "sub_success" || paymentStatus === "session_success") {
-      localStorage.removeItem('ka_session');
       setStep("payment_success");
       window.gtag?.('event', 'purchase', {
         transaction_id: checkoutSessionId || undefined,
@@ -3791,7 +3799,7 @@ aws ec2 describe-reserved-instances \\
         <div style={{ fontSize: "72px", marginBottom: "24px" }}>🎉</div>
         <h1 className="display" style={{ fontSize: "36px", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff", marginBottom: "12px" }}>Blueprint on its way!</h1>
         <p style={{ fontSize: "17px", color: "var(--text-muted)", lineHeight: 1.7, marginBottom: "32px" }}>
-          Payment confirmed. Your AI-generated guide is being prepared and will land in your inbox within <strong style={{ color: "var(--green)" }}>2 minutes</strong>.
+          Payment confirmed. Your AI-generated guide is being prepared and will land in your inbox within <strong style={{ color: "var(--green)" }}>5 minutes</strong>.
         </p>
         <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "14px", padding: "24px", marginBottom: "32px" }}>
           <p style={{ fontSize: "14px", color: "var(--text-dim)", marginBottom: "4px" }}>Check your email for a message from</p>
@@ -3799,7 +3807,7 @@ aws ec2 describe-reserved-instances \\
           <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>Subject: "⚡ Your [Provider] Cost Blueprint is ready"</p>
           <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>Check spam if you don't see it within 5 minutes.</p>
         </div>
-        <button className="glow-btn" onClick={() => { localStorage.removeItem('ka_session'); setChecked({}); setProvider(''); setMonthlyBill(''); setCompanyName(''); setActiveSection(0); setGateEmail(''); goTo('intro'); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Run Another Audit →</button>
+        <button className="glow-btn" onClick={() => { localStorage.removeItem('ka_session'); setChecked({}); setProvider(''); setMonthlyBill(''); setCompanyName(''); setActiveSection(0); setGateEmail(''); goTo('intro'); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Start a New Audit →</button>
       </div>
     </div>
   );

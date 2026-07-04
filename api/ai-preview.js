@@ -19,16 +19,16 @@ const sentry = require('./lib/_sentry');
 const { createClient } = require('@supabase/supabase-js');
 const { RATE_LIMIT_REQUESTS, RATE_LIMIT_WINDOW_MS } = require('./lib/_config');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+function getSupabase() {
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+}
 
 // ── PERSISTENT RATE LIMITER ───────────────────────────────────────────────────
 // Stored in Supabase so it survives cold starts — in-memory Map resets on every
 // Vercel cold start, making it trivially bypassable by waiting 5 minutes.
 async function isRateLimited(ip) {
   try {
+    const supabase = getSupabase();
     const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
 
     // Count requests from this IP in the last hour

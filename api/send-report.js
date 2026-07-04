@@ -98,7 +98,7 @@ module.exports = async function handler(req, res) {
     ]);
 
     const sessionId = req.body.sessionId || req.body.session_id || 'unknown';
-    const followUpAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    const followUpAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await supabaseAdmin
       .from('delivery_queue')
       .insert({

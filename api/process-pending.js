@@ -574,7 +574,7 @@ module.exports = async function handler(req, res) {
       Your ${abandonedMeta.provider || 'Cloud'} audit found ${abandonedMeta.flaggedCount || 0} issues
     </h2>
     <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px">
-      You ran a KloudAudit audit 48 hours ago and found 
+      You ran a KloudAudit audit 24 hours ago and found
       ${savingsLine} in recoverable spend. 
       The free report shows what's wrong. 
       The Blueprint shows exactly how to fix it.
@@ -650,12 +650,19 @@ module.exports = async function handler(req, res) {
         let report   = null;
         let cacheHit = false;
 
+        // bundleCacheKeys tracks keys for fresh bundle reports so we can cache after quality passes
+        let bundleCacheKeys = null;
+        let freshBundleReports = null;
+        let singleCacheKey = null;
+        let singleCacheHit = false;
+
         if (isBundle) {
           // Bundle: generate both reports in parallel — 2x value for the customer
           const [costKey, secKey] = [
             buildCacheKey('blueprint', meta),
             buildCacheKey('security_blueprint', meta),
           ];
+          bundleCacheKeys = { costKey, secKey };
           const [cachedCost, cachedSec] = await Promise.all([
             getCachedReport(costKey),
             getCachedReport(secKey),
@@ -665,21 +672,28 @@ module.exports = async function handler(req, res) {
             cachedCost ? Promise.resolve(cachedCost) : anthropic.messages.create({
               model: 'claude-sonnet-4-6', max_tokens: 2000,
               messages: [{ role: 'user', content: buildBlueprintPrompt(meta) }],
-            }).then(r => { const t = r.content[0].text; setCachedReport(costKey, 'blueprint', t); return t; }),
+            }).then(r => r.content[0].text),
             cachedSec ? Promise.resolve(cachedSec) : anthropic.messages.create({
               model: 'claude-sonnet-4-6', max_tokens: 2000,
               messages: [{ role: 'user', content: buildSecurityPrompt(meta) }],
-            }).then(r => { const t = r.content[0].text; setCachedReport(secKey, 'security_blueprint', t); return t; }),
+            }).then(r => r.content[0].text),
           ]);
+
+          // Track which reports were freshly generated (not cached) for post-quality caching
+          freshBundleReports = {
+            cost: cachedCost ? null : costReport,
+            sec:  cachedSec  ? null : secReport,
+          };
 
           report = `# COST BLUEPRINT\n\n${costReport}\n\n---\n\n# SECURITY BLUEPRINT\n\n${secReport}`;
           cacheHit = !!(cachedCost && cachedSec);
 
         } else {
           // Single product — check cache first
-          const cacheKey = buildCacheKey(job.product_type, meta);
-          report   = await getCachedReport(cacheKey);
-          cacheHit = !!report;
+          singleCacheKey = buildCacheKey(job.product_type, meta);
+          report   = await getCachedReport(singleCacheKey);
+          singleCacheHit = !!report;
+          cacheHit = singleCacheHit;
 
           if (!report) {
             console.log(`Cache miss — calling Claude for job ${job.id}`);
@@ -695,7 +709,7 @@ module.exports = async function handler(req, res) {
               ),
             ]);
             report = aiResp.content[0].text;
-            setCachedReport(cacheKey, job.product_type, report);
+            // NOTE: setCachedReport is called AFTER quality validation passes (below)
           } else {
             console.log(`Cache hit — delivering cached report for job ${job.id}`);
           }
@@ -737,6 +751,17 @@ module.exports = async function handler(req, res) {
             text:    `Blueprint quality validation failed after 2 attempts.\n\nJob: ${job.id}\nCustomer: ${email}\nProduct: ${job.product_type}\nReason: ${quality.reason}\n\nDelivering anyway — manual review recommended.`,
           });
           // Fall through to normal delivery below
+        }
+
+        // 3c. Cache the validated report (only after quality passes or on final retry)
+        // For single products: cache the freshly generated report now that it passed quality.
+        if (!cacheHit && singleCacheKey && !singleCacheHit) {
+          setCachedReport(singleCacheKey, job.product_type, report);
+        }
+        // For bundles: cache each fresh sub-report individually (so future single orders can hit them too)
+        if (isBundle && freshBundleReports && bundleCacheKeys) {
+          if (freshBundleReports.cost) setCachedReport(bundleCacheKeys.costKey, 'blueprint', freshBundleReports.cost);
+          if (freshBundleReports.sec)  setCachedReport(bundleCacheKeys.secKey, 'security_blueprint', freshBundleReports.sec);
         }
 
         // 4. Build emails

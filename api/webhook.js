@@ -120,7 +120,20 @@ module.exports = async function handler(req, res) {
   // 5. Save to delivery queue — FAST (~100ms)
   // We do NOT call Claude here. We save the job and return 200 immediately.
   // Stripe is satisfied, no retry. /api/process-pending handles actual delivery.
+  const sessionId = session.id;
   try {
+    // Idempotency pre-check — fast SELECT before INSERT to avoid duplicate deliveries
+    const { data: existing } = await supabase
+      .from('delivery_queue')
+      .select('id')
+      .eq('stripe_session_id', sessionId)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      log('info', 'webhook.duplicate', { sessionId });
+      return res.status(200).json({ received: true, duplicate: true });
+    }
+
     const { error: dbError } = await supabase
       .from('delivery_queue')
       .insert({

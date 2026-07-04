@@ -9,6 +9,7 @@ const { EventEmitter } = require('events');
 
 // ── Mock state — reassigned in beforeEach ─────────────────────────────────────
 let mockInsert;
+let mockSelect;
 let mockConstructEvent;
 let mockCaptureException;
 
@@ -60,11 +61,18 @@ beforeEach(() => {
   jest.resetModules();
 
   mockInsert           = jest.fn().mockResolvedValue({ error: null });
+  // By default the idempotency pre-check SELECT finds no existing row
+  mockSelect           = jest.fn().mockResolvedValue({ data: [] });
   mockConstructEvent   = jest.fn();
   mockCaptureException = jest.fn();
 
   jest.doMock('@supabase/supabase-js', () => ({
-    createClient: () => ({ from: () => ({ insert: mockInsert }) }),
+    createClient: () => ({
+      from: () => ({
+        insert: mockInsert,
+        select: () => ({ eq: () => ({ limit: mockSelect }) }),
+      }),
+    }),
   }));
 
   jest.doMock('stripe', () =>
@@ -172,8 +180,23 @@ test('ignores subscription checkout events and does not queue them', async () =>
   );
 });
 
-test('returns 200 with duplicate:true on unique-constraint violation (23505)', async () => {
+test('returns 200 with duplicate:true when session already exists in queue (idempotency pre-check)', async () => {
   mockConstructEvent.mockReturnValue(makeCheckoutEvent());
+  // Pre-check SELECT finds an existing row — should short-circuit before INSERT
+  mockSelect.mockResolvedValue({ data: [{ id: 'existing-row-id' }] });
+  const handler = loadHandler();
+  const res = makeRes();
+  await handler(makeReq(), res);
+  expect(res.status).toHaveBeenCalledWith(200);
+  expect(res.json).toHaveBeenCalledWith(
+    expect.objectContaining({ received: true, duplicate: true })
+  );
+  expect(mockInsert).not.toHaveBeenCalled();
+});
+
+test('returns 200 with duplicate:true on unique-constraint violation (23505) as fallback', async () => {
+  mockConstructEvent.mockReturnValue(makeCheckoutEvent());
+  // Pre-check finds nothing, but INSERT hits a race-condition 23505
   mockInsert.mockResolvedValue({ error: { code: '23505', message: 'duplicate key' } });
   const handler = loadHandler();
   const res = makeRes();
