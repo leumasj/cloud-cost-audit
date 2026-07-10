@@ -75,11 +75,9 @@ api/process-pending.js — atomic claim, Claude AI generation, SendGrid delivery
 | process-pending.js | GET | Blueprint/CFO Report delivery cron |
 | create-checkout.js | POST | Stripe session creation |
 | ai-preview.js | POST | Rate-limited AI preview |
-| send-report.js | POST | Free audit report email |
-| send-reaudit.js | GET | 90-day re-audit reminders |
+| email.js | POST/GET | Free audit report email · 90-day re-audit reminders |
 | get-benchmarks.js | GET | Aggregated audit statistics |
 | dashboard.js | GET | Admin analytics |
-| unsubscribe.js | GET | GDPR one-click unsubscribe |
 | health.js | GET | Uptime check |
 
 ### Shared Library (api/lib/ — excluded from function count)

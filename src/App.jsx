@@ -5383,7 +5383,7 @@ aws iam simulate-principal-policy \\
                 {[
                   { label: "Privacy Policy", href: "https://www.kloudaudit.eu/privacy/" },
                   { label: "Terms of Service", href: "https://www.kloudaudit.eu/terms/" },
-                  { label: "Unsubscribe", href: "https://www.kloudaudit.eu/api/unsubscribe" },
+                  { label: "Unsubscribe", href: "https://www.kloudaudit.eu/api/audits?action=unsubscribe" },
                 ].map(l => (
                   <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" style={{ display: "block", fontSize: "13px", color: "var(--text-muted)", textDecoration: "none", marginBottom: "10px", transition: "color 0.15s" }} onMouseEnter={e => e.currentTarget.style.color = "#fff"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>{l.label}</a>
                 ))}
@@ -5740,7 +5740,7 @@ aws iam simulate-principal-policy \\
       if (!gateEmail) { goTo("report"); return; }
       setGateSending(true);
       try {
-        await fetch("/api/send-report", {
+        await fetch("/api/email?action=send-report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
