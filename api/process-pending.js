@@ -778,26 +778,47 @@ module.exports = async function handler(req, res) {
             : buildBlueprintEmail(report, meta);
 
         // 5. Send emails in parallel
-        await Promise.all([
-          resend.emails.send({
-            from:    'Samuel — KloudAudit <admin@kloudaudit.eu>',
-            to:      [email],
-            subject:  isBundle
-              ? `🎯 Your Cost + Security Bundle is ready — ${assessmentId}`
-              : isSecur
-                ? `🛡 Your Security Blueprint is ready — ${assessmentId}`
-                : isCfoReport
-                  ? `📊 Your CFO & Board Report is ready — ${assessmentId}`
-                  : `⚡ Your ${provider} Cost Blueprint is ready`,
-            html: customerHtml,
-          }),
-          resend.emails.send({
-            from:    'KloudAudit System <admin@kloudaudit.eu>',
-            to:      ['admin@kloudaudit.eu'],
-            subject: `${isBundle ? '🎯' : isSecur ? '🛡' : isCfoReport ? '📊' : '⚡'} ${isCfoReport ? 'CFO Report' : 'Blueprint'} delivered — ${email} · ${provider} · ${chargeDisplay}`,
-            text:    `Email: ${email}\nProvider: ${provider}\nProduct: ${job.product_type}\nCharge: ${chargeDisplay}\nJob ID: ${job.id}\nIssues: ${(meta.flaggedIssueLabels || '').split('||').filter(Boolean).join(', ')}`,
-          }),
-        ]);
+        try {
+          await Promise.all([
+            resend.emails.send({
+              from:    'Samuel — KloudAudit <admin@kloudaudit.eu>',
+              to:      [email],
+              subject:  isBundle
+                ? `🎯 Your Cost + Security Bundle is ready — ${assessmentId}`
+                : isSecur
+                  ? `🛡 Your Security Blueprint is ready — ${assessmentId}`
+                  : isCfoReport
+                    ? `📊 Your CFO & Board Report is ready — ${assessmentId}`
+                    : `⚡ Your ${provider} Cost Blueprint is ready`,
+              html: customerHtml,
+            }),
+            resend.emails.send({
+              from:    'KloudAudit System <admin@kloudaudit.eu>',
+              to:      ['admin@kloudaudit.eu'],
+              subject: `${isBundle ? '🎯' : isSecur ? '🛡' : isCfoReport ? '📊' : '⚡'} ${isCfoReport ? 'CFO Report' : 'Blueprint'} delivered — ${email} · ${provider} · ${chargeDisplay}`,
+              text:    `Email: ${email}\nProvider: ${provider}\nProduct: ${job.product_type}\nCharge: ${chargeDisplay}\nJob ID: ${job.id}\nIssues: ${(meta.flaggedIssueLabels || '').split('||').filter(Boolean).join(', ')}`,
+            }),
+          ]);
+        } catch (emailError) {
+          console.error(JSON.stringify({
+            level: 'error', event: 'delivery.email_failed',
+            jobId: job.id, error: emailError.message,
+          }));
+          // Report already generated and cached — just retry the send,
+          // don't regenerate. Mark as pending but flag that Claude
+          // output already exists.
+          await supabaseAdmin
+            .from('delivery_queue')
+            .update({
+              status:        'pending',
+              attempts:      job.attempts + 1,
+              error_message: `Email delivery failed: ${emailError.message} (report cached, will not regenerate)`,
+            })
+            .eq('id', job.id);
+          results.push({ id: job.id, status: 'email_retry', error: emailError.message });
+          failed++;
+          continue;
+        }
 
         // 6 + 7. Parallelise post-delivery writes — no data dependency between them
         const sessionId = meta.session_id || meta.sessionId;
