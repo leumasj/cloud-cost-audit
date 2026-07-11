@@ -2438,6 +2438,48 @@ const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, 
   );
 });
 
+// ── BLUEPRINT SAMPLE CODE — real excerpt shown next to pricing for social proof ──
+const SAMPLE_COST_BLUEPRINT_CODE = `# Issue: Unattached EBS Volumes
+Difficulty: Easy | Estimated Savings: $2,000-$4,000/month
+
+aws ec2 describe-volumes \\
+  --filters Name=status,Values=available \\
+  --query 'Volumes[*].[VolumeId,Size,CreateTime]' \\
+  --output table
+
+aws ec2 delete-volume --volume-id vol-xxxxxxxxxxxxxxxxx
+
+Verify: Re-run the describe-volumes filter. Result should return empty.`;
+
+const SAMPLE_AI_BLUEPRINT_CODE = `# Fix: Using deprecated model versions
+Difficulty: Easy | Estimated Savings: $420-$1,050/month
+
+grep -rn "gpt-4-0314\\|gpt-4-0613" ./src | xargs sed -i \\
+  -e 's/gpt-4-0314/gpt-4o-mini/g' \\
+  -e 's/gpt-4-0613/gpt-4o/g'
+
+Verify: grep -rn "gpt-4-0314\\|gpt-4-0613" ./src && echo "still found" || echo "clean"`;
+
+function BlueprintSampleCode({ code, accent = '#00ffb4' }) {
+  return (
+    <div style={{ marginTop: '14px', marginBottom: '4px' }}>
+      <p style={{ fontSize: '10px', fontWeight: 700, color: accent, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Sample from a real Blueprint ↓</p>
+      <div style={{ background: '#0a0a12', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px 14px', maxHeight: '170px', overflow: 'auto' }}>
+        <pre style={{ margin: 0, fontFamily: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace', fontSize: '10.5px', lineHeight: 1.65, whiteSpace: 'pre' }}>
+          {code.split('\n').map((line, i) => {
+            const color = line.startsWith('#') ? accent
+              : line.startsWith('Difficulty:') ? '#64748b'
+              : line.startsWith('Verify:') ? '#818cf8'
+              : '#cbd5e1';
+            const fontWeight = line.startsWith('#') ? 700 : 400;
+            return <div key={i} style={{ color, fontWeight, minHeight: '1.4em' }}>{line}</div>;
+          })}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
 // ── PRICING MODAL ─────────────────────────────────────────────────────────────
 const PricingModal = memo(function PricingModal({
   onClose, currency,
@@ -2603,6 +2645,9 @@ const PricingModal = memo(function PricingModal({
                   </div>
                 ))}
               </div>
+              {(p.id === 'blueprint' || p.id === 'ai_blueprint') && (
+                <BlueprintSampleCode code={p.id === 'ai_blueprint' ? SAMPLE_AI_BLUEPRINT_CODE : SAMPLE_COST_BLUEPRINT_CODE} accent={p.color} />
+              )}
               {p.id === 'monitor' ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
                   <input type="email" placeholder="your@company.com" value={subEmail} onChange={e => setSubEmail(e.target.value)}
@@ -5325,6 +5370,7 @@ aws iam simulate-principal-policy \\
                   <span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span>
                 </div>
               ))}
+              <BlueprintSampleCode code={SAMPLE_COST_BLUEPRINT_CODE} accent="#00ffb4" />
               <button onClick={() => setShowBlueprint(true)} className="glow-btn" style={{ width: "100%", marginTop: "20px", padding: "12px", borderRadius: "10px", border: "none", background: "var(--green)", color: "#000", fontWeight: 800, fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,255,180,0.3)" }}>
                 Get Cost Blueprint →
               </button>
@@ -5350,6 +5396,7 @@ aws iam simulate-principal-policy \\
                   <span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span>
                 </div>
               ))}
+              <BlueprintSampleCode code={SAMPLE_AI_BLUEPRINT_CODE} accent="#a78bfa" />
               <button onClick={() => { setProvider('AI APIs'); setShowBlueprint(true); }} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(167,139,250,0.3)", background: "transparent", color: "#a78bfa", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>
                 Get AI Blueprint →
               </button>
