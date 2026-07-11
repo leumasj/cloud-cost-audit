@@ -5208,7 +5208,7 @@ aws iam simulate-principal-policy \\
             </div>
             <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Find the issue. Get the fix guide. Implement same day.</span>
           </div>
-          <div className="bento-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "32px" }}>
+          <div className="bento-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "12px", marginBottom: "32px" }}>
             {/* Free */}
             <div className="pricing-card" style={{ background: "rgba(74,222,128,0.05)", border: "1px solid rgba(74,222,128,0.18)", borderRadius: "18px", padding: "28px 24px" }}>
               <p style={{ fontSize: "12px", fontWeight: 700, color: "#4ade80", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Free Audit</p>
@@ -5251,6 +5251,31 @@ aws iam simulate-principal-policy \\
               ))}
               <button onClick={() => setShowBlueprint(true)} className="glow-btn" style={{ width: "100%", marginTop: "20px", padding: "12px", borderRadius: "10px", border: "none", background: "var(--green)", color: "#000", fontWeight: 800, fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,255,180,0.3)" }}>
                 Get Cost Blueprint →
+              </button>
+            </div>
+            {/* AI Blueprint */}
+            <div className="pricing-card" style={{ background: "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.2)", borderRadius: "18px", padding: "28px 24px" }}>
+              <p style={{ fontSize: "12px", fontWeight: 700, color: "#a78bfa", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>AI Blueprint</p>
+              <div style={{ marginBottom: "6px" }}>
+                <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{currency.aiBlueprintPrice}</span>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>one-time</span>
+              </div>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>Forward to your AI/ML team. Model routing, caching, and spend controls implemented the same afternoon.</p>
+              {[
+                "Model routing code for OpenAI, Anthropic, Bedrock",
+                "Caching implementation with exact API parameters",
+                "Spend cap and alert configuration steps",
+                "Batch processing code included",
+                "Delivered to inbox in 2 minutes",
+                "Full refund if nothing is actionable",
+              ].map(f => (
+                <div key={f} style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+                  <span style={{ color: "#a78bfa", fontSize: "12px", flexShrink: 0 }}>✓</span>
+                  <span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span>
+                </div>
+              ))}
+              <button onClick={() => { setProvider('AI APIs'); setShowBlueprint(true); }} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(167,139,250,0.3)", background: "transparent", color: "#a78bfa", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>
+                Get AI Blueprint →
               </button>
             </div>
             {/* Security Blueprint */}
