@@ -4630,7 +4630,7 @@ aws iam simulate-principal-policy \\
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
           {/* ── SUBHEADING ── */}
           <p className="hero-subheading fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "520px", margin: "0 auto 28px" }}>
-            Find unused cloud spend in minutes. Covers AWS, GCP and Azure — <strong style={{ color: "#fff" }}>no credentials required, ever</strong>. Teams typically uncover <strong style={{ color: "var(--green)" }}>20–45% in savings</strong>.
+            Find unused cloud spend in minutes. Covers AWS, GCP, Azure and AI APIs — <strong style={{ color: "#fff" }}>no credentials required, ever</strong>. Teams typically uncover <strong style={{ color: "var(--green)" }}>20–45% in savings</strong>.
           </p>
           <div className="methodology-note">
             <MethodologyNote />
@@ -5091,6 +5091,33 @@ aws iam simulate-principal-policy \\
                     <span key={label} style={{ fontSize: "11px", color: "rgba(248,113,113,0.7)", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.15)", borderRadius: "6px", padding: "3px 8px" }}>{label}</span>
                   ))}
                   <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "3px 6px" }}>+11 more</span>
+                </div>
+              </div>
+            </div>
+
+            {/* ── AI APIS CARD — Model routing, caching & spend controls ── */}
+            <div className="audit-cat-card fade-up" role="button" tabIndex={0} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); window.gtag?.('event', 'audit_started', { provider: 'AI APIs', source: 'what_we_audit' }); setProvider('AI APIs'); goTo("intake"); } }} onClick={() => { window.gtag?.('event', 'audit_started', { provider: 'AI APIs', source: 'what_we_audit' }); setProvider('AI APIs'); goTo("intake"); }}
+              style={{ animationDelay: "0.3s", background: "linear-gradient(135deg, rgba(167,139,250,0.07), rgba(0,212,255,0.04))", border: "1px solid rgba(167,139,250,0.2)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden", cursor: "pointer", transition: "all 0.25s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(167,139,250,0.45)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(167,139,250,0.2)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+              <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "100px", height: "100px", background: "radial-gradient(circle, rgba(167,139,250,0.08) 0%, transparent 70%)", borderRadius: "50%" }} />
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                <span style={{ fontSize: "32px" }}>🤖</span>
+                <span style={{ fontSize: "10px", fontWeight: 700, color: "#a78bfa", background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.25)", borderRadius: "20px", padding: "2px 10px", letterSpacing: "0.8px" }}>AI APIS</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
+                <h3 className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px" }}>AI APIs</h3>
+                <span style={{ background: "rgba(167,139,250,0.1)", color: "#a78bfa", fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px", border: "1px solid rgba(167,139,250,0.2)" }}>{AI_AUDIT_SECTIONS.reduce((sum, s) => sum + s.checks.length, 0)} checks</span>
+              </div>
+              <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.6)", fontWeight: 600, marginBottom: "10px" }}>OpenAI · Anthropic · Bedrock · Vertex</p>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>Model routing, caching, and spend controls — find where your AI bill is leaking before it triples.</p>
+              <div style={{ borderTop: "1px solid rgba(167,139,250,0.12)", paddingTop: "14px" }}>
+                <p style={{ fontSize: "11px", color: "rgba(148,163,184,0.5)", fontWeight: 600, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.8px" }}>Covers</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {AI_AUDIT_SECTIONS.flatMap(s => s.checks).slice(0, 3).map(c => (
+                    <span key={c.id} style={{ fontSize: "11px", color: "rgba(167,139,250,0.8)", background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.15)", borderRadius: "6px", padding: "3px 8px" }}>{c.label}</span>
+                  ))}
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "3px 6px" }}>+{AI_AUDIT_SECTIONS.reduce((sum, s) => sum + s.checks.length, 0) - 3} more</span>
                 </div>
               </div>
             </div>
