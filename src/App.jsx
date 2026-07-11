@@ -399,6 +399,15 @@ const globalCss = `
     .secondary-cta { display: none !important; }
   }
 
+  /* Comparison table: stacked cards on mobile instead of horizontal scroll */
+  @media (max-width: 767px) {
+    .comparison-table-wrap .desktop-grid { display: none; }
+    .comparison-table-wrap .mobile-cards { display: flex; flex-direction: column; gap: 12px; }
+  }
+  @media (min-width: 768px) {
+    .comparison-table-wrap .mobile-cards { display: none; }
+  }
+
  @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr 1fr !important; }
   .kpi-grid { grid-template-columns: 1fr 1fr !important; }
@@ -1350,33 +1359,63 @@ const ComparisonTable = memo(function ComparisonTable() {
         <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>Why engineers choose KloudAudit</h2>
         <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px" }}>vs. traditional cloud cost tools</p>
       </div>
-      <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-        <div style={{ minWidth: "640px", background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", overflow: "hidden" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: "1px solid var(--border)" }}>
-            <div style={{ padding: "18px 20px" }} />
-            {COMPARISON_COLUMNS.map(({ label, kloud }) => (
-              <div key={label} style={{ padding: "16px 12px", textAlign: "center", background: kloud ? "rgba(0,255,180,0.08)" : "transparent", borderLeft: `1px solid ${kloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
-                <p style={{ fontSize: "13px", fontWeight: 800, color: kloud ? "var(--green)" : "var(--text-dim)", marginBottom: kloud ? "5px" : "0" }}>{label}</p>
-                {kloud && <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--green)", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.3)", borderRadius: "10px", padding: "1px 7px" }}>← this</span>}
+      <div className="comparison-table-wrap">
+        <div className="desktop-grid" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          <div style={{ minWidth: "640px", background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", overflow: "hidden" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: "1px solid var(--border)" }}>
+              <div style={{ padding: "18px 20px" }} />
+              {COMPARISON_COLUMNS.map(({ label, kloud }) => (
+                <div key={label} style={{ padding: "16px 12px", textAlign: "center", background: kloud ? "rgba(0,255,180,0.08)" : "transparent", borderLeft: `1px solid ${kloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
+                  <p style={{ fontSize: "13px", fontWeight: 800, color: kloud ? "var(--green)" : "var(--text-dim)", marginBottom: kloud ? "5px" : "0" }}>{label}</p>
+                  {kloud && <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--green)", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.3)", borderRadius: "10px", padding: "1px 7px" }}>← this</span>}
+                </div>
+              ))}
+            </div>
+            {COMPARISON_ROWS.map((row, ri, arr) => (
+              <div key={row.label} style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: ri < arr.length - 1 ? "1px solid var(--border)" : "none", background: ri % 2 === 1 ? "rgba(255,255,255,0.015)" : "transparent" }}>
+                <div style={{ padding: "14px 20px", display: "flex", alignItems: "center" }}>
+                  <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)" }}>{row.label}</span>
+                </div>
+                {row.vals.map((val, ci) => {
+                  const isKloud = ci === 0;
+                  const color = val === "✓" ? "#4ade80" : val === "✗" ? "#f87171" : val === "Partial" ? "#fbbf24" : isKloud ? "#fff" : "var(--text-muted)";
+                  return (
+                    <div key={ci} style={{ padding: "14px 10px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: isKloud ? "rgba(0,255,180,0.05)" : "transparent", borderLeft: `1px solid ${isKloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
+                      <span style={{ fontSize: val === "✓" || val === "✗" ? "16px" : "12px", fontWeight: isKloud ? 700 : 400, color }}>{val}</span>
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>
-          {COMPARISON_ROWS.map((row, ri, arr) => (
-            <div key={row.label} style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: ri < arr.length - 1 ? "1px solid var(--border)" : "none", background: ri % 2 === 1 ? "rgba(255,255,255,0.015)" : "transparent" }}>
-              <div style={{ padding: "14px 20px", display: "flex", alignItems: "center" }}>
-                <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)" }}>{row.label}</span>
+        </div>
+
+        <div className="mobile-cards">
+          {COMPARISON_ROWS.map(row => {
+            const kloudVal = row.vals[0];
+            const kloudColor = kloudVal === "✓" ? "#4ade80" : kloudVal === "✗" ? "#f87171" : kloudVal === "Partial" ? "#fbbf24" : "#fff";
+            return (
+              <div key={row.label} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "16px 18px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px" }}>{row.label}</p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(0,255,180,0.08)", border: "1px solid rgba(0,255,180,0.3)", borderRadius: "10px", padding: "10px 14px", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "13px", fontWeight: 800, color: "var(--green)" }}>KloudAudit <span style={{ fontSize: "10px", fontWeight: 700, opacity: 0.75 }}>← this</span></span>
+                  <span style={{ fontSize: kloudVal === "✓" || kloudVal === "✗" ? "16px" : "13px", fontWeight: 800, color: kloudColor }}>{kloudVal}</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                  {COMPARISON_COLUMNS.slice(1).map((col, i) => {
+                    const val = row.vals[i + 1];
+                    const color = val === "✓" ? "#4ade80" : val === "✗" ? "#f87171" : val === "Partial" ? "#fbbf24" : "var(--text-muted)";
+                    return (
+                      <div key={col.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 14px" }}>
+                        <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{col.label}</span>
+                        <span style={{ fontSize: val === "✓" || val === "✗" ? "14px" : "12px", fontWeight: 500, color }}>{val}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              {row.vals.map((val, ci) => {
-                const isKloud = ci === 0;
-                const color = val === "✓" ? "#4ade80" : val === "✗" ? "#f87171" : val === "Partial" ? "#fbbf24" : isKloud ? "#fff" : "var(--text-muted)";
-                return (
-                  <div key={ci} style={{ padding: "14px 10px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: isKloud ? "rgba(0,255,180,0.05)" : "transparent", borderLeft: `1px solid ${isKloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
-                    <span style={{ fontSize: val === "✓" || val === "✗" ? "16px" : "12px", fontWeight: isKloud ? 700 : 400, color }}>{val}</span>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
