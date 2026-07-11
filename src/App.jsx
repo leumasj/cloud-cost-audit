@@ -6465,8 +6465,11 @@ aws iam simulate-principal-policy \\
           {/* ── ACTION PLAN CTA ── */}
           <div className="fade-up stagger-4" style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.05) 0%, rgba(99,102,241,0.05) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "20px", padding: "40px" }}>
             {/* ── ROI ANCHOR BLOCK ── */}
-            {savMin > 0 ? (() => {
-              const bpCost = currency.blueprintAmount / 100;
+            {(() => {
+              const bpAmount = provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount;
+              const bpPrice = provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice;
+              return savMin > 0 ? (() => {
+              const bpCost = bpAmount / 100;
               const daysToROI = Math.ceil(bpCost / (savMin / 30));
               const roiPct = Math.round(((savMin * 12 - bpCost) / bpCost) * 100);
               return (
@@ -6476,7 +6479,7 @@ aws iam simulate-principal-policy \\
                     <div>
                       <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px" }}>The math is simple</p>
                       <p style={{ fontSize: "clamp(18px,2.5vw,26px)", fontWeight: 800, color: "#fff", letterSpacing: "-0.8px", lineHeight: 1.2, marginBottom: "6px" }}>
-                        Spend <span style={{ color: "var(--green)" }}>{currency.blueprintPrice}</span> once.
+                        Spend <span style={{ color: "var(--green)" }}>{bpPrice}</span> once.
                         Recover <span style={{ color: "var(--green)" }}>${savMin.toLocaleString()}/mo</span> after.
                       </p>
                       <p style={{ fontSize: "15px", color: "var(--text-dim)", marginBottom: "12px" }}>
@@ -6496,9 +6499,10 @@ aws iam simulate-principal-policy \\
             })() : (
               <div style={{ background: "rgba(0,255,180,0.05)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "14px", padding: "20px 24px", marginBottom: "24px", textAlign: "center" }}>
                 <p style={{ fontSize: "15px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>Teams typically find $500–$4,000+/month.</p>
-                <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>At those numbers, the {currency.blueprintPrice} Blueprint pays for itself in hours — not days.</p>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>At those numbers, the {bpPrice} Blueprint pays for itself in hours — not days.</p>
               </div>
-            )}
+              );
+            })()}
 
             {/* Trust card */}
             <div style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" }}>
