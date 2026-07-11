@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef, useMemo, memo } from "react";
 import SEOPage, { SEO_PAGES } from "./SEOPages.jsx";
 
 const ParticleBackground = React.lazy(() => import("./ParticleBackground"));
-function SuspendedParticleBackground() {
+const SuspendedParticleBackground = memo(function SuspendedParticleBackground() {
   return (
     <React.Suspense fallback={null}>
       <ParticleBackground />
     </React.Suspense>
   );
-}
+});
 
 const SECTION_ICONS = {
   Compute: '🖥️',

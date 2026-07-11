@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 
-export default function ParticleBackground() {
+function ParticleBackground() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -28,3 +28,7 @@ export default function ParticleBackground() {
     </div>
   );
 }
+
+// No props — memoized so it never re-renders when the parent (App) re-renders
+// on unrelated state changes like checkbox clicks.
+export default memo(ParticleBackground);
