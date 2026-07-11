@@ -81,6 +81,28 @@
       ],
       "destination": "https://www.kloudaudit.eu/:path*",
       "permanent": true
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "getkloudaudit.com"
+        }
+      ],
+      "destination": "https://www.kloudaudit.eu/$1",
+      "permanent": true
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.getkloudaudit.com"
+        }
+      ],
+      "destination": "https://www.kloudaudit.eu/$1",
+      "permanent": true
     }
   ]
 }
