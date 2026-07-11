@@ -2403,7 +2403,7 @@ const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, 
 const PricingModal = memo(function PricingModal({
   onClose, currency,
   onStartAudit, onStartSecAudit,
-  onBlueprintClick, onSecBlueprintClick, onCfoReportClick, onSessionClick,
+  onBlueprintClick, onAiBlueprintClick, onSecBlueprintClick, onCfoReportClick, onSessionClick,
   onSubscribe,
 }) {
   const [subEmail, setSubEmail] = useState('');
@@ -2450,6 +2450,21 @@ const PricingModal = memo(function PricingModal({
       features: ['Exact CLI commands per issue', 'Terraform / IaC snippets', 'Step-by-step · Delivered in 2 min'],
       cta: `Get Cost Blueprint →`,
       onClick: () => { onClose(); onBlueprintClick(); },
+    },
+    {
+      id: 'ai_blueprint',
+      icon: '🤖',
+      label: 'AI Blueprint',
+      badge: null,
+      badgeColor: null,
+      price: currency.aiBlueprintPrice,
+      priceSub: 'one-time',
+      color: '#a78bfa',
+      border: 'rgba(167,139,250,0.3)',
+      bg: 'rgba(167,139,250,0.05)',
+      features: ['Model routing code (OpenAI/Anthropic/Bedrock)', 'Prompt + response caching implementation', 'Spend caps & alert setup steps'],
+      cta: 'Get AI Blueprint →',
+      onClick: () => { onClose(); onAiBlueprintClick(); },
     },
     {
       id: 'security',
@@ -2561,7 +2576,7 @@ const PricingModal = memo(function PricingModal({
                 </div>
               ) : (
                 <button onClick={p.onClick}
-                  style={{ padding: '11px', borderRadius: '9px', border: p.id === 'free' ? `1px solid ${p.border}` : 'none', background: p.id === 'free' ? 'transparent' : p.id === 'blueprint' ? 'var(--green)' : p.id === 'security' ? '#f87171' : p.id === 'cfo' || p.id === 'monitor' ? 'linear-gradient(135deg,#818cf8,#6366f1)' : 'rgba(0,212,255,0.15)', color: p.id === 'blueprint' ? '#000' : p.id === 'security' ? '#000' : p.id === 'free' ? p.color : '#fff', fontWeight: 800, fontSize: '12px', cursor: 'pointer', boxShadow: p.id === 'blueprint' ? '0 0 16px rgba(0,255,180,0.3)' : 'none' }}>
+                  style={{ padding: '11px', borderRadius: '9px', border: p.id === 'free' ? `1px solid ${p.border}` : 'none', background: p.id === 'free' ? 'transparent' : p.id === 'blueprint' ? 'var(--green)' : p.id === 'security' ? '#f87171' : p.id === 'ai_blueprint' ? '#a78bfa' : p.id === 'cfo' || p.id === 'monitor' ? 'linear-gradient(135deg,#818cf8,#6366f1)' : 'rgba(0,212,255,0.15)', color: p.id === 'blueprint' ? '#000' : p.id === 'security' ? '#000' : p.id === 'free' ? p.color : '#fff', fontWeight: 800, fontSize: '12px', cursor: 'pointer', boxShadow: p.id === 'blueprint' ? '0 0 16px rgba(0,255,180,0.3)' : 'none' }}>
                   {p.cta}
                 </button>
               )}
@@ -4546,7 +4561,7 @@ aws iam simulate-principal-policy \\
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onAiBlueprintClick={() => { setProvider('AI APIs'); setShowBlueprint(true); }} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
       <Nav />
 
       {/* ── RESUME AUDIT BANNER ── */}
@@ -5613,7 +5628,7 @@ aws iam simulate-principal-policy \\
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onAiBlueprintClick={() => { setProvider('AI APIs'); setShowBlueprint(true); }} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
         <div className="fade-up">
@@ -5697,7 +5712,7 @@ aws iam simulate-principal-policy \\
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onAiBlueprintClick={() => { setProvider('AI APIs'); setShowBlueprint(true); }} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
         <Nav showBack onBack={() => goTo("intake")} />
         {/* ── SECTION COMPLETE TOAST ── */}
         {sectionToast && (
@@ -6158,7 +6173,7 @@ aws iam simulate-principal-policy \\
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onAiBlueprintClick={() => { setProvider('AI APIs'); setShowBlueprint(true); }} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
           {/* Header */}
