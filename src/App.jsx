@@ -3079,6 +3079,16 @@ export default function App() {
     });
   }, []);
 
+  useEffect(() => {
+    // Seed the initial history entry with a proper step value so popping back
+    // to it behaves predictably instead of relying on the null-state fallback.
+    // Keep the full current href (query string + hash) unchanged — this effect
+    // runs before the payment-redirect (?payment=...) and hash-restore (#step)
+    // mount effects below, and replaceState's 3rd arg would otherwise strip
+    // those before they get a chance to read them.
+    window.history.replaceState({ step: 'intro', from: null }, '', window.location.href);
+  }, []); // run once on mount, before any goTo() calls happen
+
   // FIX #2: Payment success detection on mount
   useEffect(() => {
     // Handle Stripe payment redirect states
