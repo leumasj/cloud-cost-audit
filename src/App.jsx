@@ -5326,7 +5326,7 @@ aws iam simulate-principal-policy \\
                 <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>one-time · no subscription</span>
               </div>
               <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, margin: 0, maxWidth: "500px" }}>
-                The same audit findings, rewritten for your board. Executive summary, annual ROI table, 3-phase action plan — no CLI commands, no Terraform. Share it with your CFO or investors this afternoon.
+                The same audit findings — cloud infrastructure or AI API spend — rewritten for your board. Executive summary, annual ROI table, 3-phase action plan — no CLI commands, no Terraform. Share it with your CFO or investors this afternoon.
               </p>
             </div>
             <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: "8px", minWidth: "220px" }}>

@@ -209,6 +209,7 @@ Real ${provider} CLI only. This customer paid for professional quality.`;
 // ── CFO REPORT PROMPT ─────────────────────────────────────────────────────────
 function buildCfoPrompt(meta) {
   const provider    = meta.provider || 'AWS';
+  const isAi        = provider === 'AI APIs';
   const companyName = meta.companyName || 'Your Company';
   const monthlyBill = Number(meta.monthlyBill || 0);
   const savingsMin  = Number(meta.savingsMin || 0);
@@ -216,16 +217,18 @@ function buildCfoPrompt(meta) {
   const annualMin   = savingsMin * 12;
   const annualMax   = savingsMax * 12;
   const issueLabels = (meta.flaggedIssueLabels || '').split('||').filter(Boolean);
+  const spendLabel  = isAi ? 'AI API spend' : 'cloud spend';
+  const spendRowLabel = isAi ? 'Current Monthly AI API Spend' : 'Current Monthly Cloud Spend';
 
-  return `You are a cloud cost consultant writing an executive-level CFO & Board Report for ${companyName}.
+  return `You are ${isAi ? 'an AI cost consultant' : 'a cloud cost consultant'} writing an executive-level CFO & Board Report for ${companyName}.
 
 Provider: ${provider}
-Current monthly cloud spend: $${monthlyBill.toLocaleString()}
+Current monthly ${spendLabel}: $${monthlyBill.toLocaleString()}
 Monthly savings opportunity: $${savingsMin.toLocaleString()}–$${savingsMax.toLocaleString()}
 Annual savings opportunity: $${annualMin.toLocaleString()}–$${annualMax.toLocaleString()}
 Issues identified (${issueLabels.length}): ${issueLabels.join(', ')}
 
-Write a professional board-ready report with the following structure. Use plain language — no CLI commands or Terraform. This is for CFOs, CTOs, and investors, not engineers.
+Write a professional board-ready report with the following structure. Use plain language — no CLI commands or Terraform${isAi ? ' or infrastructure jargon — this is about model spend, not servers' : ''}. This is for CFOs, CTOs, and investors, not engineers.
 
 ## Executive Summary
 3-4 sentences. State the current monthly spend, the identified savings opportunity, the annual impact, and the overall assessment. Quantify everything in dollars.
@@ -234,7 +237,7 @@ Write a professional board-ready report with the following structure. Use plain 
 A clear breakdown in table or structured format:
 | Metric | Value |
 |---|---|
-| Current Monthly Cloud Spend | $X,XXX |
+| ${spendRowLabel} | $X,XXX |
 | Identified Monthly Waste | $X,XXX – $X,XXX |
 | Annual Savings Opportunity | $XX,XXX – $XX,XXX |
 | Waste as % of Total Spend | XX% |
