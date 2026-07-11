@@ -2964,6 +2964,7 @@ export default function App() {
   const sectionToastTimerRef = useRef(null);
   const secToastTimerRef = useRef(null);
   const saveSessionTimeoutRef = useRef(null);
+  const previousStepRef = useRef(step);
   // ── SECURITY AUDIT STATE ──────────────────────────────────────────────────
   const [secChecked, setSecChecked] = useState({});
   const [secStep, setSecStep] = useState(0);
@@ -3321,9 +3322,16 @@ useEffect(() => {
   useEffect(() => {
     // Guard: don't persist empty sessions — provider and a non-zero bill required
     if (!provider || !monthlyBill || parseFloat(monthlyBill) <= 0) return;
+    // Navigating to 'intro' (e.g. logo click) mid-audit shouldn't overwrite the
+    // persisted step with 'intro' — RESTORABLE_STEPS never includes 'intro', so
+    // doing so would silently make the in-progress session unresumable. Fall back
+    // to the last RESTORABLE step instead.
+    const stepToPersist = (step === 'intro' && RESTORABLE_STEPS.includes(previousStepRef.current))
+      ? previousStepRef.current
+      : step;
     localStorage.setItem('ka_session', JSON.stringify({
       version: SESSION_VERSION,
-      step, provider, monthlyBill, companyName, checked, activeSection, gateEmail,
+      step: stepToPersist, provider, monthlyBill, companyName, checked, activeSection, gateEmail,
     }));
     // Mirror to Supabase for cross-device resume — debounced so a burst of
     // checkbox clicks fires one network call instead of one per click.
@@ -3343,6 +3351,10 @@ useEffect(() => {
     }
     return () => { if (saveSessionTimeoutRef.current) clearTimeout(saveSessionTimeoutRef.current); };
   }, [step, provider, monthlyBill, companyName, checked, activeSection, gateEmail]);
+
+  // Track the previous step AFTER the session-save effect above has read it,
+  // so that effect always sees the step from before this change, not the new one.
+  useEffect(() => { previousStepRef.current = step; }, [step]);
 
   // ── SCROLL REVEAL — IntersectionObserver for homepage sections ────────────
   useEffect(() => {
@@ -4505,10 +4517,10 @@ aws iam simulate-principal-policy \\
     ];
 
     const HOW_IT_WORKS = [
-      { n: "01", title: "Run the free cost audit", desc: "Answer 18 structured questions about your AWS, GCP, or Azure setup. 10–15 minutes. No account access, no signup.", color: "#00ffb4" },
+      { n: "01", title: "Run the free cost audit", desc: "Answer 12-18 structured questions about your AWS, GCP, Azure, or AI API setup (OpenAI, Anthropic, Bedrock). 10-15 minutes. No account access, no signup.", color: "#00ffb4" },
       { n: "02", title: "See your savings report", desc: "Instantly see your estimated waste, prioritised findings, and projected monthly savings across compute, storage, database, and network.", color: "#818cf8" },
       { n: "03", title: "Run the security audit", desc: "16 security checkpoints across IAM, network exposure, encryption, and logging. Get your security risk score instantly — free.", color: "#f87171" },
-      { n: "04", title: "Get the AI Blueprint", desc: `Pay ${currency.blueprintPrice} (cost) or ${currency.securityPrice || "$29"} (security). Claude AI writes your exact CLI commands, policy fixes, and step-by-step guide.`, color: "#00d4ff" },
+      { n: "04", title: "Get the AI Blueprint", desc: `Pay ${currency.blueprintPrice} (cost), ${currency.aiBlueprintPrice} (AI), or ${currency.securityPrice || "$29"} (security). Claude AI writes your exact CLI commands, policy fixes, and step-by-step guide.`, color: "#00d4ff" },
       { n: "05", title: "Implement & verify", desc: "Follow the blueprint. Most clients recoup the cost within 24 hours. Re-audit in 90 days to measure improvement.", color: "#fb923c" },
     ];
 
@@ -5043,8 +5055,8 @@ aws iam simulate-principal-policy \\
                 data-reveal-index={i}
                 role="button"
                 tabIndex={0}
-                onClick={() => { setActiveSection(i); goTo("intake"); }}
-                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveSection(i); goTo("intake"); } }}
+                onClick={() => { setProvider(prev => prev === 'AI APIs' ? '' : prev); setActiveSection(i); goTo("intake"); }}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setProvider(prev => prev === 'AI APIs' ? '' : prev); setActiveSection(i); goTo("intake"); } }}
                 style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden", cursor: "pointer" }}>
                 <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "100px", height: "100px", background: "radial-gradient(circle, rgba(0,255,180,0.06) 0%, transparent 70%)", borderRadius: "50%" }} />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
