@@ -2891,6 +2891,7 @@ export default function App() {
   const [secSectionToast, setSecSectionToast] = useState(null); // security section-complete toast
   const sectionToastTimerRef = useRef(null);
   const secToastTimerRef = useRef(null);
+  const saveSessionTimeoutRef = useRef(null);
   // ── SECURITY AUDIT STATE ──────────────────────────────────────────────────
   const [secChecked, setSecChecked] = useState({});
   const [secStep, setSecStep] = useState(0);
@@ -3250,18 +3251,23 @@ useEffect(() => {
       version: SESSION_VERSION,
       step, provider, monthlyBill, companyName, checked, activeSection, gateEmail,
     }));
-    // Mirror to Supabase for cross-device resume — fire and forget
+    // Mirror to Supabase for cross-device resume — debounced so a burst of
+    // checkbox clicks fires one network call instead of one per click.
     if (sessionId && step !== 'intro' && step !== 'payment_success') {
-      fetch('/api/audits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'save-session',
-          sessionId,
-          sessionData: { step, provider, monthlyBill, companyName, checked, activeSection, gateEmail },
-        }),
-      }).catch(() => {}); // localStorage is the primary store; Supabase is backup
+      if (saveSessionTimeoutRef.current) clearTimeout(saveSessionTimeoutRef.current);
+      saveSessionTimeoutRef.current = setTimeout(() => {
+        fetch('/api/audits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'save-session',
+            sessionId,
+            sessionData: { step, provider, monthlyBill, companyName, checked, activeSection, gateEmail },
+          }),
+        }).catch(() => {}); // localStorage is the primary store; Supabase is backup
+      }, 1000);
     }
+    return () => { if (saveSessionTimeoutRef.current) clearTimeout(saveSessionTimeoutRef.current); };
   }, [step, provider, monthlyBill, companyName, checked, activeSection, gateEmail]);
 
   // ── SCROLL REVEAL — IntersectionObserver for homepage sections ────────────
