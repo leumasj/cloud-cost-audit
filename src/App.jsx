@@ -74,6 +74,56 @@ const AUDIT_SECTIONS = [
   },
 ];
 
+const AI_AUDIT_SECTIONS = [
+  {
+    id: 'model_selection', label: 'Model Selection', title: 'Model Selection', icon: '🎯',
+    description: 'Model routing, tiering strategy & legacy model usage',
+    summary: 'Identifies frontier-model overuse on simple tasks, deprecated model versions, and missing cost-tiered routing.',
+    checks: [
+      { id: 'ai_model_routing', label: 'Same model for all tasks', detail: 'Using frontier models for simple classification/formatting', savingsRange: [30, 60], effort: 'Low', impact: 'High', tooltip: 'Routing simple classification/formatting tasks to a smaller, cheaper model instead of a frontier model can cut per-call cost by 60-90% with no quality loss for those tasks.' },
+      { id: 'ai_legacy_models', label: 'Using deprecated model versions', detail: 'Old model IDs cost 2-3x more than current equivalents', savingsRange: [20, 50], effort: 'Low', impact: 'High', tooltip: 'Provider pricing typically improves generation over generation. Pinning to an old model ID means paying legacy rates for equivalent or worse capability.' },
+      { id: 'ai_model_tier', label: 'No model tiering strategy', detail: 'No routing logic between cheap and expensive models', savingsRange: [15, 40], effort: 'Medium', impact: 'High', tooltip: 'A tiering layer (cheap model first, escalate to frontier model only on low confidence) is a one-time engineering cost that compounds savings on every request afterward.' },
+    ],
+  },
+  {
+    id: 'caching', label: 'Caching', title: 'Caching', icon: '⚡',
+    description: 'Response and prompt caching to avoid redundant API spend',
+    summary: 'Uncovers repeated identical prompts and long system prompts re-sent on every request with no caching.',
+    checks: [
+      { id: 'ai_no_caching', label: 'No response caching', detail: 'Identical prompts hit the API every time', savingsRange: [20, 50], effort: 'Low', impact: 'High', tooltip: 'A simple hash-keyed cache in front of the API call eliminates cost entirely for repeated identical prompts — common in support bots and batch classification.' },
+      { id: 'ai_no_prompt_cache', label: 'No prompt caching', detail: 'Long system prompts sent in full every request', savingsRange: [10, 35], effort: 'Low', impact: 'High', tooltip: 'Provider-native prompt caching (e.g. Anthropic prompt caching, OpenAI cached inputs) can cut input token cost by up to 90% for repeated long system prompts.' },
+    ],
+  },
+  {
+    id: 'spending_controls', label: 'Spending Controls', title: 'Spending Controls', icon: '🛡️',
+    description: 'Spend caps, token limits & anomaly alerting',
+    summary: 'Exposes missing spend caps, unbounded output limits, and no alerting on unexpected spend spikes.',
+    checks: [
+      { id: 'ai_no_spend_cap', label: 'No monthly spend cap set', detail: 'No hard limit on OpenAI/Anthropic/Bedrock accounts', savingsRange: [10, 40], effort: 'Low', impact: 'Critical', tooltip: 'Provider dashboards let you set a hard monthly spend cap in minutes. Without one, a bug or bad actor can drive an unbounded bill overnight.' },
+      { id: 'ai_no_token_limits', label: 'No max_tokens limits', detail: 'API calls allow unbounded output length', savingsRange: [5, 20], effort: 'Low', impact: 'Medium', tooltip: 'Setting max_tokens per call prevents runaway generations (e.g. a model looping) from silently multiplying cost on a single request.' },
+      { id: 'ai_no_cost_alerts', label: 'No spend threshold alerts', detail: 'No notifications when AI spend spikes unexpectedly', savingsRange: [5, 20], effort: 'Low', impact: 'High', tooltip: 'A billing alert at 80% of your monthly target gives you days to investigate a spend spike before it compounds — the same pattern as cloud budget alerts.' },
+    ],
+  },
+  {
+    id: 'architecture', label: 'Architecture', title: 'Architecture', icon: '🏗️',
+    description: 'Dev/prod separation & batch processing opportunities',
+    summary: 'Finds dev/test traffic hitting paid production endpoints and async workloads that could use cheaper batch APIs.',
+    checks: [
+      { id: 'ai_dev_hits_prod_api', label: 'Dev/test uses production AI APIs', detail: 'Dev and testing calling same paid endpoints as production', savingsRange: [10, 30], effort: 'Medium', impact: 'High', tooltip: 'Mocking or routing dev/test traffic to a cheaper model (or a fixture) avoids paying production rates for every test run and CI job.' },
+      { id: 'ai_no_batch', label: 'No batch processing', detail: 'Async workloads sent individually instead of batch API', savingsRange: [30, 50], effort: 'Medium', impact: 'High', tooltip: 'Provider batch APIs (e.g. OpenAI Batch, Anthropic Message Batches) typically run at ~50% of the synchronous price for workloads that can tolerate a few hours of turnaround.' },
+    ],
+  },
+  {
+    id: 'attribution', label: 'Attribution', title: 'Attribution', icon: '📊',
+    description: 'Cost attribution and usage monitoring',
+    summary: 'Highlights missing per-feature/team cost attribution and no anomaly monitoring on token usage trends.',
+    checks: [
+      { id: 'ai_no_attribution', label: 'No cost attribution by feature/team', detail: 'Cannot identify which product or team drives AI spend', savingsRange: [5, 15], effort: 'Medium', impact: 'Medium', tooltip: 'Tagging requests with a feature/team identifier (via metadata or a wrapper) lets you find and fix the specific workload driving spend, instead of optimizing blind.' },
+      { id: 'ai_no_monitoring', label: 'No token usage monitoring', detail: 'No visibility into usage trends or anomaly detection', savingsRange: [5, 15], effort: 'Low', impact: 'Medium', tooltip: 'Basic dashboards on daily token usage make cost regressions visible within a day instead of showing up as a surprise on the monthly invoice.' },
+    ],
+  },
+];
+
 const SAMPLE_REPORT = {
   companyName: "TechFlow GmbH",
   provider: "AWS",
@@ -89,7 +139,9 @@ const SAMPLE_REPORT = {
 const IMPACT_COLOR = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24", Low: "#4ade80" };
 const EFFORT_COLOR = { Low: "#4ade80", Easy: "#4ade80", Medium: "#fbbf24", High: "#f87171", Hard: "#f87171" };
 const COMPLIANCE_COLOR = { "GDPR": "#60a5fa", "SOC 2": "#4ade80", "ISO 27001": "#a78bfa", "PCI-DSS": "#fb923c" };
-const PROVIDERS = ["AWS", "GCP", "Azure", "Multi-cloud"];
+const PROVIDERS = ["AWS", "GCP", "Azure", "Multi-cloud", "AI APIs"];
+const PROVIDER_SUBLABELS = { "AI APIs": "OpenAI · Anthropic · Bedrock · Vertex" };
+const PROVIDER_ICONS = { "AI APIs": "🤖" };
 
 const SEC_SECTIONS = [
   { id: "iam", icon: "🔐", title: "Identity & Access", color: "#f87171",
@@ -2009,7 +2061,7 @@ function ShareUrlDisplay({ url, rank }) {
 }
 
 // ── WASTE SCORE CARD ──────────────────────────────────────────────────────────
-function WasteScoreCard({ flagged, allChecks, savPct, savMin, savMax, onShare }) {
+function WasteScoreCard({ flagged, allChecks, savPct, savMin, savMax, onShare, provider }) {
   const issueWeight = Math.min(flagged.length / allChecks.length, 1) * 30;
   const pctWeight   = Math.min(savPct / 50, 1) * 70;
   const score       = Math.max(0, Math.min(100, Math.round(100 - issueWeight - pctWeight)));
@@ -2041,7 +2093,7 @@ function WasteScoreCard({ flagged, allChecks, savPct, savMin, savMax, onShare })
         </div>
       </div>
       <div style={{ flex: 1, minWidth: "200px" }}>
-        <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px" }}>KloudAudit Waste Score</p>
+        <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px" }}>{provider === 'AI APIs' ? 'KloudAudit AI Spend Score' : 'KloudAudit Waste Score'}</p>
         <h2 className="display" style={{ fontSize: "28px", fontWeight: 800, color: grade.color, letterSpacing: "-0.8px", marginBottom: "8px" }}>{grade.label}</h2>
         <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>
           {score >= 80
@@ -2089,11 +2141,13 @@ const RESTORABLE_STEPS = ['intake', 'audit', 'email_gate', 'report'];
 // ── BLUEPRINT MODAL ───────────────────────────────────────────────────────────
 // Defined OUTSIDE App so React never sees a new component type on re-render.
 // Owns its own email + status state → zero flicker while typing.
-const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, provider, flaggedCount }) {
+const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, provider, flaggedCount, productType = 'blueprint', price, amount }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | error
   const [errorMsg, setErrorMsg] = useState("");
   const [withdrawalChecked, setWithdrawalChecked] = useState(false);
+  const isAi = productType === 'ai_blueprint';
+  const displayPrice = price || currency.blueprintPrice;
 
   const handleSubmit = async () => {
     if (!email || !withdrawalChecked) return;
@@ -2113,14 +2167,17 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
       <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="blueprint-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "min(460px, calc(100vw - 32px))", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>📄</div>
-          <h2 id="blueprint-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>Get Your AI Blueprint</h2>
+          <h2 id="blueprint-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>{isAi ? "Get Your AI Cost Blueprint" : "Get Your AI Blueprint"}</h2>
           <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
-            Enter your email and you&apos;ll be redirected to secure payment. Your personalised {provider || "cloud"} implementation guide lands in your inbox within 2 minutes of payment.
+            Enter your email and you&apos;ll be redirected to secure payment. Your personalised {isAi ? "AI cost remediation" : (provider || "cloud")} {isAi ? "" : "implementation "}guide lands in your inbox within 2 minutes of payment.
           </p>
         </div>
         <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "10px", padding: "14px 18px", marginBottom: "20px" }}>
           <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>What you get:</p>
-          {[`Exact ${provider || "cloud"} CLI commands`, "Terraform snippets per issue", "Step-by-step fix instructions", `${flaggedCount} issues with savings estimates`, "PDF in your inbox in ~2 minutes"].map(f => (
+          {(isAi
+            ? [`Model routing & caching code for ${flaggedCount} flagged issues`, "Spending controls & alert setup steps", "Batch processing code where applicable", "PDF in your inbox in ~2 minutes"]
+            : [`Exact ${provider || "cloud"} CLI commands`, "Terraform snippets per issue", "Step-by-step fix instructions", `${flaggedCount} issues with savings estimates`, "PDF in your inbox in ~2 minutes"]
+          ).map(f => (
             <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
               <span style={{ color: "var(--green)", fontSize: "13px" }}>✓</span>
               <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>{f}</span>
@@ -2189,7 +2246,7 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
           style={{ background: withdrawalChecked ? "var(--green)" : "rgba(0,255,180,0.4)", color: "#000", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: withdrawalChecked ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
           {status === "loading" ? (
             <><span style={{ display: "inline-block", width: "15px", height: "15px", border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Redirecting to payment...</>
-          ) : `Pay ${currency.blueprintPrice} → Get Blueprint`}
+          ) : `Pay ${displayPrice} → Get Blueprint`}
         </button>
         <p style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center", marginTop: "8px", marginBottom: "0" }}>🕐 Delivered to your inbox in ~2 minutes</p>
         {status === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Error: {errorMsg} — email admin@kloudaudit.eu</p>}
@@ -2938,13 +2995,15 @@ export default function App() {
     securityPrice: "$29", securityAmount: 2900,
     bundlePrice: "$89", bundleAmount: 8900,
     cfoReportPrice: "$199", cfoReportAmount: 19900,
+    aiBlueprintPrice: "$79", aiBlueprintAmount: 7900,
   });
 
   const toggle = (id) => {
     const nowOn = !checked[id];
     setChecked(p => ({ ...p, [id]: !p[id] }));
     if (nowOn) {
-      const check = AUDIT_SECTIONS.flatMap(s => s.checks).find(c => c.id === id);
+      const sectionsForToggle = provider === 'AI APIs' ? AI_AUDIT_SECTIONS : AUDIT_SECTIONS;
+      const check = sectionsForToggle.flatMap(s => s.checks).find(c => c.id === id);
       if (check) setShowToast({ check, bill });
     }
   };
@@ -2972,7 +3031,7 @@ export default function App() {
   };
 
   const bill = useMemo(() => parseFloat(monthlyBill) || 0, [monthlyBill]);
-  const allChecks = useMemo(() => AUDIT_SECTIONS.flatMap(s => s.checks), []);
+  const allChecks = useMemo(() => (provider === 'AI APIs' ? AI_AUDIT_SECTIONS : AUDIT_SECTIONS).flatMap(s => s.checks), [provider]);
   const flagged = useMemo(() => allChecks.filter(c => checked[c.id]), [checked, allChecks]);
   const { savMin, savMax, savPct } = useMemo(() => {
     const rawMin = Math.round(flagged.reduce((s, c) => s + bill * c.savingsRange[0] / 100, 0));
@@ -3083,12 +3142,12 @@ export default function App() {
 
   // ── CURRENCY DETECTION ───────────────────────────────────────────
   useEffect(() => {
-    const USD = { code: "USD", symbol: "$",   blueprintPrice: "$79",     blueprintAmount: 7900,  sessionPrice: "$249",    sessionAmount: 24900, stripeCurrency: "usd", securityPrice: "$29",      securityAmount: 2900,  bundlePrice: "$89",      bundleAmount: 8900,  subscriptionPrice: "$19/mo",     subscriptionAmount: 1900,  cfoReportPrice: "$199",     cfoReportAmount: 19900  };
-    const GBP = { code: "GBP", symbol: "\u00a3",   blueprintPrice: "\u00a362",     blueprintAmount: 6200,  sessionPrice: "\u00a3199",    sessionAmount: 19900, stripeCurrency: "gbp", securityPrice: "\u00a323",      securityAmount: 2300,  bundlePrice: "\u00a369",      bundleAmount: 6900,  subscriptionPrice: "\u00a315/mo",     subscriptionAmount: 1500,  cfoReportPrice: "\u00a3159",    cfoReportAmount: 15900  };
-    const EUR = { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",     blueprintAmount: 7300,  sessionPrice: "\u20ac229",    sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27",      securityAmount: 2700,  bundlePrice: "\u20ac83",      bundleAmount: 8300,  subscriptionPrice: "\u20ac17/mo",     subscriptionAmount: 1700,  cfoReportPrice: "\u20ac183",    cfoReportAmount: 18300  };
-    const CAD = { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107",  blueprintAmount: 10700, sessionPrice: "CA$339",  sessionAmount: 33900, stripeCurrency: "cad", securityPrice: "CA$39",    securityAmount: 3900,  bundlePrice: "CA$119",   bundleAmount: 11900, subscriptionPrice: "CA$26/mo",   subscriptionAmount: 2600,  cfoReportPrice: "CA$269",   cfoReportAmount: 26900  };
-    const AUD = { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",   blueprintAmount: 11900, sessionPrice: "A$379",   sessionAmount: 37900, stripeCurrency: "aud", securityPrice: "A$45",     securityAmount: 4500,  bundlePrice: "A$134",    bundleAmount: 13400, subscriptionPrice: "A$29/mo",    subscriptionAmount: 2900,  cfoReportPrice: "A$299",    cfoReportAmount: 29900  };
-    const PLN = { code: "PLN", symbol: "z\u0142",  blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln", securityPrice: "119 PLN",  securityAmount: 11900, bundlePrice: "349 PLN",  bundleAmount: 34900, subscriptionPrice: "79 PLN/mo",  subscriptionAmount: 7900,  cfoReportPrice: "799 PLN",  cfoReportAmount: 79900  };
+    const USD = { code: "USD", symbol: "$",   blueprintPrice: "$79",     blueprintAmount: 7900,  sessionPrice: "$249",    sessionAmount: 24900, stripeCurrency: "usd", securityPrice: "$29",      securityAmount: 2900,  bundlePrice: "$89",      bundleAmount: 8900,  subscriptionPrice: "$19/mo",     subscriptionAmount: 1900,  cfoReportPrice: "$199",     cfoReportAmount: 19900, aiBlueprintPrice: "$79", aiBlueprintAmount: 7900  };
+    const GBP = { code: "GBP", symbol: "\u00a3",   blueprintPrice: "\u00a362",     blueprintAmount: 6200,  sessionPrice: "\u00a3199",    sessionAmount: 19900, stripeCurrency: "gbp", securityPrice: "\u00a323",      securityAmount: 2300,  bundlePrice: "\u00a369",      bundleAmount: 6900,  subscriptionPrice: "\u00a315/mo",     subscriptionAmount: 1500,  cfoReportPrice: "\u00a3159",    cfoReportAmount: 15900, aiBlueprintPrice: "\u00a362", aiBlueprintAmount: 6200  };
+    const EUR = { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",     blueprintAmount: 7300,  sessionPrice: "\u20ac229",    sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27",      securityAmount: 2700,  bundlePrice: "\u20ac83",      bundleAmount: 8300,  subscriptionPrice: "\u20ac17/mo",     subscriptionAmount: 1700,  cfoReportPrice: "\u20ac183",    cfoReportAmount: 18300, aiBlueprintPrice: "\u20ac73", aiBlueprintAmount: 7300  };
+    const CAD = { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107",  blueprintAmount: 10700, sessionPrice: "CA$339",  sessionAmount: 33900, stripeCurrency: "cad", securityPrice: "CA$39",    securityAmount: 3900,  bundlePrice: "CA$119",   bundleAmount: 11900, subscriptionPrice: "CA$26/mo",   subscriptionAmount: 2600,  cfoReportPrice: "CA$269",   cfoReportAmount: 26900, aiBlueprintPrice: "CA$107", aiBlueprintAmount: 10700  };
+    const AUD = { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",   blueprintAmount: 11900, sessionPrice: "A$379",   sessionAmount: 37900, stripeCurrency: "aud", securityPrice: "A$45",     securityAmount: 4500,  bundlePrice: "A$134",    bundleAmount: 13400, subscriptionPrice: "A$29/mo",    subscriptionAmount: 2900,  cfoReportPrice: "A$299",    cfoReportAmount: 29900, aiBlueprintPrice: "A$119", aiBlueprintAmount: 11900  };
+    const PLN = { code: "PLN", symbol: "z\u0142",  blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln", securityPrice: "119 PLN",  securityAmount: 11900, bundlePrice: "349 PLN",  bundleAmount: 34900, subscriptionPrice: "79 PLN/mo",  subscriptionAmount: 7900,  cfoReportPrice: "799 PLN",  cfoReportAmount: 79900, aiBlueprintPrice: "299 PLN", aiBlueprintAmount: 29900  };
     const CURRENCY_MAP = {
       US: USD, PR: USD, GU: USD, VI: USD,
       GB: GBP, JE: GBP, GG: GBP, IM: GBP,
@@ -3176,7 +3235,7 @@ export default function App() {
     wasteScore:  wScore,
     savingsMin:  savMin,
     savingsMax:  savMax,
-    auditType:   'cost',
+    auditType:   provider === 'AI APIs' ? 'ai' : 'cost',
   });
 
   try {
@@ -3239,7 +3298,7 @@ useEffect(() => {
   // ── GA4: audit section viewed ─────────────────────────────────────────────
   useEffect(() => {
     if (step !== 'audit') return;
-    const section = AUDIT_SECTIONS[activeSection];
+    const section = (provider === 'AI APIs' ? AI_AUDIT_SECTIONS : AUDIT_SECTIONS)[activeSection];
     if (section) window.gtag?.('event', 'audit_section_viewed', { section: section.label, section_index: activeSection });
   }, [activeSection, step]);
 
@@ -3322,6 +3381,42 @@ useEffect(() => {
         flaggedIssues: flagged.map(c => ({ id: c.id, label: c.label })),
         currency: currency.stripeCurrency,
         currencyAmount: currency.blueprintAmount,
+        sessionId,
+      }),
+    });
+    if (!res.ok) {
+      const ct = res.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const errData = await res.json();
+        throw new Error(errData.error || `Checkout failed (${res.status})`);
+      }
+      throw new Error(`Checkout failed (${res.status})`);
+    }
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || "Checkout failed");
+    }
+  };
+
+  // Buy AI Cost Blueprint → Vercel Function → Stripe Checkout (additive, mirrors handleBuyBlueprint)
+  const handleBuyAiBlueprint = async (email) => {
+    window.gtag?.('event', 'checkout_initiated', { provider: provider, amount: currency.aiBlueprintAmount, currency: currency.stripeCurrency });
+    const res = await fetch("/api/create-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        provider: provider || "AI APIs",
+        monthlyBill: bill,
+        companyName: companyName || "Your Company",
+        savingsMin: savMin,
+        savingsMax: savMax,
+        flaggedIssues: flagged.map(c => ({ id: c.id, label: c.label })),
+        currency: currency.stripeCurrency,
+        currencyAmount: currency.aiBlueprintAmount,
+        productType: 'ai_blueprint',
         sessionId,
       }),
     });
@@ -4412,7 +4507,7 @@ aws iam simulate-principal-policy \\
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
-      {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
+      {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
         {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
       <Nav />
@@ -4534,15 +4629,17 @@ aws iam simulate-principal-policy \\
                 { label: "GCP", color: "#4285f4" },
                 { label: "Azure", color: "#0078d4" },
                 { label: "Multi-Cloud", color: "#00ffb4" },
+                { label: "AI APIs", color: "#a78bfa", icon: "🤖", sublabel: "OpenAI · Anthropic · Bedrock · Vertex" },
               ].map(p => (
                 <button key={p.label}
                   role="radio" aria-checked={provider === p.label} tabIndex={0}
                   onClick={() => { window.gtag?.('event', 'audit_started', { provider: p.label }); setProvider(p.label); goTo("intake"); }}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.gtag?.('event', 'audit_started', { provider: p.label }); setProvider(p.label); goTo("intake"); } }}
-                  style={{ padding: "14px 24px", borderRadius: "12px", border: `2px solid ${p.color}40`, background: `${p.color}12`, color: p.label === "Multi-Cloud" ? "var(--green)" : p.color, fontSize: "15px", fontWeight: 700, cursor: "pointer", transition: "all 0.18s", fontFamily: "inherit", minWidth: "100px" }}
+                  style={{ padding: "14px 24px", borderRadius: "12px", border: `2px solid ${p.color}40`, background: `${p.color}12`, color: p.label === "Multi-Cloud" ? "var(--green)" : p.color, fontSize: "15px", fontWeight: 700, cursor: "pointer", transition: "all 0.18s", fontFamily: "inherit", minWidth: "100px", display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}
                   onMouseEnter={e => { e.currentTarget.style.background = `${p.color}22`; e.currentTarget.style.borderColor = `${p.color}80`; e.currentTarget.style.transform = "translateY(-2px)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = `${p.color}12`; e.currentTarget.style.borderColor = `${p.color}40`; e.currentTarget.style.transform = "translateY(0)"; }}>
-                  {p.label}
+                  <span>{p.icon && <span style={{ marginRight: "6px" }}>{p.icon}</span>}{p.label}</span>
+                  {p.sublabel && <span style={{ fontSize: "10px", fontWeight: 500, opacity: 0.75 }}>{p.sublabel}</span>}
                 </button>
               ))}
             </div>
@@ -5421,7 +5518,7 @@ aws iam simulate-principal-policy \\
       <SuspendedParticleBackground />
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
-      {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
+      {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
         {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
       <Nav showBack onBack={() => goTo("intro")} />
@@ -5446,8 +5543,12 @@ aws iam simulate-principal-policy \\
                   role="radio" aria-checked={provider === p} tabIndex={0}
                   onClick={() => { window.gtag?.('event', 'audit_started', { provider: p }); setProvider(p); }}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.gtag?.('event', 'audit_started', { provider: p }); setProvider(p); } }}
-                  style={{ padding: "10px 20px", borderRadius: "10px", fontSize: "14px", fontWeight: 600, border: `1.5px solid ${provider === p ? "var(--green)" : "var(--border)"}`, background: provider === p ? "rgba(0,255,180,0.08)" : "rgba(255,255,255,0.03)", color: provider === p ? "var(--green)" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>
-                  {provider === p && <span style={{ fontSize: "11px", fontWeight: 800 }}>✓</span>}{p}
+                  style={{ padding: "10px 20px", borderRadius: "10px", fontSize: "14px", fontWeight: 600, border: `1.5px solid ${provider === p ? "var(--green)" : "var(--border)"}`, background: provider === p ? "rgba(0,255,180,0.08)" : "rgba(255,255,255,0.03)", color: provider === p ? "var(--green)" : "var(--text-muted)", display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    {provider === p && <span style={{ fontSize: "11px", fontWeight: 800 }}>✓</span>}
+                    {PROVIDER_ICONS[p] && <span>{PROVIDER_ICONS[p]}</span>}{p}
+                  </span>
+                  {PROVIDER_SUBLABELS[p] && <span style={{ fontSize: "10px", fontWeight: 500, opacity: 0.65 }}>{PROVIDER_SUBLABELS[p]}</span>}
                 </button>
               ))}
             </div>
@@ -5491,7 +5592,8 @@ aws iam simulate-principal-policy \\
 
   // ── AUDIT ──────────────────────────────────────────────────────────────────
   if (step === "audit") {
-    const section = AUDIT_SECTIONS[activeSection];
+    const sections = provider === 'AI APIs' ? AI_AUDIT_SECTIONS : AUDIT_SECTIONS;
+    const section = sections[activeSection];
     const mobileCheck = section.checks[Math.min(sectionCheckIndex, section.checks.length - 1)];
     const mobileDone = sectionCheckIndex + 1;
     return (
@@ -5500,7 +5602,7 @@ aws iam simulate-principal-policy \\
         <SuspendedParticleBackground />
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
-        {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
+        {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
         {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
         <Nav showBack onBack={() => goTo("intake")} />
@@ -5515,14 +5617,14 @@ aws iam simulate-principal-policy \\
             <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, var(--green), #00d4ff, #818cf8)", transition: "width 0.5s ease", boxShadow: "0 0 8px rgba(0,255,180,0.6)" }} />
           </div>
           <div style={{ background: "rgba(8,8,16,0.92)", backdropFilter: "blur(12px)", padding: "6px 24px", display: "flex", gap: "4px", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
-            {AUDIT_SECTIONS.map((s, i) => {
+            {sections.map((s, i) => {
               const done = s.checks.filter(c => checked[c.id] !== undefined).length === s.checks.length;
               const active = i === activeSection;
               return (
                 <span key={s.id} onClick={() => setActiveSection(i)} style={{ fontSize: "11px", fontWeight: active ? 700 : 500, color: done ? "var(--green)" : active ? "var(--green)" : "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", gap: "3px", padding: "1px 4px", borderRadius: "4px", background: active ? "rgba(0,255,180,0.08)" : "transparent" }}>
                   <span className={active ? "section-active-indicator" : ""} style={{ width: "5px", height: "5px", borderRadius: "50%", background: done ? "var(--green)" : active ? "var(--green)" : "rgba(255,255,255,0.15)", display: "inline-block", flexShrink: 0 }} />
                   {done ? `✓ ${s.label}` : s.label}
-                  {i < AUDIT_SECTIONS.length - 1 && <span style={{ color: "rgba(255,255,255,0.15)", marginLeft: "4px" }}>·</span>}
+                  {i < sections.length - 1 && <span style={{ color: "rgba(255,255,255,0.15)", marginLeft: "4px" }}>·</span>}
                 </span>
               );
             })}
@@ -5530,7 +5632,7 @@ aws iam simulate-principal-policy \\
         </div>
         <div style={{ maxWidth: "960px", margin: "0 auto", padding: "32px 24px 120px", position: "relative", zIndex: 1 }}>
           <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "32px", paddingBottom: "4px" }}>
-            {AUDIT_SECTIONS.map((s, i) => {
+            {sections.map((s, i) => {
               const done = s.checks.filter(c => checked[c.id] !== undefined).length;
               const active = i === activeSection;
               return (
@@ -5544,7 +5646,7 @@ aws iam simulate-principal-policy \\
           </div>
           <div className="audit-grid" style={{ display: "grid", gridTemplateColumns: "1fr 290px", gap: "24px", alignItems: "start" }}>
             <div key={activeSection} className="fade-up">
-              {activeSection === AUDIT_SECTIONS.length - 1 && (
+              {activeSection === sections.length - 1 && (
                 <div className="pulse-green-ring" style={{ background: "rgba(0,255,180,0.08)", border: "1.5px solid rgba(0,255,180,0.35)", borderRadius: "12px", padding: "13px 20px", marginBottom: "20px", textAlign: "center" }}>
                   <span style={{ color: "var(--green)", fontWeight: 700, fontSize: "14px" }}>✅ Almost done — see your full report →</span>
                 </div>
@@ -5630,16 +5732,16 @@ aws iam simulate-principal-policy \\
               </div>
               <div style={{ display: "flex", gap: "10px", marginTop: "28px" }}>
                 {activeSection > 0 && <button className="ghost-btn" onClick={() => setActiveSection(a => a - 1)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px 22px", fontSize: "14px", fontWeight: 600, color: "var(--text-muted)" }}>← Previous</button>}
-                {activeSection < AUDIT_SECTIONS.length - 1 ? (
+                {activeSection < sections.length - 1 ? (
                   <button className="glow-btn" onClick={() => {
-                    const prevSec = AUDIT_SECTIONS[activeSection];
+                    const prevSec = sections[activeSection];
                     const flaggedInSec = prevSec.checks.filter(c => checked[c.id]).length;
                     const msg = `✓ ${prevSec.label} complete — ${flaggedInSec} issue${flaggedInSec !== 1 ? 's' : ''} found`;
                     clearTimeout(sectionToastTimerRef.current);
                     setSectionToast(msg);
                     sectionToastTimerRef.current = setTimeout(() => setSectionToast(null), 1500);
                     setActiveSection(a => a + 1);
-                  }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)" }}>Next: {AUDIT_SECTIONS[activeSection + 1].label} →</button>
+                  }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)" }}>Next: {sections[activeSection + 1].label} →</button>
                 ) : (
                   <button className="glow-btn" onClick={() => goTo("email_gate")} style={{ background: "linear-gradient(135deg, var(--green), #00d4ff)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 32px", fontSize: "14px", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Generate Report →</button>
                 )}
@@ -5688,7 +5790,7 @@ aws iam simulate-principal-policy \\
               </div>
               <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "18px" }}>
                 <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "1px", color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "14px" }}>Sections</p>
-                {AUDIT_SECTIONS.map((s, i) => {
+                {sections.map((s, i) => {
                   const done = s.checks.filter(c => checked[c.id] !== undefined).length;
                   const pct = Math.round((done / s.checks.length) * 100);
                   return (
@@ -5961,7 +6063,7 @@ aws iam simulate-principal-policy \\
         <SuspendedParticleBackground />
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
-        {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} />}
+        {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
         {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
         <Nav showBack onBack={() => goTo("audit")} />
@@ -5989,7 +6091,7 @@ aws iam simulate-principal-policy \\
           {bill > 0 && (
             <div className="fade-up stagger-1 kpi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "14px", marginBottom: "32px" }}>
               {[
-                { l: "Monthly Savings", v: `$${savMin.toLocaleString()} – $${savMax.toLocaleString()}`, s: "/month", c: "var(--green)", bg: "var(--green-dim)", b: "var(--green-border)" },
+                { l: "Monthly Savings", v: `$${savMin.toLocaleString()} – $${savMax.toLocaleString()}`, s: provider === 'AI APIs' ? "potential monthly savings on AI API costs" : "/month", c: "var(--green)", bg: "var(--green-dim)", b: "var(--green-border)" },
                 { l: "Annual Opportunity", v: `$${(savMin * 12).toLocaleString()}+`, s: "per year", c: "#818cf8", bg: "rgba(99,102,241,0.08)", b: "rgba(99,102,241,0.2)" },
                 { l: "Waste Rate", v: `~${savPct}%`, s: savPct >= 30 ? "Critical" : savPct >= 15 ? "Significant" : "Moderate", c: savPct >= 30 ? "#f87171" : savPct >= 15 ? "#fb923c" : "#fbbf24", bg: "rgba(248,113,113,0.06)", b: "rgba(248,113,113,0.15)" },
                 { l: "Issues Found", v: flagged.length, s: `of ${allChecks.length} checked`, c: "#fb923c", bg: "rgba(251,146,60,0.06)", b: "rgba(251,146,60,0.15)" },
@@ -6022,6 +6124,7 @@ aws iam simulate-principal-policy \\
             savMin={savMin}
             savMax={savMax}
             onShare={() => setShowShareCard(true)}
+            provider={provider}
           />}
 
           {/* ── SHARE & LEADERBOARD ── */}
@@ -6321,7 +6424,7 @@ aws iam simulate-principal-policy \\
                 <button className="glow-btn" onClick={() => { if (flagged.length > 0) { window.gtag?.('event', 'blueprint_clicked', { provider, savings_min: savMin, currency: currency.code }); setShowBlueprint(true); } }}
                   disabled={flagged.length === 0}
                   style={{ width: "100%", background: flagged.length > 0 ? "var(--green)" : "rgba(255,255,255,0.06)", color: flagged.length > 0 ? "#000" : "var(--text-muted)", border: "none", borderRadius: "10px", padding: "13px", fontSize: "14px", cursor: flagged.length > 0 ? "pointer" : "not-allowed", boxShadow: flagged.length > 0 ? "0 0 20px rgba(0,255,180,0.3)" : "none" }}>
-                  Get Blueprint — {currency.blueprintPrice} →
+                  {provider === 'AI APIs' ? `Get AI Cost Blueprint — ${currency.aiBlueprintPrice} →` : `Get Blueprint — ${currency.blueprintPrice} →`}
                 </button>
                 <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "6px" }}>Inbox in 2 min · Full refund if nothing actionable</p>
               </div>
@@ -6408,7 +6511,7 @@ aws iam simulate-principal-policy \\
             </div>
             <button className="glow-btn" onClick={() => { window.gtag?.('event', 'blueprint_clicked', { provider, savings_min: savMin, currency: currency.code, source: 'sticky_bar' }); setShowBlueprint(true); }}
               style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", fontWeight: 700, boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap", cursor: "pointer" }}>
-              Get Blueprint — {currency.blueprintPrice} →
+              {provider === 'AI APIs' ? `Get AI Cost Blueprint — ${currency.aiBlueprintPrice} →` : `Get Blueprint — ${currency.blueprintPrice} →`}
             </button>
           </div>
         )}

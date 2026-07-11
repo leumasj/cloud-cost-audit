@@ -267,6 +267,29 @@ One paragraph. State: if the team implements all recommendations, what is the 12
 Keep the tone professional but direct. This document will be shared with the board and investors. Avoid jargon. Every number should be in dollars.`;
 }
 
+// ── AI SPEND AUDIT PROMPT ─────────────────────────────────────────────────────
+function buildAiPrompt(meta) {
+  const flagged = (meta.flaggedIssueLabels || '').split('||').filter(Boolean);
+  const bill = meta.monthlyBill || 0;
+
+  return `You are a senior AI infrastructure engineer writing
+a cost remediation blueprint for a team spending $${bill}/month
+on AI APIs (OpenAI, Anthropic, AWS Bedrock, or similar).
+
+They have these specific issues: ${flagged.join(', ')}
+
+Write a practical blueprint covering, for each flagged issue:
+1. Model routing code (if ai_model_routing/ai_model_tier flagged)
+2. Caching implementation with exact API parameters (if caching flagged)
+3. Spending controls setup steps (if spend_cap/token_limits flagged)
+4. Batch processing code (if ai_no_batch flagged)
+5. Dev/prod separation pattern (if ai_dev_hits_prod_api flagged)
+
+Be specific, include exact code, target 700 words minimum.
+No generic advice — every recommendation must be implementable
+in under 2 hours.`;
+}
+
 // ── HTML EMAIL BUILDERS ───────────────────────────────────────────────────────
 function buildBlueprintEmail(report, meta) {
   const provider = meta.provider || 'AWS';
@@ -386,6 +409,7 @@ function validateBlueprintQuality(content, productType) {
     security:   600,
     cfo_report: 400,
     bundle:     1200,
+    ai_blueprint: 600,
   };
 
   const minimum = minimums[productType] || 600;
@@ -490,6 +514,7 @@ module.exports = async function handler(req, res) {
         const isSecur       = job.product_type === 'security_blueprint';
         const isBundle      = job.product_type === 'bundle';
         const isCfoReport   = job.product_type === 'cfo_report';
+        const isAiAudit     = job.product_type === 'ai_blueprint';
 
         // ── 3-DAY FOLLOW-UP EMAIL ─────────────────────────────────────────────
         if (job.product_type === 'followup_email') {
@@ -697,7 +722,7 @@ module.exports = async function handler(req, res) {
 
           if (!report) {
             console.log(`Cache miss — calling Claude for job ${job.id}`);
-            const prompt = isSecur ? buildSecurityPrompt(meta) : isCfoReport ? buildCfoPrompt(meta) : buildBlueprintPrompt(meta);
+            const prompt = isSecur ? buildSecurityPrompt(meta) : isCfoReport ? buildCfoPrompt(meta) : isAiAudit ? buildAiPrompt(meta) : buildBlueprintPrompt(meta);
             const aiResp = await Promise.race([
               anthropic.messages.create({
                 model:      'claude-sonnet-4-6',
@@ -716,7 +741,7 @@ module.exports = async function handler(req, res) {
         }
 
         // 3b. Validate Claude response quality before delivery
-        const validationType = isBundle ? 'bundle' : isSecur ? 'security' : isCfoReport ? 'cfo_report' : 'blueprint';
+        const validationType = isBundle ? 'bundle' : isSecur ? 'security' : isCfoReport ? 'cfo_report' : isAiAudit ? 'ai_blueprint' : 'blueprint';
         const quality = validateBlueprintQuality(report, validationType);
 
         if (!quality.valid) {

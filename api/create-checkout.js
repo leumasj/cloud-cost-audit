@@ -42,7 +42,7 @@ module.exports = async function handler(req, res)  {
     const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax, currency, currencyAmount, productType, sessionId, stripeCurrency } = req.body;
 
     // Validate product type up front — unknown types are rejected before reaching Stripe
-    const VALID_PRODUCT_TYPES = ['blueprint', 'security_blueprint', 'bundle', 'cfo_report', 'subscription', 'session'];
+    const VALID_PRODUCT_TYPES = ['blueprint', 'security_blueprint', 'bundle', 'cfo_report', 'subscription', 'session', 'ai_blueprint'];
     if (productType && !VALID_PRODUCT_TYPES.includes(productType)) {
       return res.status(400).json({ error: 'Invalid product type' });
     }
@@ -164,6 +164,50 @@ module.exports = async function handler(req, res)  {
         metadata:           { type: 'monthly_plan', provider: provider || 'AWS', sessionId: sessionId || '' },
       });
       return res.status(200).json({ url: session.url, sessionId: session.id });
+    }
+
+    // ── AI COST BLUEPRINT (one-time, additive — mirrors the default blueprint case) ──
+    if (productType === 'ai_blueprint') {
+      if (!email) return res.status(400).json({ error: 'Email required' });
+      const aiChargeCurrency = currency || 'pln';
+      const aiChargeAmount   = currencyAmount || 29900;
+      const aiIssues         = flaggedIssues || [];
+
+      const aiMetadata = {
+        email,
+        type: 'ai_blueprint',
+        provider: provider || 'AI APIs',
+        monthlyBill: String(monthlyBill || 0),
+        companyName: companyName || 'Your Company',
+        savingsMin: String(savingsMin || 0),
+        savingsMax: String(savingsMax || 0),
+        flaggedIssueIds:    aiIssues.map(i => i.id).join(',').substring(0, 499),
+        flaggedIssueLabels: aiIssues.map(i => i.label).join('||').substring(0, 499),
+        sessionId: sessionId || '',
+      };
+
+      const aiSession = await stripe.checkout.sessions.create({
+        line_items: [{
+          price_data: {
+            currency: aiChargeCurrency,
+            product_data: {
+              name: 'KloudAudit — AI Cost Blueprint',
+              description: `Personalised AI API cost remediation guide for ${aiIssues.length} detected issues — model routing, caching, spend controls. Delivered to ${email} instantly.`,
+              images: ['https://kloudaudit.eu/og-image.png'],
+            },
+            unit_amount: aiChargeAmount,
+          },
+          quantity: 1,
+        }],
+        mode: 'payment',
+        customer_email: email,
+        success_url: `${process.env.NEXT_PUBLIC_URL || 'https://kloudaudit.eu'}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.NEXT_PUBLIC_URL || 'https://kloudaudit.eu'}?payment=cancelled`,
+        metadata: aiMetadata,
+        payment_intent_data: { metadata: aiMetadata },
+      });
+
+      return res.status(200).json({ url: aiSession.url, sessionId: aiSession.id });
     }
 
     // Multi-currency: use values from frontend, fall back to PLN defaults

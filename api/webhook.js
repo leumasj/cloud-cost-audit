@@ -30,6 +30,7 @@ const PRODUCT_TYPE_MAP = {
   'cfo_report':          'cfo_report',
   'consulting_session':  'consulting_session',
   'monthly_plan':        'subscription',
+  'ai_blueprint':        'ai_blueprint',
 };
 
 // ── STRUCTURED LOGGER ─────────────────────────────────────────────────────────
