@@ -124,6 +124,21 @@ const AI_AUDIT_SECTIONS = [
   },
 ];
 
+const AI_VERIFY_COMMANDS = {
+  ai_model_routing: 'curl https://api.openai.com/v1/usage -H "Authorization: Bearer $OPENAI_API_KEY" -G --data-urlencode "date=$(date +%Y-%m-%d)" | jq \'.data[] | {model: .snapshot_id, requests: .n_requests}\'',
+  ai_legacy_models: 'curl https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY" | jq \'.data[] | select(.id | contains("gpt-4-0")) | .id\'',
+  ai_model_tier: 'grep -rn "model=" ./src --include=*.py | grep -v "mini\\|haiku"  # calls not using cheap tier',
+  ai_no_caching: 'grep -rn "cache" ./src --include=*.py | wc -l  # cache references in codebase',
+  ai_no_prompt_cache: 'grep -rn "cache_control" ./src --include=*.py | wc -l  # Anthropic prompt cache usage',
+  ai_no_spend_cap: 'echo "Check: platform.openai.com/settings/organization/limits or console.anthropic.com/settings/limits"',
+  ai_no_token_limits: 'grep -rn "max_tokens" ./src --include=*.py | wc -l  # calls with token limits set',
+  ai_no_cost_alerts: 'echo "Check: platform.openai.com/settings/organization/billing/alerts"',
+  ai_dev_hits_prod_api: 'grep -rn "OPENAI_API_KEY\\|ANTHROPIC_API_KEY" ./config ./.env* 2>/dev/null  # check for separate dev/prod keys',
+  ai_no_batch: 'grep -rn "batches.create\\|/v1/batches" ./src --include=*.py | wc -l  # batch API usage',
+  ai_no_attribution: 'grep -rn "metadata=" ./src --include=*.py | wc -l  # requests tagged with metadata',
+  ai_no_monitoring: 'echo "Check: platform.openai.com/usage or console.anthropic.com/usage"',
+};
+
 const SAMPLE_REPORT = {
   companyName: "TechFlow GmbH",
   provider: "AWS",
@@ -6315,23 +6330,8 @@ aws iam simulate-principal-policy \\
                     rds_idle: `aws rds describe-db-instances --query 'DBInstances[*].{ID:DBInstanceIdentifier,Class:DBInstanceClass,Status:DBInstanceStatus,MultiAZ:MultiAZ}' --output table`,
                     rds_size: `aws cloudwatch get-metric-statistics --namespace AWS/RDS --metric-name DatabaseConnections --statistics Average --period 86400 --start-time $(date -d '7 days ago' +%Y-%m-%dT%H:%M:%S) --end-time $(date +%Y-%m-%dT%H:%M:%S) --dimensions Name=DBInstanceIdentifier,Value=YOUR_DB_ID`,
                   };
-                  const aiCmds = {
-                    ai_model_routing: `curl https://api.openai.com/v1/usage -H "Authorization: Bearer $OPENAI_API_KEY" -G --data-urlencode "date=$(date +%Y-%m-%d)"  # check model breakdown for frontier-model usage on simple tasks`,
-                    ai_legacy_models: `grep -rEo '"(gpt-3\\.5[^"]*|gpt-4-[0-9]{4}[^"]*|claude-[12][^"]*)"' ./src ./api 2>/dev/null | sort -u  # find deprecated model IDs still hardcoded`,
-                    ai_model_tier: `grep -rE 'model\\s*[:=]\\s*["\\'']' ./src ./api 2>/dev/null | sort -u | wc -l  # count distinct models called — 1 means no tiering`,
-                    ai_no_caching: `grep -r 'cache_control' ./src --include=*.py | wc -l  # count of cached calls vs total API calls`,
-                    ai_no_prompt_cache: `grep -rE 'cache_control|prompt_cache' ./src ./api 2>/dev/null | wc -l  # 0 means no prompt caching in place`,
-                    ai_no_spend_cap: `echo 'Check dashboard: platform.openai.com/settings/organization/limits or console.anthropic.com/settings/limits'`,
-                    ai_no_token_limits: `grep -rE 'max_tokens' ./src ./api 2>/dev/null | wc -l  # 0 means calls have no output length cap`,
-                    ai_no_cost_alerts: `echo 'Check dashboard: platform.openai.com/settings/organization/limits or console.anthropic.com/settings/billing — confirm a threshold alert is configured'`,
-                    ai_dev_hits_prod_api: `grep -rE 'OPENAI_API_KEY|ANTHROPIC_API_KEY' ./.env* ./src ./api 2>/dev/null | grep -iE 'dev|test|staging'  # empty output means dev/test share the prod key`,
-                    ai_no_batch: `grep -rE '/v1/batches|message_batches' ./src ./api 2>/dev/null | wc -l  # 0 means no batch API usage for async workloads`,
-                    ai_no_attribution: `grep -rE 'metadata\\s*[:=]\\s*\\{' ./src ./api 2>/dev/null | wc -l  # 0 means API calls aren't tagged by feature/team`,
-                    ai_no_monitoring: `echo 'Check dashboard: platform.openai.com/usage or console.anthropic.com/settings/usage — confirm a daily usage view or alert exists'`,
-                  };
-                  const isAiVerify = provider === 'AI APIs';
-                  const cmd = isAiVerify
-                    ? (aiCmds[f.id] || `echo 'Check dashboard: platform.openai.com/usage or console.anthropic.com/settings/usage'`)
+                  const cmd = provider === 'AI APIs'
+                    ? (AI_VERIFY_COMMANDS[f.id] || `echo "Check: platform.openai.com/usage or console.anthropic.com/usage"`)
                     : (cmds[f.id] || `aws ce get-cost-and-usage --time-period Start=$(date -d '30 days ago' +%Y-%m-%d),End=$(date +%Y-%m-%d) --granularity MONTHLY --metrics BlendedCost --group-by Type=DIMENSION,Key=SERVICE`);
                   return (
                     <div key={f.id} style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "14px 16px" }}>
