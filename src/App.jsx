@@ -5524,6 +5524,10 @@ aws iam simulate-principal-policy \\
                   { label: "Security Audit", action: () => goTo("security_intro") },
                   { label: "Pricing", action: () => setShowPricingModal(true) },
                   { label: "Sample Report", action: () => setShowSample(true) },
+                  { label: "Cost Blueprint", action: () => setShowBlueprint(true) },
+                  { label: "AI Blueprint", action: () => { setProvider('AI APIs'); setShowBlueprint(true); } },
+                  { label: "Security Blueprint", action: () => goTo("security_intro") },
+                  { label: "CFO Report", action: () => setShowCfoReport(true) },
                   { label: "Blog", href: "https://dev.to/kloudaudit" },
                 ].map(l => (
                   l.href
