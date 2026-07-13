@@ -52,13 +52,26 @@ async function handleViewAudit(req, res, supabase, auditId) {
     return res.status(400).json({ error: 'Audit ID required. Use ?type=audit&id=YOUR_ID' });
   }
 
-  // Try to fetch by session_id first, then by public_slug
+  // Try to fetch by session_id first, then by public_slug — two separate
+  // parameterized queries rather than a single raw `.or()` filter string.
+  // auditId is unvalidated user input; PostgREST's `.or()` syntax treats
+  // commas/dots/parens as filter grammar, so splicing it into a raw string
+  // would let a crafted id inject additional OR-conditions.
   let { data: audit, error } = await supabase
     .from('audits')
     .select('*')
-    .or(`session_id.eq.${auditId},public_slug.eq.${auditId}`)
+    .eq('session_id', auditId)
     .eq('is_public', true)
     .single();
+
+  if (!audit) {
+    ({ data: audit, error } = await supabase
+      .from('audits')
+      .select('*')
+      .eq('public_slug', auditId)
+      .eq('is_public', true)
+      .single());
+  }
 
   if (error || !audit) {
     return res.status(404).json({ 
