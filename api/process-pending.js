@@ -90,10 +90,19 @@ async function setCachedReport(cacheKey, productType, reportText, supabaseAdmin)
   }
 }
 
+// Sanitizes free-text fields before embedding them in Claude prompts.
+// companyName/provider reach these builders from Stripe metadata with no
+// server-side allowlist — strips newlines/control chars (which could be used
+// to simulate new instruction blocks) and caps length, since neither field
+// legitimately needs to be long or multi-line.
+function sanitizeForPrompt(str, maxLen = 100) {
+  return String(str).replace(/[\r\n\t\x00-\x1F\x7F]/g, ' ').trim().slice(0, maxLen);
+}
+
 // ── BLUEPRINT PROMPT ─────────────────────────────────────────────────────────
 function buildBlueprintPrompt(meta) {
-  const provider      = meta.provider || 'AWS';
-  const companyName   = meta.companyName || 'Your Company';
+  const provider      = sanitizeForPrompt(meta.provider || 'AWS');
+  const companyName   = sanitizeForPrompt(meta.companyName || 'Your Company');
   const monthlyBill   = meta.monthlyBill || '0';
   const savingsMin    = meta.savingsMin || '0';
   const savingsMax    = meta.savingsMax || '0';
@@ -158,10 +167,11 @@ Be precise and technical. Real ${provider} commands only. This customer paid for
 
 // ── SECURITY BLUEPRINT PROMPT ─────────────────────────────────────────────────
 function buildSecurityPrompt(meta) {
-  const provider    = meta.provider || 'AWS';
+  const provider    = sanitizeForPrompt(meta.provider || 'AWS');
+  const companyName = sanitizeForPrompt(meta.companyName || 'a company');
   const issueLabels = (meta.flaggedIssueLabels || '').split('||').filter(Boolean);
 
-  return `You are a senior cloud security architect delivering a paid Security Blueprint for ${meta.companyName || 'a company'} on ${provider}.
+  return `You are a senior cloud security architect delivering a paid Security Blueprint for ${companyName} on ${provider}.
 
 Issues flagged (${issueLabels.length}): ${issueLabels.join(', ')}
 Additional context:
@@ -208,9 +218,9 @@ Real ${provider} CLI only. This customer paid for professional quality.`;
 
 // ── CFO REPORT PROMPT ─────────────────────────────────────────────────────────
 function buildCfoPrompt(meta) {
-  const provider    = meta.provider || 'AWS';
+  const provider    = sanitizeForPrompt(meta.provider || 'AWS');
   const isAi        = provider === 'AI APIs';
-  const companyName = meta.companyName || 'Your Company';
+  const companyName = sanitizeForPrompt(meta.companyName || 'Your Company');
   const monthlyBill = Number(meta.monthlyBill || 0);
   const savingsMin  = Number(meta.savingsMin || 0);
   const savingsMax  = Number(meta.savingsMax || 0);
