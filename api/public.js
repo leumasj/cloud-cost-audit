@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
 
 // ── VIEW PUBLIC AUDIT ─────────────────────────────────────────────────────────
 async function handleViewAudit(req, res, supabase, auditId) {
-  const rateLimit = checkRateLimit(req, 'public-audit', 50, 60 * 60 * 1000);
+  const rateLimit = await checkRateLimit(req, 'public-audit', 50, 60 * 60 * 1000);
   if (rateLimit.limited) {
     return res.status(429).json({ error: 'Too many requests' });
   }
@@ -127,7 +127,7 @@ async function handleStats(req, res, supabase) {
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────────
 async function handleLeaderboard(req, res, supabase, provider, limitStr) {
-  const rateLimit = checkRateLimit(req, 'leaderboard', 100, 60 * 60 * 1000);
+  const rateLimit = await checkRateLimit(req, 'leaderboard', 100, 60 * 60 * 1000);
   if (rateLimit.limited) {
     return res.status(429).json({ error: 'Too many requests' });
   }

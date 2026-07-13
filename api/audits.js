@@ -72,7 +72,7 @@ module.exports = async function handler(req, res) {
 // ── SAVE AUDIT ────────────────────────────────────────────────────────────────
 async function handleSaveAudit(req, res, supabase) {
   // Rate limiting
-  const rateLimit = checkRateLimit(req, 'save-audit', 10, 60 * 60 * 1000);
+  const rateLimit = await checkRateLimit(req, 'save-audit', 10, 60 * 60 * 1000);
   if (rateLimit.limit !== undefined) res.setHeader('X-RateLimit-Limit', String(rateLimit.limit));
   if (rateLimit.remaining !== undefined) res.setHeader('X-RateLimit-Remaining', String(rateLimit.remaining));
   if (rateLimit.resetAt !== undefined) res.setHeader('X-RateLimit-Reset', new Date(rateLimit.resetAt).toISOString());
@@ -189,7 +189,7 @@ async function handleSaveAudit(req, res, supabase) {
 
 // ── CALCULATE SCORE ───────────────────────────────────────────────────────────
 async function handleCalculateScore(req, res) {
-  const rateLimit = checkRateLimit(req, 'calculate-score', 30, 60 * 60 * 1000);
+  const rateLimit = await checkRateLimit(req, 'calculate-score', 30, 60 * 60 * 1000);
   if (rateLimit.limited) {
     return res.status(429).json({ error: 'Too many requests' });
   }
@@ -220,7 +220,7 @@ async function handleCalculateScore(req, res) {
 
 // ── SHARE AUDIT ───────────────────────────────────────────────────────────────
 async function handleShareAudit(req, res, supabase) {
-  const rateLimit = checkRateLimit(req, 'share-audit', 20, 60 * 60 * 1000);
+  const rateLimit = await checkRateLimit(req, 'share-audit', 20, 60 * 60 * 1000);
   if (rateLimit.limited) {
     return res.status(429).json({ error: 'Too many requests' });
   }
@@ -263,7 +263,7 @@ async function handleShareAudit(req, res, supabase) {
 
 // ── LEADERBOARD OPT-IN ────────────────────────────────────────────────────────
 async function handleLeaderboardOptIn(req, res, supabase) {
-  const rateLimit = checkRateLimit(req, 'leaderboard-opt-in', 10, 60 * 60 * 1000);
+  const rateLimit = await checkRateLimit(req, 'leaderboard-opt-in', 10, 60 * 60 * 1000);
   if (rateLimit.limited) {
     return res.status(429).json({ error: 'Too many requests' });
   }
@@ -314,7 +314,7 @@ async function handleLeaderboardOptIn(req, res, supabase) {
 // Stores in subscribers table for re-audit reminders.
 // The PDF itself is served as a public static file — no email needed to download.
 async function handleLeadMagnet(req, res, supabase) {
-  const rateLimit = checkRateLimit(req, 'lead-magnet', 5, 60 * 60 * 1000);
+  const rateLimit = await checkRateLimit(req, 'lead-magnet', 5, 60 * 60 * 1000);
   if (rateLimit.limited) return res.status(429).json({ error: 'Too many requests' });
 
   const { email } = req.body;
@@ -343,7 +343,7 @@ async function handleLeadMagnet(req, res, supabase) {
 
 // ── NEWSLETTER ────────────────────────────────────────────────────────────────
 async function handleNewsletter(req, res, supabase) {
-  const rateLimit = checkRateLimit(req, 'newsletter', 3, 60 * 60 * 1000);
+  const rateLimit = await checkRateLimit(req, 'newsletter', 3, 60 * 60 * 1000);
   if (rateLimit.limited) return res.status(429).json({ error: 'Too many requests' });
 
   const { email } = req.body;
