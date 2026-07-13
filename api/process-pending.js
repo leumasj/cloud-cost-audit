@@ -817,7 +817,9 @@ module.exports = async function handler(req, res) {
                   ? `🛡 Your Security Blueprint is ready — ${assessmentId}`
                   : isCfoReport
                     ? `📊 Your CFO & Board Report is ready — ${assessmentId}`
-                    : `⚡ Your ${provider} Cost Blueprint is ready`,
+                    : isAiAudit
+                      ? `⚡ Your AI Cost Blueprint is ready`
+                      : `⚡ Your ${provider} Cost Blueprint is ready`,
               html: customerHtml,
             }),
             resend.emails.send({
