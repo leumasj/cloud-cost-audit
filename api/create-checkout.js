@@ -247,7 +247,9 @@ module.exports = async function handler(req, res)  {
               ? 'KloudAudit — Security Blueprint'
               : type === 'bundle'
                 ? 'KloudAudit — Cost + Security Bundle'
-                : 'KloudAudit — AI Cost Blueprint',
+                : productType === 'ai_blueprint'
+                  ? 'KloudAudit — AI Cost Blueprint'
+                  : 'KloudAudit — Cost Blueprint',
             description: type === 'security_certificate'
               ? `${provider} security remediation for ${issues.length} flagged issues. CLI commands, IAM policy fixes, compliance mapping. Delivered to ${email} instantly.`
               : type === 'bundle'
