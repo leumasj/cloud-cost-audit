@@ -23,15 +23,8 @@ const sentry  = require('./lib/_sentry');
 // CRITICAL: must be an explicit map — a ternary cannot handle 3 product types.
 // Bug this fixed: meta.type === 'bundle' was previously coerced to 'blueprint',
 // causing bundle customers to receive only the cost Blueprint, not both.
-const PRODUCT_TYPE_MAP = {
-  'blueprint':           'blueprint',
-  'security_certificate':'security_blueprint',
-  'bundle':              'bundle',
-  'cfo_report':          'cfo_report',
-  'consulting_session':  'consulting_session',
-  'monthly_plan':        'subscription',
-  'ai_blueprint':        'ai_blueprint',
-};
+// Imported from lib/_config — single source of truth, not duplicated here.
+const { PRODUCT_TYPE_MAP } = require('./lib/_config');
 
 // ── STRUCTURED LOGGER ─────────────────────────────────────────────────────────
 const log = (level, event, data = {}) =>

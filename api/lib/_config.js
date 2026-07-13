@@ -27,12 +27,15 @@ const CACHE_TTL_DAYS = 7;
 // ── PRODUCT TYPE MAP ──────────────────────────────────────────────────────────
 // Maps Stripe metadata 'type' to delivery_queue product_type.
 // Explicit map — never a ternary — so new product types can be added safely.
+// Single source of truth — imported by webhook.js, not duplicated there.
 const PRODUCT_TYPE_MAP = {
   'blueprint':            'blueprint',
   'security_certificate': 'security_blueprint',
   'bundle':               'bundle',
   'consulting_session':   'consulting_session',
   'cfo_report':           'cfo_report',
+  'monthly_plan':         'subscription',
+  'ai_blueprint':         'ai_blueprint',
 };
 
 // ── ALLOWED CORS ORIGINS ──────────────────────────────────────────────────────
