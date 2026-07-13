@@ -3,6 +3,8 @@
 // Reduces API count for Vercel free tier (12 function limit)
 
 const { createClient } = require('@supabase/supabase-js');
+const { checkRateLimit } = require('./lib/_ratelimit');
+const { ALLOWED_ORIGINS } = require('./lib/_config');
 
 module.exports = async function handler(req, res) {
   const { action } = req.query;
@@ -26,11 +28,27 @@ async function handleSendReport(req, res) {
   );
   const { Resend } = require('resend');
   const resend = new Resend(process.env.RESEND_API_KEY);
-  res.setHeader('Access-Control-Allow-Origin', '*');
+
+  // CORS — restrict to KloudAudit domains only
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Reject requests from origins not in the allowlist
+  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  const rateLimit = await checkRateLimit(req, 'send-report', 10, 60 * 60 * 1000);
+  if (rateLimit.limited) {
+    return res.status(429).json({ error: 'Too many requests' });
+  }
 
   try {
     const {
