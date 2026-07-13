@@ -294,8 +294,15 @@ in under 2 hours.`;
 }
 
 // ── HTML EMAIL BUILDERS ───────────────────────────────────────────────────────
+// Escapes user-controlled fields (provider, companyName, report body) before
+// interpolating into HTML emails — all three ultimately come from client
+// request bodies, not a fixed allowlist.
+function escapeHtml(str) {
+  return String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function buildBlueprintEmail(report, meta) {
-  const provider = meta.provider || 'AWS';
+  const provider = escapeHtml(meta.provider || 'AWS');
   const savings  = `$${Number(meta.savingsMin || 0).toLocaleString()}–$${Number(meta.savingsMax || 0).toLocaleString()}`;
 
   return `<!DOCTYPE html>
@@ -314,7 +321,7 @@ function buildBlueprintEmail(report, meta) {
   </div>
   <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;margin-bottom:24px;">
     <p style="font-size:13px;font-weight:700;color:#fff;margin:0 0 16px;text-transform:uppercase;letter-spacing:1px;">Your Implementation Blueprint</p>
-    <div style="font-family:monospace;font-size:13px;line-height:1.8;color:#cbd5e1;white-space:pre-wrap;">${report.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    <div style="font-family:monospace;font-size:13px;line-height:1.8;color:#cbd5e1;white-space:pre-wrap;">${escapeHtml(report)}</div>
   </div>
   <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;text-align:center;">
     <p style="font-size:12px;color:#475569;margin:0 0 8px;">🔒 This blueprint was generated from your self-reported audit answers. We never accessed your cloud account.</p>
@@ -326,8 +333,8 @@ function buildBlueprintEmail(report, meta) {
 }
 
 function buildCfoEmail(report, meta) {
-  const provider   = meta.provider || 'AWS';
-  const company    = meta.companyName || 'Your Company';
+  const provider   = escapeHtml(meta.provider || 'AWS');
+  const company    = escapeHtml(meta.companyName || 'Your Company');
   const savingsMin = Number(meta.savingsMin || 0);
   const savingsMax = Number(meta.savingsMax || 0);
   const annualMin  = (savingsMin * 12).toLocaleString();
@@ -352,7 +359,7 @@ function buildCfoEmail(report, meta) {
   </div>
   <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;margin-bottom:24px;">
     <p style="font-size:13px;font-weight:700;color:#fff;margin:0 0 16px;text-transform:uppercase;letter-spacing:1px;">Your Executive Report</p>
-    <div style="font-family:system-ui;font-size:14px;line-height:1.9;color:#cbd5e1;white-space:pre-wrap;">${report.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    <div style="font-family:system-ui;font-size:14px;line-height:1.9;color:#cbd5e1;white-space:pre-wrap;">${escapeHtml(report)}</div>
   </div>
   <div style="background:rgba(129,140,248,0.04);border:1px solid rgba(129,140,248,0.12);border-radius:12px;padding:18px;margin-bottom:20px;text-align:center;">
     <p style="font-size:12px;color:#818cf8;font-weight:700;margin:0 0 4px;">🔒 Methodology Note</p>
@@ -367,7 +374,7 @@ function buildCfoEmail(report, meta) {
 }
 
 function buildSecurityEmail(report, meta, assessmentId) {
-  const provider = meta.provider || 'AWS';
+  const provider = escapeHtml(meta.provider || 'AWS');
 
   return `<!DOCTYPE html>
 <html>
@@ -384,7 +391,7 @@ function buildSecurityEmail(report, meta, assessmentId) {
     <p style="font-size:13px;color:#94a3b8;margin:0;">Assessment ID: ${assessmentId}</p>
   </div>
   <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;margin-bottom:24px;">
-    <div style="font-family:monospace;font-size:13px;line-height:1.8;color:#cbd5e1;white-space:pre-wrap;">${report.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    <div style="font-family:monospace;font-size:13px;line-height:1.8;color:#cbd5e1;white-space:pre-wrap;">${escapeHtml(report)}</div>
   </div>
   <div style="background:rgba(248,113,113,0.04);border:1px solid rgba(248,113,113,0.12);border-radius:12px;padding:18px;margin-bottom:20px;text-align:center;">
     <p style="font-size:12px;color:#f87171;font-weight:700;margin:0 0 4px;">🔒 Privacy Notice</p>
