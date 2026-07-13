@@ -917,7 +917,7 @@ module.exports = async function handler(req, res) {
 
         // Mark as failed (will retry on next cron run, up to MAX_ATTEMPTS)
         const isFinalAttempt = job.attempts + 1 >= MAX_ATTEMPTS;
-        await supabase
+        await supabaseAdmin
           .from('delivery_queue')
           .update({
             status:        isFinalAttempt ? 'failed' : 'pending',
