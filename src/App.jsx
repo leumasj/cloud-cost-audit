@@ -5755,7 +5755,7 @@ aws iam simulate-principal-policy \\
             </div>
             {bill > 0 && (
               <div style={{ marginTop: "10px", padding: "12px 16px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "10px", fontSize: "13px", color: "var(--green)", fontWeight: 600 }}>
-                💰 Typical savings: <strong>${Math.round(bill * 0.20).toLocaleString()} – ${Math.round(bill * 0.45).toLocaleString()}/mo</strong> based on 18 audit checks
+                💰 Typical savings: <strong>${Math.round(bill * 0.20).toLocaleString()} – ${Math.round(bill * 0.45).toLocaleString()}/mo</strong> based on {allChecks.length} audit checks
               </div>
             )}
           </div>
