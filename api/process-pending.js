@@ -48,7 +48,7 @@ function buildCacheKey(productType, meta) {
   return crypto.createHash('sha256').update(raw).digest('hex');
 }
 
-async function getCachedReport(cacheKey) {
+async function getCachedReport(cacheKey, supabaseAdmin) {
   try {
     const { data } = await supabaseAdmin
       .from('report_cache')
@@ -59,7 +59,7 @@ async function getCachedReport(cacheKey) {
 
     if (data) {
       // Increment hit count (fire and forget)
-      supabase
+      supabaseAdmin
         .from('report_cache')
         .update({ hit_count: (data.hit_count || 0) + 1 })
         .eq('cache_key', cacheKey)
@@ -72,7 +72,7 @@ async function getCachedReport(cacheKey) {
   }
 }
 
-async function setCachedReport(cacheKey, productType, reportText) {
+async function setCachedReport(cacheKey, productType, reportText, supabaseAdmin) {
   try {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7-day TTL
@@ -692,8 +692,8 @@ module.exports = async function handler(req, res) {
           ];
           bundleCacheKeys = { costKey, secKey };
           const [cachedCost, cachedSec] = await Promise.all([
-            getCachedReport(costKey),
-            getCachedReport(secKey),
+            getCachedReport(costKey, supabaseAdmin),
+            getCachedReport(secKey, supabaseAdmin),
           ]);
 
           const [costReport, secReport] = await Promise.all([
@@ -719,7 +719,7 @@ module.exports = async function handler(req, res) {
         } else {
           // Single product — check cache first
           singleCacheKey = buildCacheKey(job.product_type, meta);
-          report   = await getCachedReport(singleCacheKey);
+          report   = await getCachedReport(singleCacheKey, supabaseAdmin);
           singleCacheHit = !!report;
           cacheHit = singleCacheHit;
 
@@ -784,12 +784,12 @@ module.exports = async function handler(req, res) {
         // 3c. Cache the validated report (only after quality passes or on final retry)
         // For single products: cache the freshly generated report now that it passed quality.
         if (!cacheHit && singleCacheKey && !singleCacheHit) {
-          setCachedReport(singleCacheKey, job.product_type, report);
+          setCachedReport(singleCacheKey, job.product_type, report, supabaseAdmin);
         }
         // For bundles: cache each fresh sub-report individually (so future single orders can hit them too)
         if (isBundle && freshBundleReports && bundleCacheKeys) {
-          if (freshBundleReports.cost) setCachedReport(bundleCacheKeys.costKey, 'blueprint', freshBundleReports.cost);
-          if (freshBundleReports.sec)  setCachedReport(bundleCacheKeys.secKey, 'security_blueprint', freshBundleReports.sec);
+          if (freshBundleReports.cost) setCachedReport(bundleCacheKeys.costKey, 'blueprint', freshBundleReports.cost, supabaseAdmin);
+          if (freshBundleReports.sec)  setCachedReport(bundleCacheKeys.secKey, 'security_blueprint', freshBundleReports.sec, supabaseAdmin);
         }
 
         // 4. Build emails
