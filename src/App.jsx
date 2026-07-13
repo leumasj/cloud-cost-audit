@@ -6380,8 +6380,12 @@ aws iam simulate-principal-policy \\
             {[
               high.length > 0 && { n: 1, t: "Tackle critical & high-impact findings first — fastest ROI with least risk.", c: "#f87171" },
               { n: 2, t: "Set billing alerts at 80% and 100% of your monthly target in your cloud console today.", c: "var(--green)" },
-              { n: 3, t: "Implement auto-shutdown for dev/staging outside business hours.", c: "var(--green)" },
-              { n: 4, t: "Run a rightsizing review using your provider's native tooling (Compute Optimizer / GCP Recommender).", c: "#818cf8" },
+              provider === 'AI APIs'
+                ? { n: 3, t: "Route simple or repetitive tasks to a cheaper model tier instead of your frontier model.", c: "var(--green)" }
+                : { n: 3, t: "Implement auto-shutdown for dev/staging outside business hours.", c: "var(--green)" },
+              provider === 'AI APIs'
+                ? { n: 4, t: "Enable prompt and response caching for repeated or long-context requests.", c: "#818cf8" }
+                : { n: 4, t: "Run a rightsizing review using your provider's native tooling (Compute Optimizer / GCP Recommender).", c: "#818cf8" },
               { n: 5, t: "Revisit this audit in 30 days after changes are applied to measure real impact.", c: "var(--text-dim)" },
             ].filter(Boolean).map(item => (
               <div key={item.n} style={{ display: "flex", gap: "14px", alignItems: "flex-start", marginBottom: "14px" }}>
