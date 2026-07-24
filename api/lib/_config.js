@@ -38,6 +38,19 @@ const PRODUCT_TYPE_MAP = {
   'ai_blueprint':         'ai_blueprint',
 };
 
+// ── CANONICAL PRODUCT PRICES (cents, by Stripe currency code) ────────────────
+// Server-side source of truth for checkout amounts — must mirror the CURRENCY_MAP
+// price points shown in src/App.jsx. create-checkout.js looks amounts up here
+// instead of trusting the client-supplied currencyAmount, which previously let a
+// caller set any price (e.g. currencyAmount: 1) for a live Stripe charge.
+const PRODUCT_PRICES = {
+  blueprint:    { usd: 7900,  gbp: 6200,  eur: 7300,  cad: 10700, aud: 11900, pln: 29900 },
+  security_blueprint: { usd: 2900, gbp: 2300, eur: 2700, cad: 3900, aud: 4500, pln: 11900 },
+  bundle:       { usd: 8900,  gbp: 6900,  eur: 8300,  cad: 11900, aud: 13400, pln: 34900 },
+  cfo_report:   { usd: 19900, gbp: 15900, eur: 18300, cad: 26900, aud: 29900, pln: 79900 },
+  ai_blueprint: { usd: 7900,  gbp: 6200,  eur: 7300,  cad: 10700, aud: 11900, pln: 29900 },
+};
+
 // ── ALLOWED CORS ORIGINS ──────────────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
   'https://www.kloudaudit.eu',
@@ -46,7 +59,7 @@ const ALLOWED_ORIGINS = [
 ];
 
 // ── REQUIRED ENVIRONMENT VARIABLES ───────────────────────────────────────────
-// Call validateEnv() at the top of any handler to fail fast if config is missing.
+// Checked by health.js — single source of truth for what "healthy" means.
 const REQUIRED_ENV = [
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
@@ -56,13 +69,6 @@ const REQUIRED_ENV = [
   'SUPABASE_ANON_KEY',
   'CRON_SECRET',
 ];
-
-function validateEnv() {
-  const missing = REQUIRED_ENV.filter(k => !process.env[k]);
-  if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
-  }
-}
 
 module.exports = {
   AI_MODEL,
@@ -75,6 +81,7 @@ module.exports = {
   RATE_LIMIT_WINDOW_MS,
   CACHE_TTL_DAYS,
   PRODUCT_TYPE_MAP,
+  PRODUCT_PRICES,
   ALLOWED_ORIGINS,
-  validateEnv,
+  REQUIRED_ENV,
 };

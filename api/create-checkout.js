@@ -5,6 +5,17 @@
 
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { PRODUCT_PRICES } = require('./lib/_config');
+const { checkRateLimit } = require('./lib/_ratelimit');
+
+// Resolve the canonical, server-side price for a product — never trusts the
+// client-supplied currencyAmount, which would otherwise let a caller set an
+// arbitrary charge (e.g. currencyAmount: 1) for a live Stripe payment.
+function resolvePrice(productKey, stripeCurrency) {
+  const table = PRODUCT_PRICES[productKey];
+  const c = (stripeCurrency || 'usd').toLowerCase();
+  return table[c] || table.usd;
+}
 
 // Maps Stripe currency code → recurring Price ID env var for subscription mode.
 function resolveSubscriptionPriceId(stripeCurrency) {
@@ -38,8 +49,13 @@ module.exports = async function handler(req, res)  {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
+  const rateLimit = await checkRateLimit(req, 'create-checkout', 10, 60 * 60 * 1000);
+  if (rateLimit.limited) {
+    return res.status(429).json({ error: 'Too many requests' });
+  }
+
   try {
-    const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax, currency, currencyAmount, productType, sessionId, stripeCurrency } = req.body;
+    const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax, currency, productType, sessionId, stripeCurrency } = req.body;
 
     // Validate product type up front — unknown types are rejected before reaching Stripe
     const VALID_PRODUCT_TYPES = ['blueprint', 'security_blueprint', 'bundle', 'cfo_report', 'subscription', 'session', 'ai_blueprint'];
@@ -93,7 +109,7 @@ module.exports = async function handler(req, res)  {
     if (productType === 'cfo_report') {
       if (!email) return res.status(400).json({ error: 'Email required' });
       const chargeCurrency = (currency || 'usd').toLowerCase();
-      const chargeAmount   = currencyAmount || 19900; // $199 default
+      const chargeAmount   = resolvePrice('cfo_report', chargeCurrency);
       const numIssues      = (flaggedIssues || []).length;
 
       const metadata = {
@@ -169,8 +185,8 @@ module.exports = async function handler(req, res)  {
     // ── AI COST BLUEPRINT (one-time, additive — mirrors the default blueprint case) ──
     if (productType === 'ai_blueprint') {
       if (!email) return res.status(400).json({ error: 'Email required' });
-      const aiChargeCurrency = currency || 'pln';
-      const aiChargeAmount   = currencyAmount || 29900;
+      const aiChargeCurrency = (currency || 'pln').toLowerCase();
+      const aiChargeAmount   = resolvePrice('ai_blueprint', aiChargeCurrency);
       const aiIssues         = flaggedIssues || [];
 
       const aiMetadata = {
@@ -210,9 +226,9 @@ module.exports = async function handler(req, res)  {
       return res.status(200).json({ url: aiSession.url, sessionId: aiSession.id });
     }
 
-    // Multi-currency: use values from frontend, fall back to PLN defaults
-    const chargeCurrency = currency || "pln";
-    const chargeAmount   = currencyAmount || 29900;
+    // Multi-currency: currency comes from the frontend, but the amount is always
+    // resolved server-side against PRODUCT_PRICES — never trust client currencyAmount.
+    const chargeCurrency = (currency || "pln").toLowerCase();
 
     if (!email) {
       return res.status(400).json({ error: 'Email required' });
@@ -223,6 +239,11 @@ module.exports = async function handler(req, res)  {
     const type = productType === 'security_blueprint' ? 'security_certificate'
               : productType === 'bundle' ? 'bundle'
               : 'blueprint';
+
+    const chargeAmount = resolvePrice(
+      type === 'security_certificate' ? 'security_blueprint' : type,
+      chargeCurrency
+    );
 
     const issues = flaggedIssues || [];
     const metadata = {
