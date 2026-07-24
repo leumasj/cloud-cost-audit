@@ -2221,7 +2221,7 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
       <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="blueprint-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "min(460px, calc(100vw - 32px))", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>📄</div>
-          <h2 id="blueprint-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>{isAi ? "Get Your AI Cost Blueprint" : "Get Your AI Blueprint"}</h2>
+          <h2 id="blueprint-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>{isAi ? "Get Your AI Cost Blueprint" : "Get Your Cost Blueprint"}</h2>
           <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
             Enter your email and you&apos;ll be redirected to secure payment. Your personalised {isAi ? "AI cost remediation" : (provider || "cloud")} {isAi ? "" : "implementation "}guide lands in your inbox within 2 minutes of payment.
           </p>
@@ -3678,7 +3678,7 @@ useEffect(() => {
     <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px;">
       <p style="font-size:10px;font-weight:700;color:#c2410c;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Issues Found</p>
       <p style="font-size:20px;font-weight:800;color:#c2410c;">${items.length}</p>
-      <p style="font-size:11px;color:#64748b;">of ${isSec ? '16' : '18'} checks</p>
+      <p style="font-size:11px;color:#64748b;">of ${isSec ? SEC_SECTIONS.flatMap(s => s.checks).length : allChecks.length} checks</p>
     </div>
   </div>
 
@@ -4044,7 +4044,7 @@ aws ec2 describe-reserved-instances \\
           <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>Subject: "⚡ Your [Provider] Cost Blueprint is ready"</p>
           <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>Check spam if you don't see it within 5 minutes.</p>
         </div>
-        <button className="glow-btn" onClick={() => { localStorage.removeItem('ka_session'); setChecked({}); setProvider(''); setMonthlyBill(''); setCompanyName(''); setActiveSection(0); setGateEmail(''); goTo('intro'); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Start a New Audit →</button>
+        <button className="glow-btn" onClick={() => { localStorage.removeItem('ka_session'); setChecked({}); setProvider(''); setMonthlyBill(''); setCompanyName(''); setActiveSection(0); setGateEmail(''); setAiPreview(null); setAiPreviewLoading(false); goTo('intro'); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 24px rgba(0,255,180,0.3)" }}>Start a New Audit →</button>
       </div>
     </div>
   );
@@ -4653,7 +4653,7 @@ aws iam simulate-principal-policy \\
         <div style={{ background: "rgba(0,255,180,0.07)", borderBottom: "1px solid rgba(0,255,180,0.2)", padding: "10px 24px", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", flexWrap: "wrap", fontSize: "13px", color: "var(--text-dim)" }}>
           <span>↩ You have an audit in progress</span>
           <button className="glow-btn" onClick={() => goTo(initialSession.step)} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "8px", padding: "6px 14px", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>Resume Audit →</button>
-          <button onClick={() => { localStorage.removeItem('ka_session'); setChecked({}); setProvider(''); setMonthlyBill(''); setCompanyName(''); setActiveSection(0); setGateEmail(''); }} className="ghost-btn" style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "12px", fontWeight: 600, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>Start Over</button>
+          <button onClick={() => { localStorage.removeItem('ka_session'); setChecked({}); setProvider(''); setMonthlyBill(''); setCompanyName(''); setActiveSection(0); setGateEmail(''); setAiPreview(null); setAiPreviewLoading(false); }} className="ghost-btn" style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "12px", fontWeight: 600, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>Start Over</button>
           <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}?session=${sessionId}`); setCopiedLink(true); setTimeout(() => setCopiedLink(false), 2000); }} style={{ fontSize: "12px", color: "var(--text-muted)", background: "none", border: "1px solid var(--border)", borderRadius: "6px", padding: "4px 10px", cursor: "pointer", fontFamily: "inherit" }}>
             {copiedLink ? '✓ Copied!' : '📋 Copy resume link'}
           </button>
@@ -6277,7 +6277,7 @@ aws iam simulate-principal-policy \\
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
               <button className="ghost-btn" onClick={handleExportPDF} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "10px", padding: "10px 18px", fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>📄 Export PDF</button>
-              <button className="glow-btn" onClick={() => { setChecked({}); setActiveSection(0); goTo("audit"); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "10px 20px", fontSize: "13px", boxShadow: "0 0 16px rgba(0,255,180,0.25)" }}>Re-run</button>
+              <button className="glow-btn" onClick={() => { setChecked({}); setActiveSection(0); setAiPreview(null); setAiPreviewLoading(false); goTo("audit"); }} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "10px 20px", fontSize: "13px", boxShadow: "0 0 16px rgba(0,255,180,0.25)" }}>Re-run</button>
             </div>
           </div>
 
@@ -6650,7 +6650,7 @@ aws iam simulate-principal-policy \\
               </div>
             </div>
             <div style={{ display: "flex", justifyContent: "center" }}>
-              <button className="ghost-btn" onClick={() => goTo("intro")} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "11px 22px", fontSize: "14px" }}>
+              <button className="ghost-btn" onClick={() => { setAiPreview(null); setAiPreviewLoading(false); goTo("intro"); }} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: "12px", padding: "11px 22px", fontSize: "14px" }}>
                 New Audit
               </button>
             </div>
