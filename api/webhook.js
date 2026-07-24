@@ -25,15 +25,8 @@ const sentry  = require('./lib/_sentry');
 // causing bundle customers to receive only the cost Blueprint, not both.
 // Imported from lib/_config — single source of truth, not duplicated here.
 const { PRODUCT_TYPE_MAP } = require('./lib/_config');
-
-// ── STRUCTURED LOGGER ─────────────────────────────────────────────────────────
-const log = (level, event, data = {}) =>
-  console.log(JSON.stringify({
-    level, event,
-    timestamp: new Date().toISOString(),
-    service:   'webhook',
-    ...data,
-  }));
+const logger = require('./lib/_logger');
+const log = (level, event, data = {}) => logger[level](event, { service: 'webhook', ...data });
 
 // ── RAW BODY READER ───────────────────────────────────────────────────────────
 // Required for Stripe signature verification — must be raw bytes, not parsed JSON.
@@ -51,8 +44,13 @@ async function getRawBody(req) {
 
 // ── HANDLER ───────────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
-  // Initialise inside handler so env vars are available at call time
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+  // Initialise inside handler so env vars are available at call time.
+  // Must use service-role key — delivery_queue RLS denies the anon role (writes fail silently as 42501,
+  // which meant paid orders never got queued for delivery). Matches process-pending.js's admin client.
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+  );
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
