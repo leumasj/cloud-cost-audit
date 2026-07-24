@@ -8,6 +8,7 @@
 // Monitor at: https://www.kloudaudit.eu/api/health
 
 const { createClient } = require('@supabase/supabase-js');
+const { REQUIRED_ENV } = require('./lib/_config');
 
 module.exports = async function handler(req, res) {
   // Allow both GET and HEAD — UptimeRobot uses HEAD for uptime checks
@@ -35,12 +36,8 @@ module.exports = async function handler(req, res) {
   };
 
   try {
-    // 1. Check all required env vars are present
-    const required = [
-      'STRIPE_SECRET_KEY', 'ANTHROPIC_API_KEY', 'SENDGRID_API_KEY',
-      'SUPABASE_URL', 'SUPABASE_ANON_KEY',
-    ];
-    checks.env = required.every(k => !!process.env[k]);
+    // 1. Check all required env vars are present — single source of truth in _config.js
+    checks.env = REQUIRED_ENV.every(k => !!process.env[k]);
 
     // 2. Check Supabase connectivity with a lightweight query
     const supabase = createClient(

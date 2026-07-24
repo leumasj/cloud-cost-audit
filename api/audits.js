@@ -89,15 +89,9 @@ async function handleSaveAudit(req, res, supabase) {
 
   // Input validation
   const { action, ...auditData } = req.body; // Remove action from validation
-  
-  // DEBUG: Log what we're validating
-  console.log('Validating audit data:', JSON.stringify(auditData, null, 2));
-  
+
   const validation = validate(auditData, SaveAuditSchema);
-  
-  // DEBUG: Log validation result
-  console.log('Validation result:', JSON.stringify(validation, null, 2));
-  
+
   if (!validation.success) {
     return res.status(400).json({ 
       error: 'Validation failed', 
@@ -371,6 +365,11 @@ async function handleNewsletter(req, res, supabase) {
 
 // ── SAVE SESSION ──────────────────────────────────────────────────────────────
 async function handleSaveSession(req, res, supabase) {
+  const rateLimit = await checkRateLimit(req, 'save-session', 20, 60 * 60 * 1000);
+  if (rateLimit.limited) {
+    return res.status(429).json({ error: 'Too many requests' });
+  }
+
   const { sessionId, sessionData } = req.body;
 
   if (!sessionId || !sessionData) {
@@ -399,10 +398,22 @@ async function handleSaveSession(req, res, supabase) {
 
 // ── GET SESSION ───────────────────────────────────────────────────────────────
 async function handleGetSession(req, res, supabase) {
+  const rateLimit = await checkRateLimit(req, 'get-session', 50, 60 * 60 * 1000);
+  if (rateLimit.limited) {
+    return res.status(429).json({ error: 'Too many requests' });
+  }
+
   const { sessionId } = req.query;
 
   if (!sessionId) {
     return res.status(400).json({ error: 'Missing sessionId' });
+  }
+
+  // sessionId is an opaque, high-entropy bearer token (ka_<13-digit-ts>_<7+ char random>),
+  // same trust model as handleShareAudit/handleLeaderboardOptIn — reject malformed IDs
+  // outright rather than hitting the DB with an unvalidated lookup key.
+  if (!/^ka_\d+_[a-z0-9]+$/.test(sessionId)) {
+    return res.status(400).json({ error: 'Invalid session ID format' });
   }
 
   const { data, error } = await supabase
