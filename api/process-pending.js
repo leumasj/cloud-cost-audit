@@ -106,7 +106,7 @@ function buildBlueprintPrompt(meta) {
   const monthlyBill   = meta.monthlyBill || '0';
   const savingsMin    = meta.savingsMin || '0';
   const savingsMax    = meta.savingsMax || '0';
-  const issueLabels   = (meta.flaggedIssueLabels || '').split('||').filter(Boolean);
+  const issueLabels   = (meta.flaggedIssueLabels || '').split('||').filter(Boolean).map(l => sanitizeForPrompt(l, 80));
   const chargeDisplay = meta.amount_total
     ? `${(meta.amount_total / 100).toFixed(2)} ${(meta.currency || 'PLN').toUpperCase()}`
     : '299 PLN';
@@ -169,7 +169,7 @@ Be precise and technical. Real ${provider} commands only. This customer paid for
 function buildSecurityPrompt(meta) {
   const provider    = sanitizeForPrompt(meta.provider || 'AWS');
   const companyName = sanitizeForPrompt(meta.companyName || 'a company');
-  const issueLabels = (meta.flaggedIssueLabels || '').split('||').filter(Boolean);
+  const issueLabels = (meta.flaggedIssueLabels || '').split('||').filter(Boolean).map(l => sanitizeForPrompt(l, 80));
 
   return `You are a senior cloud security architect delivering a paid Security Blueprint for ${companyName} on ${provider}.
 
@@ -226,7 +226,7 @@ function buildCfoPrompt(meta) {
   const savingsMax  = Number(meta.savingsMax || 0);
   const annualMin   = savingsMin * 12;
   const annualMax   = savingsMax * 12;
-  const issueLabels = (meta.flaggedIssueLabels || '').split('||').filter(Boolean);
+  const issueLabels = (meta.flaggedIssueLabels || '').split('||').filter(Boolean).map(l => sanitizeForPrompt(l, 80));
   const spendLabel  = isAi ? 'AI API spend' : 'cloud spend';
   const spendRowLabel = isAi ? 'Current Monthly AI API Spend' : 'Current Monthly Cloud Spend';
 
@@ -282,7 +282,7 @@ Keep the tone professional but direct. This document will be shared with the boa
 
 // ── AI SPEND AUDIT PROMPT ─────────────────────────────────────────────────────
 function buildAiPrompt(meta) {
-  const flagged = (meta.flaggedIssueLabels || '').split('||').filter(Boolean);
+  const flagged = (meta.flaggedIssueLabels || '').split('||').filter(Boolean).map(l => sanitizeForPrompt(l, 80));
   const bill = meta.monthlyBill || 0;
 
   return `You are a senior AI infrastructure engineer writing
