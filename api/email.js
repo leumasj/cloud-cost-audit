@@ -6,6 +6,13 @@ const { createClient } = require('@supabase/supabase-js');
 const { checkRateLimit } = require('./lib/_ratelimit');
 const { ALLOWED_ORIGINS } = require('./lib/_config');
 
+// Escapes user-controlled fields before interpolating into HTML emails.
+// provider/flaggedIssues/flaggedCount come straight from the request body with
+// no server-side allowlist — mirrors process-pending.js's escapeHtml.
+function escapeHtml(str) {
+  return String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 module.exports = async function handler(req, res) {
   const { action } = req.query;
 
@@ -60,8 +67,11 @@ async function handleSendReport(req, res) {
 
     if (!email) return res.status(400).json({ error: 'Email required' });
 
+    const safeProvider     = escapeHtml(provider || 'Cloud');
+    const safeFlaggedCount = escapeHtml(flaggedCount);
+
     const issuesList = flaggedIssues.length > 0
-      ? flaggedIssues.map(label => `<li style="margin-bottom:8px;color:#cbd5e1;">${label}</li>`).join('')
+      ? flaggedIssues.map(label => `<li style="margin-bottom:8px;color:#cbd5e1;">${escapeHtml(label)}</li>`).join('')
       : '<li style="color:#94a3b8;">No issues flagged</li>';
 
     const html = `<!DOCTYPE html>
@@ -78,11 +88,11 @@ async function handleSendReport(req, res) {
 
     <!-- Savings card -->
     <div style="background:linear-gradient(135deg,rgba(0,255,180,0.12),rgba(99,102,241,0.08));border:1.5px solid #00ffb4;border-radius:20px;padding:32px;margin-bottom:24px;text-align:center;">
-      <p style="font-size:11px;font-weight:700;color:#00ffb4;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">Your ${provider || 'Cloud'} Audit Results</p>
+      <p style="font-size:11px;font-weight:700;color:#00ffb4;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">Your ${safeProvider} Audit Results</p>
       <div style="font-size:48px;font-weight:800;color:#00ffb4;letter-spacing:-2px;line-height:1;margin-bottom:8px;">
         $${Number(savingsMin).toLocaleString()}–$${Number(savingsMax).toLocaleString()}
       </div>
-      <p style="font-size:15px;color:#94a3b8;margin:0;">estimated monthly savings · <strong style="color:#f8fafc;">${flaggedCount} issues found</strong></p>
+      <p style="font-size:15px;color:#94a3b8;margin:0;">estimated monthly savings · <strong style="color:#f8fafc;">${safeFlaggedCount} issues found</strong></p>
       ${savPct ? `<p style="font-size:13px;color:#94a3b8;margin:8px 0 0;">Waste rate: ~${savPct}% of your $${Number(monthlyBill).toLocaleString()}/mo bill</p>` : ''}
     </div>
 
@@ -97,7 +107,7 @@ async function handleSendReport(req, res) {
     <!-- Blueprint CTA -->
     <div style="background:linear-gradient(135deg,rgba(0,255,180,0.08),rgba(99,102,241,0.06));border:1px solid rgba(0,255,180,0.2);border-radius:16px;padding:28px;margin-bottom:24px;text-align:center;">
       <p style="font-size:14px;font-weight:700;color:#fff;margin:0 0 8px;">Want the exact CLI commands and Terraform to fix all of this?</p>
-      <p style="font-size:13px;color:#94a3b8;margin:0 0 20px;">The AI Blueprint generates step-by-step fix instructions personalised to your ${provider || 'cloud'} setup — delivered to your inbox in minutes.</p>
+      <p style="font-size:13px;color:#94a3b8;margin:0 0 20px;">The AI Blueprint generates step-by-step fix instructions personalised to your ${safeProvider} setup — delivered to your inbox in minutes.</p>
       <a href="https://www.kloudaudit.eu" style="display:inline-block;background:#00ffb4;color:#000;font-weight:800;font-size:15px;text-decoration:none;padding:14px 32px;border-radius:10px;">
         Get the AI Blueprint →
       </a>
@@ -118,10 +128,10 @@ async function handleSendReport(req, res) {
       resend.emails.send({
         from:    'Samuel @ KloudAudit <admin@kloudaudit.eu>',
         to:      [email],
-        subject: `Your ${provider || 'Cloud'} Audit Report — $${Number(savingsMin).toLocaleString()}–$${Number(savingsMax).toLocaleString()}/mo found`,
+        subject: `Your ${safeProvider} Audit Report — $${Number(savingsMin).toLocaleString()}–$${Number(savingsMax).toLocaleString()}/mo found`,
         html,
       }),
-      // Notify admin
+      // Notify admin (plain text, not HTML — no escaping needed, but still cap length)
       resend.emails.send({
         from:    'KloudAudit System <admin@kloudaudit.eu>',
         to:      ['admin@kloudaudit.eu'],
