@@ -1,11 +1,11 @@
-// api/lib/logger.js
+// api/lib/_logger.js
 // KloudAudit — Structured Logger
 //
 // Replaces console.log/error with JSON-structured logs compatible with
 // Vercel log drain, Datadog, Logtail, and any log aggregation service.
 //
 // Usage:
-//   const logger = require('./lib/logger');
+//   const logger = require('./lib/_logger');
 //   logger.info('webhook.queued', { sessionId, email, productType });
 //   logger.error('queue.failed', { jobId, error: err.message });
 

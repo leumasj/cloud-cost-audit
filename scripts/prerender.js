@@ -209,7 +209,6 @@ const PROBLEM_WHY = {
   'find-cloud-resources-all-regions': 'Resources deployed in non-primary regions are frequently forgotten. A test EC2 instance in ap-southeast-2 can run for months before anyone notices — and AWS bills every region separately.',
 };
 
-const problemTemplate = fs.readFileSync(path.join(DIST, '..', 'public', 'problem-page-template.html'), 'utf8').catch ? null : null;
 // Read template from public dir or use inline
 let tmpl = '';
 const tmplPath = path.join(__dirname, '..', 'public', 'problem-page-template.html');
