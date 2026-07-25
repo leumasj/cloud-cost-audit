@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 .vercel
 .env*.local
+
+# Claude Code agent worktrees — nested git checkouts, not project source.
+# Committing these as gitlinks (no matching .gitmodules) is what caused
+# "Failed to fetch one or more git submodules" on every Vercel build.
+.claude/worktrees/
