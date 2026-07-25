@@ -8,6 +8,12 @@ const sentry = require('./lib/_sentry');
 const { SaveAuditSchema, validate } = require('./lib/_validation');
 const { checkRateLimit } = require('./lib/_ratelimit');
 const { calculateScores } = require('./lib/_scoring');
+const { isUnsubscribeAuthorized } = require('./lib/_unsubscribe');
+
+// Escapes user-controlled fields before interpolating into HTML responses.
+function escapeHtml(str) {
+  return String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 module.exports = async function handler(req, res) {
   // Create Supabase client inside handler to avoid early connection
@@ -472,6 +478,32 @@ async function handleUnsubscribe(req, res, supabase) {
       <button type="submit"
         style="width:100%;padding:14px;border-radius:10px;border:none;background:#00ffb4;color:#000;font-weight:800;font-size:15px;cursor:pointer;">
         Unsubscribe
+      </button>
+    </form>
+    <p style="font-size:12px;color:#475569;margin-top:20px;">Or email <a href="mailto:admin@kloudaudit.eu" style="color:#00ffb4;text-decoration:none;">admin@kloudaudit.eu</a> to unsubscribe manually.</p>
+  </div>
+</body>
+</html>`);
+  }
+
+  // The one-click link is signed (see api/lib/_unsubscribe.js). A missing or
+  // invalid token means this wasn't a link we sent — require the visitor to
+  // confirm the email themselves via the form rather than unsubscribing on
+  // the strength of the address alone.
+  if (!isUnsubscribeAuthorized(email, req.query.token)) {
+    return res.status(200).send(`<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Confirm Unsubscribe — KloudAudit</title></head>
+<body style="margin:0;padding:0;background:#07070f;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;">
+  <div style="text-align:center;max-width:420px;width:100%;padding:40px 24px;">
+    <div style="width:48px;height:48px;background:#00ffb4;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 24px;">⚡</div>
+    <h1 style="font-size:22px;font-weight:800;color:#fff;margin:0 0 10px;">Confirm unsubscribe</h1>
+    <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 28px;">This link couldn't be verified. Confirm below to unsubscribe <strong style="color:#fff;">${escapeHtml(email)}</strong> from KloudAudit emails.</p>
+    <form method="POST" action="/api/audits?action=unsubscribe" style="display:flex;flex-direction:column;gap:14px;">
+      <input type="hidden" name="email" value="${escapeHtml(email)}" />
+      <button type="submit"
+        style="width:100%;padding:14px;border-radius:10px;border:none;background:#00ffb4;color:#000;font-weight:800;font-size:15px;cursor:pointer;">
+        Confirm Unsubscribe
       </button>
     </form>
     <p style="font-size:12px;color:#475569;margin-top:20px;">Or email <a href="mailto:admin@kloudaudit.eu" style="color:#00ffb4;text-decoration:none;">admin@kloudaudit.eu</a> to unsubscribe manually.</p>

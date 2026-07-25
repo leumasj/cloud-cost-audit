@@ -13,6 +13,14 @@ const crypto    = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const sentry = require('./lib/_sentry');
 const { sanitizeForPrompt } = require('./lib/_sanitize');
+const { generateUnsubscribeToken } = require('./lib/_unsubscribe');
+
+// Builds a one-click unsubscribe link, signed when a secret is configured.
+function unsubscribeUrl(email) {
+  const token = generateUnsubscribeToken(email);
+  const base = `https://www.kloudaudit.eu/api/audits?action=unsubscribe&email=${encodeURIComponent(email)}`;
+  return token ? `${base}&token=${token}` : base;
+}
 
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -976,7 +984,7 @@ module.exports = async function handler(req, res) {
           const isSec = fu.product_type === 'security_blueprint';
           const crossSellCost = `<div style="background:rgba(0,255,180,0.05);border:1px solid rgba(0,255,180,0.18);border-radius:14px;padding:20px 24px;margin-bottom:24px;"><p style="font-size:11px;font-weight:700;color:#00ffb4;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">WHILE YOU'RE HARDENING YOUR INFRA</p><p style="font-size:14px;font-weight:700;color:#fff;margin:0 0 6px;">Have you checked what your ${fu.provider || 'cloud'} bill is hiding?</p><p style="font-size:13px;color:#94a3b8;line-height:1.6;margin:0 0 14px;">Free 15-minute cost audit — no credentials, no account access.</p><a href="https://www.kloudaudit.eu" style="display:inline-block;background:#00ffb4;color:#000;font-weight:800;font-size:13px;text-decoration:none;padding:10px 22px;border-radius:8px;">Run Free Cost Audit →</a></div>`;
           const crossSellSec = `<div style="background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.18);border-radius:14px;padding:20px 24px;margin-bottom:24px;"><p style="font-size:11px;font-weight:700;color:#f87171;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">WHILE YOU'RE CUTTING COSTS</p><p style="font-size:14px;font-weight:700;color:#fff;margin:0 0 6px;">Have you checked your security posture?</p><p style="font-size:13px;color:#94a3b8;line-height:1.6;margin:0 0 14px;">Free 10-minute security audit, no credentials needed.</p><a href="https://www.kloudaudit.eu" style="display:inline-block;background:#f87171;color:#000;font-weight:800;font-size:13px;text-decoration:none;padding:10px 22px;border-radius:8px;">Run Free Security Audit →</a></div>`;
-          const unsubLink = `<p style="font-size:12px;color:#374151;text-align:center;margin:0;"><a href="https://www.kloudaudit.eu/api/audits?action=unsubscribe&email=${encodeURIComponent(fu.email)}" style="color:#374151;">Unsubscribe</a></p>`;
+          const unsubLink = `<p style="font-size:12px;color:#374151;text-align:center;margin:0;"><a href="${unsubscribeUrl(fu.email)}" style="color:#374151;">Unsubscribe</a></p>`;
           const header = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:32px;"><div style="width:36px;height:36px;background:#00ffb4;border-radius:8px;font-size:18px;display:flex;align-items:center;justify-content:center;">⚡</div><span style="font-size:20px;font-weight:800;color:#fff;">KloudAudit</span></div>`;
 
           let html, subject;

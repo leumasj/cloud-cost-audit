@@ -5,6 +5,14 @@
 const { createClient } = require('@supabase/supabase-js');
 const { checkRateLimit } = require('./lib/_ratelimit');
 const { ALLOWED_ORIGINS } = require('./lib/_config');
+const { generateUnsubscribeToken } = require('./lib/_unsubscribe');
+
+// Builds a one-click unsubscribe link, signed when a secret is configured.
+function unsubscribeUrl(email) {
+  const token = generateUnsubscribeToken(email);
+  const base = `https://www.kloudaudit.eu/api/audits?action=unsubscribe&email=${encodeURIComponent(email)}`;
+  return token ? `${base}&token=${token}` : base;
+}
 
 // Escapes user-controlled fields before interpolating into HTML emails.
 // provider/flaggedIssues/flaggedCount come straight from the request body with
@@ -275,7 +283,7 @@ function buildReauditEmail(subscriber) {
       You're receiving this because you ran a KloudAudit 90 days ago.
     </p>
     <p style="font-size:12px;color:#374151;text-align:center;margin:0;">
-      <a href="https://www.kloudaudit.eu/api/audits?action=unsubscribe&email=${encodeURIComponent(subscriber.email)}" style="color:#374151;">Unsubscribe</a>
+      <a href="${unsubscribeUrl(subscriber.email)}" style="color:#374151;">Unsubscribe</a>
       &nbsp;·&nbsp;
       <a href="mailto:admin@kloudaudit.eu" style="color:#374151;">Contact</a>
     </p>
