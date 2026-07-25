@@ -2911,14 +2911,21 @@ const BookingModal = memo(function BookingModal({ onClose, sessionPrice, onStrip
   );
 });
 
-export default function App() {
-  // ── DETECT PUBLIC AUDIT VIEW ────────────────────────────────────────────────
+// Routes to the public, read-only audit view or the full app — kept as a
+// separate component (rather than an early return inside App) so App's
+// hooks are always called unconditionally, regardless of which branch
+// renders. An early return before hooks would only be safe as long as
+// nothing ever swaps branches without a full page reload; hoisting the
+// branch here makes that true by construction instead of by convention.
+export default function AppRoot() {
   const pathMatch = window.location.pathname.match(/^\/audit\/([a-z0-9]+)$/i);
   if (pathMatch) {
-    const auditSlug = pathMatch[1];
-    return <PublicAuditViewer slug={auditSlug} />;
+    return <PublicAuditViewer slug={pathMatch[1]} />;
   }
-  
+  return <App />;
+}
+
+function App() {
   // ── URL SESSION PARAM — captured once at mount for cross-device restore ────
   const [urlSessionId] = useState(() => new URLSearchParams(window.location.search).get('session'));
   const [copiedLink, setCopiedLink] = useState(false);
