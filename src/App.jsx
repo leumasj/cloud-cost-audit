@@ -3092,7 +3092,7 @@ export default function App() {
     // Generate once per browser session, persist across page refreshes
     const existing = localStorage.getItem('ka_session_id');
     if (existing) return existing;
-    const newId = `ka_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    const newId = `ka_${Date.now()}_${crypto.randomUUID()}`;
     localStorage.setItem('ka_session_id', newId);
     return newId;
   });
