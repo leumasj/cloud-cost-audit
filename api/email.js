@@ -327,7 +327,7 @@ async function handleSendReaudit(req, res) {
       .eq('unsubscribed', false)
       .gte('re_audit_due', now.toISOString())
       .lte('re_audit_due', tomorrow.toISOString())
-      .limit(50); // process max 50 per run to stay within SendGrid limits
+      .limit(50); // process max 50 per run to stay within Resend limits
 
     if (error) throw error;
     if (!subscribers || subscribers.length === 0) {

@@ -3,7 +3,7 @@
 //
 // Called by Vercel cron every minute (or external cron-job.org if on Hobby plan).
 // Single cron run handles two queues:
-//   1. delivery_queue  — pending blueprint jobs (Claude AI → SendGrid)
+//   1. delivery_queue  — pending blueprint jobs (Claude AI → Resend)
 //   2. follow_up_queue — post-purchase follow-up emails (day 7 / 14 / 30)
 //
 // Merged from send-followups.js to stay within Vercel Hobby's 12-function limit.

@@ -4,7 +4,7 @@
 //
 // FLOW:
 // 1. Stripe fires event → verify signature → save to queue → return 200 IMMEDIATELY
-// 2. /api/process-pending (cron every 60s) → pick up pending → Claude → SendGrid
+// 2. /api/process-pending (cron every 60s) → pick up pending → Claude → Resend
 //
 // WHY: Claude takes 25-45s. Vercel times out at 10-60s.
 //      Returning 200 immediately prevents Stripe retrying (which causes duplicate deliveries).
