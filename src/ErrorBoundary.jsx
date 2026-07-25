@@ -32,7 +32,7 @@ class ErrorBoundary extends React.Component {
               Something went wrong
             </h2>
             <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>
-              An unexpected error occurred. Your audit progress has been saved.
+              An unexpected error occurred. If you'd already started your audit, your progress has been saved and will be restored.
             </p>
             <button
               onClick={() => {
@@ -48,7 +48,7 @@ class ErrorBoundary extends React.Component {
               Return to Homepage
             </button>
             <p style={{ color: '#334155', fontSize: '12px', marginTop: '16px' }}>
-              Error has been logged. admin@kloudaudit.eu if this persists.
+              Error has been logged. Email admin@kloudaudit.eu if this persists.
             </p>
           </div>
         </div>
