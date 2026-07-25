@@ -3709,6 +3709,10 @@ useEffect(() => {
 </html>`;
 
     const w = window.open('', '_blank');
+    if (!w) {
+      alert("Your browser blocked the export popup. Please allow popups for this site and try again.");
+      return;
+    }
     w.document.write(html);
     w.document.close();
   };
