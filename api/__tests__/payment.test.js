@@ -41,9 +41,14 @@ describe('create-checkout', () => {
         productType: 'blueprint',
         email: 'test@test.com',
         currency: 'usd',
-        amount: 7900,
+        currencyAmount: 7900,
         provider: 'AWS',
-        flaggedCount: 5
+        monthlyBill: 5000,
+        companyName: 'Acme Inc',
+        savingsMin: 500,
+        savingsMax: 1200,
+        flaggedIssues: [{ id: 'rightsizing', label: 'Idle instances' }],
+        sessionId: 'ka_1737782400123_c9f3a1e0-2b6d-4e7a-9c3f-1a2b3c4d5e6f',
       }
     });
 

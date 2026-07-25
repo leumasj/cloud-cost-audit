@@ -76,7 +76,7 @@ const CreateCheckoutSchema = z.object({
   })).max(50),
   currency: z.string().regex(/^[a-z]{3}$/, 'Invalid currency code'),
   currencyAmount: z.number().int().min(1).max(1000000), // max $10,000
-  sessionId: SessionIdSchema,
+  sessionId: SessionIdSchema.optional(), // SecurityBlueprintModal doesn't send one
   productType: z.enum(['blueprint', 'security_blueprint', 'bundle']).optional(),
 });
 

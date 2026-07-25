@@ -7,6 +7,7 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { PRODUCT_PRICES } = require('./lib/_config');
 const { checkRateLimit } = require('./lib/_ratelimit');
+const { CreateCheckoutSchema, validate } = require('./lib/_validation');
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function isValidEmail(email) {
@@ -237,6 +238,14 @@ module.exports = async function handler(req, res)  {
 
     if (!isValidEmail(email)) {
       return res.status(400).json({ error: 'A valid email address is required' });
+    }
+
+    // This is the only branch CreateCheckoutSchema was written for — the
+    // session/cfo_report/subscription/ai_blueprint branches above have their
+    // own (looser) shapes and already returned before reaching here.
+    const validation = validate(req.body, CreateCheckoutSchema);
+    if (!validation.success) {
+      return res.status(400).json({ error: validation.error });
     }
 
     // Store audit data in Stripe metadata so we can use it in the webhook
