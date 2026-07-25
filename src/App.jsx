@@ -690,7 +690,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
     "mfa_all","iam_wildcards","public_buckets","hardcoded_secrets"
   ].filter(id => secChecked[id]).length;
 
-  const canSubmit = email.length > 0 && withdrawalChecked && status !== "loading";
+  const canSubmit = email.length > 0 && withdrawalChecked && status !== "loading" && flaggedIds.length > 0;
 
   const handlePurchase = async (e) => {
     e.preventDefault();
@@ -784,6 +784,14 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
               <span style={{ fontSize: "18px" }}>⚠️</span>
               <p style={{ fontSize: "13px", color: "#f87171", fontWeight: 600, margin: 0 }}>
                 {critCount} critical issue{critCount > 1 ? "s" : ""} detected. Public exposure or credential risk may be active right now.
+              </p>
+            </div>
+          )}
+
+          {flaggedIds.length === 0 && (
+            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "12px 16px", marginBottom: "20px" }}>
+              <p style={{ fontSize: "13px", color: "#94a3b8", margin: 0 }}>
+                No security issues flagged yet — the Blueprint is generated from your audit results. Complete the security audit first, then come back here for your remediation guide.
               </p>
             </div>
           )}
