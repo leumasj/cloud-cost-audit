@@ -11,6 +11,7 @@
 
 const Anthropic = require('@anthropic-ai/sdk');
 const { AI_MODEL, AI_MAX_TOKENS_PREVIEW } = require('./lib/_config');
+const { sanitizeForPrompt } = require('./lib/_sanitize');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const sentry = require('./lib/_sentry');
@@ -90,11 +91,15 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    const safeProvider    = sanitizeForPrompt(provider, 40);
+    const safeIssueLabel  = sanitizeForPrompt(issueLabel, 120);
+    const safeIssueDetail = sanitizeForPrompt(issueDetail || '', 200);
+
     const prompt = `You are a senior DevOps engineer writing a concise fix for a cloud cost issue.
 
-Provider: ${provider}
-Issue: ${issueLabel}
-Detail: ${issueDetail || ''}
+Provider: ${safeProvider}
+Issue: ${safeIssueLabel}
+Detail: ${safeIssueDetail}
 Monthly bill: $${bill || 5000}
 
 Write ONLY the fix for this ONE issue. Format exactly as:

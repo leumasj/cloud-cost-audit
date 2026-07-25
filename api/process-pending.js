@@ -12,6 +12,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const crypto    = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const sentry = require('./lib/_sentry');
+const { sanitizeForPrompt } = require('./lib/_sanitize');
 
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -88,15 +89,6 @@ async function setCachedReport(cacheKey, productType, reportText, supabaseAdmin)
   } catch (err) {
     console.warn('Cache write failed (non-critical):', err.message);
   }
-}
-
-// Sanitizes free-text fields before embedding them in Claude prompts.
-// companyName/provider reach these builders from Stripe metadata with no
-// server-side allowlist — strips newlines/control chars (which could be used
-// to simulate new instruction blocks) and caps length, since neither field
-// legitimately needs to be long or multi-line.
-function sanitizeForPrompt(str, maxLen = 100) {
-  return String(str).replace(/[\r\n\t\x00-\x1F\x7F]/g, ' ').trim().slice(0, maxLen);
 }
 
 // ── BLUEPRINT PROMPT ─────────────────────────────────────────────────────────
