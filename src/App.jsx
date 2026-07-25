@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo, memo } from "react";
 import SEOPage, { SEO_PAGES } from "./SEOPages.jsx";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const ParticleBackground = React.lazy(() => import("./ParticleBackground"));
 const SuspendedParticleBackground = memo(function SuspendedParticleBackground() {
   return (
@@ -2203,8 +2205,9 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
   const isAi = productType === 'ai_blueprint';
   const displayPrice = price || currency.blueprintPrice;
 
-  const handleSubmit = async () => {
-    if (!email || !withdrawalChecked) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!EMAIL_RE.test(email) || !withdrawalChecked) return;
     setStatus("loading");
     try {
       await onBuy(email);
@@ -2218,7 +2221,7 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
-      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="blueprint-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "min(460px, calc(100vw - 32px))", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
+      <form onSubmit={handleSubmit} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="blueprint-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "min(460px, calc(100vw - 32px))", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>📄</div>
           <h2 id="blueprint-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>{isAi ? "Get Your AI Cost Blueprint" : "Get Your Cost Blueprint"}</h2>
@@ -2242,10 +2245,10 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
         <input
           id="blueprint-email"
           type="email"
+          required
           placeholder="you@company.com"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && email && handleSubmit()}
           style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.06)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "#fff", fontSize: "15px", fontFamily: "var(--body)", marginBottom: "14px" }}
           autoFocus
         />
@@ -2295,7 +2298,7 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
             View Profile ↗
           </a>
         </div>
-        <button className="glow-btn" onClick={handleSubmit}
+        <button type="submit" className="glow-btn"
           disabled={status === "loading" || !withdrawalChecked}
           style={{ background: withdrawalChecked ? "var(--green)" : "rgba(0,255,180,0.4)", color: "#000", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", width: "100%", cursor: withdrawalChecked ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
           {status === "loading" ? (
@@ -2306,8 +2309,8 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
         {status === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Error: {errorMsg} — email admin@kloudaudit.eu</p>}
         <p style={{ fontSize: "12px", color: "var(--text-dim)", textAlign: "center", marginTop: "14px", lineHeight: 1.6 }}>💚 If the Blueprint doesn&apos;t identify at least one actionable fix, email <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a> for a full refund. No questions asked.</p>
         <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "10px" }}>🔒 Secure payment via Stripe · Prices inclusive of applicable taxes · admin@kloudaudit.eu</p>
-        <button onClick={onClose} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-      </div>
+        <button type="button" onClick={onClose} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+      </form>
     </div>
   );
 });
@@ -2322,8 +2325,9 @@ const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, 
   const annualMin = (savMin * 12).toLocaleString();
   const annualMax = (savMax * 12).toLocaleString();
 
-  const handleSubmit = async () => {
-    if (!email || !withdrawalChecked) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!EMAIL_RE.test(email) || !withdrawalChecked) return;
     setStatus("loading");
     try {
       await onBuy(email);
@@ -2336,7 +2340,7 @@ const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, 
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "fadeIn 0.2s ease" }}>
-      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" style={{ background: "var(--bg2)", border: "1px solid rgba(129,140,248,0.3)", borderRadius: "20px", maxWidth: "min(480px, calc(100vw - 32px))", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
+      <form onSubmit={handleSubmit} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" style={{ background: "var(--bg2)", border: "1px solid rgba(129,140,248,0.3)", borderRadius: "20px", maxWidth: "min(480px, calc(100vw - 32px))", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>📊</div>
           <h2 className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>CFO & Board Report</h2>
@@ -2369,10 +2373,10 @@ const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, 
         <input
           id="cfo-email"
           type="email"
+          required
           placeholder="cto@company.com"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && email && handleSubmit()}
           style={{ width: "100%", padding: "13px 16px", background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(129,140,248,0.3)", borderRadius: "10px", color: "#fff", fontSize: "15px", fontFamily: "var(--body)", marginBottom: "14px" }}
           autoFocus
         />
@@ -2422,7 +2426,7 @@ const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, 
             View Profile ↗
           </a>
         </div>
-        <button onClick={handleSubmit}
+        <button type="submit"
           disabled={status === "loading" || !withdrawalChecked}
           style={{ background: withdrawalChecked ? "linear-gradient(135deg,#818cf8,#6366f1)" : "rgba(99,102,241,0.3)", color: "#fff", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", fontWeight: 800, width: "100%", cursor: withdrawalChecked ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: withdrawalChecked ? "0 4px 20px rgba(99,102,241,0.4)" : "none" }}>
           {status === "loading" ? (
@@ -2432,8 +2436,8 @@ const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, 
         <p style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center", marginTop: "8px" }}>🕐 Delivered to your inbox in ~2 minutes</p>
         {status === "error" && <p style={{ color: "#f87171", fontSize: "12px", textAlign: "center", marginTop: "10px" }}>Error: {errorMsg} — email admin@kloudaudit.eu</p>}
         <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "14px" }}>🔒 Secure payment via Stripe · admin@kloudaudit.eu</p>
-        <button onClick={onClose} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-      </div>
+        <button type="button" onClick={onClose} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+      </form>
     </div>
   );
 });

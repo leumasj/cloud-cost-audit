@@ -8,6 +8,11 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { PRODUCT_PRICES } = require('./lib/_config');
 const { checkRateLimit } = require('./lib/_ratelimit');
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function isValidEmail(email) {
+  return typeof email === 'string' && EMAIL_RE.test(email);
+}
+
 // Resolve the canonical, server-side price for a product — never trusts the
 // client-supplied currencyAmount, which would otherwise let a caller set an
 // arbitrary charge (e.g. currencyAmount: 1) for a live Stripe payment.
@@ -68,7 +73,7 @@ module.exports = async function handler(req, res)  {
     // Set env var STRIPE_SESSION_PRICE_ID (or per-currency variants).
     // If not configured the button gracefully shows "contact us" fallback.
     if (productType === 'session') {
-      if (!email) return res.status(400).json({ error: 'Email required' });
+      if (!isValidEmail(email)) return res.status(400).json({ error: 'A valid email address is required' });
 
       const sessionCurrency = (stripeCurrency || currency || 'usd').toLowerCase();
       const currencyMap = {
@@ -107,7 +112,7 @@ module.exports = async function handler(req, res)  {
 
     // ── CFO REPORT (one-time, executive-grade PDF) ────────────────────────────
     if (productType === 'cfo_report') {
-      if (!email) return res.status(400).json({ error: 'Email required' });
+      if (!isValidEmail(email)) return res.status(400).json({ error: 'A valid email address is required' });
       const chargeCurrency = (currency || 'usd').toLowerCase();
       const chargeAmount   = resolvePrice('cfo_report', chargeCurrency);
       const numIssues      = (flaggedIssues || []).length;
@@ -161,7 +166,7 @@ module.exports = async function handler(req, res)  {
 
     // ── SUBSCRIPTION (recurring) ──────────────────────────────────────────────
     if (productType === 'subscription') {
-      if (!email) return res.status(400).json({ error: 'Email required' });
+      if (!isValidEmail(email)) return res.status(400).json({ error: 'A valid email address is required' });
       const priceId = resolveSubscriptionPriceId(stripeCurrency || currency);
       if (!priceId) {
         return res.status(503).json({
@@ -184,7 +189,7 @@ module.exports = async function handler(req, res)  {
 
     // ── AI COST BLUEPRINT (one-time, additive — mirrors the default blueprint case) ──
     if (productType === 'ai_blueprint') {
-      if (!email) return res.status(400).json({ error: 'Email required' });
+      if (!isValidEmail(email)) return res.status(400).json({ error: 'A valid email address is required' });
       const aiChargeCurrency = (currency || 'pln').toLowerCase();
       const aiChargeAmount   = resolvePrice('ai_blueprint', aiChargeCurrency);
       const aiIssues         = flaggedIssues || [];
@@ -230,8 +235,8 @@ module.exports = async function handler(req, res)  {
     // resolved server-side against PRODUCT_PRICES — never trust client currencyAmount.
     const chargeCurrency = (currency || "pln").toLowerCase();
 
-    if (!email) {
-      return res.status(400).json({ error: 'Email required' });
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'A valid email address is required' });
     }
 
     // Store audit data in Stripe metadata so we can use it in the webhook
