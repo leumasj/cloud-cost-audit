@@ -2005,10 +2005,12 @@ function ShareButton({ sessionId, companyName, onShareUrl }) {
 function LeaderboardOptIn({ sessionId, companyName, onRank }) {
   const [opted, setOpted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleOptIn = async (checked) => {
     setLoading(true);
-    
+    setError(null);
+
     try {
       const res = await fetch('/api/audits', {
         method: 'POST',
@@ -2020,17 +2022,20 @@ function LeaderboardOptIn({ sessionId, companyName, onRank }) {
           displayName: companyName || 'Anonymous',
         }),
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
         setOpted(data.publicDisplay);
         if (data.rank) {
           onRank(data.rank);
         }
+      } else {
+        setError(data.error || 'Could not update leaderboard settings — please try again.');
       }
     } catch (err) {
       console.error('Opt-in failed:', err);
+      setError('Network error — please try again.');
     } finally {
       setLoading(false);
     }
@@ -2071,6 +2076,19 @@ function LeaderboardOptIn({ sessionId, companyName, onRank }) {
           </div>
         </div>
       </label>
+      {error && (
+        <div style={{
+          marginTop: '12px',
+          padding: '12px',
+          background: 'rgba(248, 113, 113, 0.1)',
+          border: '1px solid rgba(248, 113, 113, 0.3)',
+          borderRadius: '8px',
+          fontSize: '13px',
+          color: '#f87171',
+        }}>
+          {error}
+        </div>
+      )}
     </div>
   );
 }
