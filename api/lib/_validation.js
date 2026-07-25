@@ -5,9 +5,11 @@
 const { z } = require('zod');
 
 // ── SESSION ID ────────────────────────────────────────────────────────────────
-// Format: ka_1234567890123_abc1234
+// Format: ka_1234567890123_<random> — random suffix is a crypto.randomUUID()
+// (hyphenated hex) for IDs minted client-side after the Math.random() fix;
+// older cached IDs may still carry the legacy base36 suffix, so both are accepted.
 const SessionIdSchema = z.string()
-  .regex(/^ka_\d{13,}_[a-z0-9]{7,}$/, 'Invalid session ID format')
+  .regex(/^ka_\d{13,}_[a-z0-9-]{7,}$/, 'Invalid session ID format')
   .max(100);
 
 // ── EMAIL ─────────────────────────────────────────────────────────────────────

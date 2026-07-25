@@ -225,7 +225,7 @@ async function handleShareAudit(req, res, supabase) {
     return res.status(400).json({ error: 'sessionId required' });
   }
 
-  if (!/^ka_\d+_[a-z0-9]+$/.test(sessionId)) {
+  if (!/^ka_\d+_[a-z0-9-]+$/.test(sessionId)) {
     return res.status(400).json({ error: 'Invalid session ID format' });
   }
 
@@ -268,7 +268,7 @@ async function handleLeaderboardOptIn(req, res, supabase) {
     return res.status(400).json({ error: 'sessionId required' });
   }
 
-  if (!/^ka_\d+_[a-z0-9]+$/.test(sessionId)) {
+  if (!/^ka_\d+_[a-z0-9-]+$/.test(sessionId)) {
     return res.status(400).json({ error: 'Invalid session ID format' });
   }
 
@@ -412,7 +412,7 @@ async function handleGetSession(req, res, supabase) {
   // sessionId is an opaque, high-entropy bearer token (ka_<13-digit-ts>_<7+ char random>),
   // same trust model as handleShareAudit/handleLeaderboardOptIn — reject malformed IDs
   // outright rather than hitting the DB with an unvalidated lookup key.
-  if (!/^ka_\d+_[a-z0-9]+$/.test(sessionId)) {
+  if (!/^ka_\d+_[a-z0-9-]+$/.test(sessionId)) {
     return res.status(400).json({ error: 'Invalid session ID format' });
   }
 
