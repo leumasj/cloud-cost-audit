@@ -1941,12 +1941,20 @@ function ShareButton({ sessionId, companyName, onShareUrl }) {
       });
       
       const data = await res.json();
-      
+
       if (data.success && data.shareUrl) {
         onShareUrl(data.shareUrl);
-        await navigator.clipboard.writeText(data.shareUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 3000);
+        try {
+          await navigator.clipboard.writeText(data.shareUrl);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 3000);
+        } catch (clipErr) {
+          // The share link was already generated successfully — only the
+          // clipboard write failed (common under browser permission
+          // restrictions). Don't report this as a share/network failure.
+          console.error('Clipboard copy failed:', clipErr);
+          setError('Link created — copy it manually from the link below.');
+        }
       } else {
         setError('Failed to generate share link');
       }
