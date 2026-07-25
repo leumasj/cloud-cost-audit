@@ -4609,7 +4609,7 @@ aws iam simulate-principal-policy \\
         <SuspendedParticleBackground />
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         <Nav />
-        <SEOPage page={seoPage} onStartAudit={handleSeoStartAudit} />
+        <SEOPage page={seoPage} onStartAudit={handleSeoStartAudit} currency={currency} />
       </div>
     );
   }

@@ -189,7 +189,8 @@ const SECTION_LABEL = {
 };
 
 // ── SEO Page Component ─────────────────────────────────────────────────────
-export default function SEOPage({ page, onStartAudit }) {
+export default function SEOPage({ page, onStartAudit, currency }) {
+  const aiBlueprintPrice = currency?.aiBlueprintPrice || "$79";
   // Inject all SEO tags and set real URL
   useSEOHead(page);
 
@@ -418,14 +419,14 @@ export default function SEOPage({ page, onStartAudit }) {
           </pre>
         </div>
         <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "10px" }}>
-          💡 Need the full implementation guide with Terraform, step-by-step instructions, and commands tailored to your specific setup? Get the AI Blueprint for 299 PLN.
+          💡 Need the full implementation guide with Terraform, step-by-step instructions, and commands tailored to your specific setup? Get the AI Blueprint for {aiBlueprintPrice}.
         </p>
       </div>
 
       {/* Blueprint upsell */}
       <div style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "16px", padding: "32px", marginBottom: "36px", textAlign: "center" }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "20px", padding: "4px 14px", marginBottom: "16px" }}>
-          <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>AI IMPLEMENTATION BLUEPRINT · 299 PLN</span>
+          <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 700, letterSpacing: "1px" }}>AI IMPLEMENTATION BLUEPRINT · {aiBlueprintPrice}</span>
         </div>
         <h3 className="display" style={{ fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "10px" }}>
           Get the complete fix guide for your specific setup
