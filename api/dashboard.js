@@ -1,7 +1,13 @@
 // api/dashboard.js
 // KloudAudit — Admin Analytics Dashboard
 // Password protected. Returns HTML with real-time stats from Supabase.
-// Access at: https://www.kloudaudit.eu/api/dashboard?key=YOUR_CRON_SECRET
+// Access at: https://www.kloudaudit.eu/api/dashboard?key=YOUR_DASHBOARD_SECRET
+//
+// Set DASHBOARD_SECRET to a value distinct from CRON_SECRET — the cron
+// secret also gates process-pending.js/email.js, and reusing it here means
+// a leak of either one (e.g. via a cron scheduler's logs) grants the other.
+// Falls back to CRON_SECRET if DASHBOARD_SECRET isn't set, so this keeps
+// working until you configure a dedicated one.
 
 const { createClient } = require('@supabase/supabase-js');
 
@@ -14,14 +20,16 @@ function maskEmail(email) {
 }
 
 module.exports = async function handler(req, res) {
-  // Simple key auth — uses existing CRON_SECRET
+  // Simple key auth — prefers a dedicated DASHBOARD_SECRET, falls back to
+  // CRON_SECRET only if that isn't configured (see header comment).
   const key = req.query.key;
-  if (!key || key !== process.env.CRON_SECRET) {
+  const dashboardSecret = process.env.DASHBOARD_SECRET || process.env.CRON_SECRET;
+  if (!key || !dashboardSecret || key !== dashboardSecret) {
     return res.status(401).send(`
       <html><body style="background:#07070f;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
         <div style="text-align:center;">
           <h2 style="color:#f87171;">Access denied</h2>
-          <p style="color:#475569;">Add ?key=YOUR_CRON_SECRET to the URL</p>
+          <p style="color:#475569;">Add ?key=YOUR_DASHBOARD_SECRET to the URL</p>
         </div>
       </body></html>
     `);
