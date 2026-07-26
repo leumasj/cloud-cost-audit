@@ -4486,25 +4486,6 @@ aws iam simulate-principal-policy \\
               ))}
             </div>
             <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: "0 0 8px" }}>No signup · No credit card · No cloud access required</p>
-            <button 
-              onClick={() => setShowSample(true)}
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(0,255,180,0.4)',
-                borderRadius: '10px',
-                padding: '10px 24px',
-                color: '#00ffb4',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginTop: '12px',
-              }}
-            >
-              <span>👁</span> See a sample report first →
-            </button>
           </div>
 
           {/* ── SECONDARY CTA ── */}
