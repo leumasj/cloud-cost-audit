@@ -4369,8 +4369,7 @@ aws iam simulate-principal-policy \\
       {showStickyBar && (
         <div className="sticky-bottom-cta sticky-slide-up" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", boxShadow: "0 0 8px var(--green)", flexShrink: 0 }} />
-            <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>⚡ Engineers ran 3 audits today — find out what they found</span>
+            <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>⚡ Find out what your infrastructure is hiding — free audit, 15 minutes</span>
           </div>
           <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap" }}>
             See What My Bill Is Hiding →
