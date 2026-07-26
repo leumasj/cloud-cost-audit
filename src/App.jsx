@@ -5101,17 +5101,17 @@ aws iam simulate-principal-policy \\
           </div>
         </div>
 
-        {/* ── REAL USER PROOF ── */}
+        {/* ── REAL AUDIT RESULT (anonymized — customer contacted for a feature credit, no response) ── */}
         <div style={{ marginBottom: "48px", background: "rgba(0,255,180,0.03)", border: "1px solid rgba(0,255,180,0.1)", borderRadius: "16px", padding: "24px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", align: "center", gap: "16px", flexWrap: "wrap" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase" }}>Real user · KUBRA</p>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase" }}>Real audit result</p>
               <p style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>13 issues · $794–$2,003/mo savings found</p>
               <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Multi-cloud · $640/mo bill · Completed May 2026</p>
             </div>
           </div>
           <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
-            {[["$372M", "Company value"], ["13", "Issues found"], ["$2,003", "Max monthly saving"]].map(([v, l]) => (
+            {[["13", "Issues found"], ["$2,003", "Max monthly saving"]].map(([v, l]) => (
               <div key={l} style={{ textAlign: "center" }}>
                 <p style={{ fontSize: "20px", fontWeight: 800, color: "var(--green)", fontFamily: "var(--display)" }}>{v}</p>
                 <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>{l}</p>
