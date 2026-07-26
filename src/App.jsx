@@ -5449,6 +5449,11 @@ aws iam simulate-principal-policy \\
             style={{ background: provider && monthlyBill ? "var(--green)" : "rgba(255,255,255,0.06)", color: provider && monthlyBill ? "#000" : "var(--text-muted)", border: "none", borderRadius: "12px", padding: "16px", fontSize: "15px", boxShadow: provider && monthlyBill ? "0 0 24px rgba(0,255,180,0.3)" : "none", cursor: provider && monthlyBill ? "pointer" : "not-allowed", marginTop: "8px" }}>
             Begin Audit →
           </button>
+          {(!provider || !monthlyBill) && (
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', marginTop: '8px' }}>
+              Select a provider and enter your bill to continue
+            </p>
+          )}
         </div>
       </div>
     </div>
