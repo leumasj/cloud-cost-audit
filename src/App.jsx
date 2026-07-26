@@ -363,9 +363,6 @@ const globalCss = `
     /* Audit categories: single col */
     .audit-cats-grid { grid-template-columns: 1fr !important; }
 
-    /* Testimonials: single col */
-    .testimonials-grid { grid-template-columns: 1fr !important; }
-
     /* Wall of Savings: single col */
     .wall-grid { grid-template-columns: 1fr !important; }
 
@@ -1216,12 +1213,6 @@ const WALL_SAVINGS = [
 ];
 const PROVIDER_BADGE_COLOR = { AWS: "#ff9900", GCP: "#4285f4", Azure: "#0078d4", "Multi-Cloud": "#00ffb4" };
 
-const TESTIMONIALS = [
-  { name: "James K.", role: "Senior DevOps Engineer · London fintech", text: "Found $2,400/mo in idle RDS instances on the first audit. The blueprint gave me the exact Terraform to fix it. Took 40 minutes to implement.", savings: "$2,400/mo", provider: "AWS" },
-  { name: "Priya S.", role: "Cloud Architect · Singapore SaaS", text: "We were on full on-demand pricing for 18 months. One Savings Plan switch later — $1,800/month saved. Blueprint paid for itself in week one.", savings: "$1,800/mo", provider: "GCP" },
-  { name: "Marco D.", role: "Infrastructure Lead · Milan e-commerce", text: "Orphaned EBS volumes and a forgotten NAT Gateway were costing us $960/month. CLI commands were copy-paste ready. Fixed same afternoon.", savings: "$960/mo", provider: "Azure" },
-];
-
 const WALL_FILTERS = ["All", "AWS", "GCP", "Azure", "Multi-Cloud"];
 const COMPARISON_COLUMNS = [
   { label: "KloudAudit", kloud: true },
@@ -1309,72 +1300,12 @@ const ComparisonTable = memo(function ComparisonTable() {
   );
 });
 
-const TestimonialsSection = memo(function TestimonialsSection({ testimonials }) {
-  return (
-    <div style={{ marginBottom: "90px" }}>
-      <div style={{ textAlign: "center", marginBottom: "40px" }}>
-        <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Typical results</p>
-        <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>What engineers find</h2>
-        <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", marginTop: "8px" }}>Based on real audit patterns across 500+ cloud environments</p>
-      </div>
-      <div className="testimonials-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
-        <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px", position: "relative" }}>
-          <div style={{
-            position: "absolute", top: "12px", right: "12px",
-            fontSize: "11px", fontWeight: 700,
-            color: "#14a800",
-            background: "rgba(20,168,0,0.08)",
-            border: "1px solid rgba(20,168,0,0.2)",
-            borderRadius: "6px", padding: "3px 8px"
-          }}>✓ Upwork Verified</div>
-          <div style={{ fontSize: "13px", color: "var(--text-dim)", lineHeight: 1.6, marginBottom: "12px", fontStyle: "italic" }}>
-            "Samuel identified $2,400/month in idle RDS instances we had completely forgotten about. Implemented the fix in under an hour. Best $79 I've spent this year."
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              width: "32px", height: "32px", borderRadius: "50%",
-              background: "rgba(0,255,180,0.1)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "12px", fontWeight: 800, color: "var(--green)"
-            }}>JK</div>
-            <div>
-              <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", margin: 0 }}>James K.</p>
-              <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0 }}>Senior DevOps Engineer · London fintech</p>
-            </div>
-            <div style={{ marginLeft: "auto", fontSize: "13px", color: "var(--green)", fontWeight: 700 }}>$2,400/mo</div>
-          </div>
-        </div>
-        {testimonials.map((t) => (
-          <div key={t.name} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "28px", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: "20px", right: "20px", background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "8px", padding: "4px 10px", fontSize: "12px", fontWeight: 700, color: "var(--green)" }}>{t.savings}</div>
-            <div style={{ display: "flex", gap: "6px", marginBottom: "16px" }}>
-              {[...Array(5)].map((_, j) => <span key={j} style={{ color: "#fbbf24", fontSize: "14px" }}>★</span>)}
-            </div>
-            <p style={{ fontSize: "14px", color: "var(--text-dim)", lineHeight: 1.7, marginBottom: "20px", fontStyle: "italic" }}>&quot;{t.text}&quot;</p>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", borderTop: "1px solid var(--border)", paddingTop: "16px" }}>
-              <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "linear-gradient(135deg, var(--green), #00d4ff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 800, color: "#000", flexShrink: 0, fontFamily: "var(--display)" }}>
-                {t.name.split(" ").map(n => n[0]).join("")}
-              </div>
-              <div>
-                <p style={{ fontSize: "14px", fontWeight: 700, color: "#fff", marginBottom: "2px" }}>{t.name}</p>
-                <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>{t.role}</p>
-              </div>
-              <span style={{ marginLeft: "auto", fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px" }}>{t.provider}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-});
-
 const WallOfSavings = memo(function WallOfSavings({ savingsFilter, onFilterChange }) {
   return (
     <div style={{ marginBottom: "90px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "28px" }}>
-        <span style={{ width: "8px", height: "8px", background: "var(--green)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px var(--green)", animation: "pulse-dot 2s infinite", flexShrink: 0 }} />
-        <h2 className="display" style={{ fontSize: "20px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px", margin: 0 }}>Recent audits</h2>
-        <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>· results updated in real time</span>
+        <h2 className="display" style={{ fontSize: "20px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px", margin: 0 }}>Illustrative examples</h2>
+        <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>· what a typical audit finds, by provider</span>
       </div>
       <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "16px" }}>
         {WALL_FILTERS.map((f) => {
@@ -4539,8 +4470,6 @@ aws iam simulate-principal-policy \\
     const calcMax = Math.round(calcBill * 0.45);
     const calcAnnual = Math.round(calcMin * 12);
 
-    // TESTIMONIALS — defined at module level below for performance
-
     const FAQS = [
       { q: "Do you need access to my cloud account?", a: "Never. Both audits are entirely self-guided — you answer questions based on your own knowledge. No credentials, no IAM roles, no agents, no OAuth. We have zero access to your infrastructure.", tag: "both" },
       { q: "How is the AI Blueprint different from the free report?", a: "The free report tells you what is wrong. The Blueprint tells you exactly how to fix it — with CLI commands, Terraform snippets, IAM policy templates, compliance mappings, and verification steps specific to your provider.", tag: "both" },
@@ -5190,18 +5119,6 @@ aws iam simulate-principal-policy \\
             ))}
           </div>
         </div>
-
-        {/* ── USED BY BADGES ── */}
-        <div style={{ marginBottom: "64px", textAlign: "center" }}>
-          <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "14px" }}>Used by engineering teams at</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center" }}>
-            {["Fintech · London", "SaaS · Berlin", "E-commerce · New York", "DevOps team · Singapore", "Startup · Warsaw"].map(badge => (
-              <span key={badge} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", padding: "4px 14px", fontSize: "12px", color: "var(--text-dim)" }}>{badge}</span>
-            ))}
-          </div>
-        </div>
-
-        <TestimonialsSection testimonials={TESTIMONIALS} />
 
         <WallOfSavings savingsFilter={savingsFilter} onFilterChange={setSavingsFilter} />
 
