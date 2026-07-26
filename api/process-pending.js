@@ -311,6 +311,22 @@ function escapeHtml(str) {
   return String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+// Claude free-forms per-issue "$X–$Y/month" savings estimates rather than
+// computing them deterministically, and occasionally emits the high end lower
+// than the low end (e.g. "$36,000–$32,250/month"). Prompt wording can reduce
+// how often this happens but can't guarantee it, so correct it deterministically
+// on whatever text comes back, before it's cached or delivered to a customer.
+function fixReversedMoneyRanges(text) {
+  return String(text).replace(
+    /\$([\d,]+(?:\.\d+)?)\s*[–—-]\s*\$([\d,]+(?:\.\d+)?)/g,
+    (match, a, b) => {
+      const numA = parseFloat(a.replace(/,/g, ''));
+      const numB = parseFloat(b.replace(/,/g, ''));
+      return numA > numB ? `$${b}–$${a}` : match;
+    }
+  );
+}
+
 function buildBlueprintEmail(report, meta) {
   const provider = escapeHtml(meta.provider || 'AWS');
   const savings  = `$${Number(meta.savingsMin || 0).toLocaleString()}–$${Number(meta.savingsMax || 0).toLocaleString()}`;
@@ -759,6 +775,10 @@ module.exports = async function handler(req, res) {
             console.log(`Cache hit — delivering cached report for job ${job.id}`);
           }
         }
+
+        // Correct any reversed "$X–$Y/month" ranges before validation/delivery —
+        // covers fresh Claude output and reports already sitting in the cache.
+        report = fixReversedMoneyRanges(report);
 
         // 3b. Validate Claude response quality before delivery
         const validationType = isBundle ? 'bundle' : isSecur ? 'security' : isCfoReport ? 'cfo_report' : isAiAudit ? 'ai_blueprint' : 'blueprint';
