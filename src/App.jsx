@@ -363,9 +363,6 @@ const globalCss = `
     /* Audit categories: single col */
     .audit-cats-grid { grid-template-columns: 1fr !important; }
 
-    /* Wall of Savings: single col */
-    .wall-grid { grid-template-columns: 1fr !important; }
-
     /* Blog grid: single col */
     .blog-grid { grid-template-columns: 1fr !important; }
 
@@ -1198,237 +1195,6 @@ function SpotInstanceCalculator({ onRunAudit }) {
     </div>
   );
 }
-
-// ── MODULE-LEVEL CONSTANTS — defined once, never recreated on render ─────────
-const WALL_SAVINGS = [
-  { company: "Fintech · London",        provider: "AWS",   issues: 11, savings: "$1,240–$3,100/mo", time: "14 min" },
-  { company: "SaaS · Berlin",           provider: "GCP",   issues: 8,  savings: "$610–$1,520/mo",   time: "12 min" },
-  { company: "E-commerce · US",         provider: "AWS",   issues: 14, savings: "$2,100–$5,300/mo", time: "18 min", variant: "before_after", billBefore: "$8,000", billAfter: "$5,600" },
-  { company: "HealthTech · Amsterdam",  provider: "Azure", issues: 6,  savings: "$380–$940/mo",     time: "11 min" },
-  { company: "Agency · Toronto",        provider: "AWS",   issues: 9,  savings: "$720–$1,800/mo",   time: "15 min" },
-  { company: "Startup · Singapore",     provider: "GCP",   issues: 5,  savings: "$290–$730/mo",     time: "10 min", variant: "waste_score", score: 28 },
-  { company: "Healthcare · Toronto",    provider: "GCP",   issues: 9,  savings: "$520–$1,100/mo",   time: "13 min" },
-  { company: "Media · Amsterdam",       provider: "Azure", issues: 7,  savings: "$380–$890/mo",     time: "11 min" },
-  { company: "Gaming · Sydney",         provider: "AWS",   issues: 11, savings: "$1,200–$2,800/mo", time: "16 min", variant: "time_saved" },
-];
-const PROVIDER_BADGE_COLOR = { AWS: "#ff9900", GCP: "#4285f4", Azure: "#0078d4", "Multi-Cloud": "#00ffb4" };
-
-const WALL_FILTERS = ["All", "AWS", "GCP", "Azure", "Multi-Cloud"];
-const COMPARISON_COLUMNS = [
-  { label: "KloudAudit", kloud: true },
-  { label: "CloudHealth", kloud: false },
-  { label: "AWS Cost Explorer", kloud: false },
-  { label: "Consultant", kloud: false },
-];
-const COMPARISON_ROWS = [
-  { label: "Setup time", vals: ["15 minutes", "4–6 months", "Immediate", "2–4 weeks"] },
-  { label: "Credentials required", vals: ["None", "Full IAM access", "AWS login", "Full access"] },
-  { label: "First finding", vals: ["Immediate", "30+ days", "Hours of exploration", "1–2 weeks"] },
-  { label: "Cost", vals: ["Free / $79", "$$$$ enterprise", "Free", "$$$"] },
-  { label: "Prioritised fix list", vals: ["✓", "Partial", "✗", "✓"] },
-  { label: "AI fix commands", vals: ["✓", "✗", "✗", "✗"] },
-];
-
-const ComparisonTable = memo(function ComparisonTable() {
-  return (
-    <div style={{ marginBottom: "90px" }}>
-      <div style={{ textAlign: "center", marginBottom: "48px" }}>
-        <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>No sales calls required</p>
-        <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>Why engineers choose KloudAudit</h2>
-        <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px" }}>vs. traditional cloud cost tools</p>
-      </div>
-      <div className="comparison-table-wrap">
-        <div className="desktop-grid" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-          <div style={{ minWidth: "640px", background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", overflow: "hidden" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: "1px solid var(--border)" }}>
-              <div style={{ padding: "18px 20px" }} />
-              {COMPARISON_COLUMNS.map(({ label, kloud }) => (
-                <div key={label} style={{ padding: "16px 12px", textAlign: "center", background: kloud ? "rgba(0,255,180,0.08)" : "transparent", borderLeft: `1px solid ${kloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
-                  <p style={{ fontSize: "13px", fontWeight: 800, color: kloud ? "var(--green)" : "var(--text-dim)", marginBottom: kloud ? "5px" : "0" }}>{label}</p>
-                  {kloud && <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--green)", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.3)", borderRadius: "10px", padding: "1px 7px" }}>← this</span>}
-                </div>
-              ))}
-            </div>
-            {COMPARISON_ROWS.map((row, ri, arr) => (
-              <div key={row.label} style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: ri < arr.length - 1 ? "1px solid var(--border)" : "none", background: ri % 2 === 1 ? "rgba(255,255,255,0.015)" : "transparent" }}>
-                <div style={{ padding: "14px 20px", display: "flex", alignItems: "center" }}>
-                  <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)" }}>{row.label}</span>
-                </div>
-                {row.vals.map((val, ci) => {
-                  const isKloud = ci === 0;
-                  const color = val === "✓" ? "#4ade80" : val === "✗" ? "#f87171" : val === "Partial" ? "#fbbf24" : isKloud ? "#fff" : "var(--text-muted)";
-                  return (
-                    <div key={ci} style={{ padding: "14px 10px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: isKloud ? "rgba(0,255,180,0.05)" : "transparent", borderLeft: `1px solid ${isKloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
-                      <span style={{ fontSize: val === "✓" || val === "✗" ? "16px" : "12px", fontWeight: isKloud ? 700 : 400, color }}>{val}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mobile-cards">
-          {COMPARISON_ROWS.map(row => {
-            const kloudVal = row.vals[0];
-            const kloudColor = kloudVal === "✓" ? "#4ade80" : kloudVal === "✗" ? "#f87171" : kloudVal === "Partial" ? "#fbbf24" : "#fff";
-            return (
-              <div key={row.label} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "16px 18px" }}>
-                <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px" }}>{row.label}</p>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(0,255,180,0.08)", border: "1px solid rgba(0,255,180,0.3)", borderRadius: "10px", padding: "10px 14px", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "13px", fontWeight: 800, color: "var(--green)" }}>KloudAudit <span style={{ fontSize: "10px", fontWeight: 700, opacity: 0.75 }}>← this</span></span>
-                  <span style={{ fontSize: kloudVal === "✓" || kloudVal === "✗" ? "16px" : "13px", fontWeight: 800, color: kloudColor }}>{kloudVal}</span>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  {COMPARISON_COLUMNS.slice(1).map((col, i) => {
-                    const val = row.vals[i + 1];
-                    const color = val === "✓" ? "#4ade80" : val === "✗" ? "#f87171" : val === "Partial" ? "#fbbf24" : "var(--text-muted)";
-                    return (
-                      <div key={col.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 14px" }}>
-                        <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{col.label}</span>
-                        <span style={{ fontSize: val === "✓" || val === "✗" ? "14px" : "12px", fontWeight: 500, color }}>{val}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-});
-
-const WallOfSavings = memo(function WallOfSavings({ savingsFilter, onFilterChange }) {
-  return (
-    <div style={{ marginBottom: "90px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "28px" }}>
-        <h2 className="display" style={{ fontSize: "20px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px", margin: 0 }}>Illustrative examples</h2>
-        <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>· what a typical audit finds, by provider</span>
-      </div>
-      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "16px" }}>
-        {WALL_FILTERS.map((f) => {
-          const active = savingsFilter === f;
-          return (
-            <button key={f} onClick={() => onFilterChange(f)} style={{ fontSize: "11px", padding: "4px 12px", borderRadius: "20px", border: `1px solid ${active ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.1)"}`, background: active ? "rgba(0,255,180,0.08)" : "rgba(255,255,255,0.03)", color: active ? "#00ffb4" : "#64748b", cursor: "pointer", fontFamily: "inherit", fontWeight: active ? 600 : 400, transition: "all 0.15s" }}>
-              {f}
-            </button>
-          );
-        })}
-      </div>
-      <div className="wall-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
-        {WALL_SAVINGS.filter((a) => savingsFilter === "All" || a.provider === savingsFilter).map((a) => {
-          const providerColor = PROVIDER_BADGE_COLOR[a.provider] || "#00ffb4";
-
-          if (a.variant === "before_after") {
-            return (
-              <div key={a.company} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                  <div>
-                    <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
-                    <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
-                  </div>
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}>⏱ {a.time}</span>
-                </div>
-                <div>
-                  <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Before / After</p>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{ fontSize: "16px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.billBefore}</span>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>→</span>
-                    <span style={{ fontSize: "16px", fontWeight: 800, color: "var(--green)", fontFamily: "var(--display)" }}>{a.billAfter}</span>
-                  </div>
-                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>monthly bill potential</p>
-                </div>
-                <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
-                  <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged</span>
-                </div>
-              </div>
-            );
-          }
-
-          if (a.variant === "waste_score") {
-            const circ = 2 * Math.PI * 22;
-            const offset = circ * (1 - a.score / 100);
-            return (
-              <div key={a.company} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                  <div>
-                    <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
-                    <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
-                  </div>
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}>⏱ {a.time}</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                  <div style={{ position: "relative", flexShrink: 0 }}>
-                    <svg width="52" height="52" style={{ transform: "rotate(-90deg)" }}>
-                      <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4" />
-                      <circle cx="26" cy="26" r="22" fill="none" stroke="#f87171" strokeWidth="4" strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
-                    </svg>
-                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <span style={{ fontSize: "11px", fontWeight: 800, color: "#f87171" }}>{a.score}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="display" style={{ fontSize: "20px", fontWeight: 800, color: "#f87171", letterSpacing: "-0.5px", lineHeight: 1, marginBottom: "2px" }}>Score: {a.score}/100</p>
-                    <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>critical waste level</p>
-                  </div>
-                </div>
-                <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
-                  <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged</span>
-                </div>
-              </div>
-            );
-          }
-
-          if (a.variant === "time_saved") {
-            return (
-              <div key={a.company} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                  <div>
-                    <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
-                    <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
-                  </div>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: "4px", padding: "8px 0" }}>
-                  <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px" }}>Found in</span>
-                  <p className="display" style={{ fontSize: "36px", fontWeight: 800, color: "var(--green)", letterSpacing: "-1.5px", lineHeight: 1 }}>{a.time}</p>
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>start to full savings report</span>
-                </div>
-                <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
-                  <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged · {a.savings}</span>
-                </div>
-              </div>
-            );
-          }
-
-          return (
-            <div key={a.company} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                <div>
-                  <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "6px" }}>{a.company}</p>
-                  <span style={{ fontSize: "11px", fontWeight: 700, color: providerColor, background: `${providerColor}15`, border: `1px solid ${providerColor}35`, borderRadius: "6px", padding: "2px 8px" }}>{a.provider}</span>
-                </div>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "6px", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}>⏱ {a.time}</span>
-              </div>
-              <div>
-                <p className="display" style={{ fontSize: "22px", fontWeight: 800, color: "var(--green)", letterSpacing: "-0.8px", lineHeight: 1, marginBottom: "4px" }}>{a.savings}</p>
-                <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>estimated monthly savings</p>
-              </div>
-              <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ fontSize: "15px", fontWeight: 800, color: "#f87171", fontFamily: "var(--display)" }}>{a.issues}</span>
-                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>issues flagged</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-});
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PUBLIC AUDIT VIEWER - Shows shared audits at /audit/{slug}
@@ -2902,7 +2668,6 @@ function App() {
   const [pageKey, setPageKey] = useState(0);
   // ── INTRO-SCREEN STATE (must live at top level — Rules of Hooks) ──────────
   const [calcBill, setCalcBill] = useState(5000);
-  const [savingsFilter, setSavingsFilter] = useState("All");
   const [openFaq, setOpenFaq] = useState(null);
   const [activeHowStep, setActiveHowStep] = useState(null); // null = all equal, click to expand
   const [showLeadMagnet, setShowLeadMagnet] = useState(false);
@@ -5119,8 +4884,6 @@ aws iam simulate-principal-policy \\
             ))}
           </div>
         </div>
-
-        <WallOfSavings savingsFilter={savingsFilter} onFilterChange={setSavingsFilter} />
 
         {/* ── SECURITY AUDIT PRODUCT CARD ── */}
         <div id="security-audit" style={{ marginBottom: "48px" }}>
