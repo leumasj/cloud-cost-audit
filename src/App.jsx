@@ -392,7 +392,6 @@ const globalCss = `
     .stats-pills { display: none !important; }
     .lead-magnet-btn { display: none !important; }
     .competitor-kill-line { display: none !important; }
-    .secondary-cta { display: none !important; }
   }
 
   /* Comparison table: stacked cards on mobile instead of horizontal scroll */
@@ -407,8 +406,11 @@ const globalCss = `
  @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr 1fr !important; }
   .kpi-grid { grid-template-columns: 1fr 1fr !important; }
-  .hero-provider-btns { flex-direction: column !important; width: 100% !important; }
-  .hero-provider-btns button { width: 100% !important; }
+  /* Compact provider pills — icon+label only, wrapping 2 lines instead of
+     stacking full-width, so "Start Free Audit" stays above the fold. */
+  .provider-pill-row { gap: 8px !important; }
+  .hero-provider-btns button { width: auto !important; min-width: 0 !important; flex-direction: row !important; padding: 8px 14px !important; font-size: 13px !important; gap: 4px !important; }
+  .hero-provider-btns button .provider-pill-sublabel { display: none !important; }
   .sticky-bottom-cta { flex-direction: column !important; gap: 8px !important; padding: 10px 16px !important; }
   .sticky-bottom-cta span { font-size: 11px !important; }
 }
@@ -4462,7 +4464,7 @@ aws iam simulate-principal-policy \\
 
           {/* ── PRIMARY ACTION — Provider buttons front and centre ── */}
           <div className="hero-provider-btns fade-up stagger-2" style={{ marginBottom: "16px" }}>
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap", marginBottom: "12px" }}>
+            <div className="provider-pill-row" style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap", marginBottom: "12px" }}>
               {[
                 { label: "AWS", color: "#ff9900" },
                 { label: "GCP", color: "#4285f4" },
@@ -4478,7 +4480,7 @@ aws iam simulate-principal-policy \\
                   onMouseEnter={e => { e.currentTarget.style.background = `${p.color}22`; e.currentTarget.style.borderColor = `${p.color}80`; e.currentTarget.style.transform = "translateY(-2px)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = `${p.color}12`; e.currentTarget.style.borderColor = `${p.color}40`; e.currentTarget.style.transform = "translateY(0)"; }}>
                   <span>{p.icon && <span style={{ marginRight: "6px" }}>{p.icon}</span>}{p.label}</span>
-                  {p.sublabel && <span style={{ fontSize: "10px", fontWeight: 500, opacity: 0.75 }}>{p.sublabel}</span>}
+                  {p.sublabel && <span className="provider-pill-sublabel" style={{ fontSize: "10px", fontWeight: 500, opacity: 0.75 }}>{p.sublabel}</span>}
                 </button>
               ))}
             </div>
