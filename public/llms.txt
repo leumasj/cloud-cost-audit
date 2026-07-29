@@ -1,0 +1,29 @@
+# KloudAudit
+
+> Free, self-guided cloud cost and security audit for AWS, GCP, Azure, and AI API spend (OpenAI, Anthropic, Bedrock, Vertex). Users answer a structured checklist from their own knowledge — no cloud credentials, IAM roles, or account access are ever requested or required. The tool returns a Waste Score and a prioritised, estimated savings range in about 15 minutes. Paid one-time add-ons (Cost Blueprint, Security Blueprint, AI Blueprint, CFO & Board Report) deliver an AI-generated remediation guide with exact CLI commands, Terraform snippets, and an implementation roadmap for the issues flagged in a completed audit.
+
+KloudAudit is built and operated by Samuel Ayodele Adomeh, a DevOps/Azure engineer based in Wrocław, Poland.
+
+## Core pages
+- [Homepage](https://www.kloudaudit.eu/): product overview, free audit, and pricing
+- [Terms of Service](https://www.kloudaudit.eu/terms/)
+- [Privacy Policy](https://www.kloudaudit.eu/privacy/)
+
+## Guides
+- [Cloud FinOps Guide](https://www.kloudaudit.eu/cloud-finops-guide/)
+- [FinOps for Startups](https://www.kloudaudit.eu/finops-guide-startups/)
+- [AWS Cost Optimization Checklist](https://www.kloudaudit.eu/aws-cost-optimization-checklist/)
+- [GCP Cost Optimization](https://www.kloudaudit.eu/gcp-cost-optimization/)
+- [Azure Cost Optimization](https://www.kloudaudit.eu/azure-cost-optimization/)
+- [Cloud Security Audit Checklist](https://www.kloudaudit.eu/cloud-security-audit-checklist/)
+- [Kubernetes Cost Optimization](https://www.kloudaudit.eu/kubernetes-cost-optimization/)
+
+## Comparisons
+- [KloudAudit vs AWS Cost Explorer](https://www.kloudaudit.eu/kloudaudit-vs-aws-cost-explorer/)
+- [KloudAudit vs CloudHealth](https://www.kloudaudit.eu/kloudaudit-vs-cloudhealth/)
+- [KloudAudit vs Infracost](https://www.kloudaudit.eu/kloudaudit-vs-infracost/)
+
+## Blog
+- [How We Found $2,400/Month in Cloud Waste in 15 Minutes](https://www.kloudaudit.eu/blog/how-we-found-2400-month-cloud-waste/)
+- [How to Audit Cloud Costs Without Giving Anyone Your AWS Keys](https://www.kloudaudit.eu/blog/cloud-cost-audit-no-credentials/)
+- [FinOps for Small Teams](https://www.kloudaudit.eu/blog/finops-for-small-teams/)
