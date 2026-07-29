@@ -825,7 +825,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
                   <p style={{ fontSize: "12px", fontWeight: 700, color: selectedProduct === "security" ? "#fff" : "#94a3b8" }}>Security Blueprint</p>
                 </div>
                 <p style={{ fontSize: "18px", fontWeight: 800, color: selectedProduct === "security" ? "#f87171" : "#64748b" }}>{currency.securityPrice || "$29"}</p>
-                <p style={{ fontSize: "10px", color: "#475569" }}>Security fixes only</p>
+                <p style={{ fontSize: "10px", color: "var(--text-muted)" }}>Security fixes only</p>
               </div>
               {/* Bundle */}
               <div role="radio" aria-checked={selectedProduct === "bundle"} tabIndex={0} onKeyDown={e => (e.key === "Enter" || e.key === " ") && setSelectedProduct("bundle")} onClick={() => setSelectedProduct("bundle")}
@@ -836,7 +836,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
                   <p style={{ fontSize: "12px", fontWeight: 700, color: selectedProduct === "bundle" ? "#fff" : "#94a3b8" }}>Cost + Security</p>
                 </div>
                 <p style={{ fontSize: "18px", fontWeight: 800, color: selectedProduct === "bundle" ? "#a5b4fc" : "#64748b" }}>{currency.bundlePrice || "$89"}</p>
-                <p style={{ fontSize: "10px", color: "#475569" }}>Both blueprints</p>
+                <p style={{ fontSize: "10px", color: "var(--text-muted)" }}>Both blueprints</p>
               </div>
             </div>
 
@@ -855,7 +855,7 @@ function SecurityBlueprintModal({ onClose, secChecked, currency, provider, compa
                   : `Pay ${currency.securityPrice || "$29"} → Get Security Blueprint`}
             </button>
             {status === "error" && <p style={{ color: "#f87171", fontSize: "13px", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "8px", padding: "10px" }}>⚠ {errorMsg}</p>}
-            <p style={{ fontSize: "11px", color: "#475569", textAlign: "center" }}>🔒 Secure checkout via Stripe · Prices inclusive of applicable taxes · No cloud access required</p>
+            <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>🔒 Secure checkout via Stripe · Prices inclusive of applicable taxes · No cloud access required</p>
           </form>
         </div>
       </div>
@@ -2369,7 +2369,7 @@ const PricingModal = memo(function PricingModal({
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)', marginTop: '24px' }}>
-          All blueprints include a full refund if no actionable fix is found. Questions? <a href="mailto:admin@kloudaudit.eu" style={{ color: 'var(--green)', textDecoration: 'none' }}>admin@kloudaudit.eu</a>
+          All blueprints include a full refund if no actionable fix is found. Questions? <a href="mailto:admin@kloudaudit.eu" style={{ color: 'var(--green)', textDecoration: 'underline' }}>admin@kloudaudit.eu</a>
         </p>
       </div>
     </div>
@@ -3943,7 +3943,7 @@ aws ec2 describe-reserved-instances \\
                       <p style={{ fontSize: "12px", fontWeight: 800, color: urgency.msgColor, marginBottom: "12px", animation: urgency.pulse ? "urgency-pulse 1.5s ease-in-out infinite" : "none" }}>{urgency.msg}</p>
                     )}
                     {flaggedSec.length === 0 ? (
-                      <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", lineHeight: 1.65 }}>Flag issues to see your risk level.</p>
+                      <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.65 }}>Flag issues to see your risk level.</p>
                     ) : (
                       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                         {criticalCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.18)", borderRadius: "8px", padding: "9px 12px" }}>
@@ -4142,7 +4142,7 @@ aws ec2 describe-reserved-instances \\
                 <p style={{ fontSize: "12px", fontWeight: 700, color: "#f87171", textTransform: "uppercase", letterSpacing: "1px", margin: "0 0 2px" }}>Sample Blueprint Fix</p>
                 <p style={{ fontSize: "13px", fontWeight: 600, color: "#fff", margin: 0 }}>MFA enforcement — IAM policy template</p>
               </div>
-              <span style={{ fontSize: "10px", color: "#475569", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "4px", padding: "2px 8px", fontWeight: 700 }}>AWS CLI</span>
+              <span style={{ fontSize: "10px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "4px", padding: "2px 8px", fontWeight: 700 }}>AWS CLI</span>
             </div>
             <div style={{ position: "relative" }}>
               <pre style={{ margin: 0, padding: "20px 24px", fontSize: "12px", lineHeight: 1.7, color: "#94a3b8", background: "rgba(0,0,0,0.3)", fontFamily: "monospace", overflow: "hidden", filter: "blur(3.5px)", userSelect: "none", WebkitUserSelect: "none" }}>{`# Step 1 — Create MFA enforcement policy
@@ -4577,8 +4577,10 @@ aws iam simulate-principal-policy \\
                     boxShadow: isActive ? `0 8px 40px ${step.color}20, inset 0 0 0 1.5px ${step.color}30` : "none",
                     zIndex: isActive ? 2 : 1,
                   }}>
-                  {/* Step number — clipped inside card, dimmed */}
-                  <div style={{
+                  {/* Step number — clipped inside card, dimmed. Purely decorative
+                      watermark, not content — excluded from a11y/contrast scrutiny
+                      rather than brightened, which would defeat the design. */}
+                  <div aria-hidden="true" style={{
                     position: "absolute", bottom: "-12px", right: "12px",
                     fontFamily: "var(--display)", fontSize: "72px", fontWeight: 800,
                     color: isActive ? `${step.color}18` : `${step.color}08`,
@@ -4620,7 +4622,7 @@ aws iam simulate-principal-policy \\
 
                   {/* Tap hint */}
                   {!isActive && (
-                    <p style={{ fontSize: "11px", color: `${step.color}70`, fontWeight: 600, letterSpacing: "0.5px", marginTop: "4px" }}>
+                    <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, letterSpacing: "0.5px", marginTop: "4px" }}>
                       Tap to expand
                     </p>
                   )}
@@ -4647,7 +4649,7 @@ aws iam simulate-principal-policy \\
                 <div style={{ display: "flex", gap: "5px" }}>
                   {["#f87171","#fbbf24","#4ade80"].map(c => <div key={c} style={{ width: "10px", height: "10px", borderRadius: "50%", background: c, opacity: 0.6 }} />)}
                 </div>
-                <div style={{ flex: 1, background: "rgba(255,255,255,0.06)", borderRadius: "6px", padding: "4px 12px", fontSize: "11px", color: "#475569", textAlign: "center" }}>
+                <div style={{ flex: 1, background: "rgba(255,255,255,0.06)", borderRadius: "6px", padding: "4px 12px", fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>
                   www.kloudaudit.eu
                 </div>
               </div>
@@ -4668,13 +4670,13 @@ aws iam simulate-principal-policy \\
                     </div>
                   </div>
                   <div>
-                    <p style={{ fontSize: "11px", color: "#475569", margin: "0 0 6px", letterSpacing: "1px", textTransform: "uppercase" }}>AWS · $8,000/month</p>
+                    <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: "0 0 6px", letterSpacing: "1px", textTransform: "uppercase" }}>AWS · $8,000/month</p>
                     <p style={{ fontSize: "18px", fontWeight: 800, color: "#fff", margin: "0 0 8px", lineHeight: 1.2 }}>13 issues · <span style={{ color: "#00ffb4" }}>$794–$2,003/mo</span> to recover</p>
                     <div style={{ display: "flex", gap: "8px" }}>
                       {[["8", "Quick wins", "#22c55e"], ["$794+", "Monthly saving", "#00ffb4"], ["$9,528", "Annual", "#818cf8"]].map(([v, l, c]) => (
                         <div key={l} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", padding: "8px 12px", flex: 1 }}>
                           <p style={{ fontSize: "16px", fontWeight: 800, color: c, margin: 0 }}>{v}</p>
-                          <p style={{ fontSize: "10px", color: "#475569", margin: 0 }}>{l}</p>
+                          <p style={{ fontSize: "10px", color: "var(--text-muted)", margin: 0 }}>{l}</p>
                         </div>
                       ))}
                     </div>
@@ -4698,17 +4700,17 @@ aws iam simulate-principal-policy \\
                   { n: "04", effort: "Some effort", ec: "#f59e0b", label: "Idle or oversized instances", sub: "Compute · 2–4 hrs to fix", sav: "$150–$400/mo", dim: true },
                 ].map(f => (
                   <div key={f.n} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", background: "rgba(255,255,255,0.02)", marginBottom: "5px", opacity: f.dim ? 0.45 : 1 }}>
-                    <span style={{ fontSize: "10px", color: "#334155", fontWeight: 600, minWidth: "16px" }}>{f.n}</span>
+                    <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600, minWidth: "16px" }}>{f.n}</span>
                     <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "12px", fontWeight: 600, background: `${f.ec}18`, border: `1px solid ${f.ec}40`, color: f.ec, whiteSpace: "nowrap" }}>{f.effort}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: "12px", color: "#e2e8f0", margin: 0, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.label}</p>
-                      <p style={{ fontSize: "10px", color: "#475569", margin: 0 }}>{f.sub}</p>
+                      <p style={{ fontSize: "10px", color: "var(--text-muted)", margin: 0 }}>{f.sub}</p>
                     </div>
                     <span style={{ fontSize: "11px", color: "#00ffb4", fontWeight: 700, whiteSpace: "nowrap" }}>{f.sav}</span>
                   </div>
                 ))}
 
-                <p style={{ textAlign: "center", fontSize: "11px", color: "#334155", padding: "8px", marginBottom: "12px" }}>+ 9 more findings unlocked in the Blueprint</p>
+                <p style={{ textAlign: "center", fontSize: "11px", color: "var(--text-muted)", padding: "8px", marginBottom: "12px" }}>+ 9 more findings unlocked in the Blueprint</p>
 
                 {/* CTA */}
                 <div style={{ background: "rgba(0,255,180,0.05)", border: "1px solid rgba(0,255,180,0.18)", borderRadius: "12px", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
@@ -5189,7 +5191,7 @@ aws iam simulate-principal-policy \\
           </div>) : null}
 
           <p style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "20px" }}>
-            All blueprints include a full refund if no actionable fix is identified. Questions? <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "none" }}>admin@kloudaudit.eu</a>
+            All blueprints include a full refund if no actionable fix is identified. Questions? <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "underline" }}>admin@kloudaudit.eu</a>
           </p>
         </div>
 
@@ -5360,10 +5362,10 @@ aws iam simulate-principal-policy \\
 
             {/* Bottom bar */}
             <div style={{ borderTop: "1px solid var(--border)", paddingTop: "24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-              <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.45)", margin: 0 }}>
-                © {new Date().getFullYear()} KloudAudit · Samuel Ayodele Adomeh · Wrocław, Poland · <a href="mailto:admin@kloudaudit.eu" style={{ color: "rgba(148,163,184,0.45)", textDecoration: "none" }}>admin@kloudaudit.eu</a>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>
+                © {new Date().getFullYear()} KloudAudit · Samuel Ayodele Adomeh · Wrocław, Poland · <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--text-muted)", textDecoration: "underline" }}>admin@kloudaudit.eu</a>
               </p>
-              <p style={{ fontSize: "11px", color: "rgba(148,163,184,0.3)", margin: 0, maxWidth: "480px", textAlign: "right" }}>
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0, maxWidth: "480px", textAlign: "right" }}>
                 Savings estimates are projections based on self-reported data and industry benchmarks. Not financial advice.
               </p>
             </div>
@@ -5770,7 +5772,7 @@ aws iam simulate-principal-policy \\
           onMouseLeave={e => { e.target.style.color = "#64748b"; e.target.style.borderColor = "rgba(255,255,255,0.1)"; }}>
           Skip — just show me the full report
         </button>
-        <p style={{ fontSize: "11px", color: "#475569", textAlign: "center", margin: 0 }}>🔒 One email — your report only. No marketing, no spam.</p>
+        <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", margin: 0 }}>🔒 One email — your report only. No marketing, no spam.</p>
       </form>
     );
 
@@ -6084,23 +6086,23 @@ aws iam simulate-principal-policy \\
                 {reportBenchmarks.issueFrequency !== null && (
                   <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "10px", padding: "12px 14px", textAlign: "center" }}>
                     <p style={{ fontSize: "26px", fontWeight: 800, color: "#a5b4fc", letterSpacing: "-1px", lineHeight: 1, marginBottom: "4px" }}>{reportBenchmarks.issueFrequency}%</p>
-                    <p style={{ fontSize: "11px", color: "#475569", lineHeight: 1.4 }}>of {provider} teams audited found the same issues</p>
+                    <p style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: 1.4 }}>of {provider} teams audited found the same issues</p>
                   </div>
                 )}
                 {reportBenchmarks.avgSavingsMin > 0 && (
                   <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "10px", padding: "12px 14px", textAlign: "center" }}>
                     <p style={{ fontSize: "26px", fontWeight: 800, color: "#00ffb4", letterSpacing: "-1px", lineHeight: 1, marginBottom: "4px" }}>${reportBenchmarks.avgSavingsMin.toLocaleString()}+</p>
-                    <p style={{ fontSize: "11px", color: "#475569", lineHeight: 1.4 }}>average monthly savings found per {provider} audit</p>
+                    <p style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: 1.4 }}>average monthly savings found per {provider} audit</p>
                   </div>
                 )}
                 <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "10px", padding: "12px 14px", textAlign: "center" }}>
                   <p style={{ fontSize: "26px", fontWeight: 800, color: "#94a3b8", letterSpacing: "-1px", lineHeight: 1, marginBottom: "4px" }}>{reportBenchmarks.total}</p>
-                  <p style={{ fontSize: "11px", color: "#475569", lineHeight: 1.4 }}>total assessments in benchmark dataset</p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: 1.4 }}>total assessments in benchmark dataset</p>
                 </div>
               </div>
               {reportBenchmarks.topIssues && reportBenchmarks.topIssues.length > 0 && (
                 <div>
-                  <p style={{ fontSize: "11px", color: "#334155", fontWeight: 600, marginBottom: "6px" }}>Most common {provider} issues across all audits:</p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, marginBottom: "6px" }}>Most common {provider} issues across all audits:</p>
                   <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                     {reportBenchmarks.topIssues.map(issue => (
                       <span key={issue.id} style={{ fontSize: "11px", color: "#64748b", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "6px", padding: "3px 9px" }}>
