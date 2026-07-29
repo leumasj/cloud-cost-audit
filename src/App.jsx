@@ -3455,6 +3455,28 @@ useEffect(() => {
     }
   };
 
+  // ── PRICING MODAL PRODUCT CLICKS — gated on having real audit data ────────
+  // These buttons are reachable from the footer "Pricing" link, before a
+  // visitor has ever run an audit. Opening the purchase modal directly in
+  // that case would let someone pay for a Blueprint/Report with zero flagged
+  // issues, empty company name, and $0 bill behind it — a real, empty
+  // "personalised" deliverable. Route to the relevant audit first instead;
+  // only skip straight to checkout if the visitor already has findings.
+  const handlePricingBlueprintClick = () => {
+    if (flagged.length === 0) { goTo("intake"); } else { setShowBlueprint(true); }
+  };
+  const handlePricingAiBlueprintClick = () => {
+    setProvider('AI APIs');
+    if (provider !== 'AI APIs' || flagged.length === 0) { goTo("intake"); } else { setShowBlueprint(true); }
+  };
+  const handlePricingSecBlueprintClick = () => {
+    const secFlaggedCount = Object.keys(secChecked).filter(k => secChecked[k]).length;
+    if (secFlaggedCount === 0) { goTo("security_intro"); } else { setShowSecBlueprint(true); }
+  };
+  const handlePricingCfoReportClick = () => {
+    if (flagged.length === 0) { goTo("intake"); } else { setShowCfoReport(true); }
+  };
+
   // ── NAV ────────────────────────────────────────────────────────────────────
   const Nav = ({ showBack, onBack }) => (
     <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(8,8,16,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid var(--border)", padding: "0 24px", height: "58px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -4350,7 +4372,7 @@ aws iam simulate-principal-policy \\
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onAiBlueprintClick={() => { setProvider('AI APIs'); setShowBlueprint(true); }} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
       <Nav />
 
       {/* ── RESUME AUDIT BANNER ── */}
@@ -5044,7 +5066,7 @@ aws iam simulate-principal-policy \\
                 </div>
               ))}
               <BlueprintSampleCode code={SAMPLE_COST_BLUEPRINT_CODE} accent="#00ffb4" />
-              <button onClick={() => setShowBlueprint(true)} className="glow-btn" style={{ width: "100%", marginTop: "20px", padding: "12px", borderRadius: "10px", border: "none", background: "var(--green)", color: "#000", fontWeight: 800, fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,255,180,0.3)" }}>
+              <button onClick={handlePricingBlueprintClick} className="glow-btn" style={{ width: "100%", marginTop: "20px", padding: "12px", borderRadius: "10px", border: "none", background: "var(--green)", color: "#000", fontWeight: 800, fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,255,180,0.3)" }}>
                 Get Cost Blueprint →
               </button>
             </div>
@@ -5070,7 +5092,7 @@ aws iam simulate-principal-policy \\
                 </div>
               ))}
               <BlueprintSampleCode code={SAMPLE_AI_BLUEPRINT_CODE} accent="#a78bfa" />
-              <button onClick={() => { setProvider('AI APIs'); setShowBlueprint(true); }} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(167,139,250,0.3)", background: "transparent", color: "#a78bfa", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>
+              <button onClick={handlePricingAiBlueprintClick} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(167,139,250,0.3)", background: "transparent", color: "#a78bfa", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>
                 Get AI Blueprint →
               </button>
             </div>
@@ -5094,7 +5116,7 @@ aws iam simulate-principal-policy \\
                   <span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span>
                 </div>
               ))}
-              <button onClick={() => setShowSecBlueprint(true)} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(248,113,113,0.3)", background: "transparent", color: "#f87171", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>
+              <button onClick={handlePricingSecBlueprintClick} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(248,113,113,0.3)", background: "transparent", color: "#f87171", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>
                 Get Security Blueprint →
               </button>
             </div>
@@ -5138,7 +5160,7 @@ aws iam simulate-principal-policy \\
                   <span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span>
                 </div>
               ))}
-              <button onClick={() => setShowCfoReport(true)} style={{ marginTop: "8px", width: "100%", padding: "12px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg,#818cf8,#6366f1)", color: "#fff", fontWeight: 800, fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}>
+              <button onClick={handlePricingCfoReportClick} style={{ marginTop: "8px", width: "100%", padding: "12px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg,#818cf8,#6366f1)", color: "#fff", fontWeight: 800, fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}>
                 Get Board Report — {currency.cfoReportPrice || "$199"} →
               </button>
             </div>
@@ -5387,7 +5409,7 @@ aws iam simulate-principal-policy \\
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onAiBlueprintClick={() => { setProvider('AI APIs'); setShowBlueprint(true); }} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
         <div className="fade-up">
@@ -5476,7 +5498,7 @@ aws iam simulate-principal-policy \\
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onAiBlueprintClick={() => { setProvider('AI APIs'); setShowBlueprint(true); }} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
         <Nav showBack onBack={() => goTo("intake")} />
         {/* ── SECTION COMPLETE TOAST ── */}
         {sectionToast && (
@@ -5937,7 +5959,7 @@ aws iam simulate-principal-policy \\
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={() => setShowBlueprint(true)} onAiBlueprintClick={() => { setProvider('AI APIs'); setShowBlueprint(true); }} onSecBlueprintClick={() => setShowSecBlueprint(true)} onCfoReportClick={() => setShowCfoReport(true)} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
           {/* Header */}
