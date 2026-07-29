@@ -898,7 +898,7 @@ module.exports = async function handler(req, res) {
             if (sessionId) {
               await supabaseAdmin
                 .from('audits')
-                .update({ blueprint_paid: true, blueprint_type: job.product_type })
+                .update({ blueprint_paid: true })
                 .eq('session_id', sessionId);
             } else if (job.email) {
               // Fallback: no session ID available, match by email + most
@@ -906,7 +906,7 @@ module.exports = async function handler(req, res) {
               // reconciliation rather than silently skipping entirely
               await supabaseAdmin
                 .from('audits')
-                .update({ blueprint_paid: true, blueprint_type: job.product_type })
+                .update({ blueprint_paid: true })
                 .eq('email', job.email)
                 .eq('blueprint_paid', false)
                 .order('created_at', { ascending: false })
