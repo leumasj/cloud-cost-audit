@@ -888,17 +888,38 @@ module.exports = async function handler(req, res) {
         }
 
         // 6 + 7. Parallelise post-delivery writes — no data dependency between them
-        const sessionId = meta.session_id || meta.sessionId;
+        const sessionId = meta.sessionId;
         await Promise.all([
           supabaseAdmin
             .from('delivery_queue')
             .update({ status: 'delivered', delivered_at: new Date().toISOString() })
             .eq('id', job.id),
-          sessionId && supabaseAdmin
-            .from('audits')
-            .update({ blueprint_paid: true, blueprint_type: job.product_type })
-            .eq('session_id', sessionId),
-        ].filter(Boolean));
+          (async () => {
+            if (sessionId) {
+              await supabaseAdmin
+                .from('audits')
+                .update({ blueprint_paid: true, blueprint_type: job.product_type })
+                .eq('session_id', sessionId);
+            } else if (job.email) {
+              // Fallback: no session ID available, match by email + most
+              // recent unpaid audit for this provider as a best-effort
+              // reconciliation rather than silently skipping entirely
+              await supabaseAdmin
+                .from('audits')
+                .update({ blueprint_paid: true, blueprint_type: job.product_type })
+                .eq('email', job.email)
+                .eq('blueprint_paid', false)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+              console.warn(JSON.stringify({
+                level: 'warn', event: 'blueprint_paid.fallback_match_used',
+                email: job.email,
+                reason: 'sessionId was empty at delivery time — used email fallback instead',
+              }));
+            }
+          })(),
+        ]);
 
         // 8. Queue post-purchase follow-up emails (day 7, 14, 30)
         // Non-blocking — a failure here must never prevent blueprint delivery.
