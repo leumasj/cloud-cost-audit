@@ -1,4 +1,5 @@
 import React from 'react';
+import * as Sentry from '@sentry/react';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -11,8 +12,11 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log to console — Sentry will catch it via the API layer
     console.error('KloudAudit Error Boundary caught:', error, errorInfo);
+    // No-ops safely if Sentry.init() was never called (VITE_SENTRY_DSN unset)
+    Sentry.captureException(error, {
+      contexts: { react: { componentStack: errorInfo?.componentStack } },
+    });
   }
 
   render() {
