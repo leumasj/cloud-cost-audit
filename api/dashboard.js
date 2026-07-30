@@ -49,6 +49,7 @@ module.exports = async function handler(req, res) {
 
     // Fetch all stats in parallel
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const day1Ago     = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const [
       { count: totalAudits },
       { count: audits7d },
@@ -60,6 +61,7 @@ module.exports = async function handler(req, res) {
       { data: cacheStats },
       { data: failedJobs },
       { data: stuckJobs },
+      { data: silentlyStuckJobs },
     ] = await Promise.all([
       supabaseAdmin.from('audits').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('audits').select('*', { count: 'exact', head: true }).gte('created_at', day7ago),
@@ -109,6 +111,21 @@ module.exports = async function handler(req, res) {
         .select('id, email, product_type, attempts, created_at')
         .eq('status', 'pending')
         .lt('created_at', oneHourAgo),
+      // Silently stuck — API accepted the send (status='delivered') but Resend's
+      // own webhook reported the email never actually reached the inbox. Bounces
+      // and complaints are always shown; "delayed" only past 24h since a brief
+      // delay is normal and not yet worth an admin's attention.
+      supabaseAdmin.from('delivery_queue')
+        .select('id, email, product_type, delivered_at, actual_delivery_status')
+        .eq('status', 'delivered')
+        .in('actual_delivery_status', ['bounced', 'complained', 'delayed'])
+        .order('delivered_at', { ascending: false })
+        .limit(20)
+        .then(({ data }) => ({
+          data: (data || []).filter(d =>
+            d.actual_delivery_status !== 'delayed' || new Date(d.delivered_at) < day1Ago
+          ),
+        })),
     ]);
 
     const convRate = totalAudits > 0 ? ((blueprintsPaid / totalAudits) * 100).toFixed(1) : '0.0';
@@ -229,12 +246,13 @@ module.exports = async function handler(req, res) {
   </div>
 
   <!-- Delivery Failures -->
-  ${(failedJobs?.length || stuckJobs?.length) ? `
+  ${(failedJobs?.length || stuckJobs?.length || silentlyStuckJobs?.length) ? `
   <div class="section" style="border-color:rgba(248,113,113,0.25)">
     <h2 style="display:flex;align-items:center;gap:10px">
       ⚠️ Delivery Health
       ${failedJobs?.length ? `<span class="badge badge-red">${failedJobs.length} failed</span>` : ''}
       ${stuckJobs?.length ? `<span class="badge badge-gray">${stuckJobs.length} stuck</span>` : ''}
+      ${silentlyStuckJobs?.length ? `<span class="badge badge-red">${silentlyStuckJobs.length} not actually delivered</span>` : ''}
     </h2>
 
     ${failedJobs?.length ? `
@@ -266,6 +284,23 @@ module.exports = async function handler(req, res) {
             <td style="font-family:monospace;font-size:11px">${maskEmail(j.email)}</td>
             <td><span class="badge badge-gray">${j.product_type}</span></td>
             <td style="color:#fbbf24">${j.attempts}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    ` : ''}
+
+    ${silentlyStuckJobs?.length ? `
+    <p style="font-size:11px;font-weight:700;color:#f87171;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Not Actually Delivered (API accepted, Resend reports otherwise)</p>
+    <table>
+      <thead><tr><th>Date</th><th>Email</th><th>Product</th><th>Real Status</th></tr></thead>
+      <tbody>
+        ${silentlyStuckJobs.map(j => `
+          <tr>
+            <td style="font-size:11px">${new Date(j.delivered_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
+            <td style="font-family:monospace;font-size:11px">${maskEmail(j.email)}</td>
+            <td><span class="badge badge-gray">${j.product_type}</span></td>
+            <td><span class="badge ${j.actual_delivery_status === 'delayed' ? 'badge-gray' : 'badge-red'}">${j.actual_delivery_status}</span></td>
           </tr>
         `).join('')}
       </tbody>

@@ -843,8 +843,9 @@ module.exports = async function handler(req, res) {
             : buildBlueprintEmail(report, meta);
 
         // 5. Send emails in parallel
+        let customerEmailResult;
         try {
-          await Promise.all([
+          [customerEmailResult] = await Promise.all([
             resend.emails.send({
               from:    'Samuel — KloudAudit <admin@kloudaudit.eu>',
               to:      [email],
@@ -892,7 +893,11 @@ module.exports = async function handler(req, res) {
         await Promise.all([
           supabaseAdmin
             .from('delivery_queue')
-            .update({ status: 'delivered', delivered_at: new Date().toISOString() })
+            .update({
+              status:           'delivered',
+              delivered_at:     new Date().toISOString(),
+              resend_email_id:  customerEmailResult?.data?.id || null,
+            })
             .eq('id', job.id),
           (async () => {
             if (sessionId) {
