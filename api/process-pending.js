@@ -432,28 +432,32 @@ function buildSecurityEmail(report, meta, assessmentId) {
 }
 
 // ── BLUEPRINT QUALITY VALIDATOR ──────────────────────────────────────────────
-function validateBlueprintQuality(content, productType) {
+function getMinWordCount(productType, flaggedCount) {
+  const perIssueWords = 90;
+  const baseMinimums = {
+    blueprint: 250,
+    security: 250,
+    cfo_report: 400,
+    ai_blueprint: 250,
+  };
+
+  const base = baseMinimums[productType] || 250;
+  const scaled = base + (Math.max((Number(flaggedCount) || 1) - 1, 0) * perIssueWords);
+  return Math.min(scaled, 600);
+}
+
+function validateBlueprintQuality(content, productType, minimum) {
   if (!content || typeof content !== 'string') {
     return { valid: false, reason: 'Empty or invalid response' };
   }
 
   const wordCount = content.split(/\s+/).length;
+  const resolvedMinimum = minimum ?? getMinWordCount(productType, 1);
 
-  // Minimum word counts by product type
-  const minimums = {
-    blueprint:  600,
-    security:   600,
-    cfo_report: 400,
-    bundle:     1200,
-    ai_blueprint: 600,
-  };
-
-  const minimum = minimums[productType] || 600;
-
-  if (wordCount < minimum) {
+  if (wordCount < resolvedMinimum) {
     return {
       valid:  false,
-      reason: `Too short: ${wordCount} words, expected at least ${minimum}`,
+      reason: `Too short: ${wordCount} words, expected at least ${resolvedMinimum}`,
     };
   }
 
@@ -487,7 +491,7 @@ function validateBlueprintQuality(content, productType) {
 }
 
 // ── MAIN HANDLER ─────────────────────────────────────────────────────────────
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
   // Initialise clients inside handler so env vars are available at call time
   const supabase      = getSupabase();
   const supabaseAdmin = getSupabaseAdmin();
@@ -782,7 +786,14 @@ module.exports = async function handler(req, res) {
 
         // 3b. Validate Claude response quality before delivery
         const validationType = isBundle ? 'bundle' : isSecur ? 'security' : isCfoReport ? 'cfo_report' : isAiAudit ? 'ai_blueprint' : 'blueprint';
-        const quality = validateBlueprintQuality(report, validationType);
+        const flaggedCount = Number(
+          meta.flaggedCount ||
+          ((meta.flaggedIssueIds || '').split(',').filter(Boolean).length) ||
+          ((meta.flaggedIssueLabels || '').split('||').filter(Boolean).length) ||
+          1
+        );
+        const minWords = getMinWordCount(validationType, flaggedCount);
+        const quality = validateBlueprintQuality(report, validationType, minWords);
 
         if (!quality.valid) {
           console.warn(JSON.stringify({
@@ -1086,4 +1097,8 @@ module.exports = async function handler(req, res) {
     console.error('Fatal handler error:', fatalError.message, fatalError.stack);
     return res.status(500).json({ error: fatalError.message });
   }
-};
+}
+
+module.exports = handler;
+module.exports.getMinWordCount = getMinWordCount;
+module.exports.validateBlueprintQuality = validateBlueprintQuality;
