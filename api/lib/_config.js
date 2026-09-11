@@ -36,6 +36,7 @@ const PRODUCT_TYPE_MAP = {
   'cfo_report':           'cfo_report',
   'monthly_plan':         'subscription',
   'ai_blueprint':         'ai_blueprint',
+  'coding_tools_blueprint': 'coding_tools_blueprint',
 };
 
 // ── CANONICAL PRODUCT PRICES (cents, by Stripe currency code) ────────────────
@@ -49,6 +50,11 @@ const PRODUCT_PRICES = {
   bundle:       { usd: 8900,  gbp: 6900,  eur: 8300,  cad: 11900, aud: 13400, pln: 34900 },
   cfo_report:   { usd: 19900, gbp: 15900, eur: 18300, cad: 26900, aud: 29900, pln: 79900 },
   ai_blueprint: { usd: 7900,  gbp: 6200,  eur: 7300,  cad: 10700, aud: 11900, pln: 29900 },
+  coding_tools_blueprint: { usd: 1499, gbp: 1200, eur: 1400, cad: 2000, aud: 2300, pln: 5900 },
+};
+
+const MIN_AMOUNTS = {
+  coding_tools_blueprint: 900,
 };
 
 // ── ALLOWED CORS ORIGINS ──────────────────────────────────────────────────────
@@ -83,6 +89,7 @@ module.exports = {
   CACHE_TTL_DAYS,
   PRODUCT_TYPE_MAP,
   PRODUCT_PRICES,
+  MIN_AMOUNTS,
   ALLOWED_ORIGINS,
   REQUIRED_ENV,
 };

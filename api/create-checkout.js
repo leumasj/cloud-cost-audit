@@ -5,7 +5,7 @@
 
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { PRODUCT_PRICES } = require('./lib/_config');
+const { PRODUCT_PRICES, MIN_AMOUNTS } = require('./lib/_config');
 const { checkRateLimit } = require('./lib/_ratelimit');
 const { CreateCheckoutSchema, validate } = require('./lib/_validation');
 
@@ -20,7 +20,7 @@ function isValidEmail(email) {
 function resolvePrice(productKey, stripeCurrency) {
   const table = PRODUCT_PRICES[productKey];
   const c = (stripeCurrency || 'usd').toLowerCase();
-  return table[c] || table.usd;
+  return Math.max(table[c] || table.usd, MIN_AMOUNTS[productKey] || 0);
 }
 
 // Maps Stripe currency code → recurring Price ID env var for subscription mode.
@@ -64,7 +64,7 @@ module.exports = async function handler(req, res)  {
     const { email, provider, monthlyBill, flaggedIssues, companyName, savingsMin, savingsMax, currency, productType, sessionId, stripeCurrency } = req.body;
 
     // Validate product type up front — unknown types are rejected before reaching Stripe
-    const VALID_PRODUCT_TYPES = ['blueprint', 'security_blueprint', 'bundle', 'cfo_report', 'subscription', 'session', 'ai_blueprint'];
+    const VALID_PRODUCT_TYPES = ['blueprint', 'security_blueprint', 'bundle', 'cfo_report', 'subscription', 'session', 'ai_blueprint', 'coding_tools_blueprint'];
     if (productType && !VALID_PRODUCT_TYPES.includes(productType)) {
       return res.status(400).json({ error: 'Invalid product type' });
     }
@@ -230,6 +230,47 @@ module.exports = async function handler(req, res)  {
       });
 
       return res.status(200).json({ url: aiSession.url, sessionId: aiSession.id });
+    }
+
+    // ── AI CODING TOOLS BLUEPRINT (one-time, additive) ───────────────────────
+    if (productType === 'coding_tools_blueprint') {
+      if (!isValidEmail(email)) return res.status(400).json({ error: 'A valid email address is required' });
+      const codingChargeCurrency = (currency || 'usd').toLowerCase();
+      const codingChargeAmount = resolvePrice('coding_tools_blueprint', codingChargeCurrency);
+      const codingIssues = flaggedIssues || [];
+      const codingMetadata = {
+        email,
+        type: 'coding_tools_blueprint',
+        provider: provider || 'AI Coding Tools',
+        monthlyBill: String(monthlyBill || 0),
+        companyName: companyName || 'Your Company',
+        savingsMin: String(savingsMin || 0),
+        savingsMax: String(savingsMax || 0),
+        flaggedIssueIds: codingIssues.map(i => i.id).join(',').substring(0, 499),
+        flaggedIssueLabels: codingIssues.map(i => i.label).join('||').substring(0, 499),
+        sessionId: sessionId || '',
+      };
+      const codingSession = await stripe.checkout.sessions.create({
+        line_items: [{
+          price_data: {
+            currency: codingChargeCurrency,
+            product_data: {
+              name: 'KloudAudit — AI Coding Tools Blueprint',
+              description: `Personalised AI coding tools seat and utilization guide for ${codingIssues.length} detected issues. Delivered to ${email} instantly.`,
+              images: ['https://kloudaudit.eu/og-image.png'],
+            },
+            unit_amount: codingChargeAmount,
+          },
+          quantity: 1,
+        }],
+        mode: 'payment',
+        customer_email: email,
+        success_url: `${process.env.NEXT_PUBLIC_URL || 'https://kloudaudit.eu'}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.NEXT_PUBLIC_URL || 'https://kloudaudit.eu'}?payment=cancelled`,
+        metadata: codingMetadata,
+        payment_intent_data: { metadata: codingMetadata },
+      });
+      return res.status(200).json({ url: codingSession.url, sessionId: codingSession.id });
     }
 
     // Multi-currency: currency comes from the frontend, but the amount is always
