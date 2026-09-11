@@ -213,6 +213,7 @@ const PROVIDER_ICONS = { "AI APIs": "🤖", "AI Coding Tools": "💻" };
 const CODING_TOOLS_PRICES = { USD: ["$14.99", 1499], PLN: ["59 PLN", 5900], GBP: ["£12", 1200], EUR: ["€14", 1400], CAD: ["CA$20", 2000], AUD: ["A$23", 2300] };
 const getCodingToolsPrice = currency => currency.codingToolsBlueprintPrice || (CODING_TOOLS_PRICES[currency.code] || CODING_TOOLS_PRICES.USD)[0];
 const getCodingToolsAmount = currency => currency.codingToolsBlueprintAmount || (CODING_TOOLS_PRICES[currency.code] || CODING_TOOLS_PRICES.USD)[1];
+const getSavingsRange = check => check.savingsRange || [0, 0];
 
 const SEC_SECTIONS = [
   { id: "iam", icon: "🔐", title: "Identity & Access", color: "#f87171",
@@ -2937,8 +2938,8 @@ function App() {
   const allChecks = useMemo(() => auditSections.flatMap(s => s.checks), [auditSections]);
   const flagged = useMemo(() => allChecks.filter(c => checked[c.id]), [checked, allChecks]);
   const { savMin, savMax, savPct } = useMemo(() => {
-    const rawMin = Math.round(flagged.reduce((s, c) => s + bill * c.savingsRange[0] / 100, 0));
-    const rawMax = Math.round(flagged.reduce((s, c) => s + bill * c.savingsRange[1] / 100, 0));
+    const rawMin = Math.round(flagged.reduce((s, c) => s + bill * getSavingsRange(c)[0] / 100, 0));
+    const rawMax = Math.round(flagged.reduce((s, c) => s + bill * getSavingsRange(c)[1] / 100, 0));
     const min = Math.min(rawMin, Math.round(bill * 0.70));
     const max = Math.min(rawMax, Math.round(bill * 0.85));
     return {
@@ -2950,8 +2951,8 @@ function App() {
   const progress = Math.round((Object.keys(checked).length / allChecks.length) * 100);
 
   const sampleFlagged = allChecks.filter(c => SAMPLE_REPORT.checked[c.id]);
-  const sampleSavMin = Math.round(sampleFlagged.reduce((s, c) => s + SAMPLE_REPORT.monthlyBill * c.savingsRange[0] / 100, 0));
-  const sampleSavMax = Math.round(sampleFlagged.reduce((s, c) => s + SAMPLE_REPORT.monthlyBill * c.savingsRange[1] / 100, 0));
+  const sampleSavMin = Math.round(sampleFlagged.reduce((s, c) => s + SAMPLE_REPORT.monthlyBill * getSavingsRange(c)[0] / 100, 0));
+  const sampleSavMax = Math.round(sampleFlagged.reduce((s, c) => s + SAMPLE_REPORT.monthlyBill * getSavingsRange(c)[1] / 100, 0));
   const samplePct = Math.round(((sampleSavMin + sampleSavMax) / 2 / SAMPLE_REPORT.monthlyBill) * 100);
 
   // ── LCP OVERLAY DISMISSAL — fade out static HTML placeholder once React has painted ──
@@ -3450,8 +3451,8 @@ useEffect(() => {
       : flagged;
 
     const rows = items.map(c => {
-      const sMin = !isSec && bill > 0 ? Math.round(bill * c.savingsRange[0] / 100) : null;
-      const sMax = !isSec && bill > 0 ? Math.round(bill * c.savingsRange[1] / 100) : null;
+      const sMin = !isSec && bill > 0 ? Math.round(bill * getSavingsRange(c)[0] / 100) : null;
+      const sMax = !isSec && bill > 0 ? Math.round(bill * getSavingsRange(c)[1] / 100) : null;
       const severity = isSec ? c.risk : c.impact;
       const sevColor = { Critical: '#dc2626', High: '#ea580c', Medium: '#d97706', Low: '#16a34a' }[severity] || '#64748b';
       return `
@@ -3636,7 +3637,7 @@ useEffect(() => {
 
   // ── SAMPLE MODAL ───────────────────────────────────────────────────────────
   const SampleModal = () => {
-    const getSev = c => { const p = (c.savingsRange[0] + c.savingsRange[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
+    const getSev = c => { const range = getSavingsRange(c); const p = (range[0] + range[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
     const sHigh = sampleFlagged.filter(c => getSev(c) === "high");
     const sMed  = sampleFlagged.filter(c => getSev(c) === "med");
     const sLow  = sampleFlagged.filter(c => getSev(c) === "low");
@@ -3694,8 +3695,8 @@ useEffect(() => {
                   <div key={group.label} style={{ marginBottom: "20px" }}>
                     <h4 className="display" style={{ fontSize: "13px", fontWeight: 700, color: group.color, marginBottom: "10px" }}>{group.label}</h4>
                     {group.items.map(check => {
-                      const sMin = Math.round(SAMPLE_REPORT.monthlyBill * check.savingsRange[0] / 100);
-                      const sMax = Math.round(SAMPLE_REPORT.monthlyBill * check.savingsRange[1] / 100);
+                      const sMin = Math.round(SAMPLE_REPORT.monthlyBill * getSavingsRange(check)[0] / 100);
+                      const sMax = Math.round(SAMPLE_REPORT.monthlyBill * getSavingsRange(check)[1] / 100);
                       return (
                         <div key={check.id} className="finding-row" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid var(--border)`, borderLeft: `3px solid ${group.color}`, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
                           <div>
@@ -5750,8 +5751,8 @@ aws iam simulate-principal-policy \\
                 ) : (
                   section.checks.map((check, i) => {
                     const on = !!checked[check.id];
-                    const sMin = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
-                    const sMax = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
+                    const sMin = bill > 0 ? Math.round(bill * getSavingsRange(check)[0] / 100) : null;
+                    const sMax = bill > 0 ? Math.round(bill * getSavingsRange(check)[1] / 100) : null;
                     return (
                       <div key={check.id} className="check-card" role="checkbox" aria-checked={on} tabIndex={0} onKeyDown={e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), toggle(check.id))} onClick={() => toggle(check.id)}
                         style={{ background: on ? "rgba(0,255,180,0.05)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${on ? "rgba(0,255,180,0.25)" : "var(--border)"}`, borderRadius: "14px", padding: "18px 20px", display: "flex", gap: "14px", alignItems: "flex-start", boxShadow: on ? "0 4px 20px rgba(0,255,180,0.08)" : "0 1px 4px rgba(0,0,0,0.2)", animation: "card-in 0.35s ease both", animationDelay: `${i * 55}ms` }}>
@@ -5777,7 +5778,7 @@ aws iam simulate-principal-policy \\
                             </div>
                           )}
                         </div>
-                        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", flexShrink: 0, fontWeight: 600 }}>{check.savingsRange[0]}–{check.savingsRange[1]}%</div>
+                        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", flexShrink: 0, fontWeight: 600 }}>{check.savingsRange ? `${check.savingsRange[0]}–${check.savingsRange[1]}%` : "Tool spend"}</div>
                       </div>
                     );
                   })
@@ -5878,8 +5879,10 @@ aws iam simulate-principal-policy \\
             <span style={{ fontSize: "16px" }}>💰</span>
             <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--green)" }}>
               {showToast.bill > 0
-                ? `+$${Math.round(showToast.bill * showToast.check.savingsRange[0] / 100).toLocaleString()}–$${Math.round(showToast.bill * showToast.check.savingsRange[1] / 100).toLocaleString()}/mo`
-                : `+${showToast.check.savingsRange[0]}–${showToast.check.savingsRange[1]}%`
+                ? showToast.check.savingsRange
+                  ? `+$${Math.round(showToast.bill * getSavingsRange(showToast.check)[0] / 100).toLocaleString()}–$${Math.round(showToast.bill * getSavingsRange(showToast.check)[1] / 100).toLocaleString()}/mo`
+                  : "Tool spend control"
+                : showToast.check.savingsRange ? `+${showToast.check.savingsRange[0]}–${showToast.check.savingsRange[1]}%` : "Tool spend control"
               }
             </span>
           </div>
@@ -5893,7 +5896,7 @@ aws iam simulate-principal-policy \\
   // ── EMAIL GATE STEP ──────────────────────────────────────────────────────────
   if (step === "email_gate") {
     // ── severity helper (mirrors report step) ─────────────────────────────
-    const getSev = c => { const p = (c.savingsRange[0] + c.savingsRange[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
+    const getSev = c => { const range = getSavingsRange(c); const p = (range[0] + range[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
     const SEV_COLOR = { high: "#f87171", med: "#fbbf24", low: "#4ade80" };
 
     const handleGateSubmit = async (e) => {
@@ -6030,8 +6033,8 @@ aws iam simulate-principal-policy \\
 
             {/* First 3 findings — fully visible */}
             {previewFindings.map(check => {
-              const sMin2 = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
-              const sMax2 = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
+              const sMin2 = bill > 0 ? Math.round(bill * getSavingsRange(check)[0] / 100) : null;
+              const sMax2 = bill > 0 ? Math.round(bill * getSavingsRange(check)[1] / 100) : null;
               const sev = getSev(check);
               return (
                 <div key={check.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderLeft: `3px solid ${SEV_COLOR[sev]}`, borderRadius: "0 12px 12px 0", padding: "16px 20px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
@@ -6106,7 +6109,7 @@ aws iam simulate-principal-policy \\
   }
 
   if (step === "report") {
-    const getSev = c => { const p = (c.savingsRange[0] + c.savingsRange[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
+    const getSev = c => { const range = getSavingsRange(c); const p = (range[0] + range[1]) / 2; return p >= 30 ? "high" : p >= 15 ? "med" : "low"; };
     const high = flagged.filter(c => getSev(c) === "high");
     const med = flagged.filter(c => getSev(c) === "med");
     const low = flagged.filter(c => getSev(c) === "low");
@@ -6213,8 +6216,8 @@ aws iam simulate-principal-policy \\
                   <span style={{ background: group.color + "15", color: group.color, fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px" }}>{group.items.length}</span>
                 </div>
                 {group.items.map(check => {
-                  const sMin2 = bill > 0 ? Math.round(bill * check.savingsRange[0] / 100) : null;
-                  const sMax2 = bill > 0 ? Math.round(bill * check.savingsRange[1] / 100) : null;
+                  const sMin2 = bill > 0 ? Math.round(bill * getSavingsRange(check)[0] / 100) : null;
+                  const sMax2 = bill > 0 ? Math.round(bill * getSavingsRange(check)[1] / 100) : null;
                   return (
                     <div key={check.id} className="finding-row" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderLeft: "3px solid " + group.color, borderRadius: "0 12px 12px 0", padding: "16px 20px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
                       <div style={{ flex: 1 }}>
