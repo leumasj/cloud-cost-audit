@@ -3071,24 +3071,39 @@ function App() {
       SE: USD, NO: USD, DK: USD, CH: USD, IS: USD,
       SG: USD, IN: USD, JP: USD, KR: USD, HK: USD, TW: USD,
     };
-    // Serve from 24h localStorage cache to avoid ipapi.co rate limit (1000 req/day free tier)
+    let cachedCurrency = null;
     try {
       const cached = localStorage.getItem('ka_currency');
       if (cached) {
         const { currency: saved, ts } = JSON.parse(cached);
-        if (Date.now() - ts < 24 * 60 * 60 * 1000) { setCurrency(saved); return; }
+        if (Date.now() - ts < 24 * 60 * 60 * 1000) cachedCurrency = saved;
       }
     } catch {}
+
+    const browserCountry = () => {
+      const locales = navigator.languages?.length ? navigator.languages : [navigator.language];
+      for (const locale of locales) {
+        try {
+          const region = new Intl.Locale(locale).region;
+          if (region && CURRENCY_MAP[region]) return region;
+        } catch {}
+      }
+      return null;
+    };
+    const applyCountry = countryCode => {
+      const match = CURRENCY_MAP[String(countryCode || '').toUpperCase()];
+      if (!match) return false;
+      setCurrency(match);
+      try { localStorage.setItem('ka_currency', JSON.stringify({ currency: match, country: countryCode, ts: Date.now() })); } catch {}
+      return true;
+    };
+
     fetch("/api/health?geo=1")
       .then(r => r.json())
       .then(data => {
-        const match = CURRENCY_MAP[data.country_code];
-        if (match) {
-          setCurrency(match);
-          try { localStorage.setItem('ka_currency', JSON.stringify({ currency: match, ts: Date.now() })); } catch {}
-        }
+        if (!applyCountry(data.country_code) && !applyCountry(browserCountry()) && cachedCurrency) setCurrency(cachedCurrency);
       })
-      .catch(() => {}); // silently keep USD default on failure
+      .catch(() => { if (!applyCountry(browserCountry()) && cachedCurrency) setCurrency(cachedCurrency); });
   }, []);
 
 
