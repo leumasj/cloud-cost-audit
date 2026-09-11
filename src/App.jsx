@@ -4460,6 +4460,7 @@ aws iam simulate-principal-policy \\
       { q: "Do you need access to my cloud account?", a: "Never. Both audits are entirely self-guided — you answer questions based on your own knowledge. No credentials, no IAM roles, no agents, no OAuth. We have zero access to your infrastructure.", tag: "both" },
       { q: "How is the AI Blueprint different from the free report?", a: "The free report tells you what is wrong. The Blueprint tells you exactly how to fix it — with CLI commands, Terraform snippets, IAM policy templates, compliance mappings, and verification steps specific to your provider.", tag: "both" },
       { q: "What does the AI Coding Tools Audit cover?", a: "It checks overlapping Copilot, Cursor, Windsurf, and Claude Code seats, per-seat utilization, departed-engineer offboarding, tier fit, annual commitments, renewal tracking, and cost attribution by team or project.", tag: "both" },
+      { q: "How much is the Coding Tools Blueprint?", a: `The AI Coding Tools Blueprint is a one-time payment of ${currency.codingToolsBlueprintPrice}. It includes seat consolidation steps, vendor dashboard utilization checks, tier downgrade recommendations, and renewal calendar setup.`, tag: "both" },
       { q: "How fast do I receive the Blueprint?", a: "Within 2 minutes of payment. Claude AI generates your personalised guide in ~30 seconds, then Resend delivers it to your inbox. If you don't see it within 5 minutes, check spam or email admin@kloudaudit.eu.", tag: "both" },
       { q: "What does the Security Blueprint include that the free score doesn't?", a: "The free audit shows your risk score and the first 2 flagged issues. The Security Blueprint unlocks all findings with exact CLI remediation commands, IAM policy fixes, compliance gap mapping (SOC 2, ISO 27001, GDPR, CIS Benchmark), and a 30-day remediation roadmap.", tag: "security" },
       { q: "I already use AWS Security Hub / GCP Security Command Center. Why do I need this?", a: "Those tools need account access and take weeks to configure. KloudAudit gives you a prioritised action list in 15 minutes with zero access required — ideal for a quick self-assessment before a pentest, compliance audit, or investor review.", tag: "security" },
@@ -4468,11 +4469,12 @@ aws iam simulate-principal-policy \\
     ];
 
     const HOW_IT_WORKS = [
-      { n: "01", title: "Run the free cost audit", desc: "Answer 12-18 structured questions about your AWS, GCP, Azure, or AI API setup (OpenAI, Anthropic, Bedrock). 10-15 minutes. No account access, no signup.", color: "#00ffb4" },
+      { n: "01", title: "Run the free cost audit", desc: "Answer structured questions about your AWS, GCP, Azure, AI API, or AI coding tools setup. 10-15 minutes. No account access, no signup.", color: "#00ffb4" },
       { n: "02", title: "See your savings report", desc: "Instantly see your estimated waste, prioritised findings, and projected monthly savings across compute, storage, database, and network.", color: "#818cf8" },
       { n: "03", title: "Run the security audit", desc: "16 security checkpoints across IAM, network exposure, encryption, and logging. Get your security risk score instantly — free.", color: "#f87171" },
       { n: "04", title: "Get the AI Blueprint", desc: `Pay ${currency.blueprintPrice} (cost), ${currency.aiBlueprintPrice} (AI), or ${currency.securityPrice || "$29"} (security). Claude AI writes your exact CLI commands, policy fixes, and step-by-step guide.`, color: "#00d4ff" },
-      { n: "05", title: "Implement & verify", desc: "Follow the blueprint. Most clients recoup the cost within 24 hours. Re-audit in 90 days to measure improvement.", color: "#fb923c" },
+      { n: "05", title: "Get the Coding Tools Blueprint", desc: `Pay ${currency.codingToolsBlueprintPrice} once for seat consolidation, Copilot/Cursor/Windsurf utilization checks, tier downgrade recommendations, and renewal calendar setup.`, color: "#00d4ff" },
+      { n: "06", title: "Implement & verify", desc: "Follow the blueprint. Most clients recoup the cost within 24 hours. Re-audit in 90 days to measure improvement.", color: "#fb923c" },
     ];
 
     return (
@@ -5230,7 +5232,7 @@ aws iam simulate-principal-policy \\
               <div style={{ marginBottom: "6px" }}><span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{currency.codingToolsBlueprintPrice}</span><span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>one-time</span></div>
               <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>Consolidate AI coding seats and right-size Copilot, Cursor, Windsurf, and Claude Code spend.</p>
               {["Seat overlap and shadow procurement review", "Per-seat usage export approach", "Tier downgrade recommendations", "Renewal calendar setup"].map(f => <div key={f} style={{ display: "flex", gap: "8px", marginBottom: "8px" }}><span style={{ color: "#00d4ff", fontSize: "12px", flexShrink: 0 }}>✓</span><span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span></div>)}
-              <button onClick={handlePricingCodingToolsBlueprintClick} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(0,212,255,0.3)", background: "transparent", color: "#00d4ff", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>Get Coding Tools Blueprint →</button>
+              <button onClick={handlePricingCodingToolsBlueprintClick} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(0,212,255,0.3)", background: "transparent", color: "#00d4ff", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>Get Coding Tools Blueprint — {currency.codingToolsBlueprintPrice} →</button>
             </div>
             {/* Security Blueprint */}
             <div className="pricing-card" style={{ background: "rgba(248,113,113,0.05)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "18px", padding: "28px 24px" }}>
