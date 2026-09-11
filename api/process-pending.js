@@ -303,6 +303,24 @@ No generic advice — every recommendation must be implementable
 in under 2 hours.`;
 }
 
+function buildCodingToolsPrompt(meta) {
+  const flagged = (meta.flaggedIssueLabels || '').split('||').filter(Boolean).map(l => sanitizeForPrompt(l, 80));
+  const bill = meta.monthlyBill || 0;
+
+  return `You are a senior engineering operations consultant writing a practical AI coding tools spend blueprint for a team spending $${bill}/month on GitHub Copilot, Cursor, Windsurf, Claude Code, or similar tools.
+
+They have these specific issues: ${flagged.join(', ')}
+
+Write a practical blueprint covering, for each flagged issue:
+1. Seat consolidation: how to inventory overlapping Copilot, Cursor, Windsurf, and Claude Code seats, identify duplicate coverage, centralize procurement, and remove departed engineers.
+2. Utilization audit: exact steps to check GitHub Copilot Admin Center seat activity and usage data, Cursor Team Dashboard usage exports, Windsurf team billing/activity, and Claude Console usage where available. Explain what last-active and usage signals mean.
+3. Tier fit: recommend when to move between individual, team, business, and enterprise tiers based on actual usage and admin requirements, including a review of enterprise-only features.
+4. Renewal calendar: set up renewal-date tracking, a monthly utilization review, and a pilot-before-annual-commitment process.
+5. Cost attribution: show how to map seats and subscriptions to teams or projects without accessing customer accounts.
+
+Be specific and implementable. Include dashboard paths, spreadsheet fields, decision thresholds, and ownership steps. Do not claim to have accessed any account. Target at least 700 words. No generic advice.`;
+}
+
 // ── HTML EMAIL BUILDERS ───────────────────────────────────────────────────────
 // Escapes user-controlled fields (provider, companyName, report body) before
 // interpolating into HTML emails — all three ultimately come from client
@@ -439,6 +457,7 @@ function getMinWordCount(productType, flaggedCount) {
     security: 250,
     cfo_report: 400,
     ai_blueprint: 250,
+    coding_tools_blueprint: 250,
   };
 
   const base = baseMinimums[productType] || 250;
@@ -555,6 +574,7 @@ async function handler(req, res) {
         const isBundle      = job.product_type === 'bundle';
         const isCfoReport   = job.product_type === 'cfo_report';
         const isAiAudit     = job.product_type === 'ai_blueprint';
+        const isCodingToolsAudit = job.product_type === 'coding_tools_blueprint';
 
         // ── 3-DAY FOLLOW-UP EMAIL ─────────────────────────────────────────────
         if (job.product_type === 'followup_email') {
@@ -762,7 +782,7 @@ async function handler(req, res) {
 
           if (!report) {
             console.log(`Cache miss — calling Claude for job ${job.id}`);
-            const prompt = isSecur ? buildSecurityPrompt(meta) : isCfoReport ? buildCfoPrompt(meta) : isAiAudit ? buildAiPrompt(meta) : buildBlueprintPrompt(meta);
+            const prompt = isSecur ? buildSecurityPrompt(meta) : isCfoReport ? buildCfoPrompt(meta) : isAiAudit ? buildAiPrompt(meta) : isCodingToolsAudit ? buildCodingToolsPrompt(meta) : buildBlueprintPrompt(meta);
             const aiResp = await Promise.race([
               anthropic.messages.create({
                 model:      'claude-sonnet-4-6',
@@ -785,7 +805,7 @@ async function handler(req, res) {
         report = fixReversedMoneyRanges(report);
 
         // 3b. Validate Claude response quality before delivery
-        const validationType = isBundle ? 'bundle' : isSecur ? 'security' : isCfoReport ? 'cfo_report' : isAiAudit ? 'ai_blueprint' : 'blueprint';
+        const validationType = isBundle ? 'bundle' : isSecur ? 'security' : isCfoReport ? 'cfo_report' : isAiAudit ? 'ai_blueprint' : isCodingToolsAudit ? 'coding_tools_blueprint' : 'blueprint';
         const flaggedCount = Number(
           meta.flaggedCount ||
           ((meta.flaggedIssueIds || '').split(',').filter(Boolean).length) ||
@@ -1100,5 +1120,6 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
+module.exports.buildCodingToolsPrompt = buildCodingToolsPrompt;
 module.exports.getMinWordCount = getMinWordCount;
 module.exports.validateBlueprintQuality = validateBlueprintQuality;

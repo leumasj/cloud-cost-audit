@@ -266,7 +266,9 @@ const faqSchema = JSON.stringify({
     { "@type": "Question", "name": "Is this a subscription?",
       "acceptedAnswer": { "@type": "Answer", "text": "No. One-time payment — $79 for the Cost Blueprint, $29 for the Security Blueprint. You get a permanent document you implement at your own pace." }},
     { "@type": "Question", "name": "What cloud providers do you support?",
-      "acceptedAnswer": { "@type": "Answer", "text": "AWS, GCP, Azure, and Multi-Cloud environments, plus AI APIs (OpenAI, Anthropic, Bedrock, Vertex). The 18-check cost audit and 16-check security audit cover all major cloud providers, and a dedicated 12-check audit covers AI API spend." }},
+      "acceptedAnswer": { "@type": "Answer", "text": "AWS, GCP, Azure, and Multi-Cloud environments, plus AI APIs (OpenAI, Anthropic, Bedrock, Vertex) and AI Coding Tools (Copilot, Cursor, Windsurf, Claude Code). The 18-check cost audit and 16-check security audit cover all major cloud providers, with dedicated audits for AI API spend and coding-tool seats." }},
+    { "@type": "Question", "name": "What does the AI Coding Tools Audit check?",
+      "acceptedAnswer": { "@type": "Answer", "text": "It checks overlapping Copilot, Cursor, Windsurf, and Claude Code seats, utilization tracking, departed-engineer seats, tier fit, annual commitments, renewal tracking, and cost attribution by team or project." }},
   ]
 });
 
@@ -277,7 +279,7 @@ const howToSchema = JSON.stringify({
   "description": "A structured self-assessment to find 20-45% cloud waste without giving anyone your AWS credentials.",
   "totalTime": "PT15M",
   "step": [
-    { "@type": "HowToStep", "name": "Select your cloud provider", "text": "Choose AWS, GCP, Azure, Multi-Cloud, or AI APIs." },
+    { "@type": "HowToStep", "name": "Select your provider", "text": "Choose AWS, GCP, Azure, Multi-Cloud, AI APIs, or AI Coding Tools." },
     { "@type": "HowToStep", "name": "Complete 18 audit checks", "text": "Answer questions about your infrastructure across compute, storage, network, database, and governance." },
     { "@type": "HowToStep", "name": "Get your Waste Score", "text": "Receive a personalised score from 0-100 with estimated monthly savings." },
     { "@type": "HowToStep", "name": "Get the AI Blueprint", "text": "Pay $79 to receive exact CLI commands and a 30-day remediation roadmap in your inbox within 2 minutes." },
