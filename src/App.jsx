@@ -126,6 +126,44 @@ const AI_AUDIT_SECTIONS = [
   },
 ];
 
+const CODING_TOOLS_AUDIT_SECTIONS = [
+  {
+    id: 'overlap', label: 'Tool Overlap', icon: '🔁',
+    checks: [
+      { id: 'ct_multi_tool_overlap', label: 'Multiple AI coding tools for same engineers', detail: 'Paying for Copilot + Cursor + Windsurf for overlapping team members', effort: 'Low', impact: 'High' },
+      { id: 'ct_shadow_procurement', label: 'Multiple teams buying the same tool separately', detail: 'No centralized purchasing — duplicate subscriptions across teams', effort: 'Medium', impact: 'Medium' },
+    ]
+  },
+  {
+    id: 'utilization', label: 'Utilization', icon: '📊',
+    checks: [
+      { id: 'ct_no_usage_tracking', label: 'No per-seat utilization tracking', detail: 'Cannot tell which paid seats are actually being used', effort: 'Low', impact: 'High' },
+      { id: 'ct_offboarded_seats', label: 'Active seats for departed engineers', detail: 'Offboarding process does not include AI tool seat removal', effort: 'Low', impact: 'High' },
+    ]
+  },
+  {
+    id: 'tier_fit', label: 'Tier Fit', icon: '🎯',
+    checks: [
+      { id: 'ct_wrong_tier', label: 'Team tier purchased when individual tier would suffice', detail: 'Paying for team/enterprise features most engineers never use', effort: 'Medium', impact: 'High' },
+      { id: 'ct_no_downgrade_review', label: 'No usage-based downgrade review', detail: 'Paying for unlimited/high tier despite light actual usage', effort: 'Low', impact: 'Medium' },
+      { id: 'ct_enterprise_overkill', label: 'Enterprise tier for admin-only features', detail: 'Enterprise pricing applied org-wide for features only a few people use', effort: 'Medium', impact: 'Medium' },
+    ]
+  },
+  {
+    id: 'commitment', label: 'Commitment & Renewal', icon: '📅',
+    checks: [
+      { id: 'ct_annual_no_pilot', label: 'Annual plan bought without a monthly pilot first', detail: 'Locked into annual commitment before validating fit', effort: 'Low', impact: 'Medium' },
+      { id: 'ct_no_renewal_tracking', label: 'No renewal date tracking', detail: 'Auto-renewing at list price with no negotiation window', effort: 'Low', impact: 'Medium' },
+    ]
+  },
+  {
+    id: 'attribution', label: 'Attribution', icon: '📈',
+    checks: [
+      { id: 'ct_no_attribution', label: 'No cost attribution by team/project', detail: 'Cannot identify which team or project drives AI tool spend', effort: 'Medium', impact: 'Low' },
+    ]
+  },
+];
+
 const AI_VERIFY_COMMANDS = {
   ai_model_routing: 'curl https://api.openai.com/v1/usage -H "Authorization: Bearer $OPENAI_API_KEY" -G --data-urlencode "date=$(date +%Y-%m-%d)" | jq \'.data[] | {model: .snapshot_id, requests: .n_requests}\'',
   ai_legacy_models: 'curl https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY" | jq \'.data[] | select(.id | contains("gpt-4-0")) | .id\'',
@@ -139,6 +177,19 @@ const AI_VERIFY_COMMANDS = {
   ai_no_batch: 'grep -rn "batches.create\\|/v1/batches" ./src --include=*.py | wc -l  # batch API usage',
   ai_no_attribution: 'grep -rn "metadata=" ./src --include=*.py | wc -l  # requests tagged with metadata',
   ai_no_monitoring: 'echo "Check: platform.openai.com/usage or console.anthropic.com/usage"',
+};
+
+const CODING_TOOLS_VERIFY_COMMANDS = {
+  ct_multi_tool_overlap: 'echo "Check GitHub Copilot Admin Center, Cursor Team settings, Windsurf team billing, and Claude Console for overlapping paid seats"',
+  ct_shadow_procurement: 'echo "Compare procurement records with Copilot, Cursor, Windsurf, and Claude Code team admin dashboards"',
+  ct_no_usage_tracking: 'echo "Export seat activity from GitHub Copilot Admin Center and Cursor Team Dashboard; compare last-active dates"',
+  ct_offboarded_seats: 'echo "Check GitHub organization members, Cursor team members, and identity-provider offboarding logs for active departed seats"',
+  ct_wrong_tier: 'echo "Compare Copilot Business/Enterprise and Cursor Teams features against the features engineers actually use"',
+  ct_no_downgrade_review: 'echo "Review the last 90 days of Copilot and Cursor usage exports before the next tier renewal"',
+  ct_enterprise_overkill: 'echo "List enterprise-only features in use from Copilot and Cursor admin dashboards; count actual users"',
+  ct_annual_no_pilot: 'echo "Check vendor billing history for annual commitments and confirm a monthly pilot preceded each purchase"',
+  ct_no_renewal_tracking: 'echo "Record renewal dates from Copilot, Cursor, Windsurf, and Claude billing portals in the team calendar"',
+  ct_no_attribution: 'echo "Export seat/team membership from each tool and map subscription costs to GitHub teams or projects"',
 };
 
 const SAMPLE_REPORT = {
@@ -156,9 +207,9 @@ const SAMPLE_REPORT = {
 const IMPACT_COLOR = { Critical: "#f87171", High: "#fb923c", Medium: "#fbbf24", Low: "#4ade80" };
 const EFFORT_COLOR = { Low: "#4ade80", Easy: "#4ade80", Medium: "#fbbf24", High: "#f87171", Hard: "#f87171" };
 const COMPLIANCE_COLOR = { "GDPR": "#60a5fa", "SOC 2": "#4ade80", "ISO 27001": "#a78bfa", "PCI-DSS": "#fb923c" };
-const PROVIDERS = ["AWS", "GCP", "Azure", "Multi-cloud", "AI APIs"];
-const PROVIDER_SUBLABELS = { "AI APIs": "OpenAI · Anthropic · Bedrock · Vertex" };
-const PROVIDER_ICONS = { "AI APIs": "🤖" };
+const PROVIDERS = ["AWS", "GCP", "Azure", "Multi-cloud", "AI APIs", "AI Coding Tools"];
+const PROVIDER_SUBLABELS = { "AI APIs": "OpenAI · Anthropic · Bedrock · Vertex", "AI Coding Tools": "Copilot · Cursor · Windsurf · Claude Code" };
+const PROVIDER_ICONS = { "AI APIs": "🤖", "AI Coding Tools": "💻" };
 
 const SEC_SECTIONS = [
   { id: "iam", icon: "🔐", title: "Identity & Access", color: "#f87171",
@@ -1845,7 +1896,7 @@ function WasteScoreCard({ flagged, allChecks, savPct, savMin, savMax, onShare, p
         </div>
       </div>
       <div style={{ flex: 1, minWidth: "200px" }}>
-        <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px" }}>{provider === 'AI APIs' ? 'KloudAudit AI Spend Score' : 'KloudAudit Waste Score'}</p>
+        <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px" }}>{provider === 'AI APIs' ? 'KloudAudit AI Spend Score' : provider === 'AI Coding Tools' ? 'Tool Spend Score' : 'KloudAudit Waste Score'}</p>
         <h2 className="display" style={{ fontSize: "28px", fontWeight: 800, color: grade.color, letterSpacing: "-0.8px", marginBottom: "8px" }}>{grade.label}</h2>
         <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>
           {score >= 80
@@ -1899,6 +1950,7 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
   const [errorMsg, setErrorMsg] = useState("");
   const [withdrawalChecked, setWithdrawalChecked] = useState(false);
   const isAi = productType === 'ai_blueprint';
+  const isCodingTools = productType === 'coding_tools_blueprint';
   const displayPrice = price || currency.blueprintPrice;
 
   const handleSubmit = async (e) => {
@@ -1920,15 +1972,17 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
       <form onSubmit={handleSubmit} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="blueprint-dialog-title" style={{ background: "var(--bg2)", border: "1px solid rgba(0,255,180,0.2)", borderRadius: "20px", maxWidth: "min(460px, calc(100vw - 32px))", width: "100%", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.8)", animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>📄</div>
-          <h2 id="blueprint-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>{isAi ? "Get Your AI Cost Blueprint" : "Get Your Cost Blueprint"}</h2>
+          <h2 id="blueprint-dialog-title" className="display" style={{ fontSize: "24px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "8px" }}>{isAi ? "Get Your AI Cost Blueprint" : isCodingTools ? "Get Your Coding Tools Blueprint" : "Get Your Cost Blueprint"}</h2>
           <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
-            Enter your email and you&apos;ll be redirected to secure payment. Your personalised {isAi ? "AI cost remediation" : (provider || "cloud")} {isAi ? "" : "implementation "}guide lands in your inbox within 2 minutes of payment.
+            Enter your email and you&apos;ll be redirected to secure payment. Your personalised {isAi ? "AI cost remediation" : isCodingTools ? "AI coding tools remediation" : (provider || "cloud")} {isAi || isCodingTools ? "" : "implementation "}guide lands in your inbox within 2 minutes of payment.
           </p>
         </div>
         <div style={{ background: "var(--green-dim)", border: "1px solid var(--green-border)", borderRadius: "10px", padding: "14px 18px", marginBottom: "20px" }}>
           <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>What you get:</p>
           {(isAi
             ? [`Model routing & caching code for ${flaggedCount} flagged issues`, "Spending controls & alert setup steps", "Batch processing code where applicable", "PDF in your inbox in ~2 minutes"]
+            : isCodingTools
+            ? [`Seat consolidation steps for ${flaggedCount} flagged issues`, "Copilot/Cursor/Windsurf utilization checks", "Tier downgrade and renewal recommendations", "PDF in your inbox in ~2 minutes"]
             : [`Exact ${provider || "cloud"} CLI commands`, "Terraform snippets per issue", "Step-by-step fix instructions", `${flaggedCount} issues with savings estimates`, "PDF in your inbox in ~2 minutes"]
           ).map(f => (
             <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
@@ -2184,7 +2238,7 @@ function BlueprintSampleCode({ code, accent = '#00ffb4' }) {
 const PricingModal = memo(function PricingModal({
   onClose, currency,
   onStartAudit, onStartSecAudit,
-  onBlueprintClick, onAiBlueprintClick, onSecBlueprintClick, onCfoReportClick, onSessionClick,
+  onBlueprintClick, onAiBlueprintClick, onCodingToolsBlueprintClick, onSecBlueprintClick, onCfoReportClick, onSessionClick,
   onSubscribe,
 }) {
   const [subEmail, setSubEmail] = useState('');
@@ -2246,6 +2300,21 @@ const PricingModal = memo(function PricingModal({
       features: ['Model routing code (OpenAI/Anthropic/Bedrock)', 'Prompt + response caching implementation', 'Spend caps & alert setup steps'],
       cta: 'Get AI Blueprint →',
       onClick: () => { onClose(); onAiBlueprintClick(); },
+    },
+    {
+      id: 'coding_tools_blueprint',
+      icon: '💻',
+      label: 'Coding Tools Blueprint',
+      badge: 'New',
+      badgeColor: '#00d4ff',
+      price: currency.codingToolsBlueprintPrice,
+      priceSub: 'one-time',
+      color: '#00d4ff',
+      border: 'rgba(0,212,255,0.3)',
+      bg: 'rgba(0,212,255,0.05)',
+      features: ['Seat consolidation across Copilot/Cursor/Windsurf', 'Per-seat utilization review', 'Tier downgrade & renewal plan'],
+      cta: 'Get Coding Tools Blueprint →',
+      onClick: () => { onClose(); onCodingToolsBlueprintClick(); },
     },
     {
       id: 'security',
@@ -2817,13 +2886,21 @@ function App() {
     bundlePrice: "$89", bundleAmount: 8900,
     cfoReportPrice: "$199", cfoReportAmount: 19900,
     aiBlueprintPrice: "$79", aiBlueprintAmount: 7900,
+    codingToolsBlueprintPrice: "$14.99", codingToolsBlueprintAmount: 1499,
   });
+
+  const isAiProvider = provider === 'AI APIs';
+  const isCodingToolsProvider = provider === 'AI Coding Tools';
+  const auditSections = isAiProvider ? AI_AUDIT_SECTIONS : isCodingToolsProvider ? CODING_TOOLS_AUDIT_SECTIONS : AUDIT_SECTIONS;
+  const blueprintProductType = isAiProvider ? 'ai_blueprint' : isCodingToolsProvider ? 'coding_tools_blueprint' : 'blueprint';
+  const blueprintPrice = isAiProvider ? currency.aiBlueprintPrice : isCodingToolsProvider ? currency.codingToolsBlueprintPrice : currency.blueprintPrice;
+  const blueprintAmount = isAiProvider ? currency.aiBlueprintAmount : isCodingToolsProvider ? currency.codingToolsBlueprintAmount : currency.blueprintAmount;
 
   const toggle = (id) => {
     const nowOn = !checked[id];
     setChecked(p => ({ ...p, [id]: !p[id] }));
     if (nowOn) {
-      const sectionsForToggle = provider === 'AI APIs' ? AI_AUDIT_SECTIONS : AUDIT_SECTIONS;
+      const sectionsForToggle = auditSections;
       const check = sectionsForToggle.flatMap(s => s.checks).find(c => c.id === id);
       if (check) setShowToast({ check, bill });
     }
@@ -2852,7 +2929,7 @@ function App() {
   };
 
   const bill = useMemo(() => parseFloat(monthlyBill) || 0, [monthlyBill]);
-  const allChecks = useMemo(() => (provider === 'AI APIs' ? AI_AUDIT_SECTIONS : AUDIT_SECTIONS).flatMap(s => s.checks), [provider]);
+  const allChecks = useMemo(() => auditSections.flatMap(s => s.checks), [auditSections]);
   const flagged = useMemo(() => allChecks.filter(c => checked[c.id]), [checked, allChecks]);
   const { savMin, savMax, savPct } = useMemo(() => {
     const rawMin = Math.round(flagged.reduce((s, c) => s + bill * c.savingsRange[0] / 100, 0));
@@ -2973,12 +3050,12 @@ function App() {
 
   // ── CURRENCY DETECTION ───────────────────────────────────────────
   useEffect(() => {
-    const USD = { code: "USD", symbol: "$",   blueprintPrice: "$79",     blueprintAmount: 7900,  sessionPrice: "$249",    sessionAmount: 24900, stripeCurrency: "usd", securityPrice: "$29",      securityAmount: 2900,  bundlePrice: "$89",      bundleAmount: 8900,  subscriptionPrice: "$19/mo",     subscriptionAmount: 1900,  cfoReportPrice: "$199",     cfoReportAmount: 19900, aiBlueprintPrice: "$79", aiBlueprintAmount: 7900  };
-    const GBP = { code: "GBP", symbol: "\u00a3",   blueprintPrice: "\u00a362",     blueprintAmount: 6200,  sessionPrice: "\u00a3199",    sessionAmount: 19900, stripeCurrency: "gbp", securityPrice: "\u00a323",      securityAmount: 2300,  bundlePrice: "\u00a369",      bundleAmount: 6900,  subscriptionPrice: "\u00a315/mo",     subscriptionAmount: 1500,  cfoReportPrice: "\u00a3159",    cfoReportAmount: 15900, aiBlueprintPrice: "\u00a362", aiBlueprintAmount: 6200  };
-    const EUR = { code: "EUR", symbol: "\u20ac",   blueprintPrice: "\u20ac73",     blueprintAmount: 7300,  sessionPrice: "\u20ac229",    sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27",      securityAmount: 2700,  bundlePrice: "\u20ac83",      bundleAmount: 8300,  subscriptionPrice: "\u20ac17/mo",     subscriptionAmount: 1700,  cfoReportPrice: "\u20ac183",    cfoReportAmount: 18300, aiBlueprintPrice: "\u20ac73", aiBlueprintAmount: 7300  };
-    const CAD = { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107",  blueprintAmount: 10700, sessionPrice: "CA$339",  sessionAmount: 33900, stripeCurrency: "cad", securityPrice: "CA$39",    securityAmount: 3900,  bundlePrice: "CA$119",   bundleAmount: 11900, subscriptionPrice: "CA$26/mo",   subscriptionAmount: 2600,  cfoReportPrice: "CA$269",   cfoReportAmount: 26900, aiBlueprintPrice: "CA$107", aiBlueprintAmount: 10700  };
-    const AUD = { code: "AUD", symbol: "A$",  blueprintPrice: "A$119",   blueprintAmount: 11900, sessionPrice: "A$379",   sessionAmount: 37900, stripeCurrency: "aud", securityPrice: "A$45",     securityAmount: 4500,  bundlePrice: "A$134",    bundleAmount: 13400, subscriptionPrice: "A$29/mo",    subscriptionAmount: 2900,  cfoReportPrice: "A$299",    cfoReportAmount: 29900, aiBlueprintPrice: "A$119", aiBlueprintAmount: 11900  };
-    const PLN = { code: "PLN", symbol: "z\u0142",  blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln", securityPrice: "119 PLN",  securityAmount: 11900, bundlePrice: "349 PLN",  bundleAmount: 34900, subscriptionPrice: "79 PLN/mo",  subscriptionAmount: 7900,  cfoReportPrice: "799 PLN",  cfoReportAmount: 79900, aiBlueprintPrice: "299 PLN", aiBlueprintAmount: 29900  };
+    const USD = { code: "USD", symbol: "$", blueprintPrice: "$79", blueprintAmount: 7900, sessionPrice: "$249", sessionAmount: 24900, stripeCurrency: "usd", securityPrice: "$29", securityAmount: 2900, bundlePrice: "$89", bundleAmount: 8900, subscriptionPrice: "$19/mo", subscriptionAmount: 1900, cfoReportPrice: "$199", cfoReportAmount: 19900, aiBlueprintPrice: "$79", aiBlueprintAmount: 7900, codingToolsBlueprintPrice: "$14.99", codingToolsBlueprintAmount: 1499 };
+    const GBP = { code: "GBP", symbol: "\u00a3", blueprintPrice: "\u00a362", blueprintAmount: 6200, sessionPrice: "\u00a3199", sessionAmount: 19900, stripeCurrency: "gbp", securityPrice: "\u00a323", securityAmount: 2300, bundlePrice: "\u00a369", bundleAmount: 6900, subscriptionPrice: "\u00a315/mo", subscriptionAmount: 1500, cfoReportPrice: "\u00a3159", cfoReportAmount: 15900, aiBlueprintPrice: "\u00a362", aiBlueprintAmount: 6200, codingToolsBlueprintPrice: "\u00a312", codingToolsBlueprintAmount: 1200 };
+    const EUR = { code: "EUR", symbol: "\u20ac", blueprintPrice: "\u20ac73", blueprintAmount: 7300, sessionPrice: "\u20ac229", sessionAmount: 22900, stripeCurrency: "eur", securityPrice: "\u20ac27", securityAmount: 2700, bundlePrice: "\u20ac83", bundleAmount: 8300, subscriptionPrice: "\u20ac17/mo", subscriptionAmount: 1700, cfoReportPrice: "\u20ac183", cfoReportAmount: 18300, aiBlueprintPrice: "\u20ac73", aiBlueprintAmount: 7300, codingToolsBlueprintPrice: "\u20ac14", codingToolsBlueprintAmount: 1400 };
+    const CAD = { code: "CAD", symbol: "CA$", blueprintPrice: "CA$107", blueprintAmount: 10700, sessionPrice: "CA$339", sessionAmount: 33900, stripeCurrency: "cad", securityPrice: "CA$39", securityAmount: 3900, bundlePrice: "CA$119", bundleAmount: 11900, subscriptionPrice: "CA$26/mo", subscriptionAmount: 2600, cfoReportPrice: "CA$269", cfoReportAmount: 26900, aiBlueprintPrice: "CA$107", aiBlueprintAmount: 10700, codingToolsBlueprintPrice: "CA$20", codingToolsBlueprintAmount: 2000 };
+    const AUD = { code: "AUD", symbol: "A$", blueprintPrice: "A$119", blueprintAmount: 11900, sessionPrice: "A$379", sessionAmount: 37900, stripeCurrency: "aud", securityPrice: "A$45", securityAmount: 4500, bundlePrice: "A$134", bundleAmount: 13400, subscriptionPrice: "A$29/mo", subscriptionAmount: 2900, cfoReportPrice: "A$299", cfoReportAmount: 29900, aiBlueprintPrice: "A$119", aiBlueprintAmount: 11900, codingToolsBlueprintPrice: "A$23", codingToolsBlueprintAmount: 2300 };
+    const PLN = { code: "PLN", symbol: "z\u0142", blueprintPrice: "299 PLN", blueprintAmount: 29900, sessionPrice: "999 PLN", sessionAmount: 99900, stripeCurrency: "pln", securityPrice: "119 PLN", securityAmount: 11900, bundlePrice: "349 PLN", bundleAmount: 34900, subscriptionPrice: "79 PLN/mo", subscriptionAmount: 7900, cfoReportPrice: "799 PLN", cfoReportAmount: 79900, aiBlueprintPrice: "299 PLN", aiBlueprintAmount: 29900, codingToolsBlueprintPrice: "59 PLN", codingToolsBlueprintAmount: 5900 };
     const CURRENCY_MAP = {
       US: USD, PR: USD, GU: USD, VI: USD,
       GB: GBP, JE: GBP, GG: GBP, IM: GBP,
@@ -3066,7 +3143,7 @@ function App() {
     wasteScore:  wScore,
     savingsMin:  savMin,
     savingsMax:  savMax,
-    auditType:   provider === 'AI APIs' ? 'ai' : 'cost',
+    auditType:   provider === 'AI APIs' ? 'ai' : provider === 'AI Coding Tools' ? 'coding_tools' : 'cost',
   });
 
   try {
@@ -3129,7 +3206,7 @@ useEffect(() => {
   // ── GA4: audit section viewed ─────────────────────────────────────────────
   useEffect(() => {
     if (step !== 'audit') return;
-    const section = (provider === 'AI APIs' ? AI_AUDIT_SECTIONS : AUDIT_SECTIONS)[activeSection];
+    const section = auditSections[activeSection];
     if (section) window.gtag?.('event', 'audit_section_viewed', { section: section.label, section_index: activeSection });
   }, [activeSection, step]);
 
@@ -3276,6 +3353,38 @@ useEffect(() => {
     } else {
       throw new Error(data.error || "Checkout failed");
     }
+  };
+
+  const handleBuyCodingToolsBlueprint = async (email) => {
+    window.gtag?.('event', 'checkout_initiated', { provider: provider, amount: currency.codingToolsBlueprintAmount, currency: currency.stripeCurrency });
+    const res = await fetch("/api/create-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        provider: provider || "AI Coding Tools",
+        monthlyBill: bill,
+        companyName: companyName || "Your Company",
+        savingsMin: savMin,
+        savingsMax: savMax,
+        flaggedIssues: flagged.map(c => ({ id: c.id, label: c.label })),
+        currency: currency.stripeCurrency,
+        currencyAmount: currency.codingToolsBlueprintAmount,
+        productType: 'coding_tools_blueprint',
+        sessionId,
+      }),
+    });
+    if (!res.ok) {
+      const ct = res.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const errData = await res.json();
+        throw new Error(errData.error || `Checkout failed (${res.status})`);
+      }
+      throw new Error(`Checkout failed (${res.status})`);
+    }
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else throw new Error(data.error || "Checkout failed");
   };
 
   const handleBuyCfoReport = async (email) => {
@@ -3468,6 +3577,11 @@ useEffect(() => {
   const handlePricingAiBlueprintClick = () => {
     setProvider('AI APIs');
     if (provider !== 'AI APIs' || flagged.length === 0) { goTo("intake"); } else { setShowBlueprint(true); }
+  };
+
+  const handlePricingCodingToolsBlueprintClick = () => {
+    setProvider('AI Coding Tools');
+    if (flagged.length === 0 || provider !== 'AI Coding Tools') { goTo("intake"); } else { setShowBlueprint(true); }
   };
   const handlePricingSecBlueprintClick = () => {
     const secFlaggedCount = Object.keys(secChecked).filter(k => secChecked[k]).length;
@@ -4345,6 +4459,7 @@ aws iam simulate-principal-policy \\
     const FAQS = [
       { q: "Do you need access to my cloud account?", a: "Never. Both audits are entirely self-guided — you answer questions based on your own knowledge. No credentials, no IAM roles, no agents, no OAuth. We have zero access to your infrastructure.", tag: "both" },
       { q: "How is the AI Blueprint different from the free report?", a: "The free report tells you what is wrong. The Blueprint tells you exactly how to fix it — with CLI commands, Terraform snippets, IAM policy templates, compliance mappings, and verification steps specific to your provider.", tag: "both" },
+      { q: "What does the AI Coding Tools Audit cover?", a: "It checks overlapping Copilot, Cursor, Windsurf, and Claude Code seats, per-seat utilization, departed-engineer offboarding, tier fit, annual commitments, renewal tracking, and cost attribution by team or project.", tag: "both" },
       { q: "How fast do I receive the Blueprint?", a: "Within 2 minutes of payment. Claude AI generates your personalised guide in ~30 seconds, then Resend delivers it to your inbox. If you don't see it within 5 minutes, check spam or email admin@kloudaudit.eu.", tag: "both" },
       { q: "What does the Security Blueprint include that the free score doesn't?", a: "The free audit shows your risk score and the first 2 flagged issues. The Security Blueprint unlocks all findings with exact CLI remediation commands, IAM policy fixes, compliance gap mapping (SOC 2, ISO 27001, GDPR, CIS Benchmark), and a 30-day remediation roadmap.", tag: "security" },
       { q: "I already use AWS Security Hub / GCP Security Command Center. Why do I need this?", a: "Those tools need account access and take weeks to configure. KloudAudit gives you a prioritised action list in 15 minutes with zero access required — ideal for a quick self-assessment before a pentest, compliance audit, or investor review.", tag: "security" },
@@ -4370,9 +4485,9 @@ aws iam simulate-principal-policy \\
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
-      {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
+      {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={isAiProvider ? handleBuyAiBlueprint : isCodingToolsProvider ? handleBuyCodingToolsBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={blueprintProductType} price={blueprintPrice} amount={blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
       <Nav />
 
       {/* ── RESUME AUDIT BANNER ── */}
@@ -4477,7 +4592,7 @@ aws iam simulate-principal-policy \\
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
           {/* ── SUBHEADING ── */}
           <p className="hero-subheading fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "520px", margin: "0 auto 28px" }}>
-            Find unused cloud spend in minutes. Covers AWS, GCP, Azure and AI APIs — <strong style={{ color: "#fff" }}>no credentials required, ever</strong>. Teams typically uncover <strong style={{ color: "var(--green)" }}>20–45% in savings</strong>.
+            Find unused cloud spend in minutes. Covers AWS, GCP, Azure, AI APIs, and AI coding tools — <strong style={{ color: "#fff" }}>no credentials required, ever</strong>. Teams typically uncover <strong style={{ color: "var(--green)" }}>20–45% in savings</strong>.
           </p>
           <div className="methodology-note">
             <MethodologyNote />
@@ -4492,6 +4607,7 @@ aws iam simulate-principal-policy \\
                 { label: "Azure", color: "#0078d4" },
                 { label: "Multi-Cloud", color: "#00ffb4" },
                 { label: "AI APIs", color: "#a78bfa", icon: "🤖", sublabel: "OpenAI · Anthropic · Bedrock · Vertex" },
+                { label: "AI Coding Tools", color: "#00d4ff", icon: "💻", sublabel: "Copilot · Cursor · Windsurf · Claude Code" },
               ].map(p => (
                 <button key={p.label}
                   role="radio" aria-checked={provider === p.label} tabIndex={0}
@@ -4864,7 +4980,7 @@ aws iam simulate-principal-policy \\
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
             <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Comprehensive coverage</p>
             <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>What we audit</h2>
-            <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "560px", margin: "12px auto 0" }}>Five areas where cloud spend leaks — plus a full 16-check security audit. Cost and security in one platform, zero access required.</p>
+            <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "560px", margin: "12px auto 0" }}>Cloud spend leaks, AI coding tool waste, and security gaps — all in one platform, zero access required.</p>
           </div>
           <div className="audit-cats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
             {AUDIT_SECTIONS.map((s, i) => (
@@ -4950,6 +5066,18 @@ aws iam simulate-principal-policy \\
                   <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "3px 6px" }}>+{AI_AUDIT_SECTIONS.reduce((sum, s) => sum + s.checks.length, 0) - 3} more</span>
                 </div>
               </div>
+            </div>
+
+            {/* ── AI CODING TOOLS CARD — Seats, utilization & renewals ── */}
+            <div className="audit-cat-card fade-up" role="button" tabIndex={0} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); window.gtag?.('event', 'audit_started', { provider: 'AI Coding Tools', source: 'what_we_audit' }); setProvider('AI Coding Tools'); goTo("intake"); } }} onClick={() => { window.gtag?.('event', 'audit_started', { provider: 'AI Coding Tools', source: 'what_we_audit' }); setProvider('AI Coding Tools'); goTo("intake"); }}
+              style={{ animationDelay: "0.35s", background: "linear-gradient(135deg, rgba(0,212,255,0.07), rgba(0,255,180,0.04))", border: "1px solid rgba(0,212,255,0.2)", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden", cursor: "pointer", transition: "all 0.25s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(0,212,255,0.45)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(0,212,255,0.2)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}><span style={{ fontSize: "32px" }}>💻</span><span style={{ fontSize: "10px", fontWeight: 700, color: "#00d4ff", background: "rgba(0,212,255,0.1)", border: "1px solid rgba(0,212,255,0.25)", borderRadius: "20px", padding: "2px 10px", letterSpacing: "0.8px" }}>CODING TOOLS</span></div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}><h3 className="display" style={{ fontSize: "18px", fontWeight: 700, color: "#fff", letterSpacing: "-0.3px" }}>AI Coding Tools</h3><span style={{ background: "rgba(0,212,255,0.1)", color: "#00d4ff", fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "10px", border: "1px solid rgba(0,212,255,0.2)" }}>{CODING_TOOLS_AUDIT_SECTIONS.reduce((sum, s) => sum + s.checks.length, 0)} checks</span></div>
+              <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.6)", fontWeight: 600, marginBottom: "10px" }}>Copilot · Cursor · Windsurf · Claude Code</p>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>Consolidate seats, measure utilization, fit the right tier, and stop surprise renewals.</p>
+              <div style={{ borderTop: "1px solid rgba(0,212,255,0.12)", paddingTop: "14px" }}><p style={{ fontSize: "11px", color: "rgba(148,163,184,0.5)", fontWeight: 600, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.8px" }}>Covers</p><div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>{CODING_TOOLS_AUDIT_SECTIONS.flatMap(s => s.checks).slice(0, 3).map(c => <span key={c.id} style={{ fontSize: "11px", color: "rgba(0,212,255,0.8)", background: "rgba(0,212,255,0.06)", border: "1px solid rgba(0,212,255,0.15)", borderRadius: "6px", padding: "3px 8px" }}>{c.label}</span>)}<span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "3px 6px" }}>+7 more</span></div></div>
             </div>
 
           </div>
@@ -5095,6 +5223,14 @@ aws iam simulate-principal-policy \\
               <button onClick={handlePricingAiBlueprintClick} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(167,139,250,0.3)", background: "transparent", color: "#a78bfa", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>
                 Get AI Blueprint →
               </button>
+            </div>
+            {/* AI Coding Tools Blueprint */}
+            <div className="pricing-card" style={{ background: "rgba(0,212,255,0.05)", border: "1px solid rgba(0,212,255,0.2)", borderRadius: "18px", padding: "28px 24px" }}>
+              <p style={{ fontSize: "12px", fontWeight: 700, color: "#00d4ff", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Coding Tools Blueprint</p>
+              <div style={{ marginBottom: "6px" }}><span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{currency.codingToolsBlueprintPrice}</span><span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>one-time</span></div>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>Consolidate AI coding seats and right-size Copilot, Cursor, Windsurf, and Claude Code spend.</p>
+              {["Seat overlap and shadow procurement review", "Per-seat usage export approach", "Tier downgrade recommendations", "Renewal calendar setup"].map(f => <div key={f} style={{ display: "flex", gap: "8px", marginBottom: "8px" }}><span style={{ color: "#00d4ff", fontSize: "12px", flexShrink: 0 }}>✓</span><span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span></div>)}
+              <button onClick={handlePricingCodingToolsBlueprintClick} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(0,212,255,0.3)", background: "transparent", color: "#00d4ff", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>Get Coding Tools Blueprint →</button>
             </div>
             {/* Security Blueprint */}
             <div className="pricing-card" style={{ background: "rgba(248,113,113,0.05)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "18px", padding: "28px 24px" }}>
@@ -5344,6 +5480,7 @@ aws iam simulate-principal-policy \\
                   { label: "Sample Report", action: () => setShowSample(true) },
                   { label: "Cost Blueprint", action: () => setShowBlueprint(true) },
                   { label: "AI Blueprint", action: () => { setProvider('AI APIs'); setShowBlueprint(true); } },
+                  { label: "Coding Tools Blueprint", action: () => { setProvider('AI Coding Tools'); setShowBlueprint(true); } },
                   { label: "Security Blueprint", action: () => goTo("security_intro") },
                   { label: "CFO Report", action: () => setShowCfoReport(true) },
                   { label: "Blog", href: "https://dev.to/kloudaudit" },
@@ -5407,9 +5544,9 @@ aws iam simulate-principal-policy \\
       <SuspendedParticleBackground />
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
-      {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
+      {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={isAiProvider ? handleBuyAiBlueprint : isCodingToolsProvider ? handleBuyCodingToolsBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={blueprintProductType} price={blueprintPrice} amount={blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
         <div className="fade-up">
@@ -5486,7 +5623,7 @@ aws iam simulate-principal-policy \\
 
   // ── AUDIT ──────────────────────────────────────────────────────────────────
   if (step === "audit") {
-    const sections = provider === 'AI APIs' ? AI_AUDIT_SECTIONS : AUDIT_SECTIONS;
+    const sections = auditSections;
     const section = sections[activeSection];
     const mobileCheck = section.checks[Math.min(sectionCheckIndex, section.checks.length - 1)];
     const mobileDone = sectionCheckIndex + 1;
@@ -5496,9 +5633,9 @@ aws iam simulate-principal-policy \\
         <SuspendedParticleBackground />
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
-        {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
+        {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={isAiProvider ? handleBuyAiBlueprint : isCodingToolsProvider ? handleBuyCodingToolsBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={blueprintProductType} price={blueprintPrice} amount={blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
         <Nav showBack onBack={() => goTo("intake")} />
         {/* ── SECTION COMPLETE TOAST ── */}
         {sectionToast && (
@@ -5957,7 +6094,7 @@ aws iam simulate-principal-policy \\
         <SuspendedParticleBackground />
         {showContact && <ContactModal onClose={() => setShowContact(false)} />}
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
-        {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={provider === 'AI APIs' ? handleBuyAiBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={provider === 'AI APIs' ? 'ai_blueprint' : 'blueprint'} price={provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice} amount={provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount} />}
+        {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={isAiProvider ? handleBuyAiBlueprint : isCodingToolsProvider ? handleBuyCodingToolsBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={blueprintProductType} price={blueprintPrice} amount={blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
         {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
         <Nav showBack onBack={() => goTo("audit")} />
@@ -6082,9 +6219,13 @@ aws iam simulate-principal-policy \\
               { n: 2, t: "Set billing alerts at 80% and 100% of your monthly target in your cloud console today.", c: "var(--green)" },
               provider === 'AI APIs'
                 ? { n: 3, t: "Route simple or repetitive tasks to a cheaper model tier instead of your frontier model.", c: "var(--green)" }
+                : provider === 'AI Coding Tools'
+                ? { n: 3, t: "Consolidate overlapping Copilot, Cursor, Windsurf, and Claude Code seats before changing tiers.", c: "var(--green)" }
                 : { n: 3, t: "Implement auto-shutdown for dev/staging outside business hours.", c: "var(--green)" },
               provider === 'AI APIs'
                 ? { n: 4, t: "Enable prompt and response caching for repeated or long-context requests.", c: "#818cf8" }
+                : provider === 'AI Coding Tools'
+                ? { n: 4, t: "Export admin-dashboard usage, downgrade underused tiers, and add renewal dates to the team calendar.", c: "#818cf8" }
                 : { n: 4, t: "Run a rightsizing review using your provider's native tooling (Compute Optimizer / GCP Recommender).", c: "#818cf8" },
               { n: 5, t: "Revisit this audit in 30 days after changes are applied to measure real impact.", c: "var(--text-dim)" },
             ].filter(Boolean).map(item => (
@@ -6215,6 +6356,8 @@ aws iam simulate-principal-policy \\
                   };
                   const cmd = provider === 'AI APIs'
                     ? (AI_VERIFY_COMMANDS[f.id] || `echo "Check: platform.openai.com/usage or console.anthropic.com/usage"`)
+                    : provider === 'AI Coding Tools'
+                    ? (CODING_TOOLS_VERIFY_COMMANDS[f.id] || 'echo "Check your coding-tool admin dashboard usage export"')
                     : (cmds[f.id] || `aws ce get-cost-and-usage --time-period Start=$(date -d '30 days ago' +%Y-%m-%d),End=$(date +%Y-%m-%d) --granularity MONTHLY --metrics BlendedCost --group-by Type=DIMENSION,Key=SERVICE`);
                   return (
                     <div key={f.id} style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "14px 16px" }}>
@@ -6227,6 +6370,8 @@ aws iam simulate-principal-policy \\
               <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "14px" }}>
                 {provider === 'AI APIs'
                   ? <>💡 Run these from your project root — replace provider dashboard links with your actual OpenAI/Anthropic/Bedrock console.</>
+                  : provider === 'AI Coding Tools'
+                  ? <>💡 These checks use vendor admin dashboards and usage exports. They do not access your accounts.</>
                   : <>💡 Replace <code style={{ color: "#a5b4fc", background: "rgba(165,180,252,0.1)", padding: "1px 5px", borderRadius: "4px" }}>YOUR_INSTANCE_ID</code> with your actual resource ID from your AWS console.</>}
               </p>
             </div>
@@ -6271,8 +6416,8 @@ aws iam simulate-principal-policy \\
           <div className="fade-up stagger-4" style={{ background: "linear-gradient(135deg, rgba(0,255,180,0.05) 0%, rgba(99,102,241,0.05) 100%)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "20px", padding: "40px" }}>
             {/* ── ROI ANCHOR BLOCK ── */}
             {(() => {
-              const bpAmount = provider === 'AI APIs' ? currency.aiBlueprintAmount : currency.blueprintAmount;
-              const bpPrice = provider === 'AI APIs' ? currency.aiBlueprintPrice : currency.blueprintPrice;
+              const bpAmount = blueprintAmount;
+              const bpPrice = blueprintPrice;
               return savMin > 0 ? (() => {
               const bpCost = bpAmount / 100;
               const daysToROI = Math.ceil(bpCost / (savMin / 30));
@@ -6330,7 +6475,7 @@ aws iam simulate-principal-policy \\
                 <button className="glow-btn" onClick={() => { if (flagged.length > 0) { window.gtag?.('event', 'blueprint_clicked', { provider, savings_min: savMin, currency: currency.code }); setShowBlueprint(true); } }}
                   disabled={flagged.length === 0}
                   style={{ width: "100%", background: flagged.length > 0 ? "var(--green)" : "rgba(255,255,255,0.06)", color: flagged.length > 0 ? "#000" : "var(--text-muted)", border: "none", borderRadius: "10px", padding: "13px", fontSize: "14px", cursor: flagged.length > 0 ? "pointer" : "not-allowed", boxShadow: flagged.length > 0 ? "0 0 20px rgba(0,255,180,0.3)" : "none" }}>
-                  {provider === 'AI APIs' ? `Get AI Cost Blueprint — ${currency.aiBlueprintPrice} →` : `Get Blueprint — ${currency.blueprintPrice} →`}
+                  {isAiProvider ? `Get AI Cost Blueprint — ${currency.aiBlueprintPrice} →` : isCodingToolsProvider ? `Get Coding Tools Blueprint — ${currency.codingToolsBlueprintPrice} →` : `Get Blueprint — ${currency.blueprintPrice} →`}
                 </button>
                 <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "6px" }}>Inbox in 2 min · Full refund if nothing actionable</p>
               </div>
@@ -6417,7 +6562,7 @@ aws iam simulate-principal-policy \\
             </div>
             <button className="glow-btn" onClick={() => { window.gtag?.('event', 'blueprint_clicked', { provider, savings_min: savMin, currency: currency.code, source: 'sticky_bar' }); setShowBlueprint(true); }}
               style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", fontWeight: 700, boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap", cursor: "pointer" }}>
-              {provider === 'AI APIs' ? `Get AI Cost Blueprint — ${currency.aiBlueprintPrice} →` : `Get Blueprint — ${currency.blueprintPrice} →`}
+              {isAiProvider ? `Get AI Cost Blueprint — ${currency.aiBlueprintPrice} →` : isCodingToolsProvider ? `Get Coding Tools Blueprint — ${currency.codingToolsBlueprintPrice} →` : `Get Blueprint — ${currency.blueprintPrice} →`}
             </button>
           </div>
         )}
