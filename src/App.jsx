@@ -130,36 +130,36 @@ const CODING_TOOLS_AUDIT_SECTIONS = [
   {
     id: 'overlap', label: 'Tool Overlap', icon: '🔁',
     checks: [
-      { id: 'ct_multi_tool_overlap', label: 'Multiple AI coding tools for same engineers', detail: 'Paying for Copilot + Cursor + Windsurf for overlapping team members', effort: 'Low', impact: 'High' },
-      { id: 'ct_shadow_procurement', label: 'Multiple teams buying the same tool separately', detail: 'No centralized purchasing — duplicate subscriptions across teams', effort: 'Medium', impact: 'Medium' },
+      { id: 'ct_multi_tool_overlap', label: 'Multiple AI coding tools for same engineers', detail: 'Paying for Copilot + Cursor + Windsurf for overlapping team members', savingsRange: [15, 35], effort: 'Low', impact: 'High' },
+      { id: 'ct_shadow_procurement', label: 'Multiple teams buying the same tool separately', detail: 'No centralized purchasing — duplicate subscriptions across teams', savingsRange: [5, 15], effort: 'Medium', impact: 'Medium' },
     ]
   },
   {
     id: 'utilization', label: 'Utilization', icon: '📊',
     checks: [
-      { id: 'ct_no_usage_tracking', label: 'No per-seat utilization tracking', detail: 'Cannot tell which paid seats are actually being used', effort: 'Low', impact: 'High' },
-      { id: 'ct_offboarded_seats', label: 'Active seats for departed engineers', detail: 'Offboarding process does not include AI tool seat removal', effort: 'Low', impact: 'High' },
+      { id: 'ct_no_usage_tracking', label: 'No per-seat utilization tracking', detail: 'Cannot tell which paid seats are actually being used', savingsRange: [10, 25], effort: 'Low', impact: 'High' },
+      { id: 'ct_offboarded_seats', label: 'Active seats for departed engineers', detail: 'Offboarding process does not include AI tool seat removal', savingsRange: [5, 20], effort: 'Low', impact: 'High' },
     ]
   },
   {
     id: 'tier_fit', label: 'Tier Fit', icon: '🎯',
     checks: [
-      { id: 'ct_wrong_tier', label: 'Team tier purchased when individual tier would suffice', detail: 'Paying for team/enterprise features most engineers never use', effort: 'Medium', impact: 'High' },
-      { id: 'ct_no_downgrade_review', label: 'No usage-based downgrade review', detail: 'Paying for unlimited/high tier despite light actual usage', effort: 'Low', impact: 'Medium' },
-      { id: 'ct_enterprise_overkill', label: 'Enterprise tier for admin-only features', detail: 'Enterprise pricing applied org-wide for features only a few people use', effort: 'Medium', impact: 'Medium' },
+      { id: 'ct_wrong_tier', label: 'Team tier purchased when individual tier would suffice', detail: 'Paying for team/enterprise features most engineers never use', savingsRange: [10, 25], effort: 'Medium', impact: 'High' },
+      { id: 'ct_no_downgrade_review', label: 'No usage-based downgrade review', detail: 'Paying for unlimited/high tier despite light actual usage', savingsRange: [5, 20], effort: 'Low', impact: 'Medium' },
+      { id: 'ct_enterprise_overkill', label: 'Enterprise tier for admin-only features', detail: 'Enterprise pricing applied org-wide for features only a few people use', savingsRange: [5, 15], effort: 'Medium', impact: 'Medium' },
     ]
   },
   {
     id: 'commitment', label: 'Commitment & Renewal', icon: '📅',
     checks: [
-      { id: 'ct_annual_no_pilot', label: 'Annual plan bought without a monthly pilot first', detail: 'Locked into annual commitment before validating fit', effort: 'Low', impact: 'Medium' },
-      { id: 'ct_no_renewal_tracking', label: 'No renewal date tracking', detail: 'Auto-renewing at list price with no negotiation window', effort: 'Low', impact: 'Medium' },
+      { id: 'ct_annual_no_pilot', label: 'Annual plan bought without a monthly pilot first', detail: 'Locked into annual commitment before validating fit', savingsRange: [3, 10], effort: 'Low', impact: 'Medium' },
+      { id: 'ct_no_renewal_tracking', label: 'No renewal date tracking', detail: 'Auto-renewing at list price with no negotiation window', savingsRange: [3, 12], effort: 'Low', impact: 'Medium' },
     ]
   },
   {
     id: 'attribution', label: 'Attribution', icon: '📈',
     checks: [
-      { id: 'ct_no_attribution', label: 'No cost attribution by team/project', detail: 'Cannot identify which team or project drives AI tool spend', effort: 'Medium', impact: 'Low' },
+      { id: 'ct_no_attribution', label: 'No cost attribution by team/project', detail: 'Cannot identify which team or project drives AI tool spend', savingsRange: [3, 10], effort: 'Medium', impact: 'Low' },
     ]
   },
 ];
@@ -2901,6 +2901,7 @@ function App() {
   const codingToolsAmount = getCodingToolsAmount(currency);
   const blueprintPrice = isAiProvider ? currency.aiBlueprintPrice : isCodingToolsProvider ? codingToolsPrice : currency.blueprintPrice;
   const blueprintAmount = isAiProvider ? currency.aiBlueprintAmount : isCodingToolsProvider ? codingToolsAmount : currency.blueprintAmount;
+  const spendLabel = isCodingToolsProvider ? 'Monthly AI coding tools spend (USD)' : isAiProvider ? 'Monthly AI API spend (USD)' : 'Monthly cloud bill (USD)';
 
   const toggle = (id) => {
     const nowOn = !checked[id];
@@ -5603,7 +5604,7 @@ aws iam simulate-principal-policy \\
             </div>
           </div>
           <div>
-            <label htmlFor="intake-monthly-bill" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>Monthly cloud bill (USD)</label>
+            <label htmlFor="intake-monthly-bill" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--green)", marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>{spendLabel}</label>
             <div style={{ position: "relative" }}>
               <span aria-hidden="true" style={{ position: "absolute", left: "18px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontSize: "16px", fontWeight: 700 }}>$</span>
               <input id="intake-monthly-bill" type="number" value={monthlyBill} onChange={e => setMonthlyBill(e.target.value)} placeholder="3,500" style={{ width: "100%", padding: "14px 18px 14px 34px", background: "rgba(255,255,255,0.04)", border: "1.5px solid var(--border)", borderRadius: "12px", color: "#fff", fontSize: "15px", transition: "all 0.2s" }} />
