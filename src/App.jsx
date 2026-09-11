@@ -210,6 +210,9 @@ const COMPLIANCE_COLOR = { "GDPR": "#60a5fa", "SOC 2": "#4ade80", "ISO 27001": "
 const PROVIDERS = ["AWS", "GCP", "Azure", "Multi-cloud", "AI APIs", "AI Coding Tools"];
 const PROVIDER_SUBLABELS = { "AI APIs": "OpenAI · Anthropic · Bedrock · Vertex", "AI Coding Tools": "Copilot · Cursor · Windsurf · Claude Code" };
 const PROVIDER_ICONS = { "AI APIs": "🤖", "AI Coding Tools": "💻" };
+const CODING_TOOLS_PRICES = { USD: ["$14.99", 1499], PLN: ["59 PLN", 5900], GBP: ["£12", 1200], EUR: ["€14", 1400], CAD: ["CA$20", 2000], AUD: ["A$23", 2300] };
+const getCodingToolsPrice = currency => currency.codingToolsBlueprintPrice || (CODING_TOOLS_PRICES[currency.code] || CODING_TOOLS_PRICES.USD)[0];
+const getCodingToolsAmount = currency => currency.codingToolsBlueprintAmount || (CODING_TOOLS_PRICES[currency.code] || CODING_TOOLS_PRICES.USD)[1];
 
 const SEC_SECTIONS = [
   { id: "iam", icon: "🔐", title: "Identity & Access", color: "#f87171",
@@ -2307,7 +2310,7 @@ const PricingModal = memo(function PricingModal({
       label: 'Coding Tools Blueprint',
       badge: 'New',
       badgeColor: '#00d4ff',
-      price: currency.codingToolsBlueprintPrice,
+      price: getCodingToolsPrice(currency),
       priceSub: 'one-time',
       color: '#00d4ff',
       border: 'rgba(0,212,255,0.3)',
@@ -2388,7 +2391,7 @@ const PricingModal = memo(function PricingModal({
           <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Run the free audit first — upgrade to a paid tier whenever you're ready.</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }} className="pricing-modal-grid">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '14px' }} className="pricing-modal-grid">
           <style>{`
             @media (max-width: 700px) { .pricing-modal-grid { grid-template-columns: 1fr !important; } }
             @media (max-width: 960px) and (min-width: 701px) { .pricing-modal-grid { grid-template-columns: repeat(2, 1fr) !important; } }
@@ -2893,8 +2896,10 @@ function App() {
   const isCodingToolsProvider = provider === 'AI Coding Tools';
   const auditSections = isAiProvider ? AI_AUDIT_SECTIONS : isCodingToolsProvider ? CODING_TOOLS_AUDIT_SECTIONS : AUDIT_SECTIONS;
   const blueprintProductType = isAiProvider ? 'ai_blueprint' : isCodingToolsProvider ? 'coding_tools_blueprint' : 'blueprint';
-  const blueprintPrice = isAiProvider ? currency.aiBlueprintPrice : isCodingToolsProvider ? currency.codingToolsBlueprintPrice : currency.blueprintPrice;
-  const blueprintAmount = isAiProvider ? currency.aiBlueprintAmount : isCodingToolsProvider ? currency.codingToolsBlueprintAmount : currency.blueprintAmount;
+  const codingToolsPrice = getCodingToolsPrice(currency);
+  const codingToolsAmount = getCodingToolsAmount(currency);
+  const blueprintPrice = isAiProvider ? currency.aiBlueprintPrice : isCodingToolsProvider ? codingToolsPrice : currency.blueprintPrice;
+  const blueprintAmount = isAiProvider ? currency.aiBlueprintAmount : isCodingToolsProvider ? codingToolsAmount : currency.blueprintAmount;
 
   const toggle = (id) => {
     const nowOn = !checked[id];
@@ -3356,7 +3361,7 @@ useEffect(() => {
   };
 
   const handleBuyCodingToolsBlueprint = async (email) => {
-    window.gtag?.('event', 'checkout_initiated', { provider: provider, amount: currency.codingToolsBlueprintAmount, currency: currency.stripeCurrency });
+    window.gtag?.('event', 'checkout_initiated', { provider: provider, amount: codingToolsAmount, currency: currency.stripeCurrency });
     const res = await fetch("/api/create-checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -3369,7 +3374,7 @@ useEffect(() => {
         savingsMax: savMax,
         flaggedIssues: flagged.map(c => ({ id: c.id, label: c.label })),
         currency: currency.stripeCurrency,
-        currencyAmount: currency.codingToolsBlueprintAmount,
+        currencyAmount: codingToolsAmount,
         productType: 'coding_tools_blueprint',
         sessionId,
       }),
@@ -4460,7 +4465,7 @@ aws iam simulate-principal-policy \\
       { q: "Do you need access to my cloud account?", a: "Never. Both audits are entirely self-guided — you answer questions based on your own knowledge. No credentials, no IAM roles, no agents, no OAuth. We have zero access to your infrastructure.", tag: "both" },
       { q: "How is the AI Blueprint different from the free report?", a: "The free report tells you what is wrong. The Blueprint tells you exactly how to fix it — with CLI commands, Terraform snippets, IAM policy templates, compliance mappings, and verification steps specific to your provider.", tag: "both" },
       { q: "What does the AI Coding Tools Audit cover?", a: "It checks overlapping Copilot, Cursor, Windsurf, and Claude Code seats, per-seat utilization, departed-engineer offboarding, tier fit, annual commitments, renewal tracking, and cost attribution by team or project.", tag: "both" },
-      { q: "How much is the Coding Tools Blueprint?", a: `The AI Coding Tools Blueprint is a one-time payment of ${currency.codingToolsBlueprintPrice}. It includes seat consolidation steps, vendor dashboard utilization checks, tier downgrade recommendations, and renewal calendar setup.`, tag: "both" },
+      { q: "How much is the Coding Tools Blueprint?", a: `The AI Coding Tools Blueprint is a one-time payment of ${codingToolsPrice}. It includes seat consolidation steps, vendor dashboard utilization checks, tier downgrade recommendations, and renewal calendar setup.`, tag: "both" },
       { q: "How fast do I receive the Blueprint?", a: "Within 2 minutes of payment. Claude AI generates your personalised guide in ~30 seconds, then Resend delivers it to your inbox. If you don't see it within 5 minutes, check spam or email admin@kloudaudit.eu.", tag: "both" },
       { q: "What does the Security Blueprint include that the free score doesn't?", a: "The free audit shows your risk score and the first 2 flagged issues. The Security Blueprint unlocks all findings with exact CLI remediation commands, IAM policy fixes, compliance gap mapping (SOC 2, ISO 27001, GDPR, CIS Benchmark), and a 30-day remediation roadmap.", tag: "security" },
       { q: "I already use AWS Security Hub / GCP Security Command Center. Why do I need this?", a: "Those tools need account access and take weeks to configure. KloudAudit gives you a prioritised action list in 15 minutes with zero access required — ideal for a quick self-assessment before a pentest, compliance audit, or investor review.", tag: "security" },
@@ -4473,7 +4478,7 @@ aws iam simulate-principal-policy \\
       { n: "02", title: "See your savings report", desc: "Instantly see your estimated waste, prioritised findings, and projected monthly savings across compute, storage, database, and network.", color: "#818cf8" },
       { n: "03", title: "Run the security audit", desc: "16 security checkpoints across IAM, network exposure, encryption, and logging. Get your security risk score instantly — free.", color: "#f87171" },
       { n: "04", title: "Get the AI Blueprint", desc: `Pay ${currency.blueprintPrice} (cost), ${currency.aiBlueprintPrice} (AI), or ${currency.securityPrice || "$29"} (security). Claude AI writes your exact CLI commands, policy fixes, and step-by-step guide.`, color: "#00d4ff" },
-      { n: "05", title: "Get the Coding Tools Blueprint", desc: `Pay ${currency.codingToolsBlueprintPrice} once for seat consolidation, Copilot/Cursor/Windsurf utilization checks, tier downgrade recommendations, and renewal calendar setup.`, color: "#00d4ff" },
+      { n: "05", title: "Get the Coding Tools Blueprint", desc: `Pay ${codingToolsPrice} once for seat consolidation, Copilot/Cursor/Windsurf utilization checks, tier downgrade recommendations, and renewal calendar setup.`, color: "#00d4ff" },
       { n: "06", title: "Implement & verify", desc: "Follow the blueprint. Most clients recoup the cost within 24 hours. Re-audit in 90 days to measure improvement.", color: "#fb923c" },
     ];
 
@@ -5154,7 +5159,7 @@ aws iam simulate-principal-policy \\
             </div>
             <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Find the issue. Get the fix guide. Implement same day.</span>
           </div>
-          <div className="bento-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "12px", marginBottom: "32px" }}>
+          <div className="bento-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: "12px", marginBottom: "32px" }}>
             {/* Free */}
             <div className="pricing-card" style={{ background: "rgba(74,222,128,0.05)", border: "1px solid rgba(74,222,128,0.18)", borderRadius: "18px", padding: "28px 24px" }}>
               <p style={{ fontSize: "12px", fontWeight: 700, color: "#4ade80", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Free Audit</p>
@@ -5229,10 +5234,10 @@ aws iam simulate-principal-policy \\
             {/* AI Coding Tools Blueprint */}
             <div className="pricing-card" style={{ background: "rgba(0,212,255,0.05)", border: "1px solid rgba(0,212,255,0.2)", borderRadius: "18px", padding: "28px 24px" }}>
               <p style={{ fontSize: "12px", fontWeight: 700, color: "#00d4ff", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Coding Tools Blueprint</p>
-              <div style={{ marginBottom: "6px" }}><span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{currency.codingToolsBlueprintPrice}</span><span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>one-time</span></div>
+              <div style={{ marginBottom: "6px" }}><span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{codingToolsPrice}</span><span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>one-time</span></div>
               <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>Consolidate AI coding seats and right-size Copilot, Cursor, Windsurf, and Claude Code spend.</p>
               {["Seat overlap and shadow procurement review", "Per-seat usage export approach", "Tier downgrade recommendations", "Renewal calendar setup"].map(f => <div key={f} style={{ display: "flex", gap: "8px", marginBottom: "8px" }}><span style={{ color: "#00d4ff", fontSize: "12px", flexShrink: 0 }}>✓</span><span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span></div>)}
-              <button onClick={handlePricingCodingToolsBlueprintClick} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(0,212,255,0.3)", background: "transparent", color: "#00d4ff", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>Get Coding Tools Blueprint — {currency.codingToolsBlueprintPrice} →</button>
+              <button onClick={handlePricingCodingToolsBlueprintClick} style={{ width: "100%", marginTop: "20px", padding: "11px", borderRadius: "10px", border: "1px solid rgba(0,212,255,0.3)", background: "transparent", color: "#00d4ff", fontWeight: 800, fontSize: "13px", cursor: "pointer" }}>Get Coding Tools Blueprint — {codingToolsPrice} →</button>
             </div>
             {/* Security Blueprint */}
             <div className="pricing-card" style={{ background: "rgba(248,113,113,0.05)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "18px", padding: "28px 24px" }}>
@@ -6477,7 +6482,7 @@ aws iam simulate-principal-policy \\
                 <button className="glow-btn" onClick={() => { if (flagged.length > 0) { window.gtag?.('event', 'blueprint_clicked', { provider, savings_min: savMin, currency: currency.code }); setShowBlueprint(true); } }}
                   disabled={flagged.length === 0}
                   style={{ width: "100%", background: flagged.length > 0 ? "var(--green)" : "rgba(255,255,255,0.06)", color: flagged.length > 0 ? "#000" : "var(--text-muted)", border: "none", borderRadius: "10px", padding: "13px", fontSize: "14px", cursor: flagged.length > 0 ? "pointer" : "not-allowed", boxShadow: flagged.length > 0 ? "0 0 20px rgba(0,255,180,0.3)" : "none" }}>
-                  {isAiProvider ? `Get AI Cost Blueprint — ${currency.aiBlueprintPrice} →` : isCodingToolsProvider ? `Get Coding Tools Blueprint — ${currency.codingToolsBlueprintPrice} →` : `Get Blueprint — ${currency.blueprintPrice} →`}
+                  {isAiProvider ? `Get AI Cost Blueprint — ${currency.aiBlueprintPrice} →` : isCodingToolsProvider ? `Get Coding Tools Blueprint — ${codingToolsPrice} →` : `Get Blueprint — ${currency.blueprintPrice} →`}
                 </button>
                 <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "6px" }}>Inbox in 2 min · Full refund if nothing actionable</p>
               </div>
@@ -6564,7 +6569,7 @@ aws iam simulate-principal-policy \\
             </div>
             <button className="glow-btn" onClick={() => { window.gtag?.('event', 'blueprint_clicked', { provider, savings_min: savMin, currency: currency.code, source: 'sticky_bar' }); setShowBlueprint(true); }}
               style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", fontWeight: 700, boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap", cursor: "pointer" }}>
-              {isAiProvider ? `Get AI Cost Blueprint — ${currency.aiBlueprintPrice} →` : isCodingToolsProvider ? `Get Coding Tools Blueprint — ${currency.codingToolsBlueprintPrice} →` : `Get Blueprint — ${currency.blueprintPrice} →`}
+              {isAiProvider ? `Get AI Cost Blueprint — ${currency.aiBlueprintPrice} →` : isCodingToolsProvider ? `Get Coding Tools Blueprint — ${codingToolsPrice} →` : `Get Blueprint — ${currency.blueprintPrice} →`}
             </button>
           </div>
         )}
