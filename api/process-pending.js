@@ -42,6 +42,42 @@ function getSupabaseAdmin() {
 
 const MAX_ATTEMPTS = 3;
 const PROCESS_BATCH = 5; // process up to 5 jobs per cron run
+const PENDING_QUERY_TIMEOUT_MS = 10000;
+const PENDING_QUERY_RETRIES = 2;
+
+async function fetchPendingJobs(supabaseAdmin) {
+  let lastError;
+
+  for (let attempt = 0; attempt < PENDING_QUERY_RETRIES; attempt += 1) {
+    try {
+      let query = supabaseAdmin
+        .from('delivery_queue')
+        .select('*')
+        .eq('status', 'pending')
+        .lt('attempts', MAX_ATTEMPTS)
+        .order('created_at', { ascending: true })
+        .limit(PROCESS_BATCH);
+
+      // Supabase can otherwise leave a serverless invocation waiting until
+      // Vercel's deadline when its REST gateway is unhealthy.
+      if (typeof query.abortSignal === 'function' && typeof AbortSignal !== 'undefined') {
+        query = query.abortSignal(AbortSignal.timeout(PENDING_QUERY_TIMEOUT_MS));
+      }
+
+      const result = await query;
+      if (!result.error) return result.data || [];
+      lastError = result.error;
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (attempt < PENDING_QUERY_RETRIES - 1) {
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
+  }
+
+  throw lastError || new Error('Unable to fetch pending delivery jobs');
+}
 
 // ── CACHE HELPERS ─────────────────────────────────────────────────────────────
 // Cache key: sha256 of provider + sorted flagged issue IDs
@@ -543,15 +579,14 @@ async function handler(req, res) {
 
   try {
     // 1. Fetch pending jobs
-    const { data: jobs, error: fetchError } = await supabaseAdmin
-      .from('delivery_queue')
-      .select('*')
-      .eq('status', 'pending')
-      .lt('attempts', MAX_ATTEMPTS)
-      .order('created_at', { ascending: true })
-      .limit(PROCESS_BATCH);
-
-    if (fetchError) throw fetchError;
+    let jobs;
+    try {
+      jobs = await fetchPendingJobs(supabaseAdmin);
+    } catch (fetchError) {
+      const message = fetchError?.message || String(fetchError);
+      console.warn(`Pending delivery queue unavailable after ${PENDING_QUERY_RETRIES} attempts: ${message}`);
+      return res.status(503).json({ error: 'Delivery queue temporarily unavailable', retryable: true });
+    }
     if (!jobs || jobs.length === 0) {
       return res.status(200).json({ processed: 0, message: 'No pending jobs' });
     }
