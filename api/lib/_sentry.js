@@ -17,7 +17,7 @@ function init() {
     });
     Sentry = S;
     return S;
-  } catch (_) {
+  } catch {
     return null; // Sentry package not installed — degrade gracefully
   }
 }

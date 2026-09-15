@@ -272,7 +272,7 @@ function AnimatedNumber({ value, prefix = "", suffix = "", duration = 900 }) {
     cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [value]);
+  }, [duration, value]);
   return <span>{prefix}{display.toLocaleString()}{suffix}</span>;
 }
 
@@ -679,7 +679,7 @@ function ShareCardModal({ savMin, savMax, savPct, flaggedCount, totalChecks, pro
     ctx.textAlign = "center";
     ctx.fillText("Run your free audit in 15 minutes at kloudaudit.eu — no account access required", W / 2, H - 36);
 
-  }, [savMin, savMax, savPct, flaggedCount, totalChecks, provider]);
+  }, [savMin, savMax, savPct, flaggedCount, totalChecks, provider, wasteScore]);
 
   const handleDownload = () => {
     const canvas = canvasRef.current;
@@ -1358,7 +1358,7 @@ function PublicAuditViewer({ slug }) {
         } else {
           setError(data.error || 'Audit not found');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load audit');
       } finally {
         setLoading(false);
@@ -1948,7 +1948,7 @@ const RESTORABLE_STEPS = ['intake', 'audit', 'email_gate', 'report'];
 // ── BLUEPRINT MODAL ───────────────────────────────────────────────────────────
 // Defined OUTSIDE App so React never sees a new component type on re-render.
 // Owns its own email + status state → zero flicker while typing.
-const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, provider, flaggedCount, productType = 'blueprint', price, amount }) {
+const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, provider, flaggedCount, productType = 'blueprint', price }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | error
   const [errorMsg, setErrorMsg] = useState("");
@@ -2070,7 +2070,7 @@ const BlueprintModal = memo(function BlueprintModal({ onClose, onBuy, currency, 
 });
 
 // ── CFO REPORT MODAL ─────────────────────────────────────────────────────────
-const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, provider, savMin, savMax, flaggedCount }) {
+const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, savMin, savMax, flaggedCount }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -2241,7 +2241,7 @@ function BlueprintSampleCode({ code, accent = '#00ffb4' }) {
 // ── PRICING MODAL ─────────────────────────────────────────────────────────────
 const PricingModal = memo(function PricingModal({
   onClose, currency,
-  onStartAudit, onStartSecAudit,
+  onStartAudit,
   onBlueprintClick, onAiBlueprintClick, onCodingToolsBlueprintClick, onSecBlueprintClick, onCfoReportClick, onSessionClick,
   onSubscribe,
 }) {
@@ -2643,7 +2643,7 @@ const ContactModal = memo(function ContactModal({ onClose }) {
 
 // ── BOOKING MODAL ─────────────────────────────────────────────────────────────
 // Defined OUTSIDE App — stable component type, owns its own status state.
-const BookingModal = memo(function BookingModal({ onClose, sessionPrice, onStripeCheckout }) {
+const BookingModal = memo(function BookingModal({ onClose, sessionPrice }) {
   const [status, setStatus] = useState("idle"); // idle | sending | success | error
   const [stripeEmail, setStripeEmail] = useState('');
   const [stripeStatus, setStripeStatus] = useState('idle'); // idle | loading | not_configured | error
@@ -2660,7 +2660,7 @@ const BookingModal = memo(function BookingModal({ onClose, sessionPrice, onStrip
       const data = await res.json();
       if (data.code === 'session_not_configured') { setStripeStatus('not_configured'); return; }
       if (data.url) { window.location.href = data.url; } else throw new Error(data.error);
-    } catch (err) { setStripeStatus('error'); setTimeout(() => setStripeStatus('idle'), 4000); }
+    } catch { setStripeStatus('error'); setTimeout(() => setStripeStatus('idle'), 4000); }
   };
 
   const handleSubmit = async (e) => {
@@ -2819,6 +2819,7 @@ function App() {
     return () => window.removeEventListener("resize", check);
   }, []);
   useEffect(() => {
+    // Reset the mobile question cursor when the selected audit section changes.
     setSectionCheckIndex(0);
   }, [activeSection]);
   const [showContact, setShowContact] = useState(false);
@@ -2846,17 +2847,10 @@ function App() {
   // ── SECURITY AUDIT STATE ──────────────────────────────────────────────────
   const [secChecked, setSecChecked] = useState({});
   const [secStep, setSecStep] = useState(0);
-  const [secReport, setSecReport] = useState(null);
-  const [secLoading, setSecLoading] = useState(false);
-  const [secError, setSecError] = useState(null);
   const [showSecBlueprint, setShowSecBlueprint] = useState(false);
   const [showCfoReport, setShowCfoReport] = useState(false);
   const [showSecSample, setShowSecSample] = useState(false);
-  const [secBlueprintEmail, setSecBlueprintEmail] = useState("");
-  const [secBlueprintStatus, setSecBlueprintStatus] = useState("idle"); // idle | loading | success | error
   const [secScore, setSecScore] = useState(null); // computed after audit
-  const [secEmail, setSecEmail] = useState("");
-  const [secPaymentLoading, setSecPaymentLoading] = useState(false);
   const [earlyEmail, setEarlyEmail] = useState('');
   const [gateEmail, setGateEmail] = useState(() => initialSession?.gateEmail || '');
   const [scores, setScores] = useState(null);
@@ -3276,7 +3270,7 @@ useEffect(() => {
     const els = document.querySelectorAll('.scroll-reveal');
     if (!els.length) return;
     const observer = new IntersectionObserver(entries => {
-      entries.forEach((entry, i) => {
+      entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.style.transitionDelay = `${(entry.target.dataset.revealIndex || 0) * 80}ms`;
           entry.target.classList.add('in-view');
@@ -5920,7 +5914,7 @@ aws iam simulate-principal-policy \\
             companyName: companyName || "",
           }),
         });
-      } catch (_) {}
+      } catch {}
       saveAudit(gateEmail);
       window.gtag?.('event', 'email_submitted', { provider: provider });
       setGateSubmitted(true);
@@ -5951,7 +5945,7 @@ aws iam simulate-principal-policy \\
         <button type="submit" disabled={gateSending} style={{ width: "100%", padding: "14px", borderRadius: "10px", border: "none", background: "#00ffb4", color: "#000", fontWeight: 800, fontSize: "15px", cursor: gateSending ? "not-allowed" : "pointer", boxShadow: "0 4px 24px rgba(0,255,180,0.35)", fontFamily: "inherit", opacity: gateSending ? 0.7 : 1 }}>
           {gateSending ? "Sending…" : `Unlock all ${flagged.length} findings →`}
         </button>
-        <button type="button" onClick={() => { window.gtag?.('event', 'email_gate_skipped', {}); try { saveAudit(null); } catch(_) {} goTo("report"); }}
+        <button type="button" onClick={() => { window.gtag?.('event', 'email_gate_skipped', {}); try { saveAudit(null); } catch {} goTo("report"); }}
           style={{ width: "100%", padding: "11px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "#64748b", fontSize: "13px", cursor: "pointer", fontFamily: "inherit" }}
           onMouseEnter={e => { e.target.style.color = "#f8fafc"; e.target.style.borderColor = "rgba(255,255,255,0.22)"; }}
           onMouseLeave={e => { e.target.style.color = "#64748b"; e.target.style.borderColor = "rgba(255,255,255,0.1)"; }}>
@@ -6370,7 +6364,7 @@ aws iam simulate-principal-policy \\
                 Run these commands in your terminal right now. See the waste with your own eyes before deciding anything.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {flagged.slice(0, 3).map((f, i) => {
+                {flagged.slice(0, 3).map(f => {
                   const cmds = {
                     rightsizing: `aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name CPUUtilization --statistics Average --period 86400 --start-time $(date -d '30 days ago' +%Y-%m-%dT%H:%M:%S) --end-time $(date +%Y-%m-%dT%H:%M:%S) --dimensions Name=InstanceId,Value=YOUR_INSTANCE_ID`,
                     reserved: `aws ce get-savings-plans-purchase-recommendation --savings-plans-type COMPUTE_SP --term-in-years ONE_YEAR --payment-option NO_UPFRONT --lookback-period-in-days THIRTY_DAYS`,

@@ -70,7 +70,6 @@ async function handleSendReport(req, res) {
       email, provider, monthlyBill,
       savingsMin, savingsMax, savPct,
       flaggedCount, flaggedIssues = [],
-      companyName,
     } = req.body;
 
     if (!email) return res.status(400).json({ error: 'Email required' });

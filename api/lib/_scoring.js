@@ -150,10 +150,9 @@ function calculateScores(auditData) {
 /**
  * Get human-readable message based on score
  * @param {number} score - Waste score (0-100)
- * @param {string} grade - Letter grade
  * @returns {string} Performance message
  */
-function getPerformanceMessage(score, grade) {
+function getPerformanceMessage(score) {
   if (score >= 90) {
     return '🎉 Excellent! Your cloud infrastructure is highly optimized.';
   }

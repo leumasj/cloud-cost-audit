@@ -94,7 +94,7 @@ async function handleSaveAudit(req, res, supabase) {
   }
 
   // Input validation
-  const { action, ...auditData } = req.body; // Remove action from validation
+  const { ...auditData } = req.body;
 
   const validation = validate(auditData, SaveAuditSchema);
 
@@ -209,7 +209,7 @@ async function handleCalculateScore(req, res) {
   });
 
   const { getPerformanceMessage } = require('./lib/_scoring');
-  const message = getPerformanceMessage(scores.wasteScore, scores.letterGrade);
+  const message = getPerformanceMessage(scores.wasteScore);
 
   return res.status(200).json({
     success: true,

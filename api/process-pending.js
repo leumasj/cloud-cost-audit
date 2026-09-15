@@ -112,7 +112,7 @@ async function getCachedReport(cacheKey, supabaseAdmin) {
       return data.report_text;
     }
     return null;
-  } catch (_) {
+  } catch {
     return null; // cache miss or error — proceed with Claude
   }
 }
@@ -1065,7 +1065,7 @@ async function handler(req, res) {
               subject: `🚨 Blueprint delivery FAILED after ${MAX_ATTEMPTS} attempts — ${job.email}`,
               text:    `Job ID: ${job.id}\nEmail: ${job.email}\nProduct: ${job.product_type}\nError: ${jobErr.message}\n\nManually investigate via Supabase dashboard.`,
             });
-          } catch (_) {}
+          } catch {}
         }
 
         results.push({ id: job.id, status: 'failed', error: jobErr.message });

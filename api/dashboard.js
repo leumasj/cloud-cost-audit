@@ -45,7 +45,6 @@ module.exports = async function handler(req, res) {
   try {
     const now      = new Date();
     const day7ago  = new Date(now - 7  * 86400000).toISOString();
-    const day30ago = new Date(now - 30 * 86400000).toISOString();
 
     // Fetch all stats in parallel
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -129,10 +128,6 @@ module.exports = async function handler(req, res) {
     ]);
 
     const convRate = totalAudits > 0 ? ((blueprintsPaid / totalAudits) * 100).toFixed(1) : '0.0';
-    const avgWaste = recentAudits?.length > 0
-      ? Math.round(recentAudits.filter(a => a.waste_score > 0).reduce((s, a) => s + a.waste_score, 0) / recentAudits.filter(a => a.waste_score > 0).length)
-      : 0;
-
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(`<!DOCTYPE html>
 <html lang="en">
