@@ -326,7 +326,7 @@ function MethodologyNote() {
         textAlign: "left",
       }}>
         <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.7, maxWidth: "560px", margin: "8px auto 0", padding: "12px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: "10px" }}>
-          Based on 18 checks across compute, storage, network, database and governance. The 20% figure represents conservative savings from quick wins only (orphaned resources, dev database schedules, reserved instance coverage). The 45% figure includes structural optimisations like NAT gateway elimination, storage tiering, and spot instance adoption. Actual savings depend on your current configuration and bill size.
+          This calculator applies an illustrative 20%–45% planning range to the spend you enter; it does not inspect your infrastructure or billing records. Actual opportunities depend on your configuration, and category estimates can overlap, so they should not be added together.
         </p>
       </div>
     </div>
@@ -358,11 +358,26 @@ function LandingSavingsCard({ spend, onSpendChange }) {
   return (
     <aside className="landing-savings-card" aria-label="Illustrative savings estimate calculator">
       <div className="landing-savings-card__top">
-        <span className="landing-savings-card__eyebrow">A clearer view of cloud spend</span>
-        <span className="landing-savings-card__sample">ESTIMATE</span>
+        <span className="landing-savings-card__eyebrow">Guided self-assessment preview</span>
+        <span className="landing-savings-card__sample">EXAMPLE</span>
       </div>
-      <h2>See what a focused review could uncover.</h2>
-      <p className="landing-savings-card__intro">Move the slider to see a planning range based on your monthly spend.</p>
+      <h2>See the kinds of signals you can review.</h2>
+      <p className="landing-savings-card__intro">An example of the review flow—not a live scan or connected account.</p>
+      <div className="hero-preview-console" aria-label="Illustrative assessment topics">
+        <div className="hero-preview-console__header">
+          <span aria-hidden="true"><i /><i /><i /></span>
+          <span>SELF-ASSESSMENT · EXAMPLE</span>
+        </div>
+        <div className="hero-preview-console__row"><span>01</span><strong>Compute</strong><em>Rightsizing signals</em></div>
+        <div className="hero-preview-console__row"><span>02</span><strong>Databases</strong><em>Idle / oversized capacity</em></div>
+        <div className="hero-preview-console__row"><span>03</span><strong>AI API spend</strong><em>Usage patterns & controls</em></div>
+        <p>Findings are estimated from your answers, not cloud telemetry.</p>
+      </div>
+      <div className="provider-wordmarks" aria-label="Supported providers and services">
+        {["AWS", "Google Cloud", "Azure", "OpenAI", "Anthropic", "Bedrock", "Vertex AI"].map(name => (
+          <span key={name}>{name}</span>
+        ))}
+      </div>
       <div className="landing-savings-card__figure">
         <span>Potential monthly savings range</span>
         <strong><small>$</small>{low.toLocaleString()} <i>—</i> <small>$</small>{high.toLocaleString()}</strong>
@@ -385,7 +400,7 @@ function LandingSavingsCard({ spend, onSpendChange }) {
       </div>
       <div className="landing-savings-card__trust">
         <span aria-hidden="true">✓</span>
-        <p><strong>Private by design</strong><br />This estimate runs in your browser. No account connection or billing data is requested.</p>
+        <p><strong>Private by design</strong><br />This calculator runs in your browser. No account connection or billing export is used.</p>
       </div>
       <button className="landing-savings-card__link" onClick={() => document.getElementById("start-audit")?.scrollIntoView({ behavior: "smooth", block: "center" })}>
         Explore the assessment <span aria-hidden="true">↓</span>
@@ -711,6 +726,47 @@ const globalCss = `
   .landing-savings-card__link { display: inline-flex; align-items: center; gap: 8px; margin-top: 18px; padding: 0; border: 0; background: none; color: #4f46e5; font-size: 12px; font-weight: 700; cursor: pointer; }
   .landing-savings-card__link:hover { color: #3730a3; }
   .hero-subheading { display: block !important; }
+  .hero-preview-console {
+    margin: 0 0 18px; padding: 0 14px 12px; border-radius: 12px;
+    color: #e2e8f0; background: #111827; border: 1px solid #25324a;
+    box-shadow: 0 8px 18px rgba(15,23,42,.12); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .hero-preview-console__header {
+    display: flex; align-items: center; gap: 10px; min-height: 38px;
+    margin: 0 -14px 8px; padding: 0 14px; border-bottom: 1px solid #25324a;
+    color: #9aa8ba; font-size: 9px; font-weight: 700; letter-spacing: .09em;
+  }
+  .hero-preview-console__header > span:first-child { display: flex; gap: 4px; }
+  .hero-preview-console__header i { display: block; width: 7px; height: 7px; border-radius: 50%; background: #718096; }
+  .hero-preview-console__header i:first-child { background: #f87171; }
+  .hero-preview-console__header i:nth-child(2) { background: #fbbf24; }
+  .hero-preview-console__header i:last-child { background: #34d399; }
+  .hero-preview-console__row { display: grid; grid-template-columns: 24px minmax(90px,.8fr) minmax(0,1.2fr); gap: 8px; align-items: baseline; padding: 7px 0; border-bottom: 1px solid rgba(148,163,184,.12); font-size: 10px; }
+  .hero-preview-console__row > span { color: #8291a6; }
+  .hero-preview-console__row strong { color: #f1f5f9; font-weight: 600; }
+  .hero-preview-console__row em { color: #a7b4c6; font-style: normal; text-align: right; overflow-wrap: anywhere; }
+  .hero-preview-console > p { margin-top: 10px; color: #a7b4c6; font-size: 9px; line-height: 1.5; }
+  .provider-wordmarks { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px; }
+  .provider-wordmarks span {
+    padding: 5px 8px; border: 1px solid #e4eaf1; border-radius: 6px;
+    color: #64748b; background: #fff; font-family: var(--body); font-size: 9px;
+    font-weight: 700; letter-spacing: .01em; transition: color .16s ease, border-color .16s ease, background .16s ease;
+  }
+  .provider-wordmarks span:hover { color: #4338ca; border-color: #c7d2fe; background: #f5f6ff; }
+  .hero-trust-strip { display: flex !important; }
+  .hero-trust-strip > div { padding: 7px 10px; border: 1px solid #dce4ed; border-radius: 999px; background: #fff; }
+  .hero-trust-strip > div > span:first-child { color: #087a55; font-size: 10px !important; font-weight: 800; }
+  .hero-trust-strip > div > span:last-child { color: #43536a !important; font-size: 11px !important; }
+  .team-plan-note {
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    margin-top: 22px; padding: 22px 24px; border: 1px solid #dce4ed;
+    border-radius: 14px; background: #f8fafc;
+  }
+  .team-plan-note__eyebrow { color: #4f46e5; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  .team-plan-note h3 { margin: 6px 0; color: #162235; font-size: 16px; letter-spacing: -.2px; }
+  .team-plan-note p { color: #526174; font-size: 12px; line-height: 1.55; }
+  .team-plan-note a { flex: 0 0 auto; color: #4338ca; font-size: 12px; font-weight: 700; text-decoration: none; }
+  .team-plan-note a:hover { text-decoration: underline; }
   .landing-section { margin-top: 20px; padding: clamp(24px,4vw,48px) !important; border: 1px solid #dce4ed !important; border-radius: 18px !important; background: rgba(255,255,255,.82) !important; box-shadow: 0 3px 12px rgba(15,23,42,.035); }
   .landing-preview::before { display: none !important; }
   .landing-preview [style*="color: rgb(248, 250, 252)"] { color: #162235 !important; }
@@ -755,6 +811,9 @@ const globalCss = `
     .landing-hero-copy .secondary-cta button { width: 100%; justify-content: center; }
     .landing-hero-copy .landing-trust-row { gap: 7px !important; }
     .landing-hero-copy .stats-pills { display: none !important; }
+    .landing-hero-copy .hero-trust-strip { display: flex !important; justify-content: flex-start !important; }
+    .hero-trust-strip > div { flex: 1 1 100%; }
+    .team-plan-note { align-items: flex-start; flex-direction: column; gap: 12px; padding: 18px; }
     .landing-savings-card { padding: 21px; }
     .landing-section { padding: 22px 17px !important; }
     .kpi-grid, .stats-grid { grid-template-columns: 1fr !important; }
@@ -1510,87 +1569,29 @@ function SpotInstanceCalculator({ onRunAudit }) {
   );
 }
 
-const COMPARISON_COLUMNS = [
-  { label: "KloudAudit", kloud: true },
-  { label: "CloudHealth", kloud: false },
-  { label: "AWS Cost Explorer", kloud: false },
-  { label: "Consultant", kloud: false },
-];
-const COMPARISON_ROWS = [
-  { label: "Setup time", vals: ["15 minutes", "4–6 months", "Immediate", "2–4 weeks"] },
-  { label: "Credentials required", vals: ["None", "Full IAM access", "AWS login", "Full access"] },
-  { label: "First finding", vals: ["Immediate", "30+ days", "Hours of exploration", "1–2 weeks"] },
-  { label: "Cost", vals: ["Free / $79", "$$$$ enterprise", "Free", "$$$"] },
-  { label: "Prioritised fix list", vals: ["✓", "Partial", "✗", "✓"] },
-  { label: "AI fix commands", vals: ["✓", "✗", "✗", "✗"] },
-];
-
 const ComparisonTable = memo(function ComparisonTable() {
+  const benefits = [
+    { icon: "◉", title: "No cloud connection", detail: "No IAM roles, API keys, agents, or live infrastructure scanning." },
+    { icon: "◷", title: "Guided and focused", detail: "Answer practical questions from your team's knowledge in a 10–15 minute self-assessment." },
+    { icon: "↗", title: "Prioritized next steps", detail: "Review answer-based findings and estimates, with optional one-time CLI and Terraform guidance." },
+    { icon: "$", title: "Free to start", detail: "The self-assessment is free. Paid Blueprints are optional, one-time purchases." },
+  ];
+
   return (
     <div style={{ marginBottom: "90px" }}>
       <div style={{ textAlign: "center", marginBottom: "48px" }}>
-        <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>No sales calls required</p>
-        <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>Why engineers choose KloudAudit</h2>
-        <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px" }}>vs. traditional cloud cost tools</p>
+        <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Built for a low-friction first review</p>
+        <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>A practical first step for cloud and AI spend</h2>
+        <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px" }}>Understand potential opportunities before connecting any tools—there is no connection to make.</p>
       </div>
-      <div className="comparison-table-wrap">
-        <div className="desktop-grid" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-          <div style={{ minWidth: "640px", background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", overflow: "hidden" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: "1px solid var(--border)" }}>
-              <div style={{ padding: "18px 20px" }} />
-              {COMPARISON_COLUMNS.map(({ label, kloud }) => (
-                <div key={label} style={{ padding: "16px 12px", textAlign: "center", background: kloud ? "rgba(0,255,180,0.08)" : "transparent", borderLeft: `1px solid ${kloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
-                  <p style={{ fontSize: "13px", fontWeight: 800, color: kloud ? "var(--green)" : "var(--text-dim)", marginBottom: kloud ? "5px" : "0" }}>{label}</p>
-                  {kloud && <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--green)", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.3)", borderRadius: "10px", padding: "1px 7px" }}>← this</span>}
-                </div>
-              ))}
-            </div>
-            {COMPARISON_ROWS.map((row, ri, arr) => (
-              <div key={row.label} style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1.1fr 1.1fr", borderBottom: ri < arr.length - 1 ? "1px solid var(--border)" : "none", background: ri % 2 === 1 ? "rgba(255,255,255,0.015)" : "transparent" }}>
-                <div style={{ padding: "14px 20px", display: "flex", alignItems: "center" }}>
-                  <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)" }}>{row.label}</span>
-                </div>
-                {row.vals.map((val, ci) => {
-                  const isKloud = ci === 0;
-                  const color = val === "✓" ? "#4ade80" : val === "✗" ? "#f87171" : val === "Partial" ? "#fbbf24" : isKloud ? "#fff" : "var(--text-muted)";
-                  return (
-                    <div key={ci} style={{ padding: "14px 10px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: isKloud ? "rgba(0,255,180,0.05)" : "transparent", borderLeft: `1px solid ${isKloud ? "rgba(0,255,180,0.3)" : "rgba(255,255,255,0.06)"}` }}>
-                      <span style={{ fontSize: val === "✓" || val === "✗" ? "16px" : "12px", fontWeight: isKloud ? 700 : 400, color }}>{val}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mobile-cards">
-          {COMPARISON_ROWS.map(row => {
-            const kloudVal = row.vals[0];
-            const kloudColor = kloudVal === "✓" ? "#4ade80" : kloudVal === "✗" ? "#f87171" : kloudVal === "Partial" ? "#fbbf24" : "#fff";
-            return (
-              <div key={row.label} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "14px", padding: "16px 18px" }}>
-                <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px" }}>{row.label}</p>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(0,255,180,0.08)", border: "1px solid rgba(0,255,180,0.3)", borderRadius: "10px", padding: "10px 14px", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "13px", fontWeight: 800, color: "var(--green)" }}>KloudAudit <span style={{ fontSize: "10px", fontWeight: 700, opacity: 0.75 }}>← this</span></span>
-                  <span style={{ fontSize: kloudVal === "✓" || kloudVal === "✗" ? "16px" : "13px", fontWeight: 800, color: kloudColor }}>{kloudVal}</span>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  {COMPARISON_COLUMNS.slice(1).map((col, i) => {
-                    const val = row.vals[i + 1];
-                    const color = val === "✓" ? "#4ade80" : val === "✗" ? "#f87171" : val === "Partial" ? "#fbbf24" : "var(--text-muted)";
-                    return (
-                      <div key={col.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 14px" }}>
-                        <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{col.label}</span>
-                        <span style={{ fontSize: val === "✓" || val === "✗" ? "14px" : "12px", fontWeight: 500, color }}>{val}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: "14px" }}>
+        {benefits.map(({ icon, title, detail }) => (
+          <article key={title} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "16px", padding: "22px" }}>
+            <span aria-hidden="true" style={{ display: "inline-flex", width: "36px", height: "36px", alignItems: "center", justifyContent: "center", borderRadius: "10px", background: "var(--green-dim)", color: "var(--green)", fontSize: "19px", fontWeight: 800, marginBottom: "16px" }}>{icon}</span>
+            <h3 style={{ fontSize: "16px", fontWeight: 750, color: "#fff", marginBottom: "8px" }}>{title}</h3>
+            <p style={{ fontSize: "13px", lineHeight: 1.65, color: "var(--text-muted)", margin: 0 }}>{detail}</p>
+          </article>
+        ))}
       </div>
     </div>
   );
@@ -2161,12 +2162,12 @@ function WasteScoreCard({ flagged, allChecks, savPct, savMin, savMax, onShare, p
         <h2 className="display" style={{ fontSize: "28px", fontWeight: 800, color: grade.color, letterSpacing: "-0.8px", marginBottom: "8px" }}>{grade.label}</h2>
         <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "16px" }}>
           {score >= 80
-            ? `Your infrastructure is well managed. The ${flagged.length} issue${flagged.length > 1 ? "s" : ""} found are optimisation opportunities rather than critical problems.`
+            ? `Your answers indicate a strong reported posture. The ${flagged.length} flagged issue${flagged.length > 1 ? "s" : ""} are opportunities to review rather than critical problems.`
             : score >= 60
-            ? `Your bill has identifiable waste. The ${flagged.length} flagged issue${flagged.length > 1 ? "s" : ""} represent ~${savPct}% of your monthly spend.`
+            ? `Your answers suggest potential waste. The ${flagged.length} flagged issue${flagged.length > 1 ? "s" : ""} correspond to an estimated ~${savPct}% of monthly spend.`
             : score >= 40
-            ? `Significant waste detected. Your team is paying roughly $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/month more than necessary.`
-            : `Critical waste level. Unaddressed issues are costing $${(savMin * 12).toLocaleString()}+ per year. Immediate action recommended.`
+            ? `Your answers suggest significant optimization opportunities, estimated at $${savMin.toLocaleString()}–$${savMax.toLocaleString()}/month.`
+            : `Your answers indicate high-priority opportunities, with an estimated potential of $${(savMin * 12).toLocaleString()}+ per year. Review the findings before deciding what to change.`
           }
         </p>
         <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "12px 16px", border: "1px solid rgba(255,255,255,0.06)" }}>
@@ -2455,7 +2456,8 @@ const CfoReportModal = memo(function CfoReportModal({ onClose, onBuy, currency, 
 
 // ── BLUEPRINT SAMPLE CODE — real excerpt shown next to pricing for social proof ──
 const SAMPLE_COST_BLUEPRINT_CODE = `# Issue: Unattached EBS Volumes
-Difficulty: Easy | Estimated Savings: $2,000-$4,000/month
+# Illustrative guidance — savings depend on your actual resources
+Difficulty: Easy
 
 aws ec2 describe-volumes \\
   --filters Name=status,Values=available \\
@@ -2467,7 +2469,8 @@ aws ec2 delete-volume --volume-id vol-xxxxxxxxxxxxxxxxx
 Verify: Re-run the describe-volumes filter. Result should return empty.`;
 
 const SAMPLE_AI_BLUEPRINT_CODE = `# Fix: Using deprecated model versions
-Difficulty: Easy | Estimated Savings: $420-$1,050/month
+# Illustrative guidance — savings depend on your actual usage
+Difficulty: Easy
 
 grep -rn "gpt-4-0314\\|gpt-4-0613" ./src | xargs sed -i \\
   -e 's/gpt-4-0314/gpt-4o-mini/g' \\
@@ -2478,7 +2481,7 @@ Verify: grep -rn "gpt-4-0314\\|gpt-4-0613" ./src && echo "still found" || echo "
 function BlueprintSampleCode({ code, accent = '#00ffb4' }) {
   return (
     <div style={{ marginTop: '14px', marginBottom: '4px' }}>
-      <p style={{ fontSize: '10px', fontWeight: 700, color: accent, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Sample from a real Blueprint ↓</p>
+      <p style={{ fontSize: '10px', fontWeight: 700, color: accent, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Illustrative Blueprint excerpt ↓</p>
       <div style={{ background: '#0a0a12', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px 14px', maxHeight: '170px', overflow: 'auto' }}>
         <pre style={{ margin: 0, fontFamily: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace', fontSize: '10.5px', lineHeight: 1.65, whiteSpace: 'pre' }}>
           {code.split('\n').map((line, i) => {
@@ -2500,7 +2503,7 @@ const PricingModal = memo(function PricingModal({
   onClose, currency,
   onStartAudit,
   onBlueprintClick, onAiBlueprintClick, onCodingToolsBlueprintClick, onSecBlueprintClick, onCfoReportClick, onSessionClick,
-  onSubscribe,
+  onSubscribe, subscriptionAvailable = false,
 }) {
   const [subEmail, setSubEmail] = useState('');
   const [subStatus, setSubStatus] = useState('idle');
@@ -2528,7 +2531,7 @@ const PricingModal = memo(function PricingModal({
       color: '#4ade80',
       border: 'rgba(74,222,128,0.2)',
       bg: 'rgba(74,222,128,0.04)',
-      features: ['18 cost + 16 security checks', 'Dollar savings per issue', 'Waste score & shareable link'],
+      features: ['18 cost + 16 security checks', 'Estimated savings per flagged issue', 'Waste score & shareable link'],
       cta: 'Start Free Audit →',
       onClick: () => { onClose(); onStartAudit(); },
     },
@@ -2536,7 +2539,7 @@ const PricingModal = memo(function PricingModal({
       id: 'blueprint',
       icon: '⚡',
       label: 'Cost Blueprint',
-      badge: 'Most popular',
+      badge: 'Implementation guide',
       badgeColor: '#00ffb4',
       price: currency.blueprintPrice,
       priceSub: 'one-time',
@@ -2610,15 +2613,17 @@ const PricingModal = memo(function PricingModal({
     {
       id: 'monitor',
       icon: '📈',
-      label: 'Cloud Health Monitor',
-      badge: 'Subscription',
+      label: subscriptionAvailable ? 'Cloud Health Monitor' : 'Team monitoring',
+      badge: subscriptionAvailable ? 'Subscription' : 'Planned',
       badgeColor: '#818cf8',
-      price: currency.subscriptionPrice || '$19/mo',
-      priceSub: 'cancel anytime',
+      price: subscriptionAvailable ? (currency.subscriptionPrice || '$19/mo') : 'Waitlist',
+      priceSub: subscriptionAvailable ? 'cancel anytime' : 'not currently available',
       color: '#818cf8',
       border: 'rgba(99,102,241,0.25)',
       bg: 'rgba(99,102,241,0.04)',
-      features: ['Monthly waste score tracking', 'New issues flagged automatically', 'One discounted Blueprint/month included'],
+      features: subscriptionAvailable
+        ? ['Monthly waste score tracking', 'New issues flagged automatically', 'One discounted Blueprint/month included']
+        : ['Continuous monitoring is not in the current release', 'Slack/Teams alerts are not available', 'Current plans are point-in-time and one-time'],
       cta: null, // inline email input
     },
     {
@@ -2678,7 +2683,7 @@ const PricingModal = memo(function PricingModal({
               {(p.id === 'blueprint' || p.id === 'ai_blueprint') && (
                 <BlueprintSampleCode code={p.id === 'ai_blueprint' ? SAMPLE_AI_BLUEPRINT_CODE : SAMPLE_COST_BLUEPRINT_CODE} accent={p.color} />
               )}
-              {p.id === 'monitor' ? (
+              {p.id === 'monitor' && subscriptionAvailable ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
                   <input type="email" placeholder="your@company.com" value={subEmail} onChange={e => setSubEmail(e.target.value)}
                     style={{ width: '100%', padding: '10px 12px', background: 'rgba(99,102,241,0.08)', border: '1.5px solid rgba(99,102,241,0.3)', borderRadius: '9px', color: '#fff', fontSize: '13px', boxSizing: 'border-box' }} />
@@ -2688,6 +2693,11 @@ const PricingModal = memo(function PricingModal({
                   </button>
                   {subStatus === 'error' && <p style={{ fontSize: '11px', color: '#f87171', margin: 0 }}>Something went wrong — try again</p>}
                 </div>
+              ) : p.id === 'monitor' ? (
+                <a href="mailto:admin@kloudaudit.eu?subject=KloudAudit%20team%20updates"
+                  style={{ display: 'block', padding: '11px', borderRadius: '9px', border: '1px solid rgba(99,102,241,0.3)', color: '#4338ca', background: '#fff', fontWeight: 700, fontSize: '12px', textAlign: 'center', textDecoration: 'none' }}>
+                  Ask about future team options →
+                </a>
               ) : (
                 <button onClick={p.onClick}
                   style={{ padding: '11px', borderRadius: '9px', border: p.id === 'free' ? `1px solid ${p.border}` : 'none', background: p.id === 'free' ? 'transparent' : p.id === 'blueprint' ? 'var(--green)' : p.id === 'security' ? '#f87171' : p.id === 'ai_blueprint' ? '#a78bfa' : p.id === 'cfo' || p.id === 'monitor' ? 'linear-gradient(135deg,#818cf8,#6366f1)' : 'rgba(0,212,255,0.15)', color: p.id === 'blueprint' ? '#000' : p.id === 'security' ? '#000' : p.id === 'free' ? p.color : '#fff', fontWeight: 800, fontSize: '12px', cursor: 'pointer', boxShadow: p.id === 'blueprint' ? '0 0 16px rgba(0,255,180,0.3)' : 'none' }}>
@@ -2699,7 +2709,7 @@ const PricingModal = memo(function PricingModal({
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)', marginTop: '24px' }}>
-          All blueprints include a full refund if no actionable fix is found. Questions? <a href="mailto:admin@kloudaudit.eu" style={{ color: 'var(--green)', textDecoration: 'underline' }}>admin@kloudaudit.eu</a>
+          Blueprints include the actionable-fix refund guarantee described in the <a href="/terms/" style={{ color: 'var(--green)', textDecoration: 'underline' }}>Terms of Service</a>. Questions? <a href="mailto:admin@kloudaudit.eu" style={{ color: 'var(--green)', textDecoration: 'underline' }}>admin@kloudaudit.eu</a>
         </p>
       </div>
     </div>
@@ -3128,9 +3138,7 @@ function App() {
   });
   const [aiPreview, setAiPreview] = useState(null);
   const [aiPreviewLoading, setAiPreviewLoading] = useState(false);
-  const [subEmail, setSubEmail] = useState(() => '');
-  const [subStatus, setSubStatus] = useState('idle'); // idle | loading | error | not_configured
-  const [subscriptionAvailable, setSubscriptionAvailable] = useState(true);
+  const [subscriptionAvailable, setSubscriptionAvailable] = useState(false);
   const [gateSubmitted, setGateSubmitted] = useState(false);
   const [gateSending, setGateSending] = useState(false);
   // ── MULTI-CURRENCY ────────────────────────────────────────────────────────
@@ -3801,7 +3809,6 @@ useEffect(() => {
   };
 
   const handleBuySubscription = async (email) => {
-    setSubStatus('loading');
     try {
       window.gtag?.('event', 'subscription_checkout_initiated', { currency: currency.stripeCurrency });
       const res = await fetch("/api/create-checkout", {
@@ -3818,8 +3825,6 @@ useEffect(() => {
       });
       const data = await res.json();
       if (data.code === 'subscription_not_configured') {
-        // Price ID not set up in Stripe yet — fall back gracefully
-        setSubStatus('not_configured');
         setSubscriptionAvailable(false);
         return;
       }
@@ -3831,8 +3836,7 @@ useEffect(() => {
       }
     } catch (err) {
       console.error('Subscription checkout error:', err.message);
-      setSubStatus('error');
-      setTimeout(() => setSubStatus('idle'), 5000);
+      throw err;
     }
   };
 
@@ -3893,6 +3897,16 @@ useEffect(() => {
     const sMed  = sampleFlagged.filter(c => getSev(c) === "med");
     const sLow  = sampleFlagged.filter(c => getSev(c) === "low");
     const closeModal = () => { setShowSample(false); setSampleTab("report"); };
+    useEffect(() => {
+      const handleKeyDown = event => {
+        if (event.key === "Escape") {
+          setShowSample(false);
+          setSampleTab("report");
+        }
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }, []);
     const timePill = (label) => (
       <div style={{ marginBottom: "16px" }}>
         <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "20px", padding: "3px 10px" }}>⏱ Time to implement: {label}</span>
@@ -3916,10 +3930,11 @@ useEffect(() => {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
-                  {["Sample Report", SAMPLE_REPORT.provider, "Apr 2026"].map(t => <span key={t} style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-dim)", fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "20px", border: "1px solid var(--border)" }}>{t}</span>)}
+                  {["Illustrative sample", SAMPLE_REPORT.provider, "Apr 2026"].map(t => <span key={t} style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-dim)", fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "20px", border: "1px solid var(--border)" }}>{t}</span>)}
                 </div>
                 <h2 id="sample-dialog-title" className="display" style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-1px", color: "#fff" }}>{SAMPLE_REPORT.companyName} · Cost Report</h2>
                 <p style={{ color: "var(--text-muted)", fontSize: "14px", marginTop: "4px" }}>Monthly bill: ${SAMPLE_REPORT.monthlyBill.toLocaleString()} · {sampleFlagged.length} issues found</p>
+                <p style={{ color: "var(--text-muted)", fontSize: "11px", marginTop: "4px" }}>Illustrative mock data—not a real customer report.</p>
               </div>
               <button onClick={closeModal} aria-label="Close" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-muted)", fontSize: "18px", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
             </div>
@@ -4219,7 +4234,7 @@ aws ec2 describe-reserved-instances \\
               ))}
             </div>
             <p style={{ fontSize: "12px", color: "rgba(148,163,184,0.6)", background: "rgba(248,113,113,0.04)", border: "1px solid rgba(248,113,113,0.1)", borderRadius: "8px", padding: "9px 14px", display: "inline-block", marginTop: "12px" }}>
-              🔒 Your answers stay in your browser — nothing sent to our servers until you choose to share it.
+            🔒 No cloud account access is used. Review the <a href="/privacy/" style={{ color: "#f87171" }}>Privacy Policy</a> for details about submitted information.
             </p>
             <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "10px" }}>
               Not sure what you&apos;ll get?{" "}
@@ -4235,7 +4250,7 @@ aws ec2 describe-reserved-instances \\
             <div>
               <p style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "3px" }}>How this works</p>
               <p style={{ fontSize: "12px", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
-                Go through each section and <strong style={{ color: "#fff" }}>check every issue that currently applies</strong> to your infrastructure. Be honest — the more accurate your answers, the more useful your security score. Your responses are never stored or shared.
+                Go through each section and <strong style={{ color: "#fff" }}>check every issue that currently applies</strong> to your infrastructure. Be honest — the more accurate your answers, the more useful your security score. See the <a href="/privacy/" style={{ color: "#f87171" }}>Privacy Policy</a> for information about processing and retention.
               </p>
             </div>
           </div>
@@ -4468,7 +4483,7 @@ aws ec2 describe-reserved-instances \\
                 </div>
                 {/* Details */}
                 <div style={{ flex: 1, minWidth: "180px" }}>
-                  <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "6px" }}>Security Risk Score</p>
+                  <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "6px" }}>Security Self-Assessment Score</p>
                   <h2 style={{ fontSize: "26px", fontWeight: 800, color: grade.color, letterSpacing: "-0.5px", marginBottom: "8px" }}>{grade.label}</h2>
                   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "12px" }}>
                     {critCount > 0 && <span style={{ fontSize: "12px", color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "6px", padding: "3px 10px", fontWeight: 700 }}>🔴 {critCount} Critical</span>}
@@ -4476,10 +4491,10 @@ aws ec2 describe-reserved-instances \\
                     {flaggedS.filter(c => c.risk === "Medium").length > 0 && <span style={{ fontSize: "12px", color: "#fbbf24", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)", borderRadius: "6px", padding: "3px 10px", fontWeight: 700 }}>🟡 {flaggedS.filter(c=>c.risk==="Medium").length} Medium</span>}
                   </div>
                   <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
-                    {score < 40 ? `${critCount} critical vulnerabilities detected. Your infrastructure is at active risk. Immediate remediation required.`
-                    : score < 60 ? `Significant security gaps found. ${flaggedS.length} issues need attention before your next compliance review.`
-                    : score < 80 ? `Some security issues detected. Address these before your next pentest or audit.`
-                    : `Good security posture. Minor issues found — address them to maintain compliance.`}
+                    {score < 40 ? `Your answers indicate ${critCount} critical-severity security gaps. Review them promptly with your security team.`
+                    : score < 60 ? `Your answers indicate areas to review. Validate ${flaggedS.length} reported issue${flaggedS.length === 1 ? "" : "s"} before your next compliance review.`
+                    : score < 80 ? `Your answers identify some security gaps. Review these before your next pentest or audit.`
+                    : `Your answers indicate a strong reported posture. Review minor gaps to maintain your controls.`}
                   </p>
                 </div>
               </div>
@@ -4628,7 +4643,7 @@ aws iam simulate-principal-policy \\
                   Security gaps mapped. What about the waste?
                 </h3>
                 <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.7, marginBottom: "16px" }}>
-                  18 checkpoints across compute, storage, network, database, and governance. Most {provider || "cloud"} teams find $500–$4,000+/month they didn't know about. Free savings estimate in 15 minutes.
+                  18 checkpoints across compute, storage, network, database, and governance. Review answer-based findings and an illustrative savings estimate in about 10–15 minutes.
                 </p>
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                   {["⚡ Compute savings", "🗄 Storage tiering", "🌐 Network waste", "🗃 Database sizing"].map(t => (
@@ -4729,24 +4744,20 @@ aws iam simulate-principal-policy \\
     const calcAnnual = Math.round(calcMin * 12);
 
     const FAQS = [
-      { q: "Do you need access to my cloud account?", a: "Never. Both audits are entirely self-guided — you answer questions based on your own knowledge. No credentials, no IAM roles, no agents, no OAuth. We have zero access to your infrastructure.", tag: "both" },
-      { q: "How is the AI Blueprint different from the free report?", a: "The free report tells you what is wrong. The Blueprint tells you exactly how to fix it — with CLI commands, Terraform snippets, IAM policy templates, compliance mappings, and verification steps specific to your provider.", tag: "both" },
-      { q: "What does the AI Coding Tools Audit cover?", a: "It checks overlapping Copilot, Cursor, Windsurf, and Claude Code seats, per-seat utilization, departed-engineer offboarding, tier fit, annual commitments, renewal tracking, and cost attribution by team or project.", tag: "both" },
-      { q: "How much is the Coding Tools Blueprint?", a: `The AI Coding Tools Blueprint is a one-time payment of ${codingToolsPrice}. It includes seat consolidation steps, vendor dashboard utilization checks, tier downgrade recommendations, and renewal calendar setup.`, tag: "both" },
-      { q: "How fast do I receive the Blueprint?", a: "Within 2 minutes of payment. Claude AI generates your personalised guide in ~30 seconds, then Resend delivers it to your inbox. If you don't see it within 5 minutes, check spam or email admin@kloudaudit.eu.", tag: "both" },
-      { q: "What does the Security Blueprint include that the free score doesn't?", a: "The free audit shows your risk score and the first 2 flagged issues. The Security Blueprint unlocks all findings with exact CLI remediation commands, IAM policy fixes, compliance gap mapping (SOC 2, ISO 27001, GDPR, CIS Benchmark), and a 30-day remediation roadmap.", tag: "security" },
-      { q: "I already use AWS Security Hub / GCP Security Command Center. Why do I need this?", a: "Those tools need account access and take weeks to configure. KloudAudit gives you a prioritised action list in 15 minutes with zero access required — ideal for a quick self-assessment before a pentest, compliance audit, or investor review.", tag: "security" },
-      { q: "What if my cloud bill is lower than $1,000/month?", a: "The cost audit is still useful for identifying waste patterns early. The Blueprint is most cost-effective for bills over $1,500/mo. The security audit is valuable at any bill size — a public S3 bucket costs the same to exploit whether you pay $200/mo or $20,000/mo.", tag: "cost" },
-      { q: "Is this a subscription?", a: `No. One-time payment — ${currency.blueprintPrice} for the Cost Blueprint, ${currency.securityPrice || "$29"} for the Security Blueprint. You get a permanent document you implement at your own pace.`, tag: "both" },
+      { q: "Do you need access to my cloud account?", a: "No. KloudAudit is a guided self-assessment: you answer questions from your own knowledge. We do not connect to AWS, GCP, Azure, or AI provider accounts and never ask for credentials, IAM roles, OAuth, agents, or billing exports.", tag: "security" },
+      { q: "What information do you collect, and how long is it kept?", a: "The assessment processes the answers and contact details you submit to generate and deliver your report. We do not receive cloud telemetry or raw billing exports. The Privacy Policy explains server-side retention, processors, and international transfers.", link: "/privacy/", tag: "security" },
+      { q: "Does KloudAudit parse my OpenAI or Anthropic usage logs?", a: "No. The AI API review is based on your answers and any spend figures you choose to enter; it does not connect to provider APIs or ingest usage logs. The resulting savings range is an estimate, not a measurement of live token traffic.", tag: "cost" },
+      { q: "Can the remediation guidance work with Terraform?", a: "Paid one-time Blueprints can include provider-specific CLI commands and Terraform/IaC snippets for the issues in your assessment. They are guidance for your team to review and adapt—not changes applied to your infrastructure.", tag: "cost" },
+      { q: "How are the savings estimates calculated?", a: "The assessment combines the monthly spend and issue patterns you report with estimated savings ranges for those categories. Categories can overlap, so the total range is not a promise or a sum of independent line-item maximums.", tag: "cost" },
+      { q: "How is the AI Blueprint different from the free report?", a: "The free assessment provides a score, estimated savings, and prioritised findings. A paid Blueprint adds an AI-generated implementation guide with relevant CLI commands, Terraform/IaC snippets, and verification steps.", tag: "both" },
+      { q: "Is KloudAudit hosted and processed only in the EU?", a: "We do not claim EU-only hosting or processing. The Privacy Policy lists our service providers and transfer safeguards; please review it before entering business-sensitive information.", tag: "security" },
+      { q: "Is this a subscription?", a: `The free audit is free, and the Cost, AI, Security, Coding Tools, and CFO/Board reports are one-time purchases. Continuous monitoring and Slack/Teams alerts are not part of the current offering.`, tag: "both" },
     ];
 
     const HOW_IT_WORKS = [
-      { n: "01", title: "Run the free cost audit", desc: "Answer structured questions about your AWS, GCP, Azure, AI API, or AI coding tools setup. 10-15 minutes. No account access, no signup.", color: "#00ffb4" },
-      { n: "02", title: "See your savings report", desc: "Instantly see your estimated waste, prioritised findings, and projected monthly savings across compute, storage, database, and network.", color: "#818cf8" },
-      { n: "03", title: "Run the security audit", desc: "16 security checkpoints across IAM, network exposure, encryption, and logging. Get your security risk score instantly — free.", color: "#f87171" },
-      { n: "04", title: "Get the AI Blueprint", desc: `Pay ${currency.blueprintPrice} (cost), ${currency.aiBlueprintPrice} (AI), or ${currency.securityPrice || "$29"} (security). Claude AI writes your exact CLI commands, policy fixes, and step-by-step guide.`, color: "#00d4ff" },
-      { n: "05", title: "Get the Coding Tools Blueprint", desc: `Pay ${codingToolsPrice} once for seat consolidation, Copilot/Cursor/Windsurf utilization checks, tier downgrade recommendations, and renewal calendar setup.`, color: "#00d4ff" },
-      { n: "06", title: "Implement & verify", desc: "Follow the blueprint. Most clients recoup the cost within 24 hours. Re-audit in 90 days to measure improvement.", color: "#fb923c" },
+      { n: "01", title: "Answer a guided assessment", desc: "Choose cloud, AI API, coding tools, or security and answer focused questions based on what your team knows. No account connection, credentials, agents, or uploaded billing exports.", color: "#087a55" },
+      { n: "02", title: "Review your estimated findings", desc: "Get a prioritised, point-in-time report with a waste score and estimated savings range based on your answers and the monthly spend you provide.", color: "#4f46e5" },
+      { n: "03", title: "Plan your next steps", desc: `Use the free report on its own, or choose a one-time Blueprint (${currency.blueprintPrice} for cost) for tailored CLI/Terraform guidance. Nothing is run against your cloud account.`, color: "#0e7490" },
     ];
 
     return (
@@ -4761,7 +4772,7 @@ aws iam simulate-principal-policy \\
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={isAiProvider ? handleBuyAiBlueprint : isCodingToolsProvider ? handleBuyCodingToolsBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={blueprintProductType} price={blueprintPrice} amount={blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} subscriptionAvailable={subscriptionAvailable} />}
       <Nav />
 
       {/* ── RESUME AUDIT BANNER ── */}
@@ -4780,10 +4791,10 @@ aws iam simulate-principal-policy \\
       {showStickyBar && (
         <div className="sticky-bottom-cta sticky-slide-up" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "rgba(8,8,16,0.97)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,255,180,0.2)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>⚡ Find out what your infrastructure is hiding — free audit, 15 minutes</span>
+            <span style={{ fontSize: "13px", color: "var(--text-dim)" }}>⚡ Review potential cloud and AI spend opportunities — free, 10–15 minutes</span>
           </div>
           <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "11px 28px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.3)", whiteSpace: "nowrap" }}>
-            See What My Bill Is Hiding →
+            Start Free Cost Audit →
           </button>
         </div>
       )}
@@ -4798,14 +4809,14 @@ aws iam simulate-principal-policy \\
           {/* ── MOBILE BADGE ── */}
           <div className="hero-badge fade-up stagger-1" style={{ display: "none", marginBottom: "16px" }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(0,255,180,0.1)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "6px 14px" }}>
-              <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px" }}>FREE · NO AWS CREDENTIALS · 15 MINUTES</span>
+              <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px" }}>FREE · NO CLOUD ACCESS · 10–15 MINUTES</span>
             </div>
           </div>
           {/* ── HEADLINE ── */}
           <h1 className="display hero-h1 fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "20px" }}>
-            Know your cloud spend.<br />
+            Find cloud &amp; AI spend waste.<br />
             <span style={{ position: "relative", display: "inline-block", background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              Keep your account private.
+              Without account access.
               <span style={{ position: "absolute", bottom: "-2px", left: 0, height: "2px", width: 0, background: "var(--green)", animation: "underline-draw 0.8s 0.5s ease-out forwards", borderRadius: "1px" }} />
             </span><br />
           </h1>
@@ -4820,10 +4831,10 @@ aws iam simulate-principal-policy \\
               2026 Cloud Cost<br/>Optimisation Checklist
             </h2>
             <p style={{ fontSize:"14px",color:"var(--text-muted)",lineHeight:1.65,marginBottom:"20px" }}>
-              18 actionable checks across compute, storage, network, database and governance. Find 20–45% savings on AWS, GCP or Azure.
+              18 actionable checks across compute, storage, network, database and governance. Review potential savings patterns for AWS, GCP, or Azure.
             </p>
             <div style={{ display:"flex",flexDirection:"column",gap:"6px",marginBottom:"24px" }}>
-              {["18 checks across all cost categories","Typical savings range for each issue","No credentials required to use","Pairs with the free interactive audit"].map(f => (
+              {["18 checks across cost categories","Illustrative savings ranges for common issues","No credentials required","Pairs with the free interactive self-assessment"].map(f => (
                 <div key={f} style={{ display:"flex",alignItems:"center",gap:"8px" }}>
                   <span style={{ color:"var(--green)",fontSize:"12px",fontWeight:700 }}>✓</span>
                   <span style={{ fontSize:"13px",color:"var(--text-dim)" }}>{f}</span>
@@ -4867,7 +4878,7 @@ aws iam simulate-principal-policy \\
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
           {/* ── SUBHEADING ── */}
           <p className="hero-subheading fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "520px", margin: "0 auto 28px" }}>
-            Find unused cloud spend in minutes. Covers AWS, GCP, Azure, AI APIs, and AI coding tools — <strong style={{ color: "#fff" }}>no credentials required, ever</strong>. Teams typically uncover <strong style={{ color: "var(--green)" }}>20–45% in savings</strong>.
+            A 10–15 minute guided self-assessment helps your team spot idle compute, oversized databases, and avoidable AI API spend—using what you already know. <strong style={{ color: "#fff" }}>No credentials, IAM roles, or agents.</strong>
           </p>
           <div className="methodology-note">
             <MethodologyNote />
@@ -4896,30 +4907,29 @@ aws iam simulate-principal-policy \\
                 </button>
               ))}
             </div>
-            <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: "0 0 8px" }}>No signup · No credit card · No cloud access required</p>
+            <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: "0 0 8px" }}>Choose a scope to begin · no signup or cloud account connection</p>
           </div>
 
           {/* ── SECONDARY CTA ── */}
           <div id="start-audit" className="secondary-cta fade-up stagger-3" style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
             <button className="glow-btn" onClick={() => goTo("intake")}
               style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "14px 32px", fontSize: "15px", boxShadow: "0 0 24px rgba(0,255,180,0.3)", display: "flex", alignItems: "center", gap: "10px" }}>
-              Start Free Audit <span style={{ fontSize: "18px" }}>→</span>
+              Run Free Cost Audit <span style={{ fontSize: "18px" }}>→</span>
             </button>
             <button className="ghost-btn" onClick={() => setShowSample(true)}
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-dim)", borderRadius: "12px", padding: "14px 24px", fontSize: "15px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>📄</span> See a Real Report First
+              <span>↗</span> Explore Sample Report
             </button>
           </div>
 
-          <p className="hero-cta-note" style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", margin: "0 0 22px" }}>⚡ Free · No signup · Results in 15 minutes</p>
+          <p className="hero-cta-note" style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", margin: "0 0 22px" }}>Free forever for individual audits · No credit card · <a href="/privacy/" style={{ color: "var(--indigo)", textDecoration: "underline" }}>Privacy details</a></p>
 
-          {/* ── SOCIAL PROOF ── */}
-          <div className="stats-pills fade-up stagger-4" style={{ display: "flex", gap: "24px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
+          {/* ── TRUST STRIP ── */}
+          <div className="stats-pills hero-trust-strip fade-up stagger-4" aria-label="Privacy and access guarantees" style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap", marginBottom: "32px" }}>
             {[
-              { icon: "⚡", text: "15 minutes" },
-              { icon: "🔒", text: "Zero cloud access" },
-              { icon: "💰", text: "20–45% savings found" },
-              { icon: "🌍", text: "AWS · GCP · Azure" },
+              { icon: "01", text: "No IAM role or credentials" },
+              { icon: "02", text: "No account connection" },
+              { icon: "03", text: "Your answers—not an agent" },
             ].map(item => (
               <div key={item.text} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <span style={{ fontSize: "14px" }}>{item.icon}</span>
@@ -4942,7 +4952,7 @@ aws iam simulate-principal-policy \\
 
           {/* ── COMPETITOR KILL LINE ── */}
           <p className="competitor-kill-line fade-up stagger-4" style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: "440px", margin: "0 auto", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "10px 16px" }}>
-            💡 The average team needs <strong style={{ color: "#fff" }}>4 months of procurement</strong> to connect a cloud cost tool. KloudAudit takes 15 minutes — no IT ticket, no security review, no approval needed.
+            🔒 A self-assessment, not an account integration. Your team stays in control of every answer and every next step.
           </p>
           <div className="fade-up stagger-4" style={{ marginTop: "22px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
             {[
@@ -4965,7 +4975,7 @@ aws iam simulate-principal-policy \\
         <div style={{ marginBottom: "48px", background: "var(--bg2)", border: "1px solid var(--border)", borderLeft: "4px solid var(--green)", borderRadius: "14px", padding: "28px 32px" }}>
           <p style={{ fontSize: "13px", fontWeight: 800, color: "var(--green)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "10px" }}>🔒 Zero cloud credentials — here&apos;s why this works</p>
           <p style={{ fontSize: "15px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "760px", margin: 0 }}>
-            Most cloud cost tools require IAM roles, OAuth connections, or agent installation. KloudAudit uses a structured self-assessment instead — you answer 18 questions based on your own knowledge of your infrastructure. <strong style={{ color: "#fff" }}>No credentials leave your browser. No AWS account connection. No security review required.</strong> This means you can complete the audit in 15 minutes without an IT ticket, a procurement process, or a security approval.
+            KloudAudit uses a structured self-assessment instead of an integration: you answer questions based on your own knowledge of your infrastructure. <strong style={{ color: "#fff" }}>We never request credentials, connect to your cloud account, or install an agent.</strong> It is designed to help teams start reviewing spend without first granting a vendor infrastructure access.
           </p>
         </div>
 
@@ -4973,7 +4983,7 @@ aws iam simulate-principal-policy \\
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
             <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Zero guesswork</p>
             <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>How it works</h2>
-            <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "420px", margin: "12px auto 0" }}>From first visit to first saving — in under 20 minutes.</p>
+            <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "520px", margin: "12px auto 0" }}>Answer, review, and decide—typically in 10–15 minutes. No cloud scan runs in the background.</p>
           </div>
           <div className="how-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "2px", background: "var(--border)", borderRadius: "20px", overflow: "hidden", border: "1px solid var(--border)" }}>
             {HOW_IT_WORKS.map((step, i) => {
@@ -5054,8 +5064,8 @@ aws iam simulate-principal-policy \\
           <div className="fade-up" style={{ marginBottom: "80px" }}>
             <div style={{ textAlign: "center", marginBottom: "40px" }}>
               <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "12px" }}>What you get</p>
-              <h2 className="display" style={{ fontSize: "clamp(24px,3vw,36px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "12px" }}>Your report looks like this</h2>
-              <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "480px", margin: "0 auto" }}>Free, instant, no credentials. Sorted by ease of implementation — quick wins first.</p>
+              <h2 className="display" style={{ fontSize: "clamp(24px,3vw,36px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "12px" }}>A preview of your audit report</h2>
+              <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "520px", margin: "0 auto" }}>Illustrative example only. Your point-in-time findings and estimates are based on your assessment answers.</p>
             </div>
 
             {/* Browser frame */}
@@ -5087,7 +5097,7 @@ aws iam simulate-principal-policy \\
                   </div>
                   <div>
                     <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: "0 0 6px", letterSpacing: "1px", textTransform: "uppercase" }}>AWS · $8,000/month</p>
-                    <p style={{ fontSize: "18px", fontWeight: 800, color: "#fff", margin: "0 0 8px", lineHeight: 1.2 }}>13 issues · <span style={{ color: "#00ffb4" }}>$794–$2,003/mo</span> to recover</p>
+                    <p style={{ fontSize: "18px", fontWeight: 800, color: "#fff", margin: "0 0 8px", lineHeight: 1.2 }}>Illustrative findings · <span style={{ color: "#00ffb4" }}>$794–$2,003/mo</span> estimated opportunity</p>
                     <div className="report-preview-kpis" style={{ display: "flex", gap: "8px" }}>
                       {[["8", "Quick wins", "#22c55e"], ["$794+", "Monthly saving", "#00ffb4"], ["$9,528", "Annual", "#818cf8"]].map(([v, l, c]) => (
                         <div key={l} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", padding: "8px 12px", flex: 1 }}>
@@ -5168,7 +5178,7 @@ aws iam simulate-principal-policy \\
             </div>
             <div style={{ background: "rgba(0,255,180,0.04)", border: "1px solid rgba(0,255,180,0.12)", borderRadius: "12px", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
               <p style={{ fontSize: "14px", color: "var(--text-dim)" }}>
-                The Blueprint costs <strong style={{ color: "var(--green)" }}>{currency.blueprintPrice}</strong>. At your bill size, it pays for itself in <strong style={{ color: "#fff" }}>{calcMin > (currency.blueprintAmount / 100) ? "the first day" : "the first week"}</strong>.
+                The Blueprint costs <strong style={{ color: "var(--green)" }}>{currency.blueprintPrice}</strong> once. Compare that price with the estimated savings from your assessment before deciding.
               </p>
               <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "10px", padding: "12px 24px", fontSize: "14px", boxShadow: "0 0 20px rgba(0,255,180,0.25)", whiteSpace: "nowrap" }}>
                 Find my savings →
@@ -5182,62 +5192,57 @@ aws iam simulate-principal-policy \\
           <div style={{ textAlign: "center", marginBottom: "36px" }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", padding: "6px 16px", marginBottom: "20px" }}>
               <span style={{ fontSize: "13px" }}>🤔</span>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>"Can't I just ask Claude to do this?"</span>
+              <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>A question engineers ask</span>
             </div>
             <h2 className="display" style={{ fontSize: "clamp(24px,3vw,38px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "12px" }}>
-              You can. Here's what happens.
+              A guided starting point—not a live scanner
             </h2>
             <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "520px", margin: "0 auto" }}>
-              Generic AI gives generic answers. KloudAudit runs 18 infrastructure-specific checks against your actual bill size and provider — then maps every finding to an exact CLI command, a savings estimate, and an implementation time. Tested across AWS, GCP, and Azure environments.
+              A general-purpose assistant can help when you provide context. KloudAudit organizes a provider-specific self-assessment into a prioritized report. It does not scan infrastructure, import billing data, or verify your answers.
             </p>
           </div>
           <div className="compare-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px", background: "var(--border)", borderRadius: "20px", overflow: "hidden", border: "1px solid var(--border)", marginBottom: "24px" }}>
-            {/* DIY column */}
+            {/* General-purpose assistant */}
             <div style={{ background: "rgba(248,113,113,0.04)", padding: "32px 28px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "24px" }}>
                 <span style={{ fontSize: "20px" }}>🤖</span>
                 <div>
-                  <p style={{ fontSize: "14px", fontWeight: 800, color: "#f87171", margin: 0 }}>DIY with Claude</p>
-                  <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0 }}>free · general purpose</p>
+                  <p style={{ fontSize: "14px", fontWeight: 800, color: "var(--text-dim)", margin: 0 }}>Start from a blank prompt</p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0 }}>Flexible · bring your own context</p>
                 </div>
               </div>
               {[
-                "Write 18+ prompts to cover all cost areas",
-                "Need to know the right questions to ask",
-                "No savings estimate — just generic advice",
-                "No bill context — numbers are hypothetical",
-                "2+ hours of back-and-forth iteration",
-                "Stateless — no history between sessions",
-                "No shareable output or branded report",
-                "Won't flag issues you forgot to ask about",
+                "You choose the scope and questions",
+                "You supply the infrastructure and spend context",
+                "You organize responses into a review plan",
+                "You verify suggestions before acting",
+                "Best when you need open-ended exploration",
               ].map(item => (
                 <div key={item} style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "12px" }}>
-                  <span style={{ color: "#f87171", fontSize: "13px", marginTop: "1px", flexShrink: 0 }}>✗</span>
+                  <span aria-hidden="true" style={{ color: "var(--text-muted)", fontSize: "13px", marginTop: "1px", flexShrink: 0 }}>•</span>
                   <span style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
             </div>
-            {/* KloudAudit column */}
+            {/* Guided self-assessment */}
             <div style={{ background: "rgba(0,255,180,0.04)", padding: "32px 28px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "24px" }}>
                 <div style={{ width: "28px", height: "28px", background: "var(--green)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px" }}>⚡</div>
                 <div>
                   <p style={{ fontSize: "14px", fontWeight: 800, color: "var(--green)", margin: 0 }}>KloudAudit</p>
-                  <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0 }}>free · purpose-built</p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0 }}>Free · guided · point-in-time</p>
                 </div>
               </div>
               {[
-                "34 checks across cost + security — already built",
-                "Framework encodes what to ask, automatically",
-                "Dollar savings tied to your actual monthly bill",
-                "Every estimate calculated against your spend",
-                "15 minutes, structured, guided",
-                "Score history tracked — re-audit in 30 days",
-                "PDF report, share card, public link",
-                "Catches what you didn't know to look for",
+                "18 cost checks plus a separate 16-check security review",
+                "Provider-specific questions in a guided flow",
+                "Savings estimates use your entered spend and answers",
+                "Prioritized findings and an assessment score",
+                "Optional one-time Blueprint with CLI/Terraform guidance",
+                "No cloud credentials, account connection, or billing import",
               ].map(item => (
                 <div key={item} style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "12px" }}>
-                  <span style={{ color: "var(--green)", fontSize: "13px", marginTop: "1px", flexShrink: 0 }}>✓</span>
+                  <span aria-hidden="true" style={{ color: "var(--green)", fontSize: "13px", marginTop: "1px", flexShrink: 0 }}>✓</span>
                   <span style={{ fontSize: "13px", color: "var(--text-dim)", lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
@@ -5245,10 +5250,10 @@ aws iam simulate-principal-policy \\
           </div>
           <div style={{ textAlign: "center" }}>
             <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "16px" }}>
-              The audit framework is the product. The AI is just how we deliver the fix guide.
+              The assessment organizes your answers; it does not independently validate your environment.
             </p>
             <button className="glow-btn" onClick={() => goTo("intake")} style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "12px", padding: "13px 32px", fontSize: "15px", boxShadow: "0 0 24px rgba(0,255,180,0.25)" }}>
-              Try the 15-minute version →
+              Start the Free Assessment →
             </button>
           </div>
         </div>
@@ -5256,9 +5261,9 @@ aws iam simulate-principal-policy \\
         {/* ── WHAT WE AUDIT ── */}
         <div style={{ marginBottom: "90px" }}>
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
-            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Comprehensive coverage</p>
-            <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>What we audit</h2>
-            <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "560px", margin: "12px auto 0" }}>Cloud spend leaks, AI coding tool waste, and security gaps — all in one platform, zero access required.</p>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Coverage, without account access</p>
+            <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff" }}>What the assessment covers</h2>
+            <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "12px", maxWidth: "600px", margin: "12px auto 0" }}>Structured questions across cloud infrastructure, databases, networking, AI API spend, and security—answered by your team, not gathered from a live scan.</p>
           </div>
           <div className="audit-cats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
             {AUDIT_SECTIONS.map((s, i) => (
@@ -5361,25 +5366,6 @@ aws iam simulate-principal-policy \\
           </div>
         </div>
 
-        {/* ── REAL AUDIT RESULT (anonymized — customer contacted for a feature credit, no response) ── */}
-        <div style={{ marginBottom: "48px", background: "rgba(0,255,180,0.03)", border: "1px solid rgba(0,255,180,0.1)", borderRadius: "16px", padding: "24px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", align: "center", gap: "16px", flexWrap: "wrap" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase" }}>Real audit result</p>
-              <p style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>13 issues · $794–$2,003/mo savings found</p>
-              <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Multi-cloud · $640/mo bill · Completed May 2026</p>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
-            {[["13", "Issues found"], ["$2,003", "Max monthly saving"]].map(([v, l]) => (
-              <div key={l} style={{ textAlign: "center" }}>
-                <p style={{ fontSize: "20px", fontWeight: 800, color: "var(--green)", fontFamily: "var(--display)" }}>{v}</p>
-                <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>{l}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* ── SECURITY AUDIT PRODUCT CARD ── */}
         <div id="security-audit" style={{ marginBottom: "48px" }}>
           <div role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && goTo("security_intro")} onClick={() => goTo("security_intro")}
@@ -5393,8 +5379,8 @@ aws iam simulate-principal-policy \\
                   <span style={{ fontSize: "10px", fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "20px", padding: "2px 10px", letterSpacing: "1px" }}>NEW · FREE</span>
                   <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "1px" }}>CLOUD SECURITY AUDIT</span>
                 </div>
-                <h3 className="display" style={{ fontSize: "20px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "4px" }}>Find security vulnerabilities before attackers do</h3>
-                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>Find the gaps attackers scan for first — before your next pentest, compliance audit, or investor review. 16 checks. Free. Zero access required.</p>
+                <h3 className="display" style={{ fontSize: "20px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", marginBottom: "4px" }}>Review common cloud security gaps</h3>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>A 16-check self-assessment covering IAM, network exposure, encryption, and logging. Free, with no account access required.</p>
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "10px", flexShrink: 0 }}>
@@ -5415,10 +5401,10 @@ aws iam simulate-principal-policy \\
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
             <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "12px" }}>Pricing</p>
             <h2 className="display" style={{ fontSize: "clamp(26px,3vw,40px)", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "12px" }}>
-              Two different problems. Two different solutions.
+              Start free. Add guidance only if you need it.
             </h2>
             <p style={{ fontSize: "15px", color: "var(--text-muted)", maxWidth: "520px", margin: "0 auto" }}>
-              Engineers buy the Blueprint to fix what's broken. CTOs buy the Monitor to make sure it stays fixed — and prove it to the board.
+              The assessment is free. Optional one-time Blueprints and a board-ready report turn your answers into practical next steps.
             </p>
           </div>
 
@@ -5438,8 +5424,8 @@ aws iam simulate-principal-policy \\
                 <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>$0</span>
                 <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>forever</span>
               </div>
-              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>Run the audit. See every issue. Know exactly what it's costing you.</p>
-              {["18 cost + 16 security checks", "Dollar savings per issue", "Waste score 0–100", "Shareable report link"].map(f => (
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>Complete the checklist and review prioritised findings with estimated savings based on your answers.</p>
+                      {["18 cost + 16 security checks", "Estimated savings per flagged issue", "Waste score 0–100", "Shareable report link"].map(f => (
                 <div key={f} style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
                   <span style={{ color: "#4ade80", fontSize: "12px", flexShrink: 0 }}>✓</span>
                   <span style={{ fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f}</span>
@@ -5451,20 +5437,20 @@ aws iam simulate-principal-policy \\
             </div>
             {/* Cost Blueprint */}
             <div className="pricing-card-featured" style={{ background: "rgba(0,255,180,0.06)", border: "1.5px solid rgba(0,255,180,0.3)", borderRadius: "18px", padding: "28px 24px", position: "relative" }}>
-              <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "var(--green)", color: "#000", fontSize: "11px", fontWeight: 800, padding: "3px 14px", borderRadius: "20px", whiteSpace: "nowrap" }}>Most popular</div>
+              <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "var(--green)", color: "#000", fontSize: "11px", fontWeight: 800, padding: "3px 14px", borderRadius: "20px", whiteSpace: "nowrap" }}>One-time guide</div>
               <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Cost Blueprint</p>
               <div style={{ marginBottom: "6px" }}>
                 <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{currency.blueprintPrice}</span>
                 <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>one-time</span>
               </div>
-              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>Forward to your DevOps team. They can implement every fix the same afternoon.</p>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>A one-time, issue-specific implementation guide your DevOps team can review and adapt.</p>
               {[
                 "Exact CLI commands for every issue",
                 "Terraform/IaC snippets included",
                 "Step-by-step — no Googling required",
                 "Delivered to inbox in 2 minutes",
-                "Pays for itself in day 1 of savings",
-                "Full refund if nothing is actionable",
+                "One-time purchase—no recurring fee",
+                "You choose which changes to implement",
               ].map(f => (
                 <div key={f} style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
                   <span style={{ color: "var(--green)", fontSize: "12px", flexShrink: 0 }}>✓</span>
@@ -5483,7 +5469,7 @@ aws iam simulate-principal-policy \\
                 <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{currency.aiBlueprintPrice}</span>
                 <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>one-time</span>
               </div>
-              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>Forward to your AI/ML team. Model routing, caching, and spend controls implemented the same afternoon.</p>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>A one-time guide to help your AI/ML team review routing, caching, and spend-control options.</p>
               {[
                 "Model routing code for OpenAI, Anthropic, Bedrock",
                 "Caching implementation with exact API parameters",
@@ -5517,7 +5503,7 @@ aws iam simulate-principal-policy \\
                 <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{currency.securityPrice || "$29"}</span>
                 <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>one-time</span>
               </div>
-              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>A security consultant charges $2,000+ for this. Same output, 10 minutes, no credentials shared.</p>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "20px", lineHeight: 1.5 }}>A one-time remediation guide based on the security findings in your self-assessment.</p>
               {[
                 "IAM policy templates, ready to deploy",
                 "Compliance gap mapping (SOC 2, GDPR, ISO 27001)",
@@ -5580,54 +5566,17 @@ aws iam simulate-principal-policy \\
             </div>
           </div>
 
-          {subscriptionAvailable ? (
-            <div style={{ background: "rgba(99,102,241,0.06)", border: "1.5px solid rgba(99,102,241,0.25)", borderRadius: "18px", padding: "32px", display: "flex", alignItems: "flex-start", gap: "32px", flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: "260px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-                <p style={{ fontSize: "12px", fontWeight: 700, color: "#818cf8", letterSpacing: "1px", textTransform: "uppercase", margin: 0 }}>Cloud Health Monitor</p>
-                <span style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "20px", fontSize: "11px", color: "#818cf8", fontWeight: 700, padding: "2px 10px" }}>New</span>
-              </div>
-              <div style={{ marginBottom: "8px" }}>
-                <span className="display" style={{ fontSize: "28px", fontWeight: 800, color: "#fff", letterSpacing: "-1px" }}>{currency.subscriptionPrice || "$19/mo"}</span>
-                <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "6px" }}>cancel anytime</span>
-              </div>
-              <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "0", maxWidth: "480px" }}>
-                Your engineers fix issues once. New ones appear every month — new services, new deployments, new waste. The Monitor catches them before the next board meeting, not after.
-              </p>
+          <div className="team-plan-note">
+            <div>
+              <span className="team-plan-note__eyebrow">For teams</span>
+              <h3>Continuous monitoring is not in the current offer.</h3>
+              <p>KloudAudit currently provides point-in-time self-assessments and optional one-time reports. Ongoing monitoring and Slack/Teams alerts are not available.</p>
             </div>
-            <div style={{ flex: 1, minWidth: "260px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "20px" }}>
-                {[
-                  { icon: "📊", text: "Monthly waste score — track your team's improvement" },
-                  { icon: "🚨", text: "New issues flagged the moment they appear" },
-                  { icon: "📄", text: "Board-ready infrastructure health report each month" },
-                  { icon: "💡", text: "One discounted Blueprint per month included" },
-                  { icon: "🔒", text: "Zero cloud access — nothing to approve with IT" },
-                  { icon: "📈", text: "Show investors your infrastructure is improving" },
-                ].map(f => (
-                  <div key={f.text} style={{ display: "flex", gap: "8px", alignItems: "flex-start", background: "rgba(99,102,241,0.06)", borderRadius: "8px", padding: "10px 12px" }}>
-                    <span style={{ fontSize: "14px", flexShrink: 0 }}>{f.icon}</span>
-                    <span style={{ fontSize: "11px", color: "var(--text-dim)", lineHeight: 1.5 }}>{f.text}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <input type="email" placeholder="your@company.com" value={subEmail || gateEmail}
-                  onChange={e => setSubEmail(e.target.value)}
-                  style={{ width: "100%", padding: "11px 14px", background: "rgba(99,102,241,0.08)", border: "1.5px solid rgba(99,102,241,0.3)", borderRadius: "10px", color: "#fff", fontSize: "14px", boxSizing: "border-box" }} />
-                <button onClick={() => { const email = subEmail || gateEmail; if (email) handleBuySubscription(email); else goTo("intake"); }}
-                  disabled={subStatus === 'loading'}
-                  style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg,#818cf8,#6366f1)", color: "#fff", fontWeight: 800, fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}>
-                  {subStatus === 'loading' ? "Redirecting…" : `Start Cloud Health Monitor — ${currency.subscriptionPrice || "$19/mo"} →`}
-                </button>
-                {subStatus === 'not_configured' && <p style={{ fontSize: "12px", color: "#818cf8", textAlign: "center" }}>Coming soon — <a href="mailto:admin@kloudaudit.eu" style={{ color: "#818cf8" }}>join the waitlist</a></p>}
-                <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>Cancel anytime · Secure via Stripe · No cloud access required</p>
-              </div>
-            </div>
-          </div>) : null}
+            <a href="mailto:admin@kloudaudit.eu?subject=KloudAudit%20team%20updates">Ask about future team options <span aria-hidden="true">→</span></a>
+          </div>
 
           <p style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "20px" }}>
-            All blueprints include a full refund if no actionable fix is identified. Questions? <a href="mailto:admin@kloudaudit.eu" style={{ color: "var(--green)", textDecoration: "underline" }}>admin@kloudaudit.eu</a>
+            One-time purchases. Blueprints include the actionable-fix refund guarantee described in the <a href="/terms/" style={{ color: "var(--green)", textDecoration: "underline" }}>Terms of Service</a>.
           </p>
         </div>
 
@@ -5640,7 +5589,7 @@ aws iam simulate-principal-policy \\
           </div>
           {FAQS.map((faq, i) => (
             <div key={i} style={{ background: "var(--bg2)", border: `1px solid ${openFaq === i ? (faq.tag === "security" ? "rgba(248,113,113,0.25)" : "rgba(0,255,180,0.2)") : "var(--border)"}`, borderRadius: "14px", marginBottom: "10px", overflow: "hidden", transition: "border-color 0.2s" }}>
-              <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
+              <button id={`faq-question-${i}`} aria-expanded={openFaq === i} aria-controls={`faq-answer-${i}`} onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 style={{ width: "100%", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
                   {faq.tag === "security" && <span style={{ fontSize: "10px", fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "4px", padding: "2px 7px", whiteSpace: "nowrap", flexShrink: 0 }}>Security</span>}
@@ -5650,8 +5599,11 @@ aws iam simulate-principal-policy \\
                 <span style={{ fontSize: "18px", color: openFaq === i ? "var(--green)" : "var(--text-muted)", flexShrink: 0, transition: "all 0.2s", transform: openFaq === i ? "rotate(45deg)" : "none" }}>+</span>
               </button>
               {openFaq === i && (
-                <div style={{ padding: "0 24px 20px", animation: "fadeUp 0.2s ease" }}>
-                  <p style={{ fontSize: "14px", color: "var(--text-dim)", lineHeight: 1.75, borderTop: "1px solid var(--border)", paddingTop: "16px" }}>{faq.a}</p>
+                <div id={`faq-answer-${i}`} role="region" aria-labelledby={`faq-question-${i}`} style={{ padding: "0 24px 20px", animation: "fadeUp 0.2s ease" }}>
+                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: "16px" }}>
+                    <p style={{ fontSize: "14px", color: "var(--text-dim)", lineHeight: 1.75 }}>{faq.a}</p>
+                    {faq.link && <a href={faq.link} style={{ display: "inline-block", marginTop: "8px", color: "var(--indigo)", fontSize: "13px", fontWeight: 700 }}>Read the Privacy Policy →</a>}
+                  </div>
                 </div>
               )}
             </div>
@@ -5663,15 +5615,15 @@ aws iam simulate-principal-policy \\
           <div style={{ position: "absolute", top: "-80px", left: "50%", transform: "translateX(-50%)", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(0,255,180,0.06) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
           <p style={{ fontSize: "11px", letterSpacing: "3px", color: "var(--green)", fontWeight: 700, textTransform: "uppercase", marginBottom: "16px" }}>No credit card · No signup · Free forever</p>
           <h2 className="display" style={{ fontSize: "clamp(28px,3.5vw,48px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#fff", marginBottom: "16px" }}>
-            Your cloud bill has waste.<br />
-            <span style={{ color: "var(--green)" }}>Find it in 15 minutes.</span>
+            Could your cloud bill be leaner?<br />
+            <span style={{ color: "var(--green)" }}>Review it in 10–15 minutes.</span>
           </h2>
-          <p style={{ color: "var(--text-muted)", fontSize: "16px", marginBottom: "36px", maxWidth: "400px", margin: "0 auto 36px" }}>18 structured checks. Instant savings report. AI blueprint available the moment you see your results.</p>
+          <p style={{ color: "var(--text-muted)", fontSize: "16px", marginBottom: "36px", maxWidth: "460px", margin: "0 auto 36px" }}>18 structured checks. A point-in-time report with answer-based findings. Optional one-time implementation guidance.</p>
           <button className="glow-btn" onClick={() => goTo("intake")}
             style={{ background: "var(--green)", color: "#000", border: "none", borderRadius: "14px", padding: "18px 48px", fontSize: "18px", boxShadow: "0 0 40px rgba(0,255,180,0.35)" }}>
             See What My Bill Is Hiding →
           </button>
-          <p style={{ marginTop: "16px", fontSize: "12px", color: "var(--text-muted)" }}>Takes 15 minutes · 18 checkpoints · Average saving: 20–45% of monthly bill</p>
+          <p style={{ marginTop: "16px", fontSize: "12px", color: "var(--text-muted)" }}>About 10–15 minutes · 18 checkpoints · Savings shown are estimates, not guarantees</p>
         </div>
 
         {/* ── ENGINEER TRUST SECTION ── */}
@@ -5731,7 +5683,7 @@ aws iam simulate-principal-policy \\
                   <span className="display" style={{ fontWeight: 800, fontSize: "16px", color: "#fff", letterSpacing: "-0.5px" }}>KloudAudit</span>
                 </div>
                 <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.7, marginBottom: "20px", maxWidth: "240px" }}>
-                  Find what your cloud bill is hiding. Free audit in 15 minutes — no credentials, no signup, no agent.
+                  Review potential cloud cost opportunities with a free 10–15 minute self-assessment—no credentials or account connection.
                 </p>
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                   {[
@@ -5824,7 +5776,7 @@ aws iam simulate-principal-policy \\
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={isAiProvider ? handleBuyAiBlueprint : isCodingToolsProvider ? handleBuyCodingToolsBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={blueprintProductType} price={blueprintPrice} amount={blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} subscriptionAvailable={subscriptionAvailable} />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
         <div className="fade-up">
@@ -5913,7 +5865,7 @@ aws iam simulate-principal-policy \\
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={isAiProvider ? handleBuyAiBlueprint : isCodingToolsProvider ? handleBuyCodingToolsBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={blueprintProductType} price={blueprintPrice} amount={blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} subscriptionAvailable={subscriptionAvailable} />}
         <Nav showBack onBack={() => goTo("intake")} />
         {/* ── SECTION COMPLETE TOAST ── */}
         {sectionToast && (
@@ -6113,7 +6065,7 @@ aws iam simulate-principal-policy \\
                           <span style={{ fontSize: "11px", fontWeight: 600, color: i === activeSection ? "var(--green)" : "var(--text-dim)" }}>{s.label}</span>
                         </div>
                             {(s.id === "compute" || s.id === "database") && (
-                              <span style={{ fontSize: "9px", fontWeight: 700, color: "#00ffb4", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "8px", padding: "1px 6px", width: "fit-content" }}>Most teams find issues here</span>
+                              <span style={{ fontSize: "9px", fontWeight: 700, color: "#00ffb4", background: "rgba(0,255,180,0.12)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "8px", padding: "1px 6px", width: "fit-content" }}>Common review area</span>
                             )}
                           </div>
                           <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{done}/{s.checks.length}</span>
@@ -6376,7 +6328,7 @@ aws iam simulate-principal-policy \\
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={isAiProvider ? handleBuyAiBlueprint : isCodingToolsProvider ? handleBuyCodingToolsBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={blueprintProductType} price={blueprintPrice} amount={blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} subscriptionAvailable={subscriptionAvailable} />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
           {/* Header */}
@@ -6687,7 +6639,7 @@ aws iam simulate-principal-policy \\
             </div>
             <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
               <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.65, textAlign: "center" }}>
-                🛡️ The Blueprint is generated by Claude AI using <strong style={{ color: "#fff" }}>only what you entered in this audit</strong>. We have zero access to your actual infrastructure. Your responses are never stored, sold, or shared.
+                🛡️ The Blueprint is generated using <strong style={{ color: "#fff" }}>the information you entered in this audit</strong>. We have zero access to your actual infrastructure. For information about response storage, processors, and retention, see the <a href="/privacy/" style={{ color: "var(--green)" }}>Privacy Policy</a>.
               </p>
             </div>
           </div>
@@ -6707,29 +6659,30 @@ aws iam simulate-principal-policy \\
                   <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "160px", height: "160px", background: "radial-gradient(circle, rgba(0,255,180,0.08) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
                   <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "24px", alignItems: "center", flexWrap: "wrap" }}>
                     <div>
-                      <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px" }}>The math is simple</p>
+                      <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px" }}>Illustrative economics</p>
                       <p style={{ fontSize: "clamp(18px,2.5vw,26px)", fontWeight: 800, color: "#fff", letterSpacing: "-0.8px", lineHeight: 1.2, marginBottom: "6px" }}>
-                        Spend <span style={{ color: "var(--green)" }}>{bpPrice}</span> once.
-                        Recover <span style={{ color: "var(--green)" }}>${savMin.toLocaleString()}/mo</span> after.
+                        Blueprint: <span style={{ color: "var(--green)" }}>{bpPrice}</span> once.
+                        Estimated opportunity: <span style={{ color: "var(--green)" }}>${savMin.toLocaleString()}/mo</span>.
                       </p>
                       <p style={{ fontSize: "15px", color: "var(--text-dim)", marginBottom: "12px" }}>
-                        That's <strong style={{ color: "#fff" }}>${(savMin * 12).toLocaleString()}+ per year</strong> — the Blueprint pays for itself in <strong style={{ color: "var(--green)" }}>{daysToROI <= 1 ? "day one" : daysToROI <= 7 ? `${daysToROI} days` : "the first week"}</strong>.
+                        If fully realized, the estimate annualizes to <strong style={{ color: "#fff" }}>${(savMin * 12).toLocaleString()} per year</strong>. At that rate, the one-time price is equivalent to about <strong style={{ color: "var(--green)" }}>{daysToROI} day{daysToROI === 1 ? "" : "s"}</strong> of potential savings.
                       </p>
                       <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 12px" }}>
-                        <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>🛡 If the Blueprint doesn't cover its cost in 30 days — full refund, no questions asked.</span>
+                        <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>🛡 Actionable-fix refund guarantee applies as described in the <a href="/terms/" style={{ color: "var(--green)" }}>Terms</a>.</span>
                       </div>
                     </div>
                     <div style={{ textAlign: "center", flexShrink: 0 }}>
-                      <p style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>Annual ROI</p>
+                      <p style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>Illustrative annualized ROI</p>
                       <p className="display" style={{ fontSize: "clamp(32px,4vw,48px)", fontWeight: 800, color: "var(--green)", letterSpacing: "-2px", lineHeight: 1 }}>{roiPct.toLocaleString()}%</p>
+                      <p style={{ fontSize: "10px", color: "var(--text-muted)", marginTop: "5px" }}>if the estimate is realized</p>
                     </div>
                   </div>
                 </div>
               );
             })() : (
               <div style={{ background: "rgba(0,255,180,0.05)", border: "1px solid rgba(0,255,180,0.15)", borderRadius: "14px", padding: "20px 24px", marginBottom: "24px", textAlign: "center" }}>
-                <p style={{ fontSize: "15px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>Teams typically find $500–$4,000+/month.</p>
-                <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>At those numbers, the {bpPrice} Blueprint pays for itself in hours — not days.</p>
+                <p style={{ fontSize: "15px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>Your estimate is based on your assessment answers.</p>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Review the findings first, then decide whether a {bpPrice} Blueprint is useful for your team.</p>
               </div>
               );
             })()}
