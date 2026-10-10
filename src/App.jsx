@@ -195,7 +195,21 @@ const CODING_TOOLS_VERIFY_COMMANDS = {
 const SAMPLE_REPORT = {
   companyName: "TechFlow GmbH",
   provider: "AWS",
-  monthlyBill: 8500,
+  monthlyBill: 85000,
+  savingsRange: [19975, 38250],
+  findingSavings: {
+    rightsizing: [5000, 9000],
+    reserved: [7000, 12000],
+    spot: [8000, 14000],
+    old_gen: [2500, 5000],
+    s3_tier: [2000, 4000],
+    unattached_volumes: [1500, 3000],
+    snapshots: [1000, 2500],
+    rds_idle: [2500, 5000],
+    rds_size: [3000, 6000],
+    no_budgets: [1500, 3000],
+    dev_prod_parity: [2500, 5000],
+  },
   checked: {
     rightsizing: true, reserved: true, spot: true, old_gen: true,
     s3_tier: true, unattached_volumes: true, snapshots: true,
@@ -333,6 +347,50 @@ function CodeBlock({ code }) {
         {copied ? "✓ Copied" : "Copy"}
       </button>
     </div>
+  );
+}
+
+function LandingSavingsCard({ spend, onSpendChange }) {
+  const monthlySpend = Number(spend) || 0;
+  const low = Math.round(monthlySpend * 0.2);
+  const high = Math.round(monthlySpend * 0.45);
+
+  return (
+    <aside className="landing-savings-card" aria-label="Illustrative savings estimate calculator">
+      <div className="landing-savings-card__top">
+        <span className="landing-savings-card__eyebrow">A clearer view of cloud spend</span>
+        <span className="landing-savings-card__sample">ESTIMATE</span>
+      </div>
+      <h2>See what a focused review could uncover.</h2>
+      <p className="landing-savings-card__intro">Move the slider to see a planning range based on your monthly spend.</p>
+      <div className="landing-savings-card__figure">
+        <span>Potential monthly savings range</span>
+        <strong><small>$</small>{low.toLocaleString()} <i>—</i> <small>$</small>{high.toLocaleString()}</strong>
+        <span>Illustrative estimate · not a guarantee</span>
+      </div>
+      <div className="landing-savings-card__range">
+        <label htmlFor="hero-spend-range">Estimated monthly cloud and AI spend</label>
+        <div className="landing-savings-card__spend"><strong>${monthlySpend.toLocaleString()}</strong><span>/ month</span></div>
+        <input
+          id="hero-spend-range"
+          type="range"
+          min="500"
+          max="50000"
+          step="500"
+          value={monthlySpend}
+          onChange={event => onSpendChange(Number(event.target.value))}
+          aria-valuetext={`$${monthlySpend.toLocaleString()} per month`}
+        />
+        <div className="landing-savings-card__bounds"><span>$500</span><span>$50,000+</span></div>
+      </div>
+      <div className="landing-savings-card__trust">
+        <span aria-hidden="true">✓</span>
+        <p><strong>Private by design</strong><br />This estimate runs in your browser. No account connection or billing data is requested.</p>
+      </div>
+      <button className="landing-savings-card__link" onClick={() => document.getElementById("start-audit")?.scrollIntoView({ behavior: "smooth", block: "center" })}>
+        Explore the assessment <span aria-hidden="true">↓</span>
+      </button>
+    </aside>
   );
 }
 
@@ -519,6 +577,205 @@ const globalCss = `
   }
   button, [role="button"], [role="radio"], [role="checkbox"] {
     -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+  }
+
+  /* KloudAudit product-wide visual system: calm, editorial, and data-first. */
+  :root {
+    --bg: #f3f6fa; --bg2: #ffffff; --bg3: #edf2f7;
+    --border: #dce4ed; --border-hover: #9aaec3;
+    --green: #087a55; --green-dim: #e9f6f0; --green-border: #b9e2ce;
+    --text: #162235; --text-muted: #526174; --text-dim: #3d4d61;
+    --display: Inter, ui-sans-serif, system-ui, sans-serif;
+    --body: Inter, ui-sans-serif, system-ui, sans-serif;
+    --indigo: #4f46e5;
+  }
+  html { background: var(--bg); scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--body); }
+  .app { background: var(--bg) !important; color: var(--text) !important; }
+  .app > div[style*="z-index: 0"] { display: none !important; }
+  .app nav { background: rgba(255,255,255,.94) !important; border-bottom: 1px solid var(--border) !important; box-shadow: 0 1px 3px rgba(15,23,42,.04); }
+  .app nav > div { max-width: 1320px; margin-left: auto; margin-right: auto; }
+  .app main { max-width: 1280px !important; }
+  .display { font-family: var(--display) !important; }
+  .app h1[style*="color: rgb(255, 255, 255)"],
+  .app h2[style*="color: rgb(255, 255, 255)"],
+  .app h3[style*="color: rgb(255, 255, 255)"],
+  .app p[style*="color: rgb(255, 255, 255)"],
+  .app span[style*="color: rgb(255, 255, 255)"],
+  .app strong[style*="color: rgb(255, 255, 255)"],
+  .app label[style*="color: rgb(255, 255, 255)"],
+  .app div[style*="color: rgb(255, 255, 255)"]:not(button):not(a) { color: var(--text) !important; }
+  .app [style*="color: rgb(0, 255, 180)"]:not(button),
+  .app [style*="color: rgb(74, 222, 128)"]:not(button) { color: var(--green) !important; }
+  .app [style*="color: rgba(148, 163, 184"]:not(button),
+  .app [style*="color: rgb(148, 163, 184)"]:not(button),
+  .app [style*="color: rgb(136, 153, 170)"]:not(button) { color: #526174 !important; }
+  .app [style*="background: var(--bg2)"],
+  .app [style*="background: var(--bg3)"] { background: #fff !important; }
+  .app [style*="background: rgba(255, 255, 255"],
+  .app [style*="background: linear-gradient(145deg"] { background: #fff !important; }
+  .app [style*="border: 1px solid rgba(255, 255, 255"],
+  .app [style*="border: 1.5px solid rgba(255, 255, 255"],
+  .app [style*="border: 2px solid rgba(255, 255, 255"] { border-color: var(--border) !important; }
+  .app input:not([type="range"]),
+  .app textarea,
+  .app select {
+    color: var(--text) !important; -webkit-text-fill-color: var(--text) !important;
+    background: #fff !important; border-color: #cbd5e1 !important;
+    box-shadow: 0 1px 2px rgba(15,23,42,.035);
+  }
+  .app input::placeholder, .app textarea::placeholder { color: #748196 !important; -webkit-text-fill-color: #748196 !important; }
+  .app input:focus, .app textarea:focus, .app select:focus { border-color: var(--indigo) !important; box-shadow: 0 0 0 3px rgba(79,70,229,.12) !important; }
+  .app input:-webkit-autofill, .app input:-webkit-autofill:hover, .app input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #fff inset !important; -webkit-text-fill-color: var(--text) !important;
+  }
+  .glow-btn {
+    background: var(--indigo) !important; color: #fff !important;
+    box-shadow: 0 5px 14px rgba(79,70,229,.18) !important; border-radius: 10px !important;
+    font-family: var(--body) !important; font-weight: 700 !important;
+  }
+  .glow-btn:hover { background: #4338ca !important; box-shadow: 0 8px 20px rgba(79,70,229,.24) !important; transform: translateY(-1px); }
+  .glow-btn:disabled { background: #e8edf3 !important; color: #66758a !important; box-shadow: none !important; opacity: 1; }
+  .ghost-btn { background: #fff !important; border-color: var(--border) !important; color: #334155 !important; }
+  .ghost-btn:hover { background: #f8fafc !important; border-color: #a9b8ca !important; color: var(--text) !important; }
+  .app .audit-answer-btn { color: #334155 !important; }
+  .app .audit-answer-btn:first-child { color: #fff !important; }
+  .app .audit-next-btn { background: var(--indigo) !important; border-color: var(--indigo) !important; color: #fff !important; min-height: 52px !important; border-radius: 10px !important; }
+  .audit-progress-labels { background: rgba(255,255,255,.96) !important; border-bottom: 1px solid var(--border); box-shadow: 0 3px 8px rgba(15,23,42,.04); }
+  .audit-progress-labels span > span:first-child { background: #cbd5e1 !important; }
+  .audit-progress-labels span > .section-active-indicator { background: var(--green) !important; }
+  .audit-progress-labels span > span:last-child { color: var(--border); }
+  .section-tab:hover, .provider-chip:hover { color: var(--indigo) !important; }
+  .provider-chip.selected { background: #eef2ff !important; border-color: #818cf8 !important; color: #4338ca !important; }
+  .check-card:hover, .finding-row:hover { border-color: #b9e2ce !important; background: #f4fbf7 !important; }
+  .audit-cat-card, .pricing-card, .pricing-card-featured, .check-card {
+    box-shadow: 0 3px 12px rgba(15,23,42,.045) !important;
+  }
+  .audit-cat-card:hover, .pricing-card:hover, .pricing-card-featured:hover {
+    box-shadow: 0 12px 28px rgba(15,23,42,.09) !important; border-color: #b9c8d8 !important;
+  }
+  .sticky-bottom-cta { background: rgba(255,255,255,.96) !important; border-color: var(--border) !important; box-shadow: 0 -6px 20px rgba(15,23,42,.07); }
+  .hero-pad { min-height: 0 !important; padding: 82px 0 46px !important; display: block !important; }
+  .landing-hero-grid { display: grid; grid-template-columns: minmax(0,1.12fr) minmax(360px,.88fr); align-items: center; gap: clamp(32px,5vw,72px); text-align: left; }
+  .landing-hero-copy { min-width: 0; text-align: left; }
+  .landing-hero-copy .hero-h1 { max-width: 720px; font-size: clamp(42px,5.2vw,68px) !important; letter-spacing: -2.6px !important; line-height: 1.04 !important; margin-bottom: 22px !important; }
+  .landing-hero-copy .hero-h1 > span:first-of-type { background: linear-gradient(105deg,#087a55,#4f46e5) !important; -webkit-background-clip: text !important; background-clip: text !important; }
+  .landing-hero-copy .hero-h1 > span > span { display: none !important; }
+  .landing-hero-copy .hero-subheading { display: block !important; max-width: 610px !important; margin: 0 0 22px !important; font-size: 17px !important; color: #526174 !important; line-height: 1.7 !important; }
+  .landing-hero-copy .hero-subheading strong:first-of-type { color: #162235 !important; }
+  .landing-hero-copy .methodology-note { text-align: left; margin: 0 0 24px; }
+  .landing-hero-copy .hero-provider-btns { margin-bottom: 18px !important; }
+  .landing-hero-copy .provider-pill-row { justify-content: flex-start !important; gap: 8px !important; }
+  .landing-hero-copy .hero-provider-btns button {
+    min-width: 0 !important; padding: 9px 13px !important; flex-direction: row !important;
+    border: 1px solid #dce4ed !important; background: #fff !important; color: #334155 !important;
+    border-radius: 9px !important; font-size: 12px !important; box-shadow: 0 1px 2px rgba(15,23,42,.04);
+  }
+  .landing-hero-copy .hero-provider-btns button:hover { background: #f8fafc !important; border-color: #a8b6c7 !important; transform: translateY(-1px) !important; }
+  .landing-hero-copy .hero-provider-btns button .provider-pill-sublabel { display: none !important; }
+  .landing-hero-copy .hero-provider-btns > p { color: #607085 !important; }
+  .landing-hero-copy .secondary-cta { justify-content: flex-start !important; margin-bottom: 20px !important; }
+  .landing-hero-copy .secondary-cta button { padding: 13px 21px !important; border-radius: 9px !important; }
+  .landing-hero-copy .secondary-cta .ghost-btn { color: #334155 !important; }
+  .landing-hero-copy .hero-cta-note { margin: 0 0 22px !important; text-align: left !important; }
+  .landing-hero-copy .landing-trust-row { justify-content: flex-start !important; gap: 9px !important; margin-bottom: 16px !important; }
+  .landing-hero-copy .trust-chip { background: #fff !important; border-color: #dce4ed !important; color: #43536a !important; }
+  .landing-hero-copy .stats-pills { justify-content: flex-start !important; gap: 16px !important; margin-bottom: 0 !important; }
+  .landing-savings-card {
+    max-width: 510px; width: 100%; justify-self: end; padding: clamp(24px,3vw,34px);
+    border: 1px solid #dce4ed; border-radius: 18px; background: #fff;
+    box-shadow: 0 22px 60px rgba(22,34,53,.11), 0 2px 8px rgba(22,34,53,.04);
+  }
+  .landing-savings-card__top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .landing-savings-card__eyebrow { color: #526174; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .landing-savings-card__sample { color: #4f46e5; background: #eef2ff; border-radius: 5px; padding: 5px 8px; font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+  .landing-savings-card h2 { max-width: 350px; color: #162235; font-size: clamp(21px,2.3vw,28px); line-height: 1.2; letter-spacing: -.7px; }
+  .landing-savings-card__intro { margin: 9px 0 22px; color: #526174; font-size: 13px; line-height: 1.55; }
+  .landing-savings-card__figure { padding: 17px 18px; border-radius: 12px; background: #f5f8fb; border: 1px solid #e7edf3; display: flex; flex-direction: column; gap: 5px; }
+  .landing-savings-card__figure > span:first-child { color: #526174; font-size: 11px; font-weight: 600; }
+  .landing-savings-card__figure strong { color: #087a55; font-size: clamp(24px,2.8vw,32px); letter-spacing: -.9px; font-variant-numeric: tabular-nums; }
+  .landing-savings-card__figure strong small { font-size: .55em; }
+  .landing-savings-card__figure strong i { color: #9aa9b9; font-size: .7em; font-style: normal; padding: 0 3px; }
+  .landing-savings-card__figure > span:last-child { color: #718096; font-size: 10px; }
+  .landing-savings-card__range { margin-top: 22px; }
+  .landing-savings-card__range label { display: block; margin-bottom: 8px; color: #3d4d61; font-size: 11px; font-weight: 700; }
+  .landing-savings-card__spend { display: flex; align-items: baseline; gap: 6px; margin-bottom: 10px; }
+  .landing-savings-card__spend strong { color: #162235; font-size: 18px; font-variant-numeric: tabular-nums; }
+  .landing-savings-card__spend span { color: #718096; font-size: 11px; }
+  .landing-savings-card input[type="range"] { width: 100%; accent-color: #4f46e5; cursor: pointer; }
+  .landing-savings-card__bounds { display: flex; justify-content: space-between; color: #718096; font-size: 10px; }
+  .landing-savings-card__trust { display: flex; align-items: flex-start; gap: 10px; margin-top: 22px; padding-top: 17px; border-top: 1px solid #e7edf3; }
+  .landing-savings-card__trust > span { display: grid; place-items: center; width: 23px; height: 23px; flex: 0 0 23px; border-radius: 7px; background: #e9f6f0; color: #087a55; font-size: 12px; font-weight: 800; }
+  .landing-savings-card__trust p { color: #526174; font-size: 11px; line-height: 1.5; }
+  .landing-savings-card__trust strong { color: #162235; }
+  .landing-savings-card__link { display: inline-flex; align-items: center; gap: 8px; margin-top: 18px; padding: 0; border: 0; background: none; color: #4f46e5; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .landing-savings-card__link:hover { color: #3730a3; }
+  .hero-subheading { display: block !important; }
+  .landing-section { margin-top: 20px; padding: clamp(24px,4vw,48px) !important; border: 1px solid #dce4ed !important; border-radius: 18px !important; background: rgba(255,255,255,.82) !important; box-shadow: 0 3px 12px rgba(15,23,42,.035); }
+  .landing-preview::before { display: none !important; }
+  .landing-preview [style*="color: rgb(248, 250, 252)"] { color: #162235 !important; }
+  .landing-preview [style*="color: rgb(226, 232, 240)"] { color: #233249 !important; }
+  .audit-grid, .sec-audit-grid { gap: 20px !important; }
+  .how-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .bento-grid-3 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+  .sample-metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .sample-metric-card { min-width: 0; overflow-wrap: anywhere; }
+  .sample-findings-caption { margin: -8px 0 20px; color: #607085; font-size: 12px; line-height: 1.5; }
+  .calc-metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .calc-metric-card { min-width: 0; overflow-wrap: anywhere; }
+  .report-preview-summary { grid-template-columns: 110px minmax(0, 1fr) !important; }
+  .report-preview-summary > div:last-child, .report-preview-kpis > * { min-width: 0; }
+  .report-preview-kpis { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .report-preview-kpis > * { padding: 8px 7px !important; overflow-wrap: anywhere; }
+  .newsletter-form { min-width: 0; }
+  .kpi-grid > div, .stats-grid > div { border-radius: 12px !important; }
+  .audit-grid .check-card, .audit-grid .finding-row { border-radius: 12px !important; }
+  [role="dialog"] { color: var(--text); }
+  .app [role="dialog"] h1[style*="color: rgb(255, 255, 255)"],
+  .app [role="dialog"] h2[style*="color: rgb(255, 255, 255)"],
+  .app [role="dialog"] h3[style*="color: rgb(255, 255, 255)"] { color: var(--text) !important; }
+  .app pre, .app code { color: #d9f2e6; }
+  .app pre[style*="background: rgb(10, 10, 22)"] { background: #111827 !important; border-color: #29364a !important; }
+  .app footer { color: #526174; }
+  @media (max-width: 900px) {
+    .landing-hero-grid { grid-template-columns: minmax(0,1fr); gap: 32px; }
+    .landing-hero-copy { max-width: 760px; margin: 0 auto; text-align: center; }
+    .landing-hero-copy .hero-h1 { margin-left: auto; margin-right: auto; }
+    .landing-hero-copy .hero-subheading { margin-left: auto !important; margin-right: auto !important; }
+    .landing-hero-copy .methodology-note { text-align: center; }
+    .landing-hero-copy .hero-cta-note { text-align: center !important; }
+    .landing-hero-copy .provider-pill-row, .landing-hero-copy .secondary-cta, .landing-hero-copy .landing-trust-row, .landing-hero-copy .stats-pills { justify-content: center !important; }
+    .landing-savings-card { justify-self: center; }
+  }
+  @media (max-width: 600px) {
+    .hero-pad { padding-top: 46px !important; padding-bottom: 30px !important; }
+    .landing-hero-copy .hero-h1 { font-size: clamp(35px,9vw,48px) !important; letter-spacing: -1.6px !important; }
+    .landing-hero-copy .hero-subheading { font-size: 15px !important; }
+    .landing-hero-copy .secondary-cta { display: grid !important; grid-template-columns: 1fr; }
+    .landing-hero-copy .secondary-cta button { width: 100%; justify-content: center; }
+    .landing-hero-copy .landing-trust-row { gap: 7px !important; }
+    .landing-hero-copy .stats-pills { display: none !important; }
+    .landing-savings-card { padding: 21px; }
+    .landing-section { padding: 22px 17px !important; }
+    .kpi-grid, .stats-grid { grid-template-columns: 1fr !important; }
+    .footer-grid { grid-template-columns: 1fr !important; }
+    .sticky-bottom-cta { flex-direction: column !important; align-items: stretch !important; }
+    .sticky-bottom-cta button { width: 100%; }
+    .app nav { padding-left: 14px !important; padding-right: 14px !important; }
+    .app nav a[href*="upwork.com"] { display: none !important; }
+    .how-grid, .bento-grid-3, .sample-metric-grid, .calc-metric-grid { grid-template-columns: minmax(0, 1fr) !important; }
+    .bento-grid-3, .bento-grid-3 > * { min-width: 0; width: 100%; box-sizing: border-box; }
+    .report-preview-summary { grid-template-columns: minmax(0, 1fr) !important; justify-items: center; }
+    .report-preview-summary > div:last-child { width: 100%; }
+    .newsletter-box { padding: 22px 18px !important; align-items: stretch !important; }
+    .newsletter-form { width: 100%; flex-shrink: 1 !important; }
+    .newsletter-form input, .newsletter-form button { width: 100% !important; box-sizing: border-box; }
+  }
+  @media (min-width: 601px) and (max-width: 1000px) {
+    .bento-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .app *, .app *::before, .app *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   }
 `;
 
@@ -2482,7 +2739,7 @@ const NewsletterWidget = memo(function NewsletterWidget() {
   };
 
   return (
-    <div style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "16px", padding: "28px 32px", marginBottom: "48px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}>
+    <div className="newsletter-box" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "16px", padding: "28px 32px", marginBottom: "48px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}>
       <div>
         <p style={{ fontSize: "16px", fontWeight: 800, color: "#fff", letterSpacing: "-0.3px", marginBottom: "4px" }}>Stay in the loop</p>
         <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: 0 }}>New blog posts, product updates, and cloud cost tips. No spam — unsubscribe any time.</p>
@@ -2492,7 +2749,7 @@ const NewsletterWidget = memo(function NewsletterWidget() {
           <span>✓</span> You're subscribed!
         </div>
       ) : (
-        <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px", flexShrink: 0, flexWrap: "wrap" }}>
+        <form className="newsletter-form" onSubmit={handleSubmit} style={{ display: "flex", gap: "8px", flexShrink: 0, flexWrap: "wrap" }}>
           <input type="email" required value={nEmail} onChange={e => setNEmail(e.target.value)} placeholder="you@company.com"
             style={{ padding: "11px 14px", background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(99,102,241,0.3)", borderRadius: "10px", color: "#fff", fontSize: "14px", width: "220px" }} />
           <button type="submit" disabled={nStatus === 'loading'}
@@ -2946,8 +3203,7 @@ function App() {
   const progress = Math.round((Object.keys(checked).length / allChecks.length) * 100);
 
   const sampleFlagged = allChecks.filter(c => SAMPLE_REPORT.checked[c.id]);
-  const sampleSavMin = Math.round(sampleFlagged.reduce((s, c) => s + SAMPLE_REPORT.monthlyBill * getSavingsRange(c)[0] / 100, 0));
-  const sampleSavMax = Math.round(sampleFlagged.reduce((s, c) => s + SAMPLE_REPORT.monthlyBill * getSavingsRange(c)[1] / 100, 0));
+  const [sampleSavMin, sampleSavMax] = SAMPLE_REPORT.savingsRange;
   const samplePct = Math.round(((sampleSavMin + sampleSavMax) / 2 / SAMPLE_REPORT.monthlyBill) * 100);
 
   // ── LCP OVERLAY DISMISSAL — fade out static HTML placeholder once React has painted ──
@@ -3677,21 +3933,21 @@ useEffect(() => {
           <div style={{ padding: "24px 32px" }}>
             {sampleTab === "report" ? (
               <>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", marginBottom: "28px" }}>
-                  {[{ label: "Monthly Savings", val: `$${sampleSavMin.toLocaleString()} – $${sampleSavMax.toLocaleString()}`, sub: "per month", color: "var(--green)", bg: "var(--green-dim)", border: "var(--green-border)" }, { label: "Annual Opportunity", val: `$${(sampleSavMin * 12).toLocaleString()}+`, sub: "per year", color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.25)" }, { label: "Waste Rate", val: `~${samplePct}%`, sub: "of total bill", color: "#fb923c", bg: "rgba(251,146,60,0.1)", border: "rgba(251,146,60,0.25)" }].map(s => (
-                    <div key={s.label} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: "12px", padding: "18px" }}>
+                <div className="sample-metric-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "14px", marginBottom: "28px" }}>
+                  {[{ label: "Monthly Savings", val: `$${sampleSavMin.toLocaleString()} – $${sampleSavMax.toLocaleString()}`, sub: "per month", color: "var(--green)", bg: "var(--green-dim)", border: "var(--green-border)" }, { label: "Annual Opportunity", val: `$${(sampleSavMin * 12).toLocaleString()} – $${(sampleSavMax * 12).toLocaleString()}`, sub: "per year", color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.25)" }, { label: "Waste Rate", val: `~${samplePct}%`, sub: "of total bill", color: "#fb923c", bg: "rgba(251,146,60,0.1)", border: "rgba(251,146,60,0.25)" }].map(s => (
+                    <div key={s.label} className="sample-metric-card" style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: "12px", padding: "18px" }}>
                       <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{s.label}</p>
                       <p className="display" style={{ fontSize: "20px", fontWeight: 800, color: s.color, letterSpacing: "-0.5px" }}>{s.val}</p>
                       <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "3px" }}>{s.sub}</p>
                     </div>
                   ))}
                 </div>
+                <p className="sample-findings-caption">Individual savings represent category estimates; total audit range accounts for category overlaps.</p>
                 {[{ label: "🔴 High Impact", items: sHigh, color: "#f87171" }, { label: "🟡 Medium Impact", items: sMed, color: "#fbbf24" }, { label: "🟢 Quick Wins", items: sLow, color: "#4ade80" }].filter(g => g.items.length > 0).map(group => (
                   <div key={group.label} style={{ marginBottom: "20px" }}>
                     <h4 className="display" style={{ fontSize: "13px", fontWeight: 700, color: group.color, marginBottom: "10px" }}>{group.label}</h4>
                     {group.items.map(check => {
-                      const sMin = Math.round(SAMPLE_REPORT.monthlyBill * getSavingsRange(check)[0] / 100);
-                      const sMax = Math.round(SAMPLE_REPORT.monthlyBill * getSavingsRange(check)[1] / 100);
+                      const [sMin, sMax] = SAMPLE_REPORT.findingSavings[check.id] || [0, 0];
                       return (
                         <div key={check.id} className="finding-row" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid var(--border)`, borderLeft: `3px solid ${group.color}`, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
                           <div>
@@ -4537,6 +4793,8 @@ aws iam simulate-principal-policy \\
 
         {/* ── HERO ── */}
         <div className="hero-pad" style={{ paddingTop: "90px", paddingBottom: "72px", textAlign: "center", minHeight: "85vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <div className="landing-hero-grid">
+          <div className="landing-hero-copy">
           {/* ── MOBILE BADGE ── */}
           <div className="hero-badge fade-up stagger-1" style={{ display: "none", marginBottom: "16px" }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(0,255,180,0.1)", border: "1px solid rgba(0,255,180,0.25)", borderRadius: "20px", padding: "6px 14px" }}>
@@ -4545,12 +4803,11 @@ aws iam simulate-principal-policy \\
           </div>
           {/* ── HEADLINE ── */}
           <h1 className="display hero-h1 fade-up stagger-1" style={{ fontSize: "clamp(42px,6.5vw,82px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-3px", color: "#fff", marginBottom: "20px" }}>
-            The audit your<br />
+            Know your cloud spend.<br />
             <span style={{ position: "relative", display: "inline-block", background: "linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              cloud provider
+              Keep your account private.
               <span style={{ position: "absolute", bottom: "-2px", left: 0, height: "2px", width: 0, background: "var(--green)", animation: "underline-draw 0.8s 0.5s ease-out forwards", borderRadius: "1px" }} />
             </span><br />
-            won&apos;t give you.
           </h1>
                 {showLeadMagnet && (
         <div onClick={() => setShowLeadMagnet(false)} style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px" }}>
@@ -4654,7 +4911,7 @@ aws iam simulate-principal-policy \\
             </button>
           </div>
 
-          <p style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "-28px", marginBottom: "32px" }}>⚡ Free · No signup · Results in 15 minutes</p>
+          <p className="hero-cta-note" style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", margin: "0 0 22px" }}>⚡ Free · No signup · Results in 15 minutes</p>
 
           {/* ── SOCIAL PROOF ── */}
           <div className="stats-pills fade-up stagger-4" style={{ display: "flex", gap: "24px", justifyContent: "center", flexWrap: "wrap", marginBottom: "40px" }}>
@@ -4671,6 +4928,9 @@ aws iam simulate-principal-policy \\
             ))}
           </div>
 
+        </div>
+        <LandingSavingsCard spend={calcBill} onSpendChange={setCalcBill} />
+        </div>
 
           {/* ── LEAD MAGNET CTA ── */}
           <div className="lead-magnet-btn fade-up stagger-4" style={{ marginBottom: "16px" }}>
@@ -4811,9 +5071,9 @@ aws iam simulate-principal-policy \\
               </div>
 
               {/* Report content */}
-              <div style={{ padding: "24px", background: "#080810" }}>
+              <div className="landing-report-card" style={{ padding: "24px", background: "#080810" }}>
                 {/* Score + summary */}
-                <div style={{ display: "grid", gridTemplateColumns: "110px 1fr", gap: "20px", alignItems: "center", marginBottom: "20px" }}>
+                <div className="report-preview-summary" style={{ display: "grid", gridTemplateColumns: "110px minmax(0, 1fr)", gap: "20px", alignItems: "center", marginBottom: "20px" }}>
                   <div style={{ position: "relative", width: "110px", height: "110px" }}>
                     <svg width="110" height="110" viewBox="0 0 110 110" style={{ transform: "rotate(-90deg)" }}>
                       <circle cx="55" cy="55" r="44" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="9"/>
@@ -4828,7 +5088,7 @@ aws iam simulate-principal-policy \\
                   <div>
                     <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: "0 0 6px", letterSpacing: "1px", textTransform: "uppercase" }}>AWS · $8,000/month</p>
                     <p style={{ fontSize: "18px", fontWeight: 800, color: "#fff", margin: "0 0 8px", lineHeight: 1.2 }}>13 issues · <span style={{ color: "#00ffb4" }}>$794–$2,003/mo</span> to recover</p>
-                    <div style={{ display: "flex", gap: "8px" }}>
+                    <div className="report-preview-kpis" style={{ display: "flex", gap: "8px" }}>
                       {[["8", "Quick wins", "#22c55e"], ["$794+", "Monthly saving", "#00ffb4"], ["$9,528", "Annual", "#818cf8"]].map(([v, l, c]) => (
                         <div key={l} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", padding: "8px 12px", flex: 1 }}>
                           <p style={{ fontSize: "16px", fontWeight: 800, color: c, margin: 0 }}>{v}</p>
@@ -4893,13 +5153,13 @@ aws iam simulate-principal-policy \\
             </label>
             <input id="calc-range" type="range" aria-label="Monthly cloud bill amount" min="500" max="50000" step="500" value={calcBill} onChange={e => setCalcBill(Number(e.target.value))}
               style={{ width: "100%", accentColor: "var(--green)", height: "4px", cursor: "pointer", marginBottom: "32px" }} />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", marginBottom: "28px" }}>
+            <div className="calc-metric-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "14px", marginBottom: "28px" }}>
               {[
                 { label: "Min monthly saving", val: `$${calcMin.toLocaleString()}`, sub: "conservative (20%)", color: "var(--green)", bg: "var(--green-dim)", border: "var(--green-border)" },
                 { label: "Max monthly saving", val: `$${calcMax.toLocaleString()}`, sub: "typical (45%)", color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.25)" },
                 { label: "Annual opportunity", val: `$${calcAnnual.toLocaleString()}+`, sub: "per year", color: "#fb923c", bg: "rgba(251,146,60,0.08)", border: "rgba(251,146,60,0.2)" },
               ].map(s => (
-                <div key={s.label} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: "14px", padding: "20px 16px", textAlign: "center" }}>
+                <div key={s.label} className="calc-metric-card" style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: "14px", padding: "20px 16px", textAlign: "center" }}>
                   <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{s.label}</p>
                   <p className="display" style={{ fontSize: "22px", fontWeight: 800, color: s.color, letterSpacing: "-0.5px", marginBottom: "4px" }}>{s.val}</p>
                   <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>{s.sub}</p>
@@ -5665,15 +5925,15 @@ aws iam simulate-principal-policy \\
           <div style={{ height: "2px", background: "var(--border)" }}>
             <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, var(--green), #00d4ff, #818cf8)", transition: "width 0.5s ease", boxShadow: "0 0 8px rgba(0,255,180,0.6)" }} />
           </div>
-          <div style={{ background: "rgba(8,8,16,0.92)", backdropFilter: "blur(12px)", padding: "6px 24px", display: "flex", gap: "4px", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
+          <div className="audit-progress-labels" style={{ background: "rgba(8,8,16,0.92)", backdropFilter: "blur(12px)", padding: "6px 24px", display: "flex", gap: "4px", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
             {sections.map((s, i) => {
               const done = s.checks.filter(c => checked[c.id] !== undefined).length === s.checks.length;
               const active = i === activeSection;
               return (
                 <span key={s.id} onClick={() => setActiveSection(i)} style={{ fontSize: "11px", fontWeight: active ? 700 : 500, color: done ? "var(--green)" : active ? "var(--green)" : "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", gap: "3px", padding: "1px 4px", borderRadius: "4px", background: active ? "rgba(0,255,180,0.08)" : "transparent" }}>
-                  <span className={active ? "section-active-indicator" : ""} style={{ width: "5px", height: "5px", borderRadius: "50%", background: done ? "var(--green)" : active ? "var(--green)" : "rgba(255,255,255,0.15)", display: "inline-block", flexShrink: 0 }} />
+                  <span className={active || done ? "section-active-indicator" : ""} style={{ width: "5px", height: "5px", borderRadius: "50%", background: done || active ? "var(--green)" : "var(--border)", display: "inline-block", flexShrink: 0 }} />
                   {done ? `✓ ${s.label}` : s.label}
-                  {i < sections.length - 1 && <span style={{ color: "rgba(255,255,255,0.15)", marginLeft: "4px" }}>·</span>}
+                  {i < sections.length - 1 && <span style={{ color: "var(--border)", marginLeft: "4px" }}>·</span>}
                 </span>
               );
             })}
@@ -5723,7 +5983,7 @@ aws iam simulate-principal-policy \\
                       </div>
                       <div style={{ display: "grid", gap: "12px" }}>
                         {[["Yes", true, "var(--green)"], ["No", false, "rgba(255,255,255,0.1)"], ["Not Sure", false, "rgba(255,255,255,0.06)"]].map(([label, value, bg]) => (
-                          <button key={label} onClick={() => {
+                          <button className="audit-answer-btn" key={label} onClick={() => {
                             setChecked(prev => ({ ...prev, [mobileCheck.id]: value }));
                             if (sectionCheckIndex < section.checks.length - 1) setSectionCheckIndex(idx => idx + 1);
                           }}
@@ -5732,7 +5992,7 @@ aws iam simulate-principal-policy \\
                           </button>
                         ))}
                         {sectionCheckIndex < section.checks.length - 1 && (
-                          <button onClick={() => setSectionCheckIndex(idx => Math.min(idx + 1, section.checks.length - 1))}
+                          <button className="audit-next-btn" onClick={() => setSectionCheckIndex(idx => Math.min(idx + 1, section.checks.length - 1))}
                             style={{ width: "100%", minHeight: "56px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "16px", color: "#fff", fontSize: "15px", fontWeight: 700, cursor: "pointer", padding: "16px" }}>
                             Next check →
                           </button>

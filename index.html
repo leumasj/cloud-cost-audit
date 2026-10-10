@@ -42,13 +42,13 @@
     <link rel="dns-prefetch" href="https://ipapi.co">
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="preload" as="style"
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" />
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
     <link rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       media="print" onload="this.media='all'" />
     <noscript>
       <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" />
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
     </noscript>
 
     <!-- ── Favicon & PWA icons ── -->
@@ -57,8 +57,8 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#080810" />
-    <meta name="msapplication-TileColor" content="#080810" />
+    <meta name="theme-color" content="#f3f6fa" />
+    <meta name="msapplication-TileColor" content="#f3f6fa" />
 
     <!-- ── SEO meta ── -->
     <title>KloudAudit — Free Cloud Cost & AI API Spend Audit</title>
@@ -80,27 +80,27 @@
 
     <!-- ── Critical CSS: paint background before JS loads ── -->
     <style>
-      html, body { margin: 0; padding: 0; background: #080810; color: #e2e8f0; }
+      html, body { margin: 0; padding: 0; background: #f3f6fa; color: #162235; }
       #root { min-height: 100vh; }
       .seo-h1 { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
       body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 
       /* ── LCP overlay: painted from HTML before JS loads ── */
       #lcp-overlay {
-        position: fixed; inset: 0; background: #080810; z-index: 99999;
+        position: fixed; inset: 0; background: #f3f6fa; z-index: 99999;
         display: flex; align-items: center; justify-content: center;
         text-align: center; padding: 24px;
         transition: opacity 0.2s ease;
       }
       #lcp-overlay.fade { opacity: 0; pointer-events: none; }
       #lcp-overlay h1 {
-        font-family: 'Bricolage Grotesque', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
         font-size: clamp(42px, 6.5vw, 82px);
         font-weight: 800; line-height: 1.0; letter-spacing: -3px;
-        color: #fff; margin: 0;
+        color: #162235; margin: 0;
       }
       #lcp-overlay .lcp-grad {
-        background: linear-gradient(135deg, #00ffb4 0%, #00d4ff 60%, #818cf8 100%);
+        background: linear-gradient(105deg, #087a55 0%, #4f46e5 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         background-clip: text;
       }
@@ -115,7 +115,7 @@ document.head.appendChild(o)}initApollo();</script>
     <h1 class="seo-h1">KloudAudit — Free Cloud Cost Audit for AWS, GCP and Azure. Find 20–45% Savings in 15 Minutes. No Account Access Required.</h1>
     <!-- LCP hero: browser paints this from HTML before JS loads. React removes it after mount. -->
     <div id="lcp-overlay" aria-hidden="true">
-      <h1>The audit your<br><span class="lcp-grad">cloud provider</span><br>won't give you.</h1>
+      <h1>Know your cloud spend.<br><span class="lcp-grad">Keep your account private.</span></h1>
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>

@@ -12,7 +12,52 @@ const { isUnsubscribeAuthorized } = require('./lib/_unsubscribe');
 
 // Escapes user-controlled fields before interpolating into HTML responses.
 function escapeHtml(str) {
-  return String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+const unsubscribePageStyles = `
+  * { box-sizing: border-box; }
+  body { min-height: 100vh; margin: 0; padding: 24px; display: grid; place-items: center; background: #f8fafc; color: #334155; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  .unsubscribe-card { width: 100%; max-width: 440px; padding: 40px 32px; border: 1px solid #e2e8f0; border-radius: 20px; background: #fff; box-shadow: 0 20px 60px rgba(15, 23, 42, .08); text-align: center; }
+  .brand-mark { width: 48px; height: 48px; display: grid; place-items: center; margin: 0 auto 24px; border-radius: 14px; background: #10b981; color: #fff; font-size: 22px; }
+  h1, h2 { margin: 0 0 12px; color: #0f172a; font-size: 24px; line-height: 1.25; letter-spacing: -.04em; }
+  p { margin: 0 0 24px; color: #475569; font-size: 15px; line-height: 1.65; overflow-wrap: anywhere; }
+  strong { color: #0f172a; }
+  a { color: #047857; font-size: 14px; font-weight: 600; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  form { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+  input[type="email"] { width: 100%; padding: 14px 16px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; color: #0f172a; font: inherit; font-size: 15px; }
+  input[type="email"]:focus { outline: 3px solid #a7f3d0; border-color: #10b981; }
+  button { width: 100%; padding: 14px; border: 0; border-radius: 10px; background: #4f46e5; color: #fff; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+  button:hover { background: #4338ca; }
+  .unsubscribe-note { margin: 22px 0 0; color: #64748b; font-size: 13px; }
+  .unsubscribe-note a { font-size: inherit; }
+  @media (max-width: 480px) { body { padding: 16px; } .unsubscribe-card { padding: 32px 22px; } h1, h2 { font-size: 22px; } }
+`;
+
+async function markEmailUnsubscribed(supabase, email) {
+  const { error } = await supabase
+    .from('subscribers')
+    .update({ unsubscribed: true, unsubscribed_at: new Date().toISOString() })
+    .eq('email', email);
+  if (error) throw error;
+}
+
+function sendUnsubscribeError(res, error) {
+  console.error('unsubscribe error:', error?.message || error);
+  return res.status(500).send(`
+    <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${unsubscribePageStyles}</style></head><body>
+      <main class="unsubscribe-card">
+        <h2>Something went wrong</h2>
+        <p>Please email <a href="mailto:admin@kloudaudit.eu">admin@kloudaudit.eu</a> to unsubscribe manually.</p>
+      </main>
+    </body></html>
+  `);
 }
 
 module.exports = async function handler(req, res) {
@@ -458,30 +503,33 @@ async function handleUnsubscribe(req, res, supabase) {
     const params = new URLSearchParams(body);
     const formEmail = params.get('email');
     if (formEmail) {
-      await supabase.from('subscribers').update({ unsubscribed: true, unsubscribed_at: new Date().toISOString() }).eq('email', formEmail).catch(() => null);
-      return res.status(200).send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Unsubscribed</title></head><body style="margin:0;background:#07070f;font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;"><div style="text-align:center;max-width:400px;padding:40px 24px;"><div style="width:48px;height:48px;background:#00ffb4;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 24px;">⚡</div><h1 style="font-size:22px;font-weight:800;color:#fff;margin:0 0 10px;">You're unsubscribed</h1><p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 24px;">We've removed <strong style="color:#fff;">${formEmail}</strong> from all KloudAudit emails.</p><a href="https://www.kloudaudit.eu" style="color:#00ffb4;text-decoration:none;font-size:13px;">← Back to KloudAudit</a></div></body></html>`);
+      try {
+        await markEmailUnsubscribed(supabase, formEmail);
+      } catch (error) {
+        return sendUnsubscribeError(res, error);
+      }
+      return res.status(200).send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Unsubscribed — KloudAudit</title><style>${unsubscribePageStyles}</style></head><body><main class="unsubscribe-card"><div class="brand-mark">⚡</div><h1>You're unsubscribed</h1><p>We've removed <strong>${escapeHtml(formEmail)}</strong> from all KloudAudit emails.</p><a href="https://www.kloudaudit.eu">← Back to KloudAudit</a></main></body></html>`);
     }
   }
 
   if (!email) {
     return res.status(200).send(`<!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Unsubscribe — KloudAudit</title></head>
-<body style="margin:0;padding:0;background:#07070f;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;">
-  <div style="text-align:center;max-width:420px;width:100%;padding:40px 24px;">
-    <div style="width:48px;height:48px;background:#00ffb4;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 24px;">⚡</div>
-    <h1 style="font-size:22px;font-weight:800;color:#fff;margin:0 0 10px;">Unsubscribe from KloudAudit</h1>
-    <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 28px;">Enter your email below to stop receiving re-audit reminders and updates.</p>
-    <form method="POST" action="/api/audits?action=unsubscribe" style="display:flex;flex-direction:column;gap:14px;">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Unsubscribe — KloudAudit</title><style>${unsubscribePageStyles}</style></head>
+<body>
+  <main class="unsubscribe-card">
+    <div class="brand-mark">⚡</div>
+    <h1>Unsubscribe from KloudAudit</h1>
+    <p>Enter your email below to stop receiving re-audit reminders and updates.</p>
+    <form method="POST" action="/api/audits?action=unsubscribe">
       <input type="email" name="email" required placeholder="you@company.com"
-        style="width:100%;padding:14px 16px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:15px;outline:none;box-sizing:border-box;" />
-      <button type="submit"
-        style="width:100%;padding:14px;border-radius:10px;border:none;background:#00ffb4;color:#000;font-weight:800;font-size:15px;cursor:pointer;">
+      />
+      <button type="submit">
         Unsubscribe
       </button>
     </form>
-    <p style="font-size:12px;color:#475569;margin-top:20px;">Or email <a href="mailto:admin@kloudaudit.eu" style="color:#00ffb4;text-decoration:none;">admin@kloudaudit.eu</a> to unsubscribe manually.</p>
-  </div>
+    <p class="unsubscribe-note">Or email <a href="mailto:admin@kloudaudit.eu">admin@kloudaudit.eu</a> to unsubscribe manually.</p>
+  </main>
 </body>
 </html>`);
   }
@@ -493,60 +541,49 @@ async function handleUnsubscribe(req, res, supabase) {
   if (!isUnsubscribeAuthorized(email, req.query.token)) {
     return res.status(200).send(`<!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Confirm Unsubscribe — KloudAudit</title></head>
-<body style="margin:0;padding:0;background:#07070f;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;">
-  <div style="text-align:center;max-width:420px;width:100%;padding:40px 24px;">
-    <div style="width:48px;height:48px;background:#00ffb4;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 24px;">⚡</div>
-    <h1 style="font-size:22px;font-weight:800;color:#fff;margin:0 0 10px;">Confirm unsubscribe</h1>
-    <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 28px;">This link couldn't be verified. Confirm below to unsubscribe <strong style="color:#fff;">${escapeHtml(email)}</strong> from KloudAudit emails.</p>
-    <form method="POST" action="/api/audits?action=unsubscribe" style="display:flex;flex-direction:column;gap:14px;">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Confirm Unsubscribe — KloudAudit</title><style>${unsubscribePageStyles}</style></head>
+<body>
+  <main class="unsubscribe-card">
+    <div class="brand-mark">⚡</div>
+    <h1>Confirm unsubscribe</h1>
+    <p>This link couldn't be verified. Confirm below to unsubscribe <strong>${escapeHtml(email)}</strong> from KloudAudit emails.</p>
+    <form method="POST" action="/api/audits?action=unsubscribe">
       <input type="hidden" name="email" value="${escapeHtml(email)}" />
-      <button type="submit"
-        style="width:100%;padding:14px;border-radius:10px;border:none;background:#00ffb4;color:#000;font-weight:800;font-size:15px;cursor:pointer;">
+      <button type="submit">
         Confirm Unsubscribe
       </button>
     </form>
-    <p style="font-size:12px;color:#475569;margin-top:20px;">Or email <a href="mailto:admin@kloudaudit.eu" style="color:#00ffb4;text-decoration:none;">admin@kloudaudit.eu</a> to unsubscribe manually.</p>
-  </div>
+    <p class="unsubscribe-note">Or email <a href="mailto:admin@kloudaudit.eu">admin@kloudaudit.eu</a> to unsubscribe manually.</p>
+  </main>
 </body>
 </html>`);
   }
 
   try {
-    await supabase
-      .from('subscribers')
-      .update({ unsubscribed: true, unsubscribed_at: new Date().toISOString() })
-      .eq('email', email);
+    await markEmailUnsubscribed(supabase, email);
 
     // Return a clean confirmation page — no redirect needed
     return res.status(200).send(`
       <!DOCTYPE html>
       <html>
-      <head><meta charset="UTF-8"><title>Unsubscribed — KloudAudit</title></head>
-      <body style="margin:0;padding:0;background:#07070f;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;">
-        <div style="text-align:center;max-width:400px;padding:40px 24px;">
-          <div style="width:48px;height:48px;background:#00ffb4;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 24px;">⚡</div>
-          <h1 style="font-size:22px;font-weight:800;color:#fff;margin:0 0 10px;">You're unsubscribed</h1>
-          <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 24px;">
-            We've removed <strong style="color:#fff;">${email}</strong> from re-audit reminders.
+      <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Unsubscribed — KloudAudit</title><style>${unsubscribePageStyles}</style></head>
+      <body>
+        <main class="unsubscribe-card">
+          <div class="brand-mark">⚡</div>
+          <h1>You're unsubscribed</h1>
+          <p>
+            We've removed <strong>${escapeHtml(email)}</strong> from re-audit reminders.
             You won't receive any more emails from us.
           </p>
-          <p style="font-size:13px;color:#475569;">
-            The free audit at <a href="https://www.kloudaudit.eu" style="color:#00ffb4;text-decoration:none;">kloudaudit.eu</a> is always available if you want to check your cloud costs.
+          <p class="unsubscribe-note">
+            The free audit at <a href="https://www.kloudaudit.eu">kloudaudit.eu</a> is always available if you want to check your cloud costs.
           </p>
-        </div>
+        </main>
       </body>
       </html>
     `);
 
   } catch (err) {
-    console.error('unsubscribe error:', err.message);
-    return res.status(500).send(`
-      <html><body style="font-family:system-ui;text-align:center;padding:60px;background:#07070f;color:#fff;">
-        <h2 style="color:#f87171;">Something went wrong</h2>
-        <p style="color:#94a3b8;">Please email admin@kloudaudit.eu to unsubscribe manually.</p>
-      </body></html>
-    `);
+    return sendUnsubscribeError(res, err);
   }
 }
-
