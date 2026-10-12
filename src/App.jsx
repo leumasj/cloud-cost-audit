@@ -2503,7 +2503,7 @@ const PricingModal = memo(function PricingModal({
   onClose, currency,
   onStartAudit,
   onBlueprintClick, onAiBlueprintClick, onCodingToolsBlueprintClick, onSecBlueprintClick, onCfoReportClick, onSessionClick,
-  onSubscribe, subscriptionAvailable = false,
+  onSubscribe, onContactClick, subscriptionAvailable = false,
 }) {
   const [subEmail, setSubEmail] = useState('');
   const [subStatus, setSubStatus] = useState('idle');
@@ -2694,10 +2694,10 @@ const PricingModal = memo(function PricingModal({
                   {subStatus === 'error' && <p style={{ fontSize: '11px', color: '#f87171', margin: 0 }}>Something went wrong — try again</p>}
                 </div>
               ) : p.id === 'monitor' ? (
-                <a href="mailto:admin@kloudaudit.eu?subject=KloudAudit%20team%20updates"
-                  style={{ display: 'block', padding: '11px', borderRadius: '9px', border: '1px solid rgba(99,102,241,0.3)', color: '#4338ca', background: '#fff', fontWeight: 700, fontSize: '12px', textAlign: 'center', textDecoration: 'none' }}>
+                <button type="button" onClick={() => { onClose(); onContactClick(); }}
+                  style={{ display: 'block', width: '100%', padding: '11px', borderRadius: '9px', border: '1px solid rgba(99,102,241,0.3)', color: '#4338ca', background: '#fff', fontWeight: 700, fontSize: '12px', textAlign: 'center', cursor: 'pointer' }}>
                   Ask about future team options →
-                </a>
+                </button>
               ) : (
                 <button onClick={p.onClick}
                   style={{ padding: '11px', borderRadius: '9px', border: p.id === 'free' ? `1px solid ${p.border}` : 'none', background: p.id === 'free' ? 'transparent' : p.id === 'blueprint' ? 'var(--green)' : p.id === 'security' ? '#f87171' : p.id === 'ai_blueprint' ? '#a78bfa' : p.id === 'cfo' || p.id === 'monitor' ? 'linear-gradient(135deg,#818cf8,#6366f1)' : 'rgba(0,212,255,0.15)', color: p.id === 'blueprint' ? '#000' : p.id === 'security' ? '#000' : p.id === 'free' ? p.color : '#fff', fontWeight: 800, fontSize: '12px', cursor: 'pointer', boxShadow: p.id === 'blueprint' ? '0 0 16px rgba(0,255,180,0.3)' : 'none' }}>
@@ -4772,7 +4772,7 @@ aws iam simulate-principal-policy \\
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={isAiProvider ? handleBuyAiBlueprint : isCodingToolsProvider ? handleBuyCodingToolsBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={blueprintProductType} price={blueprintPrice} amount={blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} subscriptionAvailable={subscriptionAvailable} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} onContactClick={() => setShowContact(true)} subscriptionAvailable={subscriptionAvailable} />}
       <Nav />
 
       {/* ── RESUME AUDIT BANNER ── */}
@@ -4875,10 +4875,9 @@ aws iam simulate-principal-policy \\
           </div>
         </div>
       )}
-      {showContact && <ContactModal onClose={() => setShowContact(false)} />}
           {/* ── SUBHEADING ── */}
           <p className="hero-subheading fade-up stagger-2" style={{ fontSize: "18px", color: "var(--text-dim)", lineHeight: 1.75, maxWidth: "520px", margin: "0 auto 28px" }}>
-            A 10–15 minute guided self-assessment helps your team spot idle compute, oversized databases, and avoidable AI API spend—using what you already know. <strong style={{ color: "#fff" }}>No credentials, IAM roles, or agents.</strong>
+            A 10 - 15 minute guided self-assessment helps your team spot idle compute, oversized databases, and avoidable AI API spend, using what you already know. <strong style={{ color: "#fff" }}>No credentials, IAM roles, or agents.</strong>
           </p>
           <div className="methodology-note">
             <MethodologyNote />
@@ -5572,7 +5571,9 @@ aws iam simulate-principal-policy \\
               <h3>Continuous monitoring is not in the current offer.</h3>
               <p>KloudAudit currently provides point-in-time self-assessments and optional one-time reports. Ongoing monitoring and Slack/Teams alerts are not available.</p>
             </div>
-            <a href="mailto:admin@kloudaudit.eu?subject=KloudAudit%20team%20updates">Ask about future team options <span aria-hidden="true">→</span></a>
+            <button type="button" onClick={() => setShowContact(true)} style={{ flex: "0 0 auto", padding: 0, border: 0, background: "none", color: "#4338ca", fontSize: "12px", fontWeight: 700, fontFamily: "inherit", textAlign: "left", cursor: "pointer" }}>
+              Ask about future team options <span aria-hidden="true">→</span>
+            </button>
           </div>
 
           <p style={{ textAlign: "center", fontSize: "12px", color: "var(--text-muted)", marginTop: "20px" }}>
@@ -5776,7 +5777,7 @@ aws iam simulate-principal-policy \\
       {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
       {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={isAiProvider ? handleBuyAiBlueprint : isCodingToolsProvider ? handleBuyCodingToolsBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={blueprintProductType} price={blueprintPrice} amount={blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} subscriptionAvailable={subscriptionAvailable} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} onContactClick={() => setShowContact(true)} subscriptionAvailable={subscriptionAvailable} />}
       <Nav showBack onBack={() => goTo("intro")} />
       <div key={pageKey} style={{ maxWidth: "540px", margin: "0 auto", padding: "60px 24px", position: "relative", zIndex: 1 }}>
         <div className="fade-up">
@@ -5865,7 +5866,7 @@ aws iam simulate-principal-policy \\
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={isAiProvider ? handleBuyAiBlueprint : isCodingToolsProvider ? handleBuyCodingToolsBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={blueprintProductType} price={blueprintPrice} amount={blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} subscriptionAvailable={subscriptionAvailable} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onCodingToolsBlueprintClick={handlePricingCodingToolsBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} onContactClick={() => setShowContact(true)} subscriptionAvailable={subscriptionAvailable} />}
         <Nav showBack onBack={() => goTo("intake")} />
         {/* ── SECTION COMPLETE TOAST ── */}
         {sectionToast && (
@@ -6328,7 +6329,7 @@ aws iam simulate-principal-policy \\
         {showBooking && <BookingModal onClose={() => setShowBooking(false)} sessionPrice={currency.sessionPrice} />}
         {showBlueprint && <BlueprintModal onClose={() => setShowBlueprint(false)} onBuy={isAiProvider ? handleBuyAiBlueprint : isCodingToolsProvider ? handleBuyCodingToolsBlueprint : handleBuyBlueprint} currency={currency} provider={provider} flaggedCount={flagged.length} productType={blueprintProductType} price={blueprintPrice} amount={blueprintAmount} />}
         {showCfoReport && <CfoReportModal onClose={() => setShowCfoReport(false)} onBuy={handleBuyCfoReport} currency={currency} provider={provider} savMin={savMin} savMax={savMax} flaggedCount={flagged.length} />}
-        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} subscriptionAvailable={subscriptionAvailable} />}
+        {showPricingModal && <PricingModal onClose={() => setShowPricingModal(false)} currency={currency} onStartAudit={() => goTo("intake")} onStartSecAudit={() => goTo("security_intro")} onBlueprintClick={handlePricingBlueprintClick} onAiBlueprintClick={handlePricingAiBlueprintClick} onSecBlueprintClick={handlePricingSecBlueprintClick} onCfoReportClick={handlePricingCfoReportClick} onSessionClick={() => setShowBooking(true)} onSubscribe={handleBuySubscription} onContactClick={() => setShowContact(true)} subscriptionAvailable={subscriptionAvailable} />}
         <Nav showBack onBack={() => goTo("audit")} />
         <div key={pageKey} style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px 80px", position: "relative", zIndex: 1 }}>
           {/* Header */}
