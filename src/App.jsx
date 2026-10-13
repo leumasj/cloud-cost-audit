@@ -5684,7 +5684,7 @@ aws iam simulate-principal-policy \\
                   <span className="display" style={{ fontWeight: 800, fontSize: "16px", color: "#fff", letterSpacing: "-0.5px" }}>KloudAudit</span>
                 </div>
                 <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.7, marginBottom: "20px", maxWidth: "240px" }}>
-                  Review potential cloud cost opportunities with a free 10–15 minute self-assessment—no credentials or account connection.
+                  Review potential cloud cost opportunities with a free 10–15 minute self-assessment, no credentials or account connection.
                 </p>
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                   {[
