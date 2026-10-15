@@ -147,7 +147,7 @@ function buildBlueprintPrompt(meta) {
     ? `${(meta.amount_total / 100).toFixed(2)} ${(meta.currency || 'PLN').toUpperCase()}`
     : '299 PLN';
 
-  return `Be concise. Target 600-700 words total. Focus on the most impactful fixes only.
+  return `Write a polished, practical implementation document of about 700-900 words. Be concise, but give enough detail for an engineer to act safely.
 
 You are a senior DevOps engineer writing a personalised cloud cost optimisation guide for ${companyName}.
 
@@ -157,48 +157,36 @@ Estimated savings: $${savingsMin}–$${savingsMax}/month
 Flagged issues (${issueLabels.length}): ${issueLabels.join(', ')}
 Payment: ${chargeDisplay}
 
-Generate a professional Implementation Blueprint. For EACH flagged issue provide:
+Return well-structured Markdown using this document outline:
 
-## [Issue Name]
+# ${provider} Cost Optimization Blueprint
 
-**What's happening**: 1-2 sentences explaining the waste.
+## Executive Summary
+Summarize the main opportunity, the estimated monthly and annual range (annual = monthly × 12), and the most important next action. Clearly call savings estimates opportunities, not guarantees.
 
-**Monthly cost**: Estimate based on typical ${provider} pricing.
+## Savings Snapshot
+Show monthly bill, provided monthly savings range, and calculated annual range in a compact Markdown table. Do not invent extra financial inputs.
 
-**Fix it now (${provider} CLI)**:
-\`\`\`bash
-# Exact command with real flags — not pseudocode
-[command]
-\`\`\`
+## Prioritized Implementation Plan
+Rank the flagged issues by expected value and implementation effort in a Markdown table with priority, finding, estimated impact, effort, and key dependency. Use the supplied aggregate savings range; do not divide it across issues unless the supplied facts support that allocation.
 
-**Terraform/IaC** (if applicable):
-\`\`\`hcl
-[snippet]
-\`\`\`
+## Findings & Remediation
+Create a subsection for every flagged issue, in priority order. For each include:
+- **What the audit indicates**: explain the likely cause using only the supplied answers; distinguish assumptions from confirmed facts.
+- **Why it matters**: the cost mechanism and operational trade-off in plain language.
+- **Recommended change**: a safe, provider-specific fix. Give exact real ${provider} CLI commands where applicable, with a pre-check before any change and a verification command afterward. Use clearly marked placeholders for account-specific identifiers; never invent IDs, regions, or resource names.
+- **Infrastructure as code**: include a concise Terraform/IaC example only when relevant; state what must be customized and avoid presenting incomplete snippets as deploy-ready.
+- **Effort and risk**: realistic implementation time, prerequisites, and any service-availability or rollback consideration.
 
-**Step-by-step**:
-1. [Specific step]
-2. [Specific step]
-3. [Specific step]
+If an exact per-issue cost cannot be calculated from the supplied information, say so instead of fabricating a precise number. Do not recommend deleting or changing production resources without a validation and rollback step.
 
-**Verify savings**:
-\`\`\`bash
-[verification command]
-\`\`\`
+## Recommended Rollout
+Give an ordered checklist of the first actions, who should own them (role, not a named person), and how to confirm each change worked.
 
-**Time to implement**: [X minutes/hours]
+## Expected Outcome & Measurement
+Restate the supplied savings range and its annual equivalent. Explain which bill, utilization, or service metrics to compare before and after, and when to review them. State that realized savings depend on validation and implementation.
 
----
-
-After all issues, add:
-
-## Implementation Order
-Rank all issues by ROI (savings / effort). Most impactful first.
-
-## Expected Results
-Total monthly savings, annual savings, time to full implementation.
-
-Be precise and technical. Real ${provider} commands only. This customer paid for professional quality.`;
+Use concise headings, bullets, numbered steps, tables, and fenced code blocks so the document is easy to scan. Be technically precise and use real ${provider} commands only. This customer paid for professional quality.`;
 }
 
 // ── SECURITY BLUEPRINT PROMPT ─────────────────────────────────────────────────
@@ -221,7 +209,7 @@ Additional context:
 - Secrets manager: ${meta.secretsManager}
 - Incident response plan: ${meta.incidentResponse}
 
-Generate a professional Security Blueprint with:
+Return a polished, easy-to-scan Markdown Security Blueprint with:
 
 ## Executive Summary
 2-3 sentences on overall security posture for CISO briefing.
@@ -231,25 +219,23 @@ Table: Control | Status | Severity | Fix Priority
 
 ## Critical Findings & Remediation
 For each CRITICAL issue:
-- Business impact (data breach risk, compliance violation, estimated cost)
-- Exact ${provider} CLI remediation command
-- Estimated fix time
+- What the self-reported answers indicate and the business impact
+- Exact ${provider} CLI remediation command, plus a pre-check and post-fix verification command
+- Required permissions, estimated fix time, and rollback or service-impact note
 
 ## High Priority Findings  
-For each HIGH issue: exact command and explanation.
+For each HIGH issue: exposure, actionable remediation, exact command where applicable, verification, and owner role.
 
 ## Compliance Gap Analysis
-Map to: SOC 2 Type II · ISO 27001 · GDPR · CIS ${provider} Benchmark v1.5
+Map only relevant findings to: SOC 2 Type II · ISO 27001 · GDPR · CIS ${provider} Benchmark v1.5. Explain that this is an indicative control mapping, not a certification or compliance determination.
 
 ## 30-Day Remediation Roadmap
-Week 1: [critical fixes — specific actions]
-Week 2: [high priority — specific actions]  
-Week 3-4: [medium priority + verification]
+Organize by week with priority, owner role, action, and evidence of completion.
 
 ## Verification Commands
-Commands to confirm each fix was applied correctly.
+Commands to confirm each fix was applied correctly, with account-specific identifiers shown as clearly marked placeholders. Do not invent account IDs, resource names, or facts that were not supplied.
 
-Real ${provider} CLI only. This customer paid for professional quality.`;
+Use a concise risk table, clear headings, bullets, and fenced code blocks. Base conclusions on the supplied self-reported answers, distinguish assumptions from confirmed facts, and never claim to have accessed the customer's account. Real ${provider} CLI only. This customer paid for professional quality.`;
 }
 
 // ── CFO REPORT PROMPT ─────────────────────────────────────────────────────────
@@ -362,7 +348,178 @@ Be specific and implementable. Include dashboard paths, spreadsheet fields, deci
 // interpolating into HTML emails — all three ultimately come from client
 // request bodies, not a fixed allowlist.
 function escapeHtml(str) {
-  return String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderInlineMarkdown(text) {
+  const tokenPattern = /(\[[^\]]+\]\(https?:\/\/[^\s)]+\)|`[^`]+`|\*\*[^*]+\*\*|__[^_]+__|\*[^*\n]+\*|_[^_\n]+_)/g;
+  let html = '';
+  let lastIndex = 0;
+  let match;
+
+  while ((match = tokenPattern.exec(text)) !== null) {
+    html += escapeHtml(text.slice(lastIndex, match.index));
+    const token = match[0];
+    const linkMatch = token.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
+
+    if (linkMatch) {
+      let safeUrl;
+      try {
+        const parsedUrl = new URL(linkMatch[2]);
+        if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') safeUrl = parsedUrl.href;
+      } catch {}
+
+      html += safeUrl
+        ? `<a href="${escapeHtml(safeUrl)}" style="color:#00d7a0;text-decoration:underline;">${escapeHtml(linkMatch[1])}</a>`
+        : escapeHtml(token);
+    } else if (token.startsWith('`')) {
+      html += `<code style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:0.92em;color:#8cebd0;background:#0b1220;padding:2px 5px;border-radius:4px;">${escapeHtml(token.slice(1, -1))}</code>`;
+    } else if (token.startsWith('**') || token.startsWith('__')) {
+      html += `<strong style="color:#f1f5f9;">${escapeHtml(token.slice(2, -2))}</strong>`;
+    } else {
+      html += `<em>${escapeHtml(token.slice(1, -1))}</em>`;
+    }
+
+    lastIndex = tokenPattern.lastIndex;
+  }
+
+  return html + escapeHtml(text.slice(lastIndex));
+}
+
+function renderReportMarkdown(markdown) {
+  const lines = String(markdown || '').replace(/\r\n?/g, '\n').split('\n');
+  const blocks = [];
+  let paragraph = [];
+  let listType = null;
+  let listItems = [];
+  let inCodeBlock = false;
+  let codeLanguage = '';
+  let codeLines = [];
+
+  const flushParagraph = () => {
+    if (paragraph.length) {
+      blocks.push(`<p style="font-size:14px;line-height:1.8;color:#cbd5e1;margin:0 0 16px;">${renderInlineMarkdown(paragraph.join(' '))}</p>`);
+      paragraph = [];
+    }
+  };
+
+  const flushList = () => {
+    if (!listItems.length) return;
+    const tag = listType === 'ol' ? 'ol' : 'ul';
+    const items = listItems.map(item => `<li style="font-size:14px;line-height:1.75;color:#cbd5e1;margin:0 0 7px;padding-left:3px;">${renderInlineMarkdown(item)}</li>`).join('');
+    blocks.push(`<${tag} style="margin:0 0 18px;padding-left:24px;">${items}</${tag}>`);
+    listItems = [];
+    listType = null;
+  };
+
+  const flushCode = () => {
+    const label = codeLanguage
+      ? `<div style="font:700 10px/1.4 system-ui,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#8cebd0;margin:0 0 8px;">${escapeHtml(codeLanguage)}</div>`
+      : '';
+    blocks.push(`<div style="background:#080d17;border:1px solid rgba(148,163,184,0.2);border-radius:10px;padding:15px 17px;margin:0 0 18px;overflow-x:auto;">${label}<pre style="margin:0;white-space:pre;overflow-x:auto;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;color:#d1d9e6;"><code>${escapeHtml(codeLines.join('\n'))}</code></pre></div>`);
+    codeLines = [];
+    codeLanguage = '';
+  };
+
+  const isTableSeparator = line => /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(line.trim());
+  const renderTable = rows => {
+    const header = rows[0].split('|').slice(1, -1).map(cell => cell.trim());
+    const bodyRows = rows.slice(1).filter(row => !isTableSeparator(row));
+    const headerHtml = `<thead><tr>${header.map(cell => `<th style="text-align:left;padding:10px 12px;background:#172235;color:#f1f5f9;font-size:12px;font-weight:700;border-bottom:1px solid rgba(148,163,184,0.25);">${renderInlineMarkdown(cell)}</th>`).join('')}</tr></thead>`;
+    const bodyHtml = bodyRows.map(row => {
+      const cells = row.split('|').slice(1, -1).map(cell => cell.trim());
+      return `<tr>${header.map((_, index) => `<td style="vertical-align:top;padding:10px 12px;color:#cbd5e1;font-size:13px;line-height:1.6;border-bottom:1px solid rgba(148,163,184,0.13);">${renderInlineMarkdown(cells[index] || '')}</td>`).join('')}</tr>`;
+    }).join('');
+    blocks.push(`<div style="overflow-x:auto;margin:0 0 20px;"><table style="width:100%;border-collapse:collapse;background:#0d1421;border:1px solid rgba(148,163,184,0.2);border-radius:8px;">${headerHtml}<tbody>${bodyHtml}</tbody></table></div>`);
+  };
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+
+    if (inCodeBlock) {
+      if (/^\s*```/.test(line)) {
+        flushCode();
+        inCodeBlock = false;
+      } else {
+        codeLines.push(line);
+      }
+      continue;
+    }
+
+    const fence = line.match(/^\s*```([\w+#.-]*)\s*$/);
+    if (fence) {
+      flushParagraph();
+      flushList();
+      inCodeBlock = true;
+      codeLanguage = fence[1];
+      continue;
+    }
+
+    if (!line.trim()) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    if (/^\s*\|.*\|\s*$/.test(line)) {
+      flushParagraph();
+      flushList();
+      const rows = [];
+      while (index < lines.length && /^\s*\|.*\|\s*$/.test(lines[index])) {
+        rows.push(lines[index].trim());
+        index += 1;
+      }
+      index -= 1;
+      if (rows.length > 1 && isTableSeparator(rows[1])) renderTable(rows);
+      else paragraph.push(...rows);
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,3})\s+(.+?)\s*#*$/);
+    if (heading) {
+      flushParagraph();
+      flushList();
+      const level = heading[1].length;
+      const tag = level === 1 ? 'h1' : level === 2 ? 'h2' : 'h3';
+      const styles = level === 1
+        ? 'font-size:24px;line-height:1.25;color:#fff;letter-spacing:-0.5px;margin:4px 0 18px;padding-bottom:14px;border-bottom:1px solid rgba(0,215,160,0.35);'
+        : level === 2
+          ? 'font-size:18px;line-height:1.4;color:#f1f5f9;margin:28px 0 12px;padding-left:11px;border-left:3px solid #00d7a0;'
+          : 'font-size:15px;line-height:1.45;color:#e2e8f0;margin:20px 0 9px;';
+      blocks.push(`<${tag} style="${styles}">${renderInlineMarkdown(heading[2])}</${tag}>`);
+      continue;
+    }
+
+    if (/^\s*([-*_]\s*){3,}$/.test(line)) {
+      flushParagraph();
+      flushList();
+      blocks.push('<hr style="height:1px;border:0;background:rgba(148,163,184,0.2);margin:22px 0;">');
+      continue;
+    }
+
+    const listItem = line.match(/^\s*(?:([-*+])|(\d+)[.)])\s+(.+)$/);
+    if (listItem) {
+      flushParagraph();
+      const nextListType = listItem[2] ? 'ol' : 'ul';
+      if (listType && listType !== nextListType) flushList();
+      listType = nextListType;
+      listItems.push(listItem[3]);
+      continue;
+    }
+
+    flushList();
+    paragraph.push(line.trim());
+  }
+
+  flushParagraph();
+  flushList();
+  if (inCodeBlock) flushCode();
+  return blocks.join('\n');
 }
 
 // Claude free-forms per-issue "$X–$Y/month" savings estimates rather than
@@ -383,29 +540,51 @@ function fixReversedMoneyRanges(text) {
 
 function buildBlueprintEmail(report, meta) {
   const provider = escapeHtml(meta.provider || 'AWS');
-  const savings  = `$${Number(meta.savingsMin || 0).toLocaleString()}–$${Number(meta.savingsMax || 0).toLocaleString()}`;
+  const savingsMin = Number(meta.savingsMin || 0);
+  const savingsMax = Number(meta.savingsMax || 0);
+  const monthlySavings = `$${savingsMin.toLocaleString()}–$${savingsMax.toLocaleString()}`;
+  const annualSavings = `$${(savingsMin * 12).toLocaleString()}–$${(savingsMax * 12).toLocaleString()}`;
 
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#07070f;font-family:system-ui,sans-serif;">
-<div style="max-width:680px;margin:0 auto;padding:40px 24px;">
+<body style="margin:0;padding:0;background:#080d17;font-family:Arial,Helvetica,sans-serif;">
+<div style="max-width:760px;margin:0 auto;padding:36px 20px;">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:32px;">
-    <div style="width:36px;height:36px;background:#00ffb4;border-radius:8px;font-size:18px;display:flex;align-items:center;justify-content:center;">⚡</div>
-    <span style="font-size:20px;font-weight:800;color:#fff;">KloudAudit</span>
+    <div style="width:36px;height:36px;background:#00d7a0;border-radius:10px;font-size:18px;line-height:36px;text-align:center;">⚡</div>
+    <span style="font-size:20px;font-weight:800;color:#f8fafc;">KloudAudit</span>
+    <span style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8cebd0;background:#0d211f;border:1px solid rgba(0,215,160,0.25);border-radius:20px;padding:5px 9px;">Implementation Blueprint</span>
   </div>
-  <div style="background:linear-gradient(135deg,rgba(0,255,180,0.12),rgba(99,102,241,0.08));border:1.5px solid #00ffb4;border-radius:16px;padding:28px;margin-bottom:28px;text-align:center;">
-    <p style="font-size:11px;font-weight:700;color:#00ffb4;letter-spacing:2px;text-transform:uppercase;margin:0 0 10px;">Your ${provider} Cost Blueprint</p>
-    <div style="font-size:42px;font-weight:800;color:#00ffb4;letter-spacing:-2px;line-height:1;margin-bottom:8px;">${savings}</div>
-    <p style="font-size:14px;color:#94a3b8;margin:0;">estimated monthly savings identified</p>
+  <div style="background:#101a29;border:1px solid rgba(0,215,160,0.3);border-radius:18px;padding:27px 28px;margin-bottom:20px;">
+    <p style="font-size:10px;font-weight:700;color:#8cebd0;letter-spacing:1.8px;text-transform:uppercase;margin:0 0 9px;">Personalized action plan · ${provider}</p>
+    <h1 style="font-size:25px;line-height:1.25;font-weight:800;color:#f8fafc;letter-spacing:-0.5px;margin:0 0 9px;">Your Cost Optimization Blueprint</h1>
+    <p style="font-size:14px;line-height:1.6;color:#9eacbf;margin:0;">A prioritized, implementation-ready plan based on your self-reported audit answers.</p>
   </div>
-  <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;margin-bottom:24px;">
-    <p style="font-size:13px;font-weight:700;color:#fff;margin:0 0 16px;text-transform:uppercase;letter-spacing:1px;">Your Implementation Blueprint</p>
-    <div style="font-family:monospace;font-size:13px;line-height:1.8;color:#cbd5e1;white-space:pre-wrap;">${escapeHtml(report)}</div>
+  <table role="presentation" style="width:100%;border-spacing:8px 0;margin:0 -8px 20px;">
+    <tr>
+      <td style="width:50%;vertical-align:top;background:#101a29;border:1px solid rgba(148,163,184,0.16);border-radius:12px;padding:16px 18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8b9bb0;margin:0 0 7px;">Estimated monthly opportunity</div>
+        <div style="font-size:22px;line-height:1.25;font-weight:800;color:#8cebd0;">${monthlySavings}</div>
+      </td>
+      <td style="width:50%;vertical-align:top;background:#101a29;border:1px solid rgba(148,163,184,0.16);border-radius:12px;padding:16px 18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8b9bb0;margin:0 0 7px;">Annualized opportunity</div>
+        <div style="font-size:22px;line-height:1.25;font-weight:800;color:#8cebd0;">${annualSavings}</div>
+      </td>
+    </tr>
+  </table>
+  <div style="background:#101a29;border:1px solid rgba(148,163,184,0.16);border-radius:16px;padding:26px 25px;margin-bottom:20px;">
+    <div style="border-bottom:1px solid rgba(148,163,184,0.16);padding-bottom:14px;margin-bottom:20px;">
+      <p style="font-size:10px;font-weight:700;color:#8b9bb0;margin:0 0 5px;text-transform:uppercase;letter-spacing:1.2px;">Your implementation guide</p>
+      <p style="font-size:13px;color:#d5deea;margin:0;">Priorities, safe implementation steps, and ways to verify results</p>
+    </div>
+    <div style="font-family:Arial,Helvetica,sans-serif;">${renderReportMarkdown(report)}</div>
   </div>
-  <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;text-align:center;">
-    <p style="font-size:12px;color:#475569;margin:0 0 8px;">🔒 This blueprint was generated from your self-reported audit answers. We never accessed your cloud account.</p>
-    <p style="font-size:12px;color:#475569;margin:0;">Questions? Reply to this email · <a href="mailto:admin@kloudaudit.eu" style="color:#00ffb4;">admin@kloudaudit.eu</a></p>
+  <div style="background:#0d1421;border:1px solid rgba(148,163,184,0.12);border-radius:12px;padding:16px 18px;margin-bottom:18px;">
+    <p style="font-size:12px;line-height:1.6;color:#a6b3c4;margin:0;"><strong style="color:#d8e2ee;">How to use this plan:</strong> Validate each change in your environment, apply it in the recommended order, and compare actual billing and usage before and after. Savings are estimates, not guarantees.</p>
+  </div>
+  <div style="border-top:1px solid rgba(148,163,184,0.16);padding-top:17px;text-align:center;">
+    <p style="font-size:12px;line-height:1.6;color:#748196;margin:0 0 6px;">🔒 Generated from your self-reported audit answers. KloudAudit never accessed your cloud account.</p>
+    <p style="font-size:12px;color:#748196;margin:0;">Questions? Reply to this email · <a href="mailto:admin@kloudaudit.eu" style="color:#8cebd0;">admin@kloudaudit.eu</a></p>
   </div>
 </div>
 </body>
@@ -439,7 +618,7 @@ function buildCfoEmail(report, meta) {
   </div>
   <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;margin-bottom:24px;">
     <p style="font-size:13px;font-weight:700;color:#fff;margin:0 0 16px;text-transform:uppercase;letter-spacing:1px;">Your Executive Report</p>
-    <div style="font-family:system-ui;font-size:14px;line-height:1.9;color:#cbd5e1;white-space:pre-wrap;">${escapeHtml(report)}</div>
+    <div style="font-family:Arial,Helvetica,sans-serif;">${renderReportMarkdown(report)}</div>
   </div>
   <div style="background:rgba(129,140,248,0.04);border:1px solid rgba(129,140,248,0.12);border-radius:12px;padding:18px;margin-bottom:20px;text-align:center;">
     <p style="font-size:12px;color:#818cf8;font-weight:700;margin:0 0 4px;">🔒 Methodology Note</p>
@@ -471,7 +650,7 @@ function buildSecurityEmail(report, meta, assessmentId) {
     <p style="font-size:13px;color:#94a3b8;margin:0;">Assessment ID: ${assessmentId}</p>
   </div>
   <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;margin-bottom:24px;">
-    <div style="font-family:monospace;font-size:13px;line-height:1.8;color:#cbd5e1;white-space:pre-wrap;">${escapeHtml(report)}</div>
+    <div style="font-family:Arial,Helvetica,sans-serif;">${renderReportMarkdown(report)}</div>
   </div>
   <div style="background:rgba(248,113,113,0.04);border:1px solid rgba(248,113,113,0.12);border-radius:12px;padding:18px;margin-bottom:20px;text-align:center;">
     <p style="font-size:12px;color:#f87171;font-weight:700;margin:0 0 4px;">🔒 Privacy Notice</p>
@@ -1155,6 +1334,8 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
+module.exports.buildBlueprintEmail = buildBlueprintEmail;
 module.exports.buildCodingToolsPrompt = buildCodingToolsPrompt;
 module.exports.getMinWordCount = getMinWordCount;
 module.exports.validateBlueprintQuality = validateBlueprintQuality;
+module.exports.renderReportMarkdown = renderReportMarkdown;
