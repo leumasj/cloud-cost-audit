@@ -111,7 +111,7 @@ module.exports = async function handler(req, res) {
 
   // 5. Save to delivery queue — FAST (~100ms)
   // We do NOT call Claude here. We save the job and return 200 immediately.
-  // Stripe is satisfied, no retry. /api/process-pending handles actual delivery.
+  // Stripe retries on database failures; the idempotency checks below make retries safe.
   const sessionId = session.id;
   try {
     // Idempotency pre-check — fast SELECT before INSERT to avoid duplicate deliveries
@@ -163,8 +163,6 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     log('error', 'webhook.queue_failed', { sessionId: session.id, error: err.message });
     sentry.captureException(err, { sessionId: session.id, email });
-    // Return 200 even on DB error — prevents Stripe from retrying indefinitely.
-    // The customer is protected: manual recovery via Supabase dashboard is possible.
-    return res.status(200).json({ received: true, error: 'queue_failed' });
+    return res.status(500).json({ error: 'queue_failed' });
   }
 };

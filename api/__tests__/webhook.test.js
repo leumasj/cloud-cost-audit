@@ -207,15 +207,15 @@ test('returns 200 with duplicate:true on unique-constraint violation (23505) as 
   );
 });
 
-test('returns 200 with error:queue_failed on generic DB error — does not throw', async () => {
+test('returns 500 on generic DB error so Stripe retries the queue insert', async () => {
   mockConstructEvent.mockReturnValue(makeCheckoutEvent());
   mockInsert.mockResolvedValue({ error: { code: '500', message: 'connection timeout' } });
   const handler = loadHandler();
   const res = makeRes();
   await handler(makeReq(), res);
-  expect(res.status).toHaveBeenCalledWith(200);
+  expect(res.status).toHaveBeenCalledWith(500);
   expect(res.json).toHaveBeenCalledWith(
-    expect.objectContaining({ received: true, error: 'queue_failed' })
+    expect.objectContaining({ error: 'queue_failed' })
   );
   expect(mockCaptureException).toHaveBeenCalled();
 });

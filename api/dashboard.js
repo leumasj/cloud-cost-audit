@@ -11,6 +11,22 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
+const BLUEPRINT_PRODUCT_TYPES = [
+  'blueprint',
+  'security_blueprint',
+  'bundle',
+  'cfo_report',
+  'ai_blueprint',
+  'coding_tools_blueprint',
+];
+
+function countBlueprintOrders(supabaseAdmin) {
+  return supabaseAdmin
+    .from('delivery_queue')
+    .select('id', { count: 'exact', head: true })
+    .in('product_type', BLUEPRINT_PRODUCT_TYPES);
+}
+
 // first 3 chars of local part + *** + @domain  e.g. "sam***@example.com"
 function maskEmail(email) {
   if (!email) return '—';
@@ -20,6 +36,8 @@ function maskEmail(email) {
 }
 
 module.exports = async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+
   // Simple key auth — prefers a dedicated DASHBOARD_SECRET, falls back to
   // CRON_SECRET only if that isn't configured (see header comment).
   const key = req.query.key;
@@ -53,7 +71,7 @@ module.exports = async function handler(req, res) {
       { count: totalAudits },
       { count: audits7d },
       { count: totalSubscribers },
-      { count: blueprintsPaid },
+      { count: blueprintOrders, error: blueprintOrderCountError },
       { data: providerBreakdown },
       { data: recentAudits },
       { data: deliveryStats },
@@ -65,7 +83,7 @@ module.exports = async function handler(req, res) {
       supabaseAdmin.from('audits').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('audits').select('*', { count: 'exact', head: true }).gte('created_at', day7ago),
       supabaseAdmin.from('subscribers').select('*', { count: 'exact', head: true }).eq('unsubscribed', false),
-      supabaseAdmin.from('audits').select('*', { count: 'exact', head: true }).eq('blueprint_paid', true),
+      countBlueprintOrders(supabaseAdmin),
       supabaseAdmin.from('audits').select('provider').then(({ data }) => {
         const counts = {};
         (data || []).forEach(a => { const provider = a.provider === 'Multi-cloud' ? 'Multi-Cloud' : a.provider; counts[provider] = (counts[provider] || 0) + 1; });
@@ -127,7 +145,10 @@ module.exports = async function handler(req, res) {
         })),
     ]);
 
-    const convRate = totalAudits > 0 ? ((blueprintsPaid / totalAudits) * 100).toFixed(1) : '0.0';
+    if (blueprintOrderCountError) {
+      throw new Error(`Blueprint order count failed: ${blueprintOrderCountError.message}`);
+    }
+
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(`<!DOCTYPE html>
 <html lang="en">
@@ -186,9 +207,9 @@ module.exports = async function handler(req, res) {
       <div class="card-sub">+${audits7d || 0} last 7 days</div>
     </div>
     <div class="card">
-      <div class="card-label">Blueprints Sold</div>
-      <div class="card-value green">${blueprintsPaid || 0}</div>
-      <div class="card-sub">${convRate}% conversion rate</div>
+      <div class="card-label">Paid Blueprint Orders</div>
+      <div class="card-value green">${blueprintOrders || 0}</div>
+      <div class="card-sub">Stripe checkout orders · bundle counts once</div>
     </div>
     <div class="card">
       <div class="card-label">Email Subscribers</div>
@@ -340,3 +361,5 @@ module.exports = async function handler(req, res) {
     return res.status(500).send(`<html><body style="background:#07070f;color:#f87171;font-family:system-ui;padding:40px;">${err.message}</body></html>`);
   }
 };
+
+module.exports.countBlueprintOrders = countBlueprintOrders;
